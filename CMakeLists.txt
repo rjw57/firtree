@@ -18,6 +18,9 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 # The kernel language parser
 ADD_SUBDIRECTORY(kernel-parser)
 
+# Some tools
+ADD_SUBDIRECTORY(tools)
+
 # Ignore some files in svn.
 SET(CPACK_SOURCE_IGNORE_FILES 
     CMakeCache.txt

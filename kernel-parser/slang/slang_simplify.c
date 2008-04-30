@@ -30,7 +30,8 @@
 
 #include "imports.h"
 #include "macros.h"
-#include "get.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "get.h" */
 #include "slang_compile.h"
 #include "slang_codegen.h"
 #include "slang_simplify.h"

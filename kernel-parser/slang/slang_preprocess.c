@@ -29,7 +29,9 @@
  */
 
 #include "imports.h"
-#include "grammar_mesa.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "grammar_mesa.h" */
+#include "grammar_crt.h"
 #include "slang_preprocess.h"
 
 LONGSTRING static const char *slang_pp_directives_syn =

@@ -32,7 +32,8 @@
  * \author Brian Paul
  */
 
-#include "context.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "context.h" */
 #include "macros.h"
 #include "slang_mem.h"
 
@@ -42,7 +43,9 @@
 
 
 /** If 1, use conventional malloc/free.  Helpful for debugging */
-#define USE_MALLOC_FREE 0
+/* FIRTREE ONLY ******************************************************* */
+/* #define USE_MALLOC_FREE 0 */
+#define USE_MALLOC_FREE 1
 
 
 struct slang_mempool_

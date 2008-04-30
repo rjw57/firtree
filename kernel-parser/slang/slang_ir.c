@@ -24,7 +24,8 @@
 
 
 #include "imports.h"
-#include "context.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "context.h" */
 #include "slang_ir.h"
 #include "slang_mem.h"
 #include "shader/prog_print.h"

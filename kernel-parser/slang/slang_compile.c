@@ -29,10 +29,13 @@
  */
 
 #include "imports.h"
-#include "context.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "context.h" */
 #include "program.h"
 #include "prog_parameter.h"
-#include "grammar_mesa.h"
+/* FIRTREE ONLY ******************************************************* */
+/* #include "grammar_mesa.h" */
+#include "grammar_crt.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_preprocess.h"
@@ -1814,11 +1817,16 @@ static GLboolean
 parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
                 struct gl_program *program)
 {
-   GET_CURRENT_CONTEXT(ctx);
+/* FIRTREE ONLY ******************************************************* */
+   /* XXX HACK remove test for the moment */
+   /* GET_CURRENT_CONTEXT(ctx); */
    slang_output_ctx o;
    GLboolean success;
    GLuint maxRegs;
 
+/* FIRTREE ONLY ******************************************************* */
+   /* XXX HACK remove test for the moment */
+   /*
    if (unit->type == SLANG_UNIT_FRAGMENT_BUILTIN ||
        unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
       maxRegs = ctx->Const.FragmentProgram.MaxTemps;
@@ -1828,6 +1836,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
              unit->type == SLANG_UNIT_VERTEX_SHADER);
       maxRegs = ctx->Const.VertexProgram.MaxTemps;
    }
+   */
 
    /* setup output context */
    o.funs = &unit->funs;

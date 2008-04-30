@@ -3,7 +3,8 @@
 
 
 #include <stdlib.h>
-#include <malloc.h>
+/* FIRTREE ONLY ***********************************************************/
+/* #include <malloc.h> */
 #include <string.h>
 
 

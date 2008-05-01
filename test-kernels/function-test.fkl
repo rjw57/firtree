@@ -4,14 +4,19 @@ uniform float input;
 
 float half(float a)
 {
-    return 0.5 * a;
+    return 0.5*a;
+}
+
+vec4 offset_sin(vec4 a)
+{
+    return 0.5 + 0.5 * sin(a);
 }
 
 void main(void)
 {
     float a = half(input);
     float b = half(0.5);
-    float c = half(input);
+    vec4 c = offset_sin(vec4(a,a,0,0));
     float d = destCoord();
 }
 

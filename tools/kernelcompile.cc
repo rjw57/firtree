@@ -53,6 +53,7 @@ extern "C" {
 #include "shaders.h"
 #include "shader/shader_api.h"
 #include "shader/prog_print.h"
+#include "shader/prog_parameter.h"
 #include "drivers/common/driverfuncs.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -222,6 +223,194 @@ CheckLink(GLuint prog)
 }
 #endif
 
+static const char*
+DataTypeToString(GLenum Type)
+{
+   switch(Type)
+   {
+      case GL_FLOAT:
+         return "float";
+         break;
+      case GL_FLOAT_VEC2:
+         return "vec2";
+         break;
+      case GL_FLOAT_VEC3:
+         return "vec3";
+         break;
+      case GL_FLOAT_VEC4:
+         return "vec4";
+         break;
+      case GL_INT:
+         return "int";
+         break;
+      case GL_INT_VEC2:
+         return "ivec2";
+         break;
+      case GL_INT_VEC3:
+         return "ivec3";
+         break;
+      case GL_INT_VEC4:
+         return "ivec4";
+         break;
+      case GL_BOOL:
+         return "bool";
+         break;
+      case GL_BOOL_VEC2:
+         return "bvec2";
+         break;
+      case GL_BOOL_VEC3:
+         return "bvec3";
+         break;
+      case GL_BOOL_VEC4:
+         return "bvec4";
+         break;
+      case GL_FLOAT_MAT2:
+         return "mat2";
+         break;
+      case GL_FLOAT_MAT3:
+         return "mat3";
+         break;
+      case GL_FLOAT_MAT4:
+         return "mat4";
+         break;
+      case GL_SAMPLER_1D:
+         return "sampler1D";
+         break;
+      case GL_SAMPLER_2D:
+         return "sampler2D";
+         break;
+      case GL_SAMPLER_3D:
+         return "sampler3D";
+         break;
+      case GL_SAMPLER_CUBE:
+         return "samplerCube";
+         break;
+      case GL_SAMPLER_1D_SHADOW:
+         return "sampler1DShadow";
+         break;
+      case GL_SAMPLER_2D_SHADOW:
+         return "sampler2DShadow";
+         break;
+      case GL_FLOAT_MAT2x3:
+         return "mat2x3";
+         break;
+      case GL_FLOAT_MAT2x4:
+         return "mat2x4";
+         break;
+      case GL_FLOAT_MAT3x2:
+         return "mat3x2";
+         break;
+      case GL_FLOAT_MAT3x4:
+         return "mat3x4";
+         break;
+      case GL_FLOAT_MAT4x2:
+         return "mat4x2";
+         break;
+      case GL_FLOAT_MAT4x3:
+         return "mat4x3";
+         break;
+   }
+
+   return "????";
+}
+
+static const char*
+RegisterTypeToString(enum register_file Type)
+{
+   switch(Type)
+   {
+      case PROGRAM_TEMPORARY:
+         return "TEMPORARY"; 
+         break;
+      case PROGRAM_LOCAL_PARAM:
+         return "LOCAL_PARAM"; 
+         break;
+      case PROGRAM_ENV_PARAM:
+         return "ENV_PARAM"; 
+         break;
+      case PROGRAM_STATE_VAR:
+         return "STATE_VAR"; 
+         break;
+      case PROGRAM_INPUT:
+         return "INPUT"; 
+         break;
+      case PROGRAM_OUTPUT:
+         return "OUTPUT"; 
+         break;
+      case PROGRAM_NAMED_PARAM:
+         return "NAMED_PARAM"; 
+         break;
+      case PROGRAM_CONSTANT:
+         return "CONSTANT"; 
+         break;
+      case PROGRAM_UNIFORM:
+         return "UNIFORM"; 
+         break;
+      case PROGRAM_VARYING:
+         return "VARYING"; 
+         break;
+      case PROGRAM_WRITE_ONLY:
+         return "WRITE_ONLY"; 
+         break;
+      case PROGRAM_ADDRESS:
+         return "ADDRESS"; 
+         break;
+      case PROGRAM_SAMPLER:
+         return "SAMPLER"; 
+         break;
+      case PROGRAM_UNDEFINED:
+         return "UNDEFINED"; 
+         break;
+   }
+
+   return "????";
+}
+
+static void 
+PrintParameter(struct gl_program_parameter* param, GLfloat value[4], FILE *f)
+{
+   fprintf(f, "#  - %s\t %s\t %s = (%f,%f,%f,%f)\t (%04x,%04x)\n",
+         RegisterTypeToString(param->Type),
+         DataTypeToString(param->DataType),
+         (param->Name != NULL) ? param->Name : "(unnamed)",
+         value[0], value[1], value[2], value[3],
+         param->Type, param->DataType
+         );
+}
+
+static void
+PrintParameterList(gl_program_parameter_list* list, FILE* f)
+{
+   GLuint j;
+   for(j = 0; j<list->NumParameters; j++)
+   {
+      struct gl_program_parameter* param = &(list->Parameters[j]);
+      PrintParameter(param, list->ParameterValues[j], f);
+   }
+}
+
+static void
+PrintShaderParameters(GLuint shader, FILE *f)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
+   GLuint i;
+
+   for (i = 0; i < sh->NumPrograms; i++) {
+      struct gl_program *prog = sh->Programs[i];
+
+      fprintf(f, "# Parameters for program %i (num = %i):\n", i,
+            prog->Parameters->NumParameters);
+      PrintParameterList(prog->Parameters, f);
+      fprintf(f, "# Varying params for program %i (num = %i):\n", i,
+            prog->Varying->NumParameters);
+      PrintParameterList(prog->Varying, f);
+      fprintf(f, "# Attributes for program %i (num = %i):\n", i,
+            prog->Attributes->NumParameters);
+      PrintParameterList(prog->Attributes, f);
+   }
+}
+
 
 static void
 PrintShaderInstructions(GLuint shader, FILE *f)
@@ -299,7 +488,7 @@ ParseOptions(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "--kernel") == 0) {
          Options.KernelFile = argv[i + 1];
-	 Options.Mode = PROG_PRINT_FIRTREE;
+         Options.Mode = PROG_PRINT_FIRTREE;
          i++;
       }
       else if (strcmp(argv[i], "--arb") == 0) {
@@ -364,6 +553,7 @@ main(int argc, char *argv[])
          /*stdout =*/ freopen(Options.OutputFile, "w", stdout);
       }
       if (stdout) {
+         PrintShaderParameters(shader, stdout);
          PrintShaderInstructions(shader, stdout);
       }
       if (Options.OutputFile) {
@@ -373,3 +563,5 @@ main(int argc, char *argv[])
 
    return 0;
 }
+
+// vim:cindent:sw=3:ts=3:et

@@ -650,6 +650,7 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
    if (n) {
       _slang_attach_storage(n, var);
    }
+
    return n;
 }
 
@@ -3093,6 +3094,45 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 		if(fun->kind != SLANG_FUNC_KERNEL)
 		{
 			return GL_TRUE;
+		}
+
+		/* Kernels must return a vec4 */
+		/*
+		if(fun->header.type.specifier.type != SLANG_SPEC_VEC4)
+		{
+			slang_info_log_error(A->log, "kernels must have a return type "
+					"of vec4.");
+			return GL_FALSE;
+		}
+		*/
+
+		/* If this is a kernel, our work is not yet done. We
+		 * need to turn each function parameter into a global
+		 * uniform. */
+		slang_variable_scope* params = fun->parameters;
+
+		{
+			/* XXX I'm assuming the first fun->param_count entries
+			 * in the variables table are the function's formal 
+			 * parameters. This might be entirely false :(. */
+			 
+			GLuint i;
+			for( i=0; i<fun->param_count; i++ )
+			{
+				slang_variable* var = params->variables[i];
+				if(var->isTemp)
+					continue;
+
+				printf("%s\n", var->a_name);
+
+				/* Turn this parameter into a global uniform. */
+				{
+					GLint uniformLoc = _mesa_add_uniform(A->program->Parameters,
+							var->a_name, 1,
+							_slang_gltype_from_specifier(&var->type.specifier));
+					var->aux = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, 1);
+				}
+			}
 		}
    } else
 #endif

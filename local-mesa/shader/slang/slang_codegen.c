@@ -3085,8 +3085,16 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    GLboolean success = GL_TRUE;
 
 #if FIRTREE
-   //if () {
-   //} else
+   if ((A->program != NULL) &&
+			(A->program->Target == GL_KERNEL_PROGRAM_FIRTREE)) {
+		/* If we're generating a kernel, we look for the kernel
+		 * function to generate code for. */
+
+		if(fun->kind != SLANG_FUNC_KERNEL)
+		{
+			return GL_TRUE;
+		}
+   } else
 #endif
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get

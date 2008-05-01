@@ -35,7 +35,10 @@ typedef enum slang_function_kind_
 {
    SLANG_FUNC_ORDINARY,
    SLANG_FUNC_CONSTRUCTOR,
-   SLANG_FUNC_OPERATOR
+   SLANG_FUNC_OPERATOR,
+#ifdef FIRTREE
+   SLANG_FUNC_KERNEL,
+#endif
 } slang_function_kind;
 
 

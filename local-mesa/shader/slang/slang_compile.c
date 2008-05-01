@@ -1403,7 +1403,7 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       break;
 #ifdef FIRTREE
    case FUNCTION_KERNEL:
-      func->kind = SLANG_FUNC_ORDINARY;
+      func->kind = SLANG_FUNC_KERNEL;
       func->header.a_name = parse_identifier(C);
       if (func->header.a_name == SLANG_ATOM_NULL)
          return 0;

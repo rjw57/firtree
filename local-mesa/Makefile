@@ -87,6 +87,17 @@ depend:
 	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 
 # Convenience name for target.
+local-mesa/CMakeFiles/gc2bin.dir/rule:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 local-mesa/CMakeFiles/gc2bin.dir/rule
+
+# Convenience name for target.
+gc2bin: local-mesa/CMakeFiles/gc2bin.dir/rule
+
+# fast build rule for target.
+gc2bin/fast:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/gc2bin.dir/build.make local-mesa/CMakeFiles/gc2bin.dir/build
+
+# Convenience name for target.
 local-mesa/CMakeFiles/mesa.dir/rule:
 	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 local-mesa/CMakeFiles/mesa.dir/rule
 
@@ -96,6 +107,17 @@ mesa: local-mesa/CMakeFiles/mesa.dir/rule
 # fast build rule for target.
 mesa/fast:
 	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/mesa.dir/build.make local-mesa/CMakeFiles/mesa.dir/build
+
+# Convenience name for target.
+local-mesa/CMakeFiles/syn2c.dir/rule:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 local-mesa/CMakeFiles/syn2c.dir/rule
+
+# Convenience name for target.
+syn2c: local-mesa/CMakeFiles/syn2c.dir/rule
+
+# fast build rule for target.
+syn2c/fast:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/syn2c.dir/build.make local-mesa/CMakeFiles/syn2c.dir/build
 
 # target to build an object file
 drivers/common/driverfuncs.o:
@@ -1190,6 +1212,30 @@ shader/shader_api.s:
 	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/mesa.dir/build.make local-mesa/CMakeFiles/mesa.dir/shader/shader_api.s
 
 # target to build an object file
+shader/slang/library/gc_to_bin.o:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/gc2bin.dir/build.make local-mesa/CMakeFiles/gc2bin.dir/shader/slang/library/gc_to_bin.o
+
+# target to preprocess a source file
+shader/slang/library/gc_to_bin.i:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/gc2bin.dir/build.make local-mesa/CMakeFiles/gc2bin.dir/shader/slang/library/gc_to_bin.i
+
+# target to generate assembly for a file
+shader/slang/library/gc_to_bin.s:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/gc2bin.dir/build.make local-mesa/CMakeFiles/gc2bin.dir/shader/slang/library/gc_to_bin.s
+
+# target to build an object file
+shader/slang/library/syn_to_c.o:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/syn2c.dir/build.make local-mesa/CMakeFiles/syn2c.dir/shader/slang/library/syn_to_c.o
+
+# target to preprocess a source file
+shader/slang/library/syn_to_c.i:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/syn2c.dir/build.make local-mesa/CMakeFiles/syn2c.dir/shader/slang/library/syn_to_c.i
+
+# target to generate assembly for a file
+shader/slang/library/syn_to_c.s:
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/syn2c.dir/build.make local-mesa/CMakeFiles/syn2c.dir/shader/slang/library/syn_to_c.s
+
+# target to build an object file
 shader/slang/slang_builtin.o:
 	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f local-mesa/CMakeFiles/mesa.dir/build.make local-mesa/CMakeFiles/mesa.dir/shader/slang/slang_builtin.o
 
@@ -2192,8 +2238,10 @@ help::
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... gc2bin"
 	@echo "... mesa"
 	@echo "... rebuild_cache"
+	@echo "... syn2c"
 	@echo "... drivers/common/driverfuncs.o"
 	@echo "... drivers/common/driverfuncs.i"
 	@echo "... drivers/common/driverfuncs.s"
@@ -2467,6 +2515,12 @@ help::
 	@echo "... shader/shader_api.o"
 	@echo "... shader/shader_api.i"
 	@echo "... shader/shader_api.s"
+	@echo "... shader/slang/library/gc_to_bin.o"
+	@echo "... shader/slang/library/gc_to_bin.i"
+	@echo "... shader/slang/library/gc_to_bin.s"
+	@echo "... shader/slang/library/syn_to_c.o"
+	@echo "... shader/slang/library/syn_to_c.i"
+	@echo "... shader/slang/library/syn_to_c.s"
 	@echo "... shader/slang/slang_builtin.o"
 	@echo "... shader/slang/slang_builtin.i"
 	@echo "... shader/slang/slang_builtin.s"

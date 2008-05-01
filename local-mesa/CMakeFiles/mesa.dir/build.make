@@ -4221,9 +4221,78 @@ local-mesa/CMakeFiles/mesa.dir/drivers/common/driverfuncs.o.provides: local-mesa
 
 local-mesa/CMakeFiles/mesa.dir/drivers/common/driverfuncs.o.provides.build: local-mesa/CMakeFiles/mesa.dir/drivers/common/driverfuncs.o
 
+local-mesa/shader/slang/library/slang_120_core_gc.h: local-mesa/gc2bin
+local-mesa/shader/slang/library/slang_120_core_gc.h: local-mesa/shader/slang/library/slang_120_core.gc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_175)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_120_core_gc.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./gc2bin 1 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_120_core.gc /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_120_core_gc.h
+
+local-mesa/shader/slang/library/slang_fragment_builtin_gc.h: local-mesa/gc2bin
+local-mesa/shader/slang/library/slang_fragment_builtin_gc.h: local-mesa/shader/slang/library/slang_fragment_builtin.gc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_176)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_fragment_builtin_gc.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./gc2bin 1 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_fragment_builtin.gc /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_fragment_builtin_gc.h
+
+local-mesa/shader/slang/library/slang_common_builtin_gc.h: local-mesa/gc2bin
+local-mesa/shader/slang/library/slang_common_builtin_gc.h: local-mesa/shader/slang/library/slang_common_builtin.gc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_177)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_common_builtin_gc.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./gc2bin 1 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_common_builtin.gc /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_common_builtin_gc.h
+
+local-mesa/shader/slang/library/slang_vertex_builtin_gc.h: local-mesa/gc2bin
+local-mesa/shader/slang/library/slang_vertex_builtin_gc.h: local-mesa/shader/slang/library/slang_vertex_builtin.gc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_178)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_vertex_builtin_gc.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./gc2bin 2 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_vertex_builtin.gc /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_vertex_builtin_gc.h
+
+local-mesa/shader/slang/library/slang_core_gc.h: local-mesa/gc2bin
+local-mesa/shader/slang/library/slang_core_gc.h: local-mesa/shader/slang/library/slang_core.gc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_179)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_core_gc.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./gc2bin 1 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_core.gc /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_core_gc.h
+
+local-mesa/shader/slang/library/slang_pp_directives_syn.h: local-mesa/syn2c
+local-mesa/shader/slang/library/slang_pp_directives_syn.h: local-mesa/shader/slang/library/slang_pp_directives.syn
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_180)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_pp_directives_syn.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./syn2c /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_directives.syn >/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_directives_syn.h
+
+local-mesa/shader/slang/library/slang_shader_syn.h: local-mesa/syn2c
+local-mesa/shader/slang/library/slang_shader_syn.h: local-mesa/shader/slang/library/slang_shader.syn
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_181)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_shader_syn.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./syn2c /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_shader.syn >/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_shader_syn.h
+
+local-mesa/shader/slang/library/slang_pp_expression_syn.h: local-mesa/syn2c
+local-mesa/shader/slang/library/slang_pp_expression_syn.h: local-mesa/shader/slang/library/slang_pp_expression.syn
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_182)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_pp_expression_syn.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./syn2c /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_expression.syn >/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_expression_syn.h
+
+local-mesa/shader/slang/library/slang_version_syn.h: local-mesa/syn2c
+local-mesa/shader/slang/library/slang_version_syn.h: local-mesa/shader/slang/library/slang_version.syn
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_183)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_version_syn.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./syn2c /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_version.syn >/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_version_syn.h
+
+local-mesa/shader/slang/library/slang_pp_version_syn.h: local-mesa/syn2c
+local-mesa/shader/slang/library/slang_pp_version_syn.h: local-mesa/shader/slang/library/slang_pp_version.syn
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_PROGRESS_184)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating shader/slang/library/slang_pp_version_syn.h"
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa && ./syn2c /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_version.syn >/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_version_syn.h
+
 local-mesa/CMakeFiles/mesa.dir/depend: local-mesa/CMakeFiles/mesa.dir/depend.make.mark
 
-local-mesa/CMakeFiles/mesa.dir/depend.make.mark:
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_120_core_gc.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_fragment_builtin_gc.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_common_builtin_gc.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_vertex_builtin_gc.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_core_gc.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_pp_directives_syn.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_shader_syn.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_pp_expression_syn.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_version_syn.h
+local-mesa/CMakeFiles/mesa.dir/depend.make.mark: local-mesa/shader/slang/library/slang_pp_version_syn.h
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --magenta --bold "Scanning dependencies of target mesa"
 	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/CMakeFiles/mesa.dir/DependInfo.cmake
 

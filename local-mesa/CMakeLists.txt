@@ -4,7 +4,71 @@
 #
 # See LICENSE file for distribution rights.
 
+# Utility programs
+SET(SYN2C_SOURCES
+    shader/slang/library/syn_to_c.c
+)
+ADD_EXECUTABLE(syn2c ${SYN2C_SOURCES})
+
+MACRO(ADD_SYN_FILE input)
+    GET_TARGET_PROPERTY(SYN2C_EXE syn2c LOCATION)
+    STRING(REGEX REPLACE "\\.syn$" "_syn.h" output ${input})
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${output}
+        COMMAND ${SYN2C_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/${input} >${CMAKE_CURRENT_SOURCE_DIR}/${output}
+        DEPENDS syn2c ${input}
+    )
+    SET_SOURCE_FILES_PROPERTIES(${output} PROPERTIES GENERATED 1)
+ENDMACRO(ADD_SYN_FILE)
+
+ADD_SYN_FILE(shader/slang/library/slang_shader.syn)
+ADD_SYN_FILE(shader/slang/library/slang_pp_directives.syn)
+ADD_SYN_FILE(shader/slang/library/slang_pp_expression.syn)
+ADD_SYN_FILE(shader/slang/library/slang_version.syn)
+ADD_SYN_FILE(shader/slang/library/slang_pp_version.syn)
+
+SET(GC2BIN_SOURCES
+    # Syntax files
+    shader/slang/library/slang_pp_directives_syn.h  shader/slang/library/slang_shader_syn.h
+    shader/slang/library/slang_pp_expression_syn.h  shader/slang/library/slang_version_syn.h
+    shader/slang/library/slang_pp_version_syn.h
+
+    shader/slang/library/gc_to_bin.c
+)
+ADD_EXECUTABLE(gc2bin ${GC2BIN_SOURCES})
+
+MACRO(ADD_GC_FILE type input)
+    GET_TARGET_PROPERTY(GC2BIN_EXE gc2bin LOCATION)
+    STRING(REGEX REPLACE "\\.gc$" "_gc.h" output ${input})
+    ADD_CUSTOM_COMMAND(
+        OUTPUT ${output}
+        COMMAND ${GC2BIN_EXE} ${type} ${CMAKE_CURRENT_SOURCE_DIR}/${input} ${CMAKE_CURRENT_SOURCE_DIR}/${output}
+        DEPENDS gc2bin ${input}
+    )
+    SET_SOURCE_FILES_PROPERTIES(${output} PROPERTIES GENERATED 1)
+ENDMACRO(ADD_GC_FILE)
+
+ADD_GC_FILE(1 shader/slang/library/slang_120_core.gc)
+ADD_GC_FILE(1 shader/slang/library/slang_builtin_120_common.gc)
+ADD_GC_FILE(1 shader/slang/library/slang_builtin_120_fragment.gc)
+ADD_GC_FILE(1 shader/slang/library/slang_common_builtin.gc)
+ADD_GC_FILE(1 shader/slang/library/slang_core.gc)
+ADD_GC_FILE(1 shader/slang/library/slang_fragment_builtin.gc)
+ADD_GC_FILE(2 shader/slang/library/slang_vertex_builtin.gc)
+
 SET(MESA_SOURCES
+    # Builtin files
+    shader/slang/library/slang_120_core_gc.h     
+    shader/slang/library/slang_fragment_builtin_gc.h   
+    shader/slang/library/slang_common_builtin_gc.h 
+    shader/slang/library/slang_vertex_builtin_gc.h
+    shader/slang/library/slang_core_gc.h
+
+    # Syntax files
+    shader/slang/library/slang_pp_directives_syn.h  shader/slang/library/slang_shader_syn.h
+    shader/slang/library/slang_pp_expression_syn.h  shader/slang/library/slang_version_syn.h
+    shader/slang/library/slang_pp_version_syn.h
+
     # Grammar parsing
 	shader/grammar/grammar_mesa.c 
 

@@ -3012,7 +3012,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          GLint size = 4; /* XXX? */
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
-#ifdef FFIRTREE
+#ifdef FIRTREE
       else if (type == SLANG_UNIT_KERNEL_BUILTIN) {
          GLint index = _slang_output_index(varName, GL_KERNEL_PROGRAM_FIRTREE);
          GLint size = 4; /* XXX? */

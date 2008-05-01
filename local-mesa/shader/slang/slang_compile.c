@@ -1273,6 +1273,9 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
 #define FUNCTION_ORDINARY 0
 #define FUNCTION_CONSTRUCTOR 1
 #define FUNCTION_OPERATOR 2
+#ifdef FIRTREE
+#define FUNCTION_KERNEL 3
+#endif
 
 /* function parameter */
 #define PARAMETER_NONE 0
@@ -1398,6 +1401,14 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       if (func->header.a_name == SLANG_ATOM_NULL)
          return 0;
       break;
+#ifdef FIRTREE
+   case FUNCTION_KERNEL:
+      func->kind = SLANG_FUNC_ORDINARY;
+      func->header.a_name = parse_identifier(C);
+      if (func->header.a_name == SLANG_ATOM_NULL)
+         return 0;
+      break;
+#endif
    default:
       return 0;
    }

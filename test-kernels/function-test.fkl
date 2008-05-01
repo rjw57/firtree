@@ -7,7 +7,7 @@ float half(float a)
     return 0.5*a;
 }
 
-vec4 offset_sin(vec4 a)
+kernel vec4 offset_sin(vec4 a)
 {
     return 0.5 + 0.5 * sin(a);
 }

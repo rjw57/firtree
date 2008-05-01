@@ -64,6 +64,7 @@
 .emtcode FUNCTION_ORDINARY                          0
 .emtcode FUNCTION_CONSTRUCTOR                       1
 .emtcode FUNCTION_OPERATOR                          2
+.emtcode FUNCTION_KERNEL                            3
 
 /* operator type */
 .emtcode OPERATOR_ADDASSIGN                         1
@@ -250,6 +251,7 @@
 /* holds the type of the shader being parsed; possible values are listed below */
 /*   FRAGMENT_SHADER            1 */
 /*   VERTEX_SHADER              2 */
+/*   KERNEL_SHADER              3 [ FIRTREE ONLY ] */
 /* shader type is set by the caller before parsing */
 .regbyte shader_type                                0
 
@@ -622,14 +624,21 @@ function_header_with_parameters_1
     comma .and parameter_declaration;
 
 /*
-    <function_header>                   ::= <fully_specified_type> <identifier> "("
-*/
+    <function_header>                   ::= <function_qualifier> <fully_specified_type> <identifier> "("
+*/    
 function_header
-    function_header_nospace .or function_header_space;
+    function_header_nospace .or function_header_space .or .if (shader_type == 3) kernel_header;
 function_header_space
     fully_specified_type_space .and space .and function_decl_identifier .and lparen;
 function_header_nospace
     fully_specified_type_nospace .and function_decl_identifier .and lparen;
+
+kernel_header
+    kernel_header_space .or kernel_header_nospace;
+kernel_header_space
+    "kernel" .and space .and fully_specified_type_space .and space .and identifier .emit FUNCTION_KERNEL .and lparen;
+kernel_header_nospace
+    "kernel" .and space .and fully_specified_type_nospace .and identifier .emit FUNCTION_KERNEL .and lparen;
 
 /*
     <function_decl_identifier>          ::= "__constructor"

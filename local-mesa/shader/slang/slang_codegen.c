@@ -3084,6 +3084,10 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    slang_ir_node *n;
    GLboolean success = GL_TRUE;
 
+#if FIRTREE
+   //if () {
+   //} else
+#endif
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
        * inlined.

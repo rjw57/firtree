@@ -1823,6 +1823,12 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
        unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
       maxRegs = ctx->Const.FragmentProgram.MaxTemps;
    }
+#ifdef FIRTREE
+   else if (unit->type == SLANG_UNIT_KERNEL_BUILTIN ||
+       unit->type == SLANG_UNIT_KERNEL_SHADER) {
+      maxRegs = ctx->Const.FragmentProgram.MaxTemps;
+   }
+#endif
    else {
       assert(unit->type == SLANG_UNIT_VERTEX_BUILTIN ||
              unit->type == SLANG_UNIT_VERTEX_SHADER);
@@ -1991,6 +1997,10 @@ static const byte slang_fragment_builtin_gc[] = {
 #include "library/slang_fragment_builtin_gc.h"
 };
 
+static const byte slang_kernel_builtin_gc[] = {
+#include "library/slang_kernel_builtin_gc.h"
+};
+
 static const byte slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
@@ -2017,6 +2027,11 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
    if (type == SLANG_UNIT_FRAGMENT_SHADER
        || type == SLANG_UNIT_FRAGMENT_BUILTIN)
       grammar_set_reg8(*id, (const byte *) "shader_type", 1);
+#ifdef FIRTREE
+   if (type == SLANG_UNIT_KERNEL_SHADER
+       || type == SLANG_UNIT_KERNEL_BUILTIN)
+      grammar_set_reg8(*id, (const byte *) "shader_type", 3);
+#endif
    else
       grammar_set_reg8(*id, (const byte *) "shader_type", 2);
 
@@ -2024,7 +2039,12 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
    grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
 
    /* if parsing user-specified shader, load built-in library */
+#ifdef FIRTREE
+   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER ||
+		   type == SLANG_UNIT_KERNEL_SHADER ) {
+#else
    if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER) {
+#endif
       /* compile core functionality first */
       if (!compile_binary(slang_core_gc,
                           &object->builtin[SLANG_BUILTIN_CORE],
@@ -2060,6 +2080,15 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
                              &object->builtin[SLANG_BUILTIN_COMMON], NULL))
             return GL_FALSE;
       }
+#ifdef FIRTREE
+      else if (type == SLANG_UNIT_KERNEL_SHADER) {
+         if (!compile_binary(slang_kernel_builtin_gc,
+                             &object->builtin[SLANG_BUILTIN_TARGET],
+                             SLANG_UNIT_KERNEL_BUILTIN, infolog, NULL,
+                             &object->builtin[SLANG_BUILTIN_COMMON], NULL))
+            return GL_FALSE;
+      }
+#endif
       else if (type == SLANG_UNIT_VERTEX_SHADER) {
          if (!compile_binary(slang_vertex_builtin_gc,
                              &object->builtin[SLANG_BUILTIN_TARGET],
@@ -2119,6 +2148,11 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    if (shader->Type == GL_VERTEX_SHADER) {
       type = SLANG_UNIT_VERTEX_SHADER;
    }
+#ifdef FIRTREE
+   else if(shader->Type == GL_KERNEL_SHADER_FIRTREE) {
+      type = SLANG_UNIT_KERNEL_SHADER;
+   }
+#endif
    else {
       assert(shader->Type == GL_FRAGMENT_SHADER);
       type = SLANG_UNIT_FRAGMENT_SHADER;
@@ -2131,6 +2165,10 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       GLenum progTarget;
       if (shader->Type == GL_VERTEX_SHADER)
          progTarget = GL_VERTEX_PROGRAM_ARB;
+#ifdef FIRTREE
+      else if (shader->Type == GL_KERNEL_SHADER_FIRTREE)
+         progTarget = GL_KERNEL_PROGRAM_FIRTREE;
+#endif
       else
          progTarget = GL_FRAGMENT_PROGRAM_ARB;
       shader->Programs

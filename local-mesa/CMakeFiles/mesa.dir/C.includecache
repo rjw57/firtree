@@ -2398,6 +2398,8 @@ mtypes.h
 
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_fragment_builtin_gc.h
 
+/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_kernel_builtin_gc.h
+
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_directives_syn.h
 
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_pp_expression_syn.h
@@ -2517,6 +2519,8 @@ library/slang_common_builtin_gc.h
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_common_builtin_gc.h
 library/slang_fragment_builtin_gc.h
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_fragment_builtin_gc.h
+library/slang_kernel_builtin_gc.h
+/home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_kernel_builtin_gc.h
 library/slang_vertex_builtin_gc.h
 /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/local-mesa/shader/slang/library/slang_vertex_builtin_gc.h
 

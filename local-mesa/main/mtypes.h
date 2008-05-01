@@ -1864,6 +1864,7 @@ struct gl_program
    GLubyte *String;  /**< Null-terminated program text */
    GLint RefCount;
    GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
+   		     /**< FIRTREE only: GL_KERNEL_PROGRAM_FIRTREE */	
    GLenum Format;    /**< String encoding format */
    GLboolean Resident;
 
@@ -1926,6 +1927,14 @@ struct gl_fragment_program
    GLboolean UsesKill;
 };
 
+#ifdef FIRTREE
+struct gl_kernel_program
+{
+   struct gl_program Base;   /**< base class */
+   GLenum FogOption;
+   GLboolean UsesKill;
+};
+#endif
 
 /**
  * State common to vertex and fragment programs.

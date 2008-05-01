@@ -4,6 +4,7 @@ FILE(REMOVE
 "shader/slang/library/slang_common_builtin_gc.h"
 "shader/slang/library/slang_vertex_builtin_gc.h"
 "shader/slang/library/slang_core_gc.h"
+"shader/slang/library/slang_kernel_builtin_gc.h"
 "shader/slang/library/slang_pp_directives_syn.h"
 "shader/slang/library/slang_shader_syn.h"
 "shader/slang/library/slang_pp_expression_syn.h"

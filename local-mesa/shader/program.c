@@ -212,6 +212,20 @@ _mesa_init_fragment_program( GLcontext *ctx, struct gl_fragment_program *prog,
       return NULL;
 }
 
+#ifdef FIRTREE
+/**
+ * Initialize a new kernel program object.
+ */
+struct gl_program *
+_mesa_init_kernel_program( GLcontext *ctx, struct gl_kernel_program *prog,
+                             GLenum target, GLuint id)
+{
+   if (prog) 
+      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
+   else
+      return NULL;
+}
+#endif
 
 /**
  * Initialize a new vertex program object.
@@ -251,6 +265,12 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
       return _mesa_init_fragment_program(ctx,
                                          CALLOC_STRUCT(gl_fragment_program),
                                          target, id );
+#ifdef FIRTREE
+   case GL_KERNEL_PROGRAM_FIRTREE:
+      return _mesa_init_kernel_program(ctx,
+	                               CALLOC_STRUCT(gl_kernel_program),
+                                       target, id );
+#endif
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
       return NULL;

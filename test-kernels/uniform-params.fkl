@@ -1,0 +1,10 @@
+// Trig test with uniforms
+
+uniform vec4 a;
+
+void main(void)
+{
+    vec4 b = sin(a);
+}
+
+// vim:sw=4:ts=4:et:cindent:filetype=c

@@ -33,7 +33,10 @@
 typedef enum {
    PROG_PRINT_ARB,
    PROG_PRINT_NV,
-   PROG_PRINT_DEBUG
+   PROG_PRINT_DEBUG,
+#ifdef FIRTREE
+   PROG_PRINT_FIRTREE
+#endif
 } gl_prog_print_mode;
 
 

@@ -1,0 +1,8 @@
+/*
+ * FIRTREE copyright
+ */
+
+vec2 destCoord()
+{
+    return vec2(1,1);
+}

@@ -1,0 +1,7 @@
+// Trivial null-kernel
+
+void main(void)
+{
+}
+
+// vim:sw=4:ts=4:et:cindent:filetype=c

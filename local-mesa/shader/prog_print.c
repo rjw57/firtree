@@ -198,6 +198,9 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
 
    switch (mode) {
    case PROG_PRINT_DEBUG:
+#ifdef FIRTREE
+   case PROG_PRINT_FIRTREE:
+#endif
       sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
 
@@ -617,7 +620,11 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
          return indent + 3;
       }
    case OPCODE_ENDSUB:
+#ifdef FIRTREE
+      if ((mode == PROG_PRINT_DEBUG) || (mode == PROG_PRINT_FIRTREE)) {
+#else
       if (mode == PROG_PRINT_DEBUG) {
+#endif
          _mesa_printf("ENDSUB");
          print_comment(inst);
       }
@@ -642,7 +649,11 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       _mesa_printf("END\n");
       break;
    case OPCODE_NOP:
+#ifdef FIRTREE
+      if ((mode == PROG_PRINT_DEBUG) || (mode == PROG_PRINT_FIRTREE)) {
+#else
       if (mode == PROG_PRINT_DEBUG) {
+#endif
          _mesa_printf("NOP");
          print_comment(inst);
       }
@@ -702,6 +713,11 @@ _mesa_print_program_opt(const struct gl_program *prog,
       else
          _mesa_printf("# Fragment Program/Shader\n");
       break;
+#ifdef FIRTREE
+   case GL_KERNEL_PROGRAM_FIRTREE:
+      _mesa_printf("# FIRTREE kernel\n");
+      break;
+#endif
    }
 
    for (i = 0; i < prog->NumInstructions; i++) {

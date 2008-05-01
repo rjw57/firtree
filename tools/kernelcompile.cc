@@ -72,6 +72,7 @@ struct options {
    gl_prog_print_mode Mode;
    const char *VertFile;
    const char *FragFile;
+   const char *KernelFile;
    const char *OutputFile;
 };
 
@@ -242,7 +243,8 @@ CompileShader(const char *filename, GLenum type)
    GLuint shader;
 
    assert(type == GL_FRAGMENT_SHADER ||
-          type == GL_VERTEX_SHADER);
+          type == GL_VERTEX_SHADER ||
+	  type == GL_KERNEL_SHADER_FIRTREE);
 
    shader = _mesa_CreateShader(type);
    ReadShader(shader, filename);
@@ -258,9 +260,11 @@ Usage(void)
    printf("Usage:\n");
    printf("  --vs FILE          vertex shader input filename\n");
    printf("  --fs FILE          fragment shader input filename\n");
+   printf("  --kernel FILE      kernel input filename\n");
    printf("  --arb              emit ARB-style instructions (the default)\n");
    printf("  --nv               emit NV-style instructions\n");
    printf("  --debug            emit debug-style instructions\n");
+   printf("  --firtree          emit firtree-style instructions (default for kernel)\n");
    printf("  --number, -n       emit line numbers\n");
    printf("  --output, -o FILE  output filename\n");
    printf("  --help             display this information\n");
@@ -276,6 +280,7 @@ ParseOptions(int argc, char *argv[])
    Options.Mode = PROG_PRINT_ARB;
    Options.VertFile = NULL;
    Options.FragFile = NULL;
+   Options.KernelFile = NULL;
    Options.OutputFile = NULL;
 
    if (argc == 1) {
@@ -292,6 +297,11 @@ ParseOptions(int argc, char *argv[])
          Options.FragFile = argv[i + 1];
          i++;
       }
+      else if (strcmp(argv[i], "--kernel") == 0) {
+         Options.KernelFile = argv[i + 1];
+	 Options.Mode = PROG_PRINT_FIRTREE;
+         i++;
+      }
       else if (strcmp(argv[i], "--arb") == 0) {
          Options.Mode = PROG_PRINT_ARB;
       }
@@ -300,6 +310,9 @@ ParseOptions(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "--debug") == 0) {
          Options.Mode = PROG_PRINT_DEBUG;
+      }
+      else if (strcmp(argv[i], "--firtree") == 0) {
+         Options.Mode = PROG_PRINT_FIRTREE;
       }
       else if (strcmp(argv[i], "--number") == 0 ||
                strcmp(argv[i], "-n") == 0) {
@@ -340,6 +353,9 @@ main(int argc, char *argv[])
    }
    else if (Options.FragFile) {
       shader = CompileShader(Options.FragFile, GL_FRAGMENT_SHADER);
+   }
+   else if (Options.KernelFile) {
+      shader = CompileShader(Options.KernelFile, GL_KERNEL_SHADER_FIRTREE);
    }
 
    if (shader) {

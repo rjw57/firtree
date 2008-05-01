@@ -2256,6 +2256,18 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
                               (char *) oper->children[0].a_id);
          return NULL;
       }
+#ifdef FIRTREE
+      if (var->type.qualifier == SLANG_QUAL_CONST ||
+          var->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
+          var->type.qualifier == SLANG_QUAL_UNIFORM ||
+          (var->type.qualifier == SLANG_QUAL_VARYING &&
+           A->program->Target == GL_KERNEL_PROGRAM_FIRTREE)) {
+         slang_info_log_error(A->log,
+                              "illegal assignment to read-only variable '%s'",
+                              (char *) oper->children[0].a_id);
+         return NULL;
+      }
+#endif
    }
 
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER &&
@@ -2945,6 +2957,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             store->Swizzle = swizzle;
             assert(index < FRAG_ATTRIB_MAX);
          }
+#ifdef FIRTREE
+	 else if (type == SLANG_UNIT_KERNEL_BUILTIN) {
+	    slang_info_log_error(A->log, "global varying values not allowed in "
+			    "kernel programs.");	 
+	 }
+#endif
          else {
             GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
             assert(index >= 0);
@@ -2994,6 +3012,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          GLint size = 4; /* XXX? */
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
+#ifdef FFIRTREE
+      else if (type == SLANG_UNIT_KERNEL_BUILTIN) {
+         GLint index = _slang_output_index(varName, GL_KERNEL_PROGRAM_FIRTREE);
+         GLint size = 4; /* XXX? */
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+      }
+#endif
       else {
          GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
          GLint size = 4; /* XXX? */

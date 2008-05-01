@@ -3382,6 +3382,17 @@ extern "C" {
 #ifndef GL_GREMEDY_frame_terminator
 #endif
 
+#ifdef FIRTREE
+/* FIRTREE only **********************************************
+ * NOTE. There are in NO WAY part of an official OpenGL
+ * extension. They are just here to allow us to 'piggyback' on
+ * Mesa's GLSL compiler.
+ *************************************************************/
+#ifndef GL_FIRTREE_kernel_program
+#define GL_KERNEL_PROGRAM_FIRTREE         0x8E00
+#define GL_KERNEL_SHADER_FIRTREE          0x8E01
+#endif
+#endif
 
 /*************************************************************/
 

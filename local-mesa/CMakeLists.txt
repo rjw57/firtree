@@ -55,6 +55,7 @@ ADD_GC_FILE(1 shader/slang/library/slang_common_builtin.gc)
 ADD_GC_FILE(1 shader/slang/library/slang_core.gc)
 ADD_GC_FILE(1 shader/slang/library/slang_fragment_builtin.gc)
 ADD_GC_FILE(2 shader/slang/library/slang_vertex_builtin.gc)
+ADD_GC_FILE(3 shader/slang/library/slang_kernel_builtin.gc)
 
 SET(MESA_SOURCES
     # Builtin files
@@ -63,6 +64,7 @@ SET(MESA_SOURCES
     shader/slang/library/slang_common_builtin_gc.h 
     shader/slang/library/slang_vertex_builtin_gc.h
     shader/slang/library/slang_core_gc.h
+    shader/slang/library/slang_kernel_builtin_gc.h
 
     # Syntax files
     shader/slang/library/slang_pp_directives_syn.h  shader/slang/library/slang_shader_syn.h

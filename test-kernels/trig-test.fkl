@@ -1,0 +1,9 @@
+// Trivial null-kernel
+
+void main(void)
+{
+    vec4 a = vec4(1,2,3,4);
+    vec4 b = sin(a);
+}
+
+// vim:sw=4:ts=4:et:cindent:filetype=c

@@ -1,0 +1,18 @@
+// Trivial function test
+
+uniform float input;
+
+float half(float a)
+{
+    return 0.5 * a;
+}
+
+void main(void)
+{
+    float a = half(input);
+    float b = half(0.5);
+    float c = half(input);
+    float d = destCoord();
+}
+
+// vim:sw=4:ts=4:et:cindent:filetype=c

@@ -3123,14 +3123,16 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 				if(var->isTemp)
 					continue;
 
-				printf("%s\n", var->a_name);
+				// printf("%s\n", var->a_name);
+				printf("FIXME\n");
 
 				/* Turn this parameter into a global uniform. */
 				{
-					GLint uniformLoc = _mesa_add_uniform(A->program->Parameters,
-							var->a_name, 1,
-							_slang_gltype_from_specifier(&var->type.specifier));
-					var->aux = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, 1);
+					//GLint uniformLoc = _mesa_add_varying(A->program->Parameters,
+					//		var->a_name, 4);
+					
+							// _slang_gltype_from_specifier(&var->type.specifier));
+					var->aux = _slang_new_ir_storage(PROGRAM_NAMED_PARAM, i, 1);
 				}
 			}
 		}

@@ -12,10 +12,10 @@ vec4 offset_sin(vec4 a)
     return 0.5 + 0.5 * sin(a);
 }
 
-kernel void testKernel(vec4 param)
+kernel void testKernel(float param, float p2)
 {
-    float a = half(param.y);
-    float b = half(0.5);
+    float a = half(param);
+    float b = half(p2);
     vec4 c = offset_sin(vec4(a,a,0,0));
     float d = destCoord();
 

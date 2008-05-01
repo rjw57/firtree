@@ -7,6 +7,7 @@ SET(CMAKE_FORCE_UNIX_PATHS 1)
 # The C and CXX include file search paths:
 SET(CMAKE_C_INCLUDE_PATH
   "local-mesa"
+  "local-mesa/include"
   "local-mesa/glapi"
   "local-mesa/main"
   "local-mesa/math"

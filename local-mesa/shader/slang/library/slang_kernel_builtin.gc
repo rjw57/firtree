@@ -2,6 +2,120 @@
  * FIRTREE copyright
  */
 
+//// Convert __color -> vec4
+vec4 __constructor(const __color c)
+{
+    __retVal = c;
+}
+
+//// Color/vec4 operators
+
+vec4 __operator + (const __color v, const vec4 u)
+{
+    __retVal = vec4(v) + u;
+}
+
+vec4 __operator - (const __color v, const vec4 u)
+{
+    __retVal = vec4(v) - u;
+}
+
+vec4 __operator * (const __color v, const vec4 u)
+{
+    __retVal = vec4(v) * u;
+}
+
+vec4 __operator / (const __color v, const vec4 u)
+{
+    __retVal = vec4(v) / u;
+}
+
+vec4 __operator + (const vec4 v, const __color u)
+{
+    __retVal = v + vec4(u);
+}
+
+vec4 __operator - (const vec4 v, const __color u)
+{
+    __retVal = v - vec4(u);
+}
+
+vec4 __operator * (const vec4 v, const __color u)
+{
+    __retVal = v * vec4(u);
+}
+
+vec4 __operator / (const vec4 v, const __color u)
+{
+    __retVal = v / vec4(u);
+}
+
+//// Color/float operators
+
+vec4 __operator + (const __color v, const float u)
+{
+    __retVal = vec4(v) + u;
+}
+
+vec4 __operator - (const __color v, const float u)
+{
+    __retVal = vec4(v) - u;
+}
+
+vec4 __operator * (const __color v, const float u)
+{
+    __retVal = vec4(v) * u;
+}
+
+vec4 __operator / (const __color v, const float u)
+{
+    __retVal = vec4(v) / u;
+}
+
+vec4 __operator + (const float v, const __color u)
+{
+    __retVal = v + vec4(u);
+}
+
+vec4 __operator - (const float v, const __color u)
+{
+    __retVal = v - vec4(u);
+}
+
+vec4 __operator * (const float v, const __color u)
+{
+    __retVal = v * vec4(u);
+}
+
+vec4 __operator / (const float v, const __color u)
+{
+    __retVal = v / vec4(u);
+}
+
+//// Color/color operators
+
+vec4 __operator + (const __color v, const __color u)
+{
+    __retVal = vec4(v) + vec4(u);
+}
+
+vec4 __operator - (const __color v, const __color u)
+{
+    __retVal = vec4(v) - vec4(u);
+}
+
+vec4 __operator * (const __color v, const __color u)
+{
+    __retVal = vec4(v) * vec4(u);
+}
+vec4 __operator / (const __color v, const __color u)
+{
+    __retVal = vec4(v) / vec4(u);
+}
+
+
+//// Kernel builtin functions.
+
 vec2 destCoord()
 {
     return vec2(1,1);

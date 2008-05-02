@@ -1,8 +1,8 @@
-// Trivial null-kernel
+// Trivial color-kernel
 
 kernel vec4 colorKernel(__color outCol)
 {
-    return outCol;
+    return outCol * 0.5;
 }
 
 // vim:sw=4:ts=4:et:cindent:filetype=c

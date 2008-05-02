@@ -116,8 +116,9 @@ vec4 __operator / (const __color v, const __color u)
 
 //// Kernel builtin functions.
 
-__fixed_output vec4 __kern_Color;
-__fixed_input  vec2 __kern_DestCoord;
+__fixed_input  vec2 __kern_DestCoord;    // == INPUT[0]
+
+__fixed_output vec4 __kern_Color;        // == OUTPUT[0]
 
 vec2 destCoord()
 {

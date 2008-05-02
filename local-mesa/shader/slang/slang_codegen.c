@@ -3241,19 +3241,11 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 				if(var->isTemp)
 					continue;
 
-            if(_mesa_strcmp((char *) var->a_name, "__retVal") == 0)
-            {
-					/* Ignore the auto-generated __retVal parameter.
-                * We pass the return value back via the __kern_Color
-                * output. */
-            }
-            else {
-               /* Turn this parameter into a global uniform. */
-					GLint uniformLoc = _mesa_add_uniform(A->program->Parameters,
-							var->a_name, 1,
-							_slang_gltype_from_specifier(&var->type.specifier));
-					var->aux = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, 1);
-				}
+            /* Turn this parameter into a global uniform. */
+            GLint uniformLoc = _mesa_add_uniform(A->program->Parameters,
+                  var->a_name, 1,
+                  _slang_gltype_from_specifier(&var->type.specifier));
+            var->aux = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, 1);
 			}
 		}
    } else

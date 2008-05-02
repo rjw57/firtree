@@ -1432,8 +1432,14 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
 
    /* if the function returns a value, append a hidden __retVal 'out'
     * parameter that corresponds to the return value.
+    * FIRTREE: Do not do this for kernels. Their return value is
+    *          assigned to a special fixed output (__kern_Color).
     */
+#ifdef FIRTREE
+   if (_slang_function_has_return_value(func) && (func->kind != SLANG_FUNC_KERNEL)) {
+#else
    if (_slang_function_has_return_value(func)) {
+#endif
       slang_variable *p = slang_variable_scope_grow(func->parameters);
       slang_atom a_retVal = slang_atom_pool_atom(C->atoms, "__retVal");
       assert(a_retVal);

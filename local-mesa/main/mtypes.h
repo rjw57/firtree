@@ -312,12 +312,19 @@ enum
 
 #ifdef FIRTREE
 /**
+ * Kernel program input attributes
+ */
+enum
+{
+   KERNEL_ATTRIB_DEST_COORD = 0,
+};
+
+/**
  * Kernel program results
  */
 enum
 {
    KERNEL_RESULT_COLR = 0,
-   KERNEL_RESULT_MAX
 };
 #endif
 

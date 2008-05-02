@@ -326,9 +326,34 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
       { "gl_FrontFacing", FRAG_ATTRIB_FOGC, SWIZZLE_YYYY }, /*XXX*/
       { NULL, 0, SWIZZLE_NOOP }
    };
+#ifdef FIRTREE
+   static const struct input_info kernelInputs[] = {
+      { "__kern_DestCoord", KERNEL_ATTRIB_DEST_COORD, SWIZZLE_NOOP },
+      { NULL, 0, SWIZZLE_NOOP }
+   };
+#endif
    GLuint i;
+#ifdef FIRTREE
+   const struct input_info *inputs = NULL;
+   switch(target)
+   {
+      case GL_VERTEX_PROGRAM_ARB:
+         inputs = vertInputs;
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         inputs = fragInputs;
+         break;
+      case GL_KERNEL_PROGRAM_FIRTREE:
+         inputs = kernelInputs;
+         break;
+      default:
+         assert(0 && "Unknown target.");
+         break;
+   }
+#else
    const struct input_info *inputs
       = (target == GL_VERTEX_PROGRAM_ARB) ? vertInputs : fragInputs;
+#endif
 
    ASSERT(MAX_TEXTURE_UNITS == 8); /* if this fails, fix vertInputs above */
 
@@ -3020,10 +3045,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             assert(index < FRAG_ATTRIB_MAX);
          }
 #ifdef FIRTREE
-	 else if (type == SLANG_UNIT_KERNEL_BUILTIN) {
-	    slang_info_log_error(A->log, "global varying values not allowed in "
-			    "kernel programs.");	 
-	 }
+         else if (type == SLANG_UNIT_KERNEL_BUILTIN) {
+            slang_info_log_error(A->log, "global varying values not allowed in "
+                  "kernel programs.");	 
+         }
 #endif
          else {
             GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
@@ -3061,8 +3086,26 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
       GLuint swizzle = SWIZZLE_XYZW; /* silence compiler warning */
+#ifdef FIRTREE
+      GLenum target;
+      switch(type)
+      {
+         case SLANG_UNIT_FRAGMENT_BUILTIN:
+            target = GL_FRAGMENT_PROGRAM_ARB;
+            break;
+         case SLANG_UNIT_KERNEL_BUILTIN:
+            target = GL_KERNEL_PROGRAM_FIRTREE;
+            break;
+         default:
+            slang_info_log_error(A->log, "Unknown target");
+            return GL_FALSE;
+            break;
+      }
+      GLint index = _slang_input_index(varName, target, &swizzle);
+#else
       GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                        &swizzle);
+#endif
       GLint size = 4; /* XXX? */
       store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
       store->Swizzle = swizzle;

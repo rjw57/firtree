@@ -117,10 +117,9 @@ vec4 __operator / (const __color v, const __color u)
 //// Kernel builtin functions.
 
 __fixed_output vec4 __kern_Color;
-
-// uniform vec2 __currentDestCoord;
+__fixed_input  vec2 __kern_DestCoord;
 
 vec2 destCoord()
 {
-    return vec2(1,1); // __currentDestCoord;
+    __retVal = __kern_DestCoord.xy;
 }

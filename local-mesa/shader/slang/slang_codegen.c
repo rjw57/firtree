@@ -1972,7 +1972,6 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation *assign;
       slang_atom a_retVal;
 
-      printf("HRV: %i\n", haveReturnValue);
       if(!haveReturnValue)
          return new_node0(IR_NOP);
 
@@ -3128,15 +3127,29 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 			return GL_TRUE;
 		}
 
+      /* We should have no global uniforms defined in kernels. */
+      {
+         GLuint i;
+         for( i=0; i<A->program->Parameters->NumParameters; i++)
+         {
+            struct gl_program_parameter* param = 
+               &(A->program->Parameters->Parameters[i]);
+            if(param->Type == PROGRAM_UNIFORM)
+            {
+               slang_info_log_error(A->log, "kernels may not have "
+                     "global uniforms declared.");
+            }
+         }
+      }
+      
+
 		/* Kernels must return a vec4 */
-		/*
 		if(fun->header.type.specifier.type != SLANG_SPEC_VEC4)
 		{
 			slang_info_log_error(A->log, "kernels must have a return type "
 					"of vec4.");
 			return GL_FALSE;
 		}
-		*/
 
 		/* If this is a kernel, our work is not yet done. We
 		 * need to turn each function parameter into a global

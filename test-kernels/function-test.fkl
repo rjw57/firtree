@@ -1,7 +1,5 @@
 // Trivial function test
 
-uniform float input;
-
 float half(float a)
 {
     return 0.5*a;

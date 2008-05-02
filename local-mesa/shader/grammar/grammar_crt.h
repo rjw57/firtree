@@ -3,7 +3,9 @@
 
 
 #include <stdlib.h>
+#ifndef FIRTREE
 #include <malloc.h>
+#endif
 #include <string.h>
 
 

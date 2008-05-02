@@ -372,9 +372,34 @@ _slang_output_index(const char *name, GLenum target)
       { "gl_FragData", FRAG_RESULT_DATA0 },
       { NULL, 0 }
    };
+#ifdef FIRTREE
+   static const struct output_info kernelOutputs[] = {
+      { "__kern_Color", KERNEL_RESULT_COLR },
+      { NULL, 0 }
+   };
+#endif
    GLuint i;
+#ifdef FIRTREE
+   const struct output_info *outputs = NULL;
+   switch(target)
+   {
+      case GL_VERTEX_PROGRAM_ARB:
+         outputs = vertOutputs;
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         outputs = fragOutputs;
+         break;
+      case GL_KERNEL_PROGRAM_FIRTREE:
+         outputs = kernelOutputs;
+         break;
+      default:
+         assert(0 && "Unknown target.");
+         break;
+   }
+#else
    const struct output_info *outputs
       = (target == GL_VERTEX_PROGRAM_ARB) ? vertOutputs : fragOutputs;
+#endif
 
    for (i = 0; outputs[i].Name; i++) {
       if (strcmp(outputs[i].Name, name) == 0) {
@@ -1980,7 +2005,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       if(!haveReturnValue)
          return new_node0(IR_NOP);
 
-      a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
+      a_retVal = slang_atom_pool_atom(A->atoms, "__kern_Color");
       assert(a_retVal);
 
       assign = slang_operation_new(1);
@@ -3123,14 +3148,14 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
 #if FIRTREE
    if ((A->program != NULL) &&
-			(A->program->Target == GL_KERNEL_PROGRAM_FIRTREE)) {
-		/* If we're generating a kernel, we look for the kernel
-		 * function to generate code for. */
+         (A->program->Target == GL_KERNEL_PROGRAM_FIRTREE)) {
+      /* If we're generating a kernel, we look for the kernel
+       * function to generate code for. */
 
-		if(fun->kind != SLANG_FUNC_KERNEL)
-		{
-			return GL_TRUE;
-		}
+      if(fun->kind != SLANG_FUNC_KERNEL)
+      {
+         return GL_TRUE;
+      }
 
       /* We should have no global uniforms defined in kernels. */
       {
@@ -3173,10 +3198,11 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 				if(var->isTemp)
 					continue;
 
-            /* If this is the return value, turn it into the output. */
             if(_mesa_strcmp((char *) var->a_name, "__retVal") == 0)
             {
-					var->aux = _slang_new_ir_storage(PROGRAM_OUTPUT, 0, 4);
+					/* Ignore the auto-generated __retVal parameter.
+                * We pass the return value back via the __kern_Color
+                * output. */
             }
             else {
                /* Turn this parameter into a global uniform. */

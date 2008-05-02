@@ -310,6 +310,16 @@ enum
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 };
 
+#ifdef FIRTREE
+/**
+ * Kernel program results
+ */
+enum
+{
+   KERNEL_RESULT_COLR = 0,
+   KERNEL_RESULT_MAX
+};
+#endif
 
 /**
  * Indexes for all renderbuffers

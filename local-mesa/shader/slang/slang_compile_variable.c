@@ -70,6 +70,9 @@ static const type_specifier_type_name type_specifier_type_names[] = {
    {"sampler2DShadow", SLANG_SPEC_SAMPLER2DSHADOW},
    {"sampler2DRect", SLANG_SPEC_SAMPLER2DRECT},
    {"sampler2DRectShadow", SLANG_SPEC_SAMPLER2DRECTSHADOW},
+#ifdef FIRTREE
+   {"__color", SLANG_SPEC_COLOR},
+#endif
    {NULL, SLANG_SPEC_VOID}
 };
 

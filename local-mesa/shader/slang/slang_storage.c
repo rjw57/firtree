@@ -198,6 +198,10 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
       return aggregate_matrix(agg, SLANG_STORE_FLOAT, 3, 4);
    case SLANG_SPEC_MAT43:
       return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4, 3);
+#ifdef FIRTREE   
+   case SLANG_SPEC_COLOR:
+      return aggregate_vector(agg, SLANG_STORE_FLOAT, 4);
+#endif
 
    case SLANG_SPEC_SAMPLER1D:
    case SLANG_SPEC_SAMPLER2D:

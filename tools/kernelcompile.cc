@@ -33,10 +33,11 @@
  * This file is basically just a Mesa device driver but instead of building
  * a shared library we build an executable.
  *
- * We can emit programs in three different formats:
+ * We can emit programs in three (four) different formats:
  *  1. ARB-style (GL_ARB_vertex/fragment_program)
  *  2. NV-style (GL_NV_vertex/fragment_program)
  *  3. debug-style (a slightly more sophisticated, internal format)
+ *  4. firtree-style (for the FIRTREE system)
  *
  * Note that the ARB and NV program languages can't express all the
  * features that might be used by a fragment program (examples being
@@ -308,6 +309,9 @@ DataTypeToString(GLenum Type)
          break;
       case GL_FLOAT_MAT4x3:
          return "mat4x3";
+         break;
+      case GL_FLOAT_COLOR_FIRTREE:
+         return "__color";
          break;
    }
 

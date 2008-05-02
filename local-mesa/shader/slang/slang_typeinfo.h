@@ -105,6 +105,9 @@ typedef enum slang_type_specifier_type_
    SLANG_SPEC_VEC2,
    SLANG_SPEC_VEC3,
    SLANG_SPEC_VEC4,
+#ifdef FIRTREE
+   SLANG_SPEC_COLOR,
+#endif
    SLANG_SPEC_MAT2,
    SLANG_SPEC_MAT3,
    SLANG_SPEC_MAT4,

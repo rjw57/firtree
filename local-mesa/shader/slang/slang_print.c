@@ -137,6 +137,11 @@ print_type(const slang_fully_specified_type *t)
    case SLANG_SPEC_SAMPLER2DSHADOW:
       printf("sampler2DShadow");
       break;
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+      printf("__color");
+      break;
+#endif
    case SLANG_SPEC_STRUCT:
       printf("struct");
       break;
@@ -729,6 +734,10 @@ slang_type_string(slang_type_specifier_type t)
       return "sampler2DRect";
    case SLANG_SPEC_SAMPLER2DRECTSHADOW:
       return "sampler2DRectShadow";
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+      return "__color";
+#endif
    case SLANG_SPEC_STRUCT:
       return "struct";
    case SLANG_SPEC_ARRAY:

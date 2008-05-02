@@ -499,6 +499,7 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 #define TYPE_SPECIFIER_MAT42 29
 #define TYPE_SPECIFIER_MAT34 30
 #define TYPE_SPECIFIER_MAT43 31
+#define TYPE_SPECIFIER_COLOR 32
 
 
 static int
@@ -596,6 +597,11 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    case TYPE_SPECIFIER_SAMPLER2DRECTSHADOW:
       spec->type = SLANG_SPEC_SAMPLER2DRECTSHADOW;
       break;
+#ifdef FIRTREE
+   case TYPE_SPECIFIER_COLOR:
+      spec->type = SLANG_SPEC_COLOR;
+      break;
+#endif
    case TYPE_SPECIFIER_STRUCT:
       spec->type = SLANG_SPEC_STRUCT;
       if (!parse_struct(C, O, &spec->_struct))

@@ -3391,6 +3391,7 @@ extern "C" {
 #ifndef GL_FIRTREE_kernel_program
 #define GL_KERNEL_PROGRAM_FIRTREE         0x8E00
 #define GL_KERNEL_SHADER_FIRTREE          0x8E01
+#define GL_FLOAT_COLOR_FIRTREE            0x8E02
 #endif
 #endif
 

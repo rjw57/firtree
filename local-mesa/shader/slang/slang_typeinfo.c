@@ -839,6 +839,9 @@ _slang_type_is_vector(slang_type_specifier_type ty)
    case SLANG_SPEC_VEC2:
    case SLANG_SPEC_VEC3:
    case SLANG_SPEC_VEC4:
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+#endif
    case SLANG_SPEC_IVEC2:
    case SLANG_SPEC_IVEC3:
    case SLANG_SPEC_IVEC4:
@@ -864,6 +867,9 @@ _slang_type_base(slang_type_specifier_type ty)
    case SLANG_SPEC_VEC2:
    case SLANG_SPEC_VEC3:
    case SLANG_SPEC_VEC4:
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+#endif
       return SLANG_SPEC_FLOAT;
    case SLANG_SPEC_INT:
    case SLANG_SPEC_IVEC2:
@@ -922,6 +928,9 @@ _slang_type_dim(slang_type_specifier_type ty)
    case SLANG_SPEC_MAT3:
       return 3;
    case SLANG_SPEC_VEC4:
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+#endif
    case SLANG_SPEC_IVEC4:
    case SLANG_SPEC_BVEC4:
    case SLANG_SPEC_MAT4:
@@ -975,6 +984,10 @@ _slang_gltype_from_specifier(const slang_type_specifier *type)
       return GL_FLOAT_VEC2;
    case SLANG_SPEC_VEC3:
       return GL_FLOAT_VEC3;
+#ifdef FIRTREE
+   case SLANG_SPEC_COLOR:
+      return GL_FLOAT_COLOR_FIRTREE;
+#endif
    case SLANG_SPEC_VEC4:
       return GL_FLOAT_VEC4;
    case SLANG_SPEC_MAT2:

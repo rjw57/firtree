@@ -153,6 +153,8 @@
 .emtcode TYPE_SPECIFIER_MAT34                       30
 .emtcode TYPE_SPECIFIER_MAT43                       31
 
+/* FIRTREE */
+.emtcode TYPE_SPECIFIER_COLOR                       32
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -946,6 +948,7 @@ type_specifier_space
     "sampler2DShadow" .emit TYPE_SPECIFIER_SAMPLER2DSHADOW .or
     "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
     "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
+    "__color" .emit TYPE_SPECIFIER_COLOR .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
 type_specifier_nospace
     struct_specifier .emit TYPE_SPECIFIER_STRUCT;

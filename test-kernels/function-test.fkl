@@ -12,14 +12,14 @@ vec4 offset_sin(vec4 a)
     return 0.5 + 0.5 * sin(a);
 }
 
-kernel void testKernel(float param, float p2)
+kernel vec4 testKernel(float param, float p2)
 {
     float a = half(param);
     float b = half(p2);
     vec4 c = offset_sin(vec4(a,a,0,0));
     float d = destCoord();
 
-    //return c;
+    return c;
 }
 
 // vim:sw=4:ts=4:et:cindent:filetype=c

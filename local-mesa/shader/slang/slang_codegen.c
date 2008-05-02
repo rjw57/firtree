@@ -1964,6 +1964,38 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
    const GLboolean haveReturnValue
       = (oper->num_children == 1 && oper->children[0].type != SLANG_OPER_VOID);
 
+#ifdef FIRTREE
+   /* If this is a kernel, the 'return' statement actually just sets the 
+    * output value. */ 
+   if(A->CurFunction->kind = SLANG_FUNC_KERNEL)
+   {
+      slang_operation *assign;
+      slang_atom a_retVal;
+
+      printf("HRV: %i\n", haveReturnValue);
+      if(!haveReturnValue)
+         return new_node0(IR_NOP);
+
+      a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
+      assert(a_retVal);
+
+      assign = slang_operation_new(1);
+      assign->locals = oper->locals;
+      assign->type = SLANG_OPER_ASSIGN;
+      assign->num_children = 2;
+      assign->children = slang_operation_new(2);
+      /* lhs (__retVal) */
+      assign->children[0].type = SLANG_OPER_IDENTIFIER;
+      assign->children[0].a_id = a_retVal;
+      assign->children[0].locals->outer_scope = assign->locals;
+      /* rhs (expr) */
+      /* XXX we might be able to avoid this copy someday */
+      slang_operation_copy(&assign->children[1], &oper->children[0]);
+
+      return _slang_gen_operation(A, assign);
+   }
+#endif
+
    /* error checking */
    assert(A->CurFunction);
    if (haveReturnValue &&
@@ -3123,16 +3155,17 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 				if(var->isTemp)
 					continue;
 
-				// printf("%s\n", var->a_name);
-				printf("FIXME\n");
-
-				/* Turn this parameter into a global uniform. */
-				{
-					//GLint uniformLoc = _mesa_add_varying(A->program->Parameters,
-					//		var->a_name, 4);
-					
-							// _slang_gltype_from_specifier(&var->type.specifier));
-					var->aux = _slang_new_ir_storage(PROGRAM_NAMED_PARAM, i, 1);
+            /* If this is the return value, turn it into the output. */
+            if(_mesa_strcmp((char *) var->a_name, "__retVal") == 0)
+            {
+					var->aux = _slang_new_ir_storage(PROGRAM_OUTPUT, 0, 4);
+            }
+            else {
+               /* Turn this parameter into a global uniform. */
+					GLint uniformLoc = _mesa_add_uniform(A->program->Parameters,
+							var->a_name, 1,
+							_slang_gltype_from_specifier(&var->type.specifier));
+					var->aux = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, 1);
 				}
 			}
 		}

@@ -500,6 +500,7 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 #define TYPE_SPECIFIER_MAT34 30
 #define TYPE_SPECIFIER_MAT43 31
 #define TYPE_SPECIFIER_COLOR 32
+#define TYPE_SPECIFIER_KERNEL_SAMPLER 33
 
 
 static int
@@ -600,6 +601,9 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
 #ifdef FIRTREE
    case TYPE_SPECIFIER_COLOR:
       spec->type = SLANG_SPEC_COLOR;
+      break;
+   case TYPE_SPECIFIER_KERNEL_SAMPLER:
+      spec->type = SLANG_SPEC_KERNEL_SAMPLER;
       break;
 #endif
    case TYPE_SPECIFIER_STRUCT:

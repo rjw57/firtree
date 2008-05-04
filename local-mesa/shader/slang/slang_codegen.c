@@ -200,6 +200,9 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_COLOR:
       sz = 4;
       break;
+   case SLANG_SPEC_KERNEL_SAMPLER:
+      sz = 1;
+      break;
 #endif
    case SLANG_SPEC_STRUCT:
       sz = _slang_field_offset(spec, 0); /* special use */

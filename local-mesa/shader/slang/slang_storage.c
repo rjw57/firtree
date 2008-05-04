@@ -201,6 +201,8 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
 #ifdef FIRTREE   
    case SLANG_SPEC_COLOR:
       return aggregate_vector(agg, SLANG_STORE_FLOAT, 4);
+   case SLANG_SPEC_KERNEL_SAMPLER:
+      return aggregate_vector(agg, SLANG_STORE_INT, 1);
 #endif
 
    case SLANG_SPEC_SAMPLER1D:

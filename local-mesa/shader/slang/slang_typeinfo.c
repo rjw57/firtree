@@ -987,6 +987,8 @@ _slang_gltype_from_specifier(const slang_type_specifier *type)
 #ifdef FIRTREE
    case SLANG_SPEC_COLOR:
       return GL_FLOAT_COLOR_FIRTREE;
+   case SLANG_SPEC_KERNEL_SAMPLER:
+      return GL_KERNEL_SAMPLER_FIRTREE;
 #endif
    case SLANG_SPEC_VEC4:
       return GL_FLOAT_VEC4;

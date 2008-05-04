@@ -313,6 +313,9 @@ DataTypeToString(GLenum Type)
       case GL_FLOAT_COLOR_FIRTREE:
          return "__color";
          break;
+      case GL_KERNEL_SAMPLER_FIRTREE:
+         return "sampler";
+         break;
    }
 
    return "????";

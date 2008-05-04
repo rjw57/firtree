@@ -124,3 +124,35 @@ vec2 destCoord()
 {
     __retVal = __kern_DestCoord.xy;
 }
+
+// Samplers
+
+vec4 sample(sampler src, vec2 point)
+{
+    __retVal = vec4(1,0,0,1);
+}
+
+vec2 samplerCoord(sampler src)
+{
+    __retVal = samplerTransform(src, destCoord());
+}
+
+vec4 samplerExtent(sampler src)
+{
+    __retVal = vec4(0,0,1,1);
+}
+
+vec2 samplerOrigin(sampler src)
+{
+    __retVal = samplerExtent(src).xy;
+}
+
+vec2 samplerSize(sampler src)
+{
+    __retVal = samplerExtent(src).zw;
+}
+
+vec2 samplerTransform(sampler src, vec2 point)
+{
+    __retVal = vec2(0,0);
+}

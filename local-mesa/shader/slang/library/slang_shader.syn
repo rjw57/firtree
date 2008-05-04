@@ -155,6 +155,7 @@
 
 /* FIRTREE */
 .emtcode TYPE_SPECIFIER_COLOR                       32
+.emtcode TYPE_SPECIFIER_KERNEL_SAMPLER              33
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -949,6 +950,7 @@ type_specifier_space
     "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
     "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
     "__color" .emit TYPE_SPECIFIER_COLOR .or
+    "sampler" .emit TYPE_SPECIFIER_KERNEL_SAMPLER .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
 type_specifier_nospace
     struct_specifier .emit TYPE_SPECIFIER_STRUCT;

@@ -953,10 +953,11 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, const TBu
     }
 }
 
-char* GetPreprocessorBuiltinString()
+const char* GetPreprocessorBuiltinString()
 {
-    static char *PreprocessorBuiltinString = "#define GL_ARB_texture_rectangle 1\n"
-                                             "#define GL_3DL_array_objects 1\n";
+    static const char *PreprocessorBuiltinString = 
+    			                   "#define GL_ARB_texture_rectangle 1\n"
+                                           "#define GL_3DL_array_objects 1\n";
 
     return PreprocessorBuiltinString;
 }

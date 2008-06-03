@@ -59,7 +59,7 @@ O           [0-7]
 #include <stdio.h>
 #include <stdlib.h>
 #include "ParseHelper.h"
-#include "glslang_tab.h"
+#include "bison_glslang.tab.hpp"
 
 /* windows only pragma */
 #ifdef _MSC_VER
@@ -67,7 +67,7 @@ O           [0-7]
 #endif
 
 int yy_input(char* buf, int max_size);
-TSourceLoc yylineno;
+TSourceLoc sourcelineno;
 
 #ifdef _WIN32
     extern int yyparse(TParseContext&);
@@ -84,66 +84,66 @@ TSourceLoc yylineno;
 
 %option noyywrap
 %option never-interactive
-%option outfile="Gen_glslang.cpp"
+/* %option outfile="Gen_glslang.cpp" */
 %x FIELDS
 
 
 %%
 <*>"//"[^\n]*"\n"     { /* ?? carriage and/or line-feed? */ };
 
-"attribute"    {  pyylval->lex.line = yylineno; return(ATTRIBUTE); }
-"const"        {  pyylval->lex.line = yylineno; return(CONST_QUAL); }
-"uniform"      {  pyylval->lex.line = yylineno; return(UNIFORM); }
-"varying"      {  pyylval->lex.line = yylineno; return(VARYING); }
+"attribute"    {  pyylval->lex.line = sourcelineno; return(ATTRIBUTE); }
+"const"        {  pyylval->lex.line = sourcelineno; return(CONST_QUAL); }
+"uniform"      {  pyylval->lex.line = sourcelineno; return(UNIFORM); }
+"varying"      {  pyylval->lex.line = sourcelineno; return(VARYING); }
 
-"break"        {  pyylval->lex.line = yylineno; return(BREAK); }
-"continue"     {  pyylval->lex.line = yylineno; return(CONTINUE); }
-"do"           {  pyylval->lex.line = yylineno; return(DO); }
-"for"          {  pyylval->lex.line = yylineno; return(FOR); }
-"while"        {  pyylval->lex.line = yylineno; return(WHILE); }
+"break"        {  pyylval->lex.line = sourcelineno; return(BREAK); }
+"continue"     {  pyylval->lex.line = sourcelineno; return(CONTINUE); }
+"do"           {  pyylval->lex.line = sourcelineno; return(DO); }
+"for"          {  pyylval->lex.line = sourcelineno; return(FOR); }
+"while"        {  pyylval->lex.line = sourcelineno; return(WHILE); }
 
-"if"           {  pyylval->lex.line = yylineno; return(IF); }
-"else"         {  pyylval->lex.line = yylineno; return(ELSE); }
+"if"           {  pyylval->lex.line = sourcelineno; return(IF); }
+"else"         {  pyylval->lex.line = sourcelineno; return(ELSE); }
 
-"in"           {  pyylval->lex.line = yylineno; return(IN_QUAL); }
-"out"          {  pyylval->lex.line = yylineno; return(OUT_QUAL); }
-"inout"        {  pyylval->lex.line = yylineno; return(INOUT_QUAL); }
+"in"           {  pyylval->lex.line = sourcelineno; return(IN_QUAL); }
+"out"          {  pyylval->lex.line = sourcelineno; return(OUT_QUAL); }
+"inout"        {  pyylval->lex.line = sourcelineno; return(INOUT_QUAL); }
 
-"float"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(FLOAT_TYPE); }
-"int"          {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(INT_TYPE); }
-"void"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(VOID_TYPE); }
-"bool"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(BOOL_TYPE); }
-"true"         {  pyylval->lex.line = yylineno; pyylval->lex.b = true;  return(BOOLCONSTANT); }
-"false"        {  pyylval->lex.line = yylineno; pyylval->lex.b = false; return(BOOLCONSTANT); }
+"float"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(FLOAT_TYPE); }
+"int"          {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(INT_TYPE); }
+"void"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(VOID_TYPE); }
+"bool"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(BOOL_TYPE); }
+"true"         {  pyylval->lex.line = sourcelineno; pyylval->lex.b = true;  return(BOOLCONSTANT); }
+"false"        {  pyylval->lex.line = sourcelineno; pyylval->lex.b = false; return(BOOLCONSTANT); }
 
-"discard"      {  pyylval->lex.line = yylineno; return(DISCARD); }
-"return"       {  pyylval->lex.line = yylineno; return(RETURN); }
+"discard"      {  pyylval->lex.line = sourcelineno; return(DISCARD); }
+"return"       {  pyylval->lex.line = sourcelineno; return(RETURN); }
 
-"mat2"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(MATRIX2); }
-"mat3"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(MATRIX3); }
-"mat4"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return(MATRIX4); }
+"mat2"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(MATRIX2); }
+"mat3"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(MATRIX3); }
+"mat4"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(MATRIX4); }
 
-"vec2"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (VEC2); }
-"vec3"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (VEC3); }
-"vec4"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (VEC4); }
-"ivec2"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (IVEC2); }
-"ivec3"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (IVEC3); }
-"ivec4"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (IVEC4); }
-"bvec2"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (BVEC2); }
-"bvec3"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (BVEC3); }
-"bvec4"        {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return (BVEC4); }
+"vec2"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (VEC2); }
+"vec3"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (VEC3); }
+"vec4"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (VEC4); }
+"ivec2"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (IVEC2); }
+"ivec3"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (IVEC3); }
+"ivec4"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (IVEC4); }
+"bvec2"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (BVEC2); }
+"bvec3"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (BVEC3); }
+"bvec4"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (BVEC4); }
 
-"sampler1D"       {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLER1D; }
-"sampler2D"       {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLER2D; }
-"sampler3D"       {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLER3D; }
-"samplerCube"     {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLERCUBE; }
-"sampler1DShadow" {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLER1DSHADOW; }
-"sampler2DShadow" {  pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLER2DSHADOW; }
+"sampler1D"       {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER1D; }
+"sampler2D"       {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER2D; }
+"sampler3D"       {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER3D; }
+"samplerCube"     {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLERCUBE; }
+"sampler1DShadow" {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER1DSHADOW; }
+"sampler2DShadow" {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER2DSHADOW; }
 
-"sampler2DRect"        { pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLERRECTARB; /* ARB_texture_rectangle */ }
-"sampler2DRectShadow"  { pyylval->lex.line = yylineno; parseContext.lexAfterType = true; return SAMPLERRECTSHADOWARB; /* ARB_texture_rectangle */ }
+"sampler2DRect"        { pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLERRECTARB; /* ARB_texture_rectangle */ }
+"sampler2DRectShadow"  { pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLERRECTSHADOWARB; /* ARB_texture_rectangle */ }
 
-"struct"       {  pyylval->lex.line = yylineno; return(STRUCT); }
+"struct"       {  pyylval->lex.line = sourcelineno; return(STRUCT); }
 
 "asm"          {  PaReservedWord(); return 0; }
 
@@ -197,72 +197,72 @@ TSourceLoc yylineno;
 "using"        {  PaReservedWord(); return 0; }
 
 {L}({L}|{D})*       {  
-   pyylval->lex.line = yylineno; 
+   pyylval->lex.line = sourcelineno; 
    pyylval->lex.string = NewPoolTString(yytext); 
    return PaIdentOrType(*pyylval->lex.string, parseContext, pyylval->lex.symbol); 
 }
 
-0[xX]{H}+         { pyylval->lex.line = yylineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
-0{O}+             { pyylval->lex.line = yylineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
-0{D}+             { pyylval->lex.line = yylineno; parseContext.error(yylineno, "Invalid Octal number.", yytext, "", ""); parseContext.recover(); return 0;}
-{D}+              { pyylval->lex.line = yylineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
+0[xX]{H}+         { pyylval->lex.line = sourcelineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
+0{O}+             { pyylval->lex.line = sourcelineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
+0{D}+             { pyylval->lex.line = sourcelineno; parseContext.error(sourcelineno, "Invalid Octal number.", yytext, "", ""); parseContext.recover(); return 0;}
+{D}+              { pyylval->lex.line = sourcelineno; pyylval->lex.i = strtol(yytext, 0, 0); return(INTCONSTANT); }
 
-{D}+{E}           { pyylval->lex.line = yylineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
-{D}+"."{D}*({E})? { pyylval->lex.line = yylineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
-"."{D}+({E})?     { pyylval->lex.line = yylineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
+{D}+{E}           { pyylval->lex.line = sourcelineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
+{D}+"."{D}*({E})? { pyylval->lex.line = sourcelineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
+"."{D}+({E})?     { pyylval->lex.line = sourcelineno; pyylval->lex.f = static_cast<float>(atof(yytext)); return(FLOATCONSTANT); }
 
 "/*"            {  int ret = PaParseComment(pyylval->lex.line, parseContext); if (!ret) return ret; }   
 
-"+="            {  pyylval->lex.line = yylineno; return(ADD_ASSIGN); }
-"-="            {  pyylval->lex.line = yylineno; return(SUB_ASSIGN); }
-"*="            {  pyylval->lex.line = yylineno; return(MUL_ASSIGN); }
-"/="            {  pyylval->lex.line = yylineno; return(DIV_ASSIGN); }
-"%="            {  pyylval->lex.line = yylineno; return(MOD_ASSIGN); }
-"<<="           {  pyylval->lex.line = yylineno; return(LEFT_ASSIGN); }
-">>="           {  pyylval->lex.line = yylineno; return(RIGHT_ASSIGN); }
-"&="            {  pyylval->lex.line = yylineno; return(AND_ASSIGN); }
-"^="            {  pyylval->lex.line = yylineno; return(XOR_ASSIGN); }
-"|="            {  pyylval->lex.line = yylineno; return(OR_ASSIGN); }
+"+="            {  pyylval->lex.line = sourcelineno; return(ADD_ASSIGN); }
+"-="            {  pyylval->lex.line = sourcelineno; return(SUB_ASSIGN); }
+"*="            {  pyylval->lex.line = sourcelineno; return(MUL_ASSIGN); }
+"/="            {  pyylval->lex.line = sourcelineno; return(DIV_ASSIGN); }
+"%="            {  pyylval->lex.line = sourcelineno; return(MOD_ASSIGN); }
+"<<="           {  pyylval->lex.line = sourcelineno; return(LEFT_ASSIGN); }
+">>="           {  pyylval->lex.line = sourcelineno; return(RIGHT_ASSIGN); }
+"&="            {  pyylval->lex.line = sourcelineno; return(AND_ASSIGN); }
+"^="            {  pyylval->lex.line = sourcelineno; return(XOR_ASSIGN); }
+"|="            {  pyylval->lex.line = sourcelineno; return(OR_ASSIGN); }
 
-"++"            {  pyylval->lex.line = yylineno; return(INC_OP); }
-"--"            {  pyylval->lex.line = yylineno; return(DEC_OP); }
-"&&"            {  pyylval->lex.line = yylineno; return(AND_OP); }
-"||"            {  pyylval->lex.line = yylineno; return(OR_OP); }
-"^^"            {  pyylval->lex.line = yylineno; return(XOR_OP); }
-"<="            {  pyylval->lex.line = yylineno; return(LE_OP); }
-">="            {  pyylval->lex.line = yylineno; return(GE_OP); }
-"=="            {  pyylval->lex.line = yylineno; return(EQ_OP); }
-"!="            {  pyylval->lex.line = yylineno; return(NE_OP); }
-"<<"            {  pyylval->lex.line = yylineno; return(LEFT_OP); }
-">>"            {  pyylval->lex.line = yylineno; return(RIGHT_OP); }
-";"         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = false; return(SEMICOLON); }
-("{"|"<%")      {  pyylval->lex.line = yylineno; parseContext.lexAfterType = false; return(LEFT_BRACE); }
-("}"|"%>")      {  pyylval->lex.line = yylineno; return(RIGHT_BRACE); }
-","         {  pyylval->lex.line = yylineno; if (parseContext.inTypeParen) parseContext.lexAfterType = false; return(COMMA); }
-":"         {  pyylval->lex.line = yylineno; return(COLON); }
-"="         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = false; return(EQUAL); }
-"("         {  pyylval->lex.line = yylineno; parseContext.lexAfterType = false; parseContext.inTypeParen = true; return(LEFT_PAREN); }
-")"         {  pyylval->lex.line = yylineno; parseContext.inTypeParen = false; return(RIGHT_PAREN); }
-("["|"<:")      {  pyylval->lex.line = yylineno; return(LEFT_BRACKET); }
-("]"|":>")      {  pyylval->lex.line = yylineno; return(RIGHT_BRACKET); }
+"++"            {  pyylval->lex.line = sourcelineno; return(INC_OP); }
+"--"            {  pyylval->lex.line = sourcelineno; return(DEC_OP); }
+"&&"            {  pyylval->lex.line = sourcelineno; return(AND_OP); }
+"||"            {  pyylval->lex.line = sourcelineno; return(OR_OP); }
+"^^"            {  pyylval->lex.line = sourcelineno; return(XOR_OP); }
+"<="            {  pyylval->lex.line = sourcelineno; return(LE_OP); }
+">="            {  pyylval->lex.line = sourcelineno; return(GE_OP); }
+"=="            {  pyylval->lex.line = sourcelineno; return(EQ_OP); }
+"!="            {  pyylval->lex.line = sourcelineno; return(NE_OP); }
+"<<"            {  pyylval->lex.line = sourcelineno; return(LEFT_OP); }
+">>"            {  pyylval->lex.line = sourcelineno; return(RIGHT_OP); }
+";"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = false; return(SEMICOLON); }
+("{"|"<%")      {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = false; return(LEFT_BRACE); }
+("}"|"%>")      {  pyylval->lex.line = sourcelineno; return(RIGHT_BRACE); }
+","         {  pyylval->lex.line = sourcelineno; if (parseContext.inTypeParen) parseContext.lexAfterType = false; return(COMMA); }
+":"         {  pyylval->lex.line = sourcelineno; return(COLON); }
+"="         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = false; return(EQUAL); }
+"("         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = false; parseContext.inTypeParen = true; return(LEFT_PAREN); }
+")"         {  pyylval->lex.line = sourcelineno; parseContext.inTypeParen = false; return(RIGHT_PAREN); }
+("["|"<:")      {  pyylval->lex.line = sourcelineno; return(LEFT_BRACKET); }
+("]"|":>")      {  pyylval->lex.line = sourcelineno; return(RIGHT_BRACKET); }
 "."         { BEGIN(FIELDS);  return(DOT); }
-"!"         {  pyylval->lex.line = yylineno; return(BANG); }
-"-"         {  pyylval->lex.line = yylineno; return(DASH); }
-"~"         {  pyylval->lex.line = yylineno; return(TILDE); }
-"+"         {  pyylval->lex.line = yylineno; return(PLUS); }
-"*"         {  pyylval->lex.line = yylineno; return(STAR); }
-"/"         {  pyylval->lex.line = yylineno; return(SLASH); }
-"%"         {  pyylval->lex.line = yylineno; return(PERCENT); }
-"<"         {  pyylval->lex.line = yylineno; return(LEFT_ANGLE); }
-">"         {  pyylval->lex.line = yylineno; return(RIGHT_ANGLE); }
-"|"         {  pyylval->lex.line = yylineno; return(VERTICAL_BAR); }
-"^"         {  pyylval->lex.line = yylineno; return(CARET); }
-"&"         {  pyylval->lex.line = yylineno; return(AMPERSAND); }
-"?"         {  pyylval->lex.line = yylineno; return(QUESTION); }
+"!"         {  pyylval->lex.line = sourcelineno; return(BANG); }
+"-"         {  pyylval->lex.line = sourcelineno; return(DASH); }
+"~"         {  pyylval->lex.line = sourcelineno; return(TILDE); }
+"+"         {  pyylval->lex.line = sourcelineno; return(PLUS); }
+"*"         {  pyylval->lex.line = sourcelineno; return(STAR); }
+"/"         {  pyylval->lex.line = sourcelineno; return(SLASH); }
+"%"         {  pyylval->lex.line = sourcelineno; return(PERCENT); }
+"<"         {  pyylval->lex.line = sourcelineno; return(LEFT_ANGLE); }
+">"         {  pyylval->lex.line = sourcelineno; return(RIGHT_ANGLE); }
+"|"         {  pyylval->lex.line = sourcelineno; return(VERTICAL_BAR); }
+"^"         {  pyylval->lex.line = sourcelineno; return(CARET); }
+"&"         {  pyylval->lex.line = sourcelineno; return(AMPERSAND); }
+"?"         {  pyylval->lex.line = sourcelineno; return(QUESTION); }
 
 <FIELDS>{L}({L}|{D})* { 
 BEGIN(INITIAL);      
-    pyylval->lex.line = yylineno;     
+    pyylval->lex.line = sourcelineno;     
     pyylval->lex.string = NewPoolTString(yytext); 
     return FIELD_SELECTION; }
 <FIELDS>[ \t\v\f\r] {}
@@ -337,7 +337,7 @@ int PaParseStrings(char* argv[], int strLen[], int argc, TParseContext& parseCon
     cpp->PaArgc     = argc;
     cpp->PaStrLen   = strLen;
     cpp->notAVersionToken = 0;
-    yylineno   = 1;
+    sourcelineno   = 1;
    
     if (*cpp->PaStrLen >= 0) {    
         int ret;
@@ -359,18 +359,18 @@ void yyerror(char *s)
 {
     if (((TParseContext *)cpp->pC)->AfterEOF) {
         if (cpp->tokensBeforeEOF == 1) {
-            GlobalParseContext->error(yylineno, "syntax error", "pre-mature EOF", s, "");
+            GlobalParseContext->error(sourcelineno, "syntax error", "pre-mature EOF", s, "");
             GlobalParseContext->recover();
         }
     } else {
-        GlobalParseContext->error(yylineno, "syntax error", yytext, s, "");
+        GlobalParseContext->error(sourcelineno, "syntax error", yytext, s, "");
         GlobalParseContext->recover();
     }            
 }
 
 void PaReservedWord()
 {
-    GlobalParseContext->error(yylineno, "Reserved word.", yytext, "", "");
+    GlobalParseContext->error(sourcelineno, "Reserved word.", yytext, "", "");
     GlobalParseContext->recover();
 }
 
@@ -408,7 +408,7 @@ int PaParseComment(int &lineno, TParseContext& parseContextLocal)
             break;
         case EOF :
             /* Raise error message here */
-            parseContextLocal.error(yylineno, "End of shader found before end of comment.", "", "", "");
+            parseContextLocal.error(sourcelineno, "End of shader found before end of comment.", "", "", "");
             GlobalParseContext->recover();
             return YY_NULL; 
         default :  /* Any other character will be a part of the comment */
@@ -427,52 +427,52 @@ void CPPDebugLogMsg(const char *msg)
 
 void CPPWarningToInfoLog(const char *msg)
 {
-    ((TParseContext *)cpp->pC)->infoSink.info.message(EPrefixWarning, msg, yylineno); 
+    ((TParseContext *)cpp->pC)->infoSink.info.message(EPrefixWarning, msg, sourcelineno); 
 }
 
 void CPPShInfoLogMsg(const char *msg)
 {
-    ((TParseContext *)cpp->pC)->error(yylineno,"", "",msg,"");
+    ((TParseContext *)cpp->pC)->error(sourcelineno,"", "",msg,"");
     GlobalParseContext->recover();
 }
 
 void CPPErrorToInfoLog(char *msg)
 {
-    ((TParseContext *)cpp->pC)->error(yylineno,"syntax error", "",msg,"");
+    ((TParseContext *)cpp->pC)->error(sourcelineno,"syntax error", "",msg,"");
     GlobalParseContext->recover();
 }
 
 void SetLineNumber(int line)
 {
-    yylineno &= ~SourceLocLineMask;
-    yylineno |= line;
+    sourcelineno &= ~SourceLocLineMask;
+    sourcelineno |= line;
 }
 
 void SetStringNumber(int string)
 {
-    yylineno = (string << SourceLocStringShift) | (yylineno & SourceLocLineMask);
+    sourcelineno = (string << SourceLocStringShift) | (sourcelineno & SourceLocLineMask);
 }
 
 int GetStringNumber(void)
 {
-    return yylineno >> 16;
+    return sourcelineno >> 16;
 }
 
 int GetLineNumber(void)
 {
-    return yylineno & SourceLocLineMask;
+    return sourcelineno & SourceLocLineMask;
 }
 
 void IncLineNumber(void)
 {
-    if ((yylineno & SourceLocLineMask) <= SourceLocLineMask)
-        ++yylineno;
+    if ((sourcelineno & SourceLocLineMask) <= SourceLocLineMask)
+        ++sourcelineno;
 }
 
 void DecLineNumber(void)
 {
-    if ((yylineno & SourceLocLineMask) > 0)
-        --yylineno;
+    if ((sourcelineno & SourceLocLineMask) > 0)
+        --sourcelineno;
 }
 
 void HandlePragma(const char **tokens, int numTokens)
@@ -620,7 +620,7 @@ void  updateExtensionBehavior(const char* extName, const char* behavior)
             case EBhWarn:
             case EBhDisable:
                 msg = TString("extension '") + extName + "' is not supported";
-                ((TParseContext *)cpp->pC)->infoSink.info.message(EPrefixWarning, msg.c_str(), yylineno); 
+                ((TParseContext *)cpp->pC)->infoSink.info.message(EPrefixWarning, msg.c_str(), sourcelineno); 
                 break;
             }
             return;

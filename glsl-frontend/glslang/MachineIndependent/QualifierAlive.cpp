@@ -34,6 +34,9 @@
 
 #include "../Include/intermediate.h"
 
+void AliveSymbol(TIntermSymbol* node, TIntermTraverser* it);
+bool AliveSelection(bool preVisit, TIntermSelection* node, TIntermTraverser* it);
+
 class TAliveTraverser : public TIntermTraverser {
 public:
     TAliveTraverser(TQualifier q) : TIntermTraverser(), found(false), qualifier(q)

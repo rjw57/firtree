@@ -231,7 +231,7 @@ public:
     void setArrayInformationType(TType* t) { arrayInformationType = t; }
     TType* getArrayInformationType() { return arrayInformationType; }
     virtual bool isVector() const { return size > 1 && !matrix; }
-    static char* getBasicString(TBasicType t) {
+    static const char* getBasicString(TBasicType t) {
         switch (t) {
         case EbtVoid:              return "void";              break;
         case EbtFloat:             return "float";             break;

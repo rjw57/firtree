@@ -83,8 +83,10 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #elif defined (_WIN64)
 typedef unsigned __int64 uintptr_t;
-#else 
+#elif defined (linux)
 typedef unsigned int uintptr_t;
+#else
+// uintptr_t defined on MacOS.
 #endif
 
 #include "memory.h"

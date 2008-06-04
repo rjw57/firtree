@@ -39,8 +39,8 @@
 // This file contains any Linux specific functions.
 //
 
-#if !(defined(linux))
-#error Trying to include a Linux specific file in a non-Linux build.
+#if !(defined(linux)) && !(defined(__APPLE__))
+#error Trying to build a Unix specific file in a non-Unix build.
 #endif
 
 #include <pthread.h>

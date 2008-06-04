@@ -327,6 +327,8 @@ public:
 
     void construct(pointer p, const T& val) { new ((void *)p) T(val); }
     void destroy(pointer p) { p->T::~T(); }
+    void construct(void* p, const T& val) { construct(reinterpret_cast<pointer>(p), val); }
+    void destroy(void* p) { destroy(reinterpret_cast<pointer>(p)); }
 
     bool operator==(const pool_allocator& rhs) const { return &getAllocator() == &rhs.getAllocator(); }
     bool operator!=(const pool_allocator& rhs) const { return &getAllocator() != &rhs.getAllocator(); }

@@ -214,6 +214,7 @@ int C_DECL main(int argc, char* argv[])
 //   .vert*    = vertex programs
 //   .pack*    = pack programs
 //   .unpa*    = unpack pragrams
+//   .fknl*    = firtree kernels
 //
 static EShLanguage FindLanguage(char *name)
 {
@@ -230,6 +231,7 @@ static EShLanguage FindLanguage(char *name)
         if (strncmp(ext, ".vert", 4) == 0) return EShLangVertex;
         if (strncmp(ext, ".pack", 4) == 0) return EShLangPack;
         if (strncmp(ext, ".unpa", 4) == 0) return EShLangUnpack;
+        if (strncmp(ext, ".fknl", 4) == 0) return EShLangKernel;
     }
 
     return EShLangFragment;

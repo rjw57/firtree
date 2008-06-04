@@ -90,10 +90,16 @@ int ShInitialize()
         SymbolTables[EShLangVertex].copyTable(symTables[EShLangVertex]);
         SymbolTables[EShLangFragment].copyTable(symTables[EShLangFragment]);
 
+	// FIRTREE only
+        SymbolTables[EShLangKernel].copyTable(symTables[EShLangKernel]);
+
         SetGlobalPoolAllocatorPtr(gPoolAllocator);
 
         symTables[EShLangVertex].pop();
         symTables[EShLangFragment].pop();
+
+	// FIRTREE only
+        symTables[EShLangKernel].pop();
 
         builtInPoolAllocator->popAll();
         delete builtInPoolAllocator;        
@@ -176,6 +182,8 @@ bool GenerateBuiltInSymbolTable(const TBuiltInResource* resources, TInfoSink& in
 		builtIns.initialize();
 		InitializeSymbolTable(builtIns.getBuiltInStrings(), EShLangVertex, infoSink, resources, symbolTables);
 		InitializeSymbolTable(builtIns.getBuiltInStrings(), EShLangFragment, infoSink, resources, symbolTables);
+		// FIRTREE only:
+		InitializeSymbolTable(builtIns.getBuiltInStrings(), EShLangKernel, infoSink, resources, symbolTables);
 	}
 
     return true;

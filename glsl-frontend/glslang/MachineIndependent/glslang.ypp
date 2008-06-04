@@ -70,10 +70,20 @@ Jutta Degener, 1995
     extern void yyerror(char*);    
 #endif
 
+// FIRTREE modification
 #define FRAG_VERT_ONLY(S, L) {                                                  \
     if (parseContext.language != EShLangFragment &&                             \
+	parseContext.language != EShLangKernel &&				\
         parseContext.language != EShLangVertex) {                               \
-        parseContext.error(L, " supported in vertex/fragment shaders only ", S, "", "");   \
+        parseContext.error(L, " supported in vertex/fragment/kernel shaders only ", S, "", "");   \
+        parseContext.recover();                                                            \
+    }                                                                           \
+}
+
+// FIRTREE only
+#define KERNEL_ONLY(S, L) {                                                     \
+    if (parseContext.language != EShLangKernel) {                               \
+        parseContext.error(L, " supported in vertex shaders only ", S, "", "");            \
         parseContext.recover();                                                            \
     }                                                                           \
 }

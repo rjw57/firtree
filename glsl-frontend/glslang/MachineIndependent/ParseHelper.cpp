@@ -639,6 +639,12 @@ bool TParseContext::containsSampler(TType& type)
 
 bool TParseContext::insertBuiltInArrayAtGlobalLevel()
 {
+    // FIRTREE kernels don't use gl_TexCoord.
+    if(language == EShLangKernel)
+    {
+        return false;
+    }
+
     TString *name = NewPoolTString("gl_TexCoord");
     TSymbol* symbol = symbolTable.find(*name);
     if (!symbol) {

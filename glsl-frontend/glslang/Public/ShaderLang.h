@@ -74,6 +74,7 @@ typedef enum {
 	EShLangFragment,
 	EShLangPack,
     EShLangUnpack,
+    EShLangKernel,  // < FIRTREE ONLY
     EShLangCount,
 } EShLanguage;
 
@@ -84,7 +85,8 @@ typedef enum {
     EShExVertexFragment,
     EShExPackFragment,
     EShExUnpackFragment,
-    EShExFragment
+    EShExFragment,
+    EShExKernel, // < FIRTREE ONLY
 } EShExecutable;
 
 //

@@ -929,6 +929,10 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
         symbolTable.relateToOperator("writeOutput",  EOpWriteOutput);
         symbolTable.relateToOperator("readPixel",    EOpReadPixel);
         break;
+
+    case EShLangKernel:
+	// FIRTREE only
+        break;
 	default: assert(false && "Language not supported");
     }
 }

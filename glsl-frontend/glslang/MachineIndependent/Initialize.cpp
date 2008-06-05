@@ -499,16 +499,46 @@ void TBuiltIns::initialize()
 
         TString& s = BuiltInFunctionsKernel;
 
+        s.append(TString("float compare(float x, float y, float z);"));
+        s.append(TString("vec2 compare(vec2 x, vec2 y, vec2 z);"));
+        s.append(TString("vec3 compare(vec3 x, vec3 y, vec3 z);"));
+        s.append(TString("vec4 compare(vec4 x, vec4 y, vec4 z);"));
+
+        s.append(TString("float cos_(float angle);"));
+        s.append(TString("vec2  cos_(vec2  angle);"));
+        s.append(TString("vec3  cos_(vec3  angle);"));
+        s.append(TString("vec4  cos_(vec4  angle);"));
+
+        s.append(TString("vec2  cossin(float  angle);"));
+        s.append(TString("vec2  cossin_(float  angle);"));
+
+        s.append(TString("float sin_(float angle);"));
+        s.append(TString("vec2  sin_(vec2  angle);"));
+        s.append(TString("vec3  sin_(vec3  angle);"));
+        s.append(TString("vec4  sin_(vec4  angle);"));
+
+        s.append(TString("vec2  sincos(float  angle);"));
+        s.append(TString("vec2  sincos_(float  angle);"));
+
+        s.append(TString("float tan_(float angle);"));
+        s.append(TString("vec2  tan_(vec2  angle);"));
+        s.append(TString("vec3  tan_(vec3  angle);"));
+        s.append(TString("vec4  tan_(vec4  angle);"));
+
+        s.append(TString("vec4  premultiply(vec4 color);"));
+        s.append(TString("vec4  unpremultiply(vec4 color);"));
+
+
         //
         // Sampler Functions.
         //
-        s.append(TString("vec2 destCoord();"));
-        s.append(TString("vec4 sample(sampler src, vec2 point);"));
-        s.append(TString("vec2 samplerCoord(sampler src);"));
-        s.append(TString("vec4 samplerExtent(sampler src);"));
-        s.append(TString("vec2 samplerOrigin(sampler src);"));
-        s.append(TString("vec2 samplerSize(sampler src);"));
-        s.append(TString("vec2 samplerTransform(sampler src, vec2 point);"));
+        s.append(TString("varying vec2 destCoord();"));
+        s.append(TString("vec4 sample(uniform sampler src, vec2 point);"));
+        s.append(TString("varying vec2 samplerCoord(uniform sampler src);"));
+        s.append(TString("uniform vec4 samplerExtent(uniform sampler src);"));
+        s.append(TString("uniform vec2 samplerOrigin(uniform sampler src);"));
+        s.append(TString("uniform vec2 samplerSize(uniform sampler src);"));
+        s.append(TString("vec2 samplerTransform(uniform sampler src, vec2 point);"));
 
 		s.append(TString("\n"));
     }

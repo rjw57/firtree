@@ -973,7 +973,7 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
 
     case EShLangKernel:
 	// FIRTREE only
-    	symbolTable.relateToOperator("sample",          EOpPow);
+    	symbolTable.relateToOperator("destCoord",          EOpDestCoord);
         break;
 	default: assert(false && "Language not supported");
     }

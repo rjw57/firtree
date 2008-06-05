@@ -2,6 +2,7 @@
 
 vec4 kernel(sampler s, __color foo)
 {
+  vec2 dc = destCoord();
   float a = 7.0;
   for(int i=0; i<4; i++)
   {

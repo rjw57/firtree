@@ -178,6 +178,8 @@ enum TOperator {
     EOpBitmapMsb,    // unpack only
     EOpWriteOutput,  // pack only
     EOpReadPixel,    // pack only
+
+    EOpDestCoord,    // FIRTREE only
     
     //
     // Branch

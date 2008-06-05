@@ -313,6 +313,9 @@ bool OutputAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTravers
     case EOpWriteOutput:   out.debug << "writeOutput"; break;
     case EOpReadPixel:     out.debug << "readPixel";   break;
 
+    // FIRTREE only
+    case EOpDestCoord: out.debug << "kernel-destination-coord"; break;
+
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }
 

@@ -34,10 +34,10 @@ RM = /usr/bin/cmake -E remove -f
 CMAKE_EDIT_COMMAND = /usr/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/rjw57/Repositories/l4-software/projects/firtree
+CMAKE_SOURCE_DIR = /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/rjw57/Repositories/l4-software/projects/firtree
+CMAKE_BINARY_DIR = /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree
 
 # Include the progress variables for this target.
 include CMakeFiles/progress.make
@@ -48,7 +48,7 @@ include CMakeFiles/progress.make
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree/glsl-frontend/StandAlone && /usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/glsl-frontend/StandAlone && /usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 
 # Special rule for the target edit_cache
 edit_cache/fast: edit_cache
@@ -56,31 +56,31 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree/glsl-frontend/StandAlone && /usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/glsl-frontend/StandAlone && /usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 
 # Special rule for the target rebuild_cache
 rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(CMAKE_COMMAND) -E cmake_progress_start /Users/rjw57/Repositories/l4-software/projects/firtree/CMakeFiles $(CMAKE_ALL_PROGRESS)
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/rjw57/Repositories/l4-software/projects/firtree/CMakeFiles 0
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(CMAKE_COMMAND) -E cmake_progress_start /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles $(CMAKE_ALL_PROGRESS)
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree/CMakeFiles 0
 
 # The main clean target
 clean:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/clean
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/clean
 
 # The main clean target
 clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/preinstall
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/preinstall
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/preinstall
 
 # clear depends
 depend:
@@ -88,26 +88,26 @@ depend:
 
 # Convenience name for target.
 glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/rule:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/rule
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f CMakeFiles/Makefile2 glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/rule
 
 # Convenience name for target.
 StandAlone: glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/rule
 
 # fast build rule for target.
 StandAlone/fast:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build
 
 # target to build an object file
 StandAlone.o:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.o
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.o
 
 # target to preprocess a source file
 StandAlone.i:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.i
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.i
 
 # target to generate assembly for a file
 StandAlone.s:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.s
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(MAKE) -f glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/build.make glsl-frontend/StandAlone/CMakeFiles/StandAlone.dir/StandAlone.s
 
 # Help Target
 help::
@@ -131,5 +131,5 @@ help::
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /Users/rjw57/Repositories/l4-software/projects/firtree && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/rjw57/Repositories/l4.me.uk/rjw57/software/projects/firtree && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 

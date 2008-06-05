@@ -1,15 +1,11 @@
-struct sampler {
-  vec4 a;
-};
-
 #define __color vec4
-
-vec4 sample(sampler s, vec2 a)
-{
-  return vec4(1,0,0,1);
-}
 
 vec4 kernel(sampler s, __color foo)
 {
+  float a = 7.0;
+  for(int i=0; i<4; i++)
+  {
+    a += 1.0;
+  }
   return sample(s, vec2(1,1)) * foo;
 }

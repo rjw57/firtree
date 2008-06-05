@@ -49,10 +49,12 @@ void TBuiltIns::initialize()
     TString BuiltInFunctions;
     TString BuiltInFunctionsVertex;
     TString BuiltInFunctionsFragment;
+    TString BuiltInFunctionsKernel;
     TString StandardVertexVaryings;
     TString StandardFragmentVaryings;
     TString StandardVertexAttributes;
     TString StandardUniforms;
+    TString StandardKernelUniforms;
 
     {
         //============================================================================
@@ -491,6 +493,28 @@ void TBuiltIns::initialize()
     {
         //============================================================================
         //
+        // Prototypes for built-in functions seen by FIRTREE kernel shaders only.
+        //
+        //============================================================================
+
+        TString& s = BuiltInFunctionsKernel;
+
+        //
+        // Sampler Functions.
+        //
+        s.append(TString("vec2 destCoord();"));
+        s.append(TString("vec4 sample(sampler src, vec2 point);"));
+        s.append(TString("vec2 samplerCoord(sampler src);"));
+        s.append(TString("vec4 samplerExtent(sampler src);"));
+        s.append(TString("vec2 samplerOrigin(sampler src);"));
+        s.append(TString("vec2 samplerSize(sampler src);"));
+        s.append(TString("vec2 samplerTransform(sampler src, vec2 point);"));
+
+		s.append(TString("\n"));
+    }
+    {
+        //============================================================================
+        //
         // Standard Uniforms
         //
         //============================================================================
@@ -694,6 +718,19 @@ void TBuiltIns::initialize()
 
         s.append(TString("\n"));
     }
+    {
+        //============================================================================
+        //
+        // Define the input interface to the kernel shader.
+        //
+        //============================================================================
+
+        TString& s = StandardKernelUniforms;
+
+        s.append(TString("struct sampler { vec4 foo; };"));
+
+        s.append(TString("\n"));
+    }
 
     builtInStrings[EShLangFragment].push_back(BuiltInFunctions.c_str());
     builtInStrings[EShLangFragment].push_back(BuiltInFunctionsFragment);
@@ -705,6 +742,10 @@ void TBuiltIns::initialize()
     builtInStrings[EShLangVertex].push_back(StandardVertexVaryings);
     builtInStrings[EShLangVertex].push_back(StandardVertexAttributes);
     builtInStrings[EShLangVertex].push_back(StandardUniforms);
+
+    builtInStrings[EShLangKernel].push_back(BuiltInFunctions);
+    builtInStrings[EShLangKernel].push_back(StandardKernelUniforms);
+    builtInStrings[EShLangKernel].push_back(BuiltInFunctionsKernel);
 }
 
 
@@ -932,6 +973,7 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
 
     case EShLangKernel:
 	// FIRTREE only
+    	symbolTable.relateToOperator("sample",          EOpPow);
         break;
 	default: assert(false && "Language not supported");
     }

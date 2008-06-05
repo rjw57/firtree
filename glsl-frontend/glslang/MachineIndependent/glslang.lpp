@@ -143,6 +143,9 @@ TSourceLoc sourcelineno;
 "sampler2DRect"        { pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLERRECTARB; /* ARB_texture_rectangle */ }
 "sampler2DRectShadow"  { pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLERRECTSHADOWARB; /* ARB_texture_rectangle */ }
 
+"sampler"  { pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return SAMPLER; /* FIRTREE kernel sampler */ }
+"__color"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return (COLOR); /* FIRTREE color */ }
+
 "struct"       {  pyylval->lex.line = sourcelineno; return(STRUCT); }
 
 "asm"          {  PaReservedWord(); return 0; }

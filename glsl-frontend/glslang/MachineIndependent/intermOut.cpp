@@ -67,7 +67,10 @@ TString TType::getCompleteString() const
     else if (size > 1)
         p += sprintf(p, "%d-component vector of ", size);
 
-    sprintf(p, "%s", getBasicString());
+    p += sprintf(p, "%s", getBasicString());
+    
+    if(color)
+        p += sprintf(p, " [color]", size);
 
     return TString(buf);
 }   

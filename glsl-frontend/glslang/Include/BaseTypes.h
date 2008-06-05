@@ -52,6 +52,7 @@ enum TBasicType {
     EbtSampler2DShadow,
     EbtSamplerRect,        // ARB_texture_rectangle
     EbtSamplerRectShadow,  // ARB_texture_rectangle
+    EbtSampler,            // FIRTREE kernel sampler - it is a type.
     EbtGuardSamplerEnd,    // non type:  see implementation of IsSampler()
     EbtStruct,
     EbtAddress,            // should be deprecated??

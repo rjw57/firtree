@@ -171,6 +171,7 @@ Jutta Degener, 1995
 %token <lex> SAMPLER1D SAMPLER2D SAMPLER3D SAMPLERCUBE SAMPLER1DSHADOW SAMPLER2DSHADOW
 
 %token <lex> SAMPLERRECTARB SAMPLERRECTSHADOWARB // ARB_texture_rectangle
+%token <lex> SAMPLER COLOR // FIRTREE kernel
 
 %token <lex> IDENTIFIER TYPE_NAME FLOATCONSTANT INTCONSTANT BOOLCONSTANT
 %token <lex> FIELD_SELECTION
@@ -1888,6 +1889,18 @@ type_specifier_nonarray
         TQualifier qual = parseContext.symbolTable.atGlobalLevel() ? EvqGlobal : EvqTemporary;
         $$.setBasic(EbtSamplerRectShadow, qual, $1.line);
     }
+    | COLOR {
+        KERNEL_ONLY("__color", $1.line);
+        TQualifier qual = parseContext.symbolTable.atGlobalLevel() ? EvqGlobal : EvqTemporary;
+        $$.setBasic(EbtFloat, qual, $1.line);
+        $$.setAggregate(4);
+        $$.setIsColor(true);
+    }
+    | SAMPLER {
+        KERNEL_ONLY("sampler", $1.line);
+        TQualifier qual = parseContext.symbolTable.atGlobalLevel() ? EvqGlobal : EvqTemporary;
+        $$.setBasic(EbtSampler, qual, $1.line);
+    } 
     | struct_specifier {
         FRAG_VERT_ONLY("struct", $1.line);
         $$ = $1;

@@ -275,6 +275,12 @@ void TBuiltIns::initialize()
         s.append(TString("vec4  refract(vec4  I, vec4  N, float eta);"));
 
         //
+        // FIRTREE only. The functions above are all those defined for 
+        // FIRTREE kernels.
+        //
+        BuiltInFunctionsKernel.append(s);
+
+        //
         // Matrix Functions.
         //
         s.append(TString("mat2 matrixCompMult(mat2 x, mat2 y);"));
@@ -538,7 +544,7 @@ void TBuiltIns::initialize()
         s.append(TString("vec2 samplerOrigin(sampler src);"));
         s.append(TString("vec2 samplerSize(sampler src);"));
         s.append(TString("vec2 samplerTransform(sampler src, vec2 point);"));
-
+        
 		s.append(TString("\n"));
     }
     {
@@ -756,8 +762,7 @@ void TBuiltIns::initialize()
 
         TString& s = StandardKernelUniforms;
 
-        s.append(TString("struct sampler { vec4 foo; };"));
-
+        // s.append(TString("struct sampler { vec4 a; };"));
         s.append(TString("\n"));
     }
 
@@ -772,8 +777,8 @@ void TBuiltIns::initialize()
     builtInStrings[EShLangVertex].push_back(StandardVertexAttributes);
     builtInStrings[EShLangVertex].push_back(StandardUniforms);
 
-    builtInStrings[EShLangKernel].push_back(BuiltInFunctions);
-    builtInStrings[EShLangKernel].push_back(StandardKernelUniforms);
+    // builtInStrings[EShLangKernel].push_back(BuiltInFunctions);
+    // builtInStrings[EShLangKernel].push_back(StandardKernelUniforms);
     builtInStrings[EShLangKernel].push_back(BuiltInFunctionsKernel);
 }
 

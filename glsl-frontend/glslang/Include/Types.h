@@ -73,6 +73,7 @@ public:
     int arraySize;
     TType* userDef;
     int line;
+    bool color;     // FIRTREE only - is this a colour?
 
     void setBasic(TBasicType bt, TQualifier q, int ln = 0) 
     { 
@@ -84,18 +85,27 @@ public:
         arraySize = 0;
         userDef = 0;
         line = ln;
+	color = false;
     }
 
     void setAggregate(int s, bool m = false)
     {
         size = s;
         matrix = m;
+	color = false;
     }
 
     void setArray(bool a, int s = 0)
     {
         array = a;
         arraySize = s;
+	color = false;
+    }
+
+    // FIRTREE only
+    void setIsColor(bool flag)
+    {
+        color = flag;
     }
 };
 
@@ -111,8 +121,9 @@ public:
                             type(t), qualifier(q), size(s), matrix(m), array(a), arraySize(0),
                             structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0)
                             { }
+			    // FIRTREE modified.
     explicit TType(const TPublicType &p) :
-                            type(p.type), qualifier(p.qualifier), size(p.size), matrix(p.matrix), array(p.array), arraySize(p.arraySize), 
+                            type(p.type), qualifier(p.qualifier), size(p.size), matrix(p.matrix), array(p.array), color(p.color), arraySize(p.arraySize), 
                             structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0)
                             {
                               if (p.userDef) {
@@ -245,6 +256,7 @@ public:
         case EbtSampler2DShadow:   return "sampler2DShadow";   break;
         case EbtSamplerRect:       return "samplerRect";       break; // ARB_texture_rectangle
         case EbtSamplerRectShadow: return "samplerRectShadow"; break; // ARB_texture_rectangle
+        case EbtSampler:	   return "sampler";           break; // FIRTREE kernel sampler
         case EbtStruct:            return "structure";         break;
         default:                   return "unknown type";
         }
@@ -308,6 +320,7 @@ protected:
 	int size             : 8; // size of vector or matrix, not size of array
 	unsigned int matrix  : 1;
 	unsigned int array   : 1;
+	unsigned int color   : 1; // FIRTREE only
     int arraySize;
 
     TTypeList* structure;      // 0 unless this is a struct

@@ -208,6 +208,17 @@ bool OutputUnary(bool /* preVisit */, TIntermUnary* node, TIntermTraverser* it)
     case EOpAcos:           out.debug << "arc cosine";           break;
     case EOpAtan:           out.debug << "arc tangent";          break;
 
+    // FIRTREE only
+    case EOpSinRange:       out.debug << "sine (in range [-pi, pi])";  break;
+    case EOpCosRange:       out.debug << "cosine (in range [-pi, pi])";  break;
+    case EOpTanRange:       out.debug << "tangent (in range [-pi, pi])";  break;
+    case EOpSinCos:         out.debug << "sine and cosine";  break;
+    case EOpCosSin:         out.debug << "cosine and sine";  break;
+    case EOpSinCosRange:    out.debug << "sine and cosine (in range [-pi, pi])";  break;
+    case EOpCosSinRange:    out.debug << "cosine and sine (in range [-pi, pi])";  break;
+    case EOpPremultiply:    out.debug << "premultiply alpha";  break;
+    case EOpUnPremultiply:  out.debug << "unpremultiply alpha";  break;
+
     case EOpExp:            out.debug << "exp";                  break;
     case EOpLog:            out.debug << "log";                  break;
     case EOpExp2:           out.debug << "exp2";                 break;
@@ -315,6 +326,7 @@ bool OutputAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTravers
 
     // FIRTREE only
     case EOpDestCoord: out.debug << "kernel-destination-coord"; break;
+    case EOpCompare: out.debug << "compare ( ($1<0) ? $2:$3 )"; break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }

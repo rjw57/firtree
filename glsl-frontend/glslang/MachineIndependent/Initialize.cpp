@@ -528,17 +528,16 @@ void TBuiltIns::initialize()
         s.append(TString("vec4  premultiply(vec4 color);"));
         s.append(TString("vec4  unpremultiply(vec4 color);"));
 
-
         //
         // Sampler Functions.
         //
-        s.append(TString("varying vec2 destCoord();"));
-        s.append(TString("vec4 sample(uniform sampler src, vec2 point);"));
-        s.append(TString("varying vec2 samplerCoord(uniform sampler src);"));
-        s.append(TString("uniform vec4 samplerExtent(uniform sampler src);"));
-        s.append(TString("uniform vec2 samplerOrigin(uniform sampler src);"));
-        s.append(TString("uniform vec2 samplerSize(uniform sampler src);"));
-        s.append(TString("vec2 samplerTransform(uniform sampler src, vec2 point);"));
+        s.append(TString("vec2 destCoord();"));
+        s.append(TString("vec4 sample(sampler src, vec2 point);"));
+        s.append(TString("vec2 samplerCoord(sampler src);"));
+        s.append(TString("vec4 samplerExtent(sampler src);"));
+        s.append(TString("vec2 samplerOrigin(sampler src);"));
+        s.append(TString("vec2 samplerSize(sampler src);"));
+        s.append(TString("vec2 samplerTransform(sampler src, vec2 point);"));
 
 		s.append(TString("\n"));
     }
@@ -1003,7 +1002,17 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
 
     case EShLangKernel:
 	// FIRTREE only
+    	symbolTable.relateToOperator("sin_",          EOpSinRange);
+    	symbolTable.relateToOperator("cos_",          EOpCosRange);
+    	symbolTable.relateToOperator("tan_",          EOpTanRange);
+    	symbolTable.relateToOperator("sincos",          EOpSinCos);
+    	symbolTable.relateToOperator("cossin",          EOpCosSin);
+    	symbolTable.relateToOperator("sincos_",          EOpSinCosRange);
+    	symbolTable.relateToOperator("cossin_",          EOpCosSinRange);
     	symbolTable.relateToOperator("destCoord",          EOpDestCoord);
+    	symbolTable.relateToOperator("compare",          EOpCompare);
+    	symbolTable.relateToOperator("premultiply",          EOpPremultiply);
+    	symbolTable.relateToOperator("unpremultiply",          EOpUnPremultiply);
         break;
 	default: assert(false && "Language not supported");
     }

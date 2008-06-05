@@ -3,7 +3,10 @@
 vec4 kernel(sampler s, __color foo)
 {
   vec2 dc = destCoord();
-  float a = 7.0;
+  float a = compare(-1.0, 7.0, 5.0);
+  vec2 sc = cossin_(4.0);
+  vec4 pm = premultiply(foo);
+  vec2 sz = samplerSize(s);
   for(int i=0; i<4; i++)
   {
     a += 1.0;

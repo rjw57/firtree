@@ -131,6 +131,17 @@ enum TOperator {
     EOpAcos,
     EOpAtan,
 
+    //
+    // FIRTREE only
+    // 
+    EOpSinRange,
+    EOpCosRange,
+    EOpTanRange,
+    EOpSinCos,
+    EOpCosSin,
+    EOpSinCosRange,
+    EOpCosSinRange,
+
     EOpPow,
     EOpExp,
     EOpLog,
@@ -180,7 +191,10 @@ enum TOperator {
     EOpReadPixel,    // pack only
 
     EOpDestCoord,    // FIRTREE only
-    
+    EOpCompare,    // FIRTREE only
+    EOpPremultiply,    // FIRTREE only
+    EOpUnPremultiply,    // FIRTREE only
+
     //
     // Branch
     //

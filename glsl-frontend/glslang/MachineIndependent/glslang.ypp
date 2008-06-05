@@ -171,7 +171,7 @@ Jutta Degener, 1995
 %token <lex> SAMPLER1D SAMPLER2D SAMPLER3D SAMPLERCUBE SAMPLER1DSHADOW SAMPLER2DSHADOW
 
 %token <lex> SAMPLERRECTARB SAMPLERRECTSHADOWARB // ARB_texture_rectangle
-%token <lex> SAMPLER COLOR // FIRTREE kernel
+%token <lex> SAMPLER COLOR KERNEL // FIRTREE kernel
 
 %token <lex> IDENTIFIER TYPE_NAME FLOATCONSTANT INTCONSTANT BOOLCONSTANT
 %token <lex> FIELD_SELECTION
@@ -1196,7 +1196,25 @@ function_header_with_parameters
     ;
 
 function_header 
-    : fully_specified_type IDENTIFIER LEFT_PAREN {
+    : KERNEL fully_specified_type IDENTIFIER LEFT_PAREN {
+        // FIRTREE only
+
+        if ($2.qualifier != EvqGlobal && $2.qualifier != EvqTemporary) {
+            parseContext.error($3.line, "no qualifiers allowed for function return", getQualifierString($2.qualifier), "");
+            parseContext.recover();
+        }
+        // make sure a sampler is not involved as well...
+        if (parseContext.structQualifierErrorCheck($3.line, $2))
+            parseContext.recover();
+        
+        // Add the function as a prototype after parsing it (we do not support recursion) 
+        TFunction *function;
+        TType type($2);
+        function = new TFunction($3.string, type);
+        function->setIsKernel();
+        $$ = function;
+    }
+    | fully_specified_type IDENTIFIER LEFT_PAREN {
         if ($1.qualifier != EvqGlobal && $1.qualifier != EvqTemporary) {
             parseContext.error($2.line, "no qualifiers allowed for function return", getQualifierString($1.qualifier), "");
             parseContext.recover();

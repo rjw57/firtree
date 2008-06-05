@@ -109,6 +109,8 @@ TSourceLoc sourcelineno;
 "out"          {  pyylval->lex.line = sourcelineno; return(OUT_QUAL); }
 "inout"        {  pyylval->lex.line = sourcelineno; return(INOUT_QUAL); }
 
+"kernel"       {  pyylval->lex.line = sourcelineno; return(KERNEL); /* FIRTREE only */ }
+
 "float"        {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(FLOAT_TYPE); }
 "int"          {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(INT_TYPE); }
 "void"         {  pyylval->lex.line = sourcelineno; parseContext.lexAfterType = true; return(VOID_TYPE); }

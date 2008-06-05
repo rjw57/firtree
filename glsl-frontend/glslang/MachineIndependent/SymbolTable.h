@@ -157,7 +157,8 @@ public:
         TSymbol(0),
         returnType(TType(EbtVoid)),
         op(o),
-        defined(false) { }
+        defined(false),
+        kernel(false) { }
     TFunction(const TString *name, TType& retType, TOperator tOp = EOpNull) : 
         TSymbol(name), 
         returnType(retType),
@@ -183,6 +184,10 @@ public:
     int getParamCount() const { return static_cast<int>(parameters.size()); }    
           TParameter& operator [](int i)       { return parameters[i]; }
     const TParameter& operator [](int i) const { return parameters[i]; }
+
+    // FIRTREE only.
+    void setIsKernel() { kernel = true; }
+    bool isKernel() { return kernel; }
     
     virtual void dump(TInfoSink &infoSink) const;
 	TFunction(const TFunction&, TStructureMap& remapper);
@@ -195,6 +200,7 @@ protected:
     TString mangledName;
     TOperator op;
     bool defined;
+    bool kernel; // FIRTREE only
 };
 
 

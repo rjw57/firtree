@@ -1,4 +1,4 @@
-vec4 kernel(sampler s, __color foo, vec4 parm3)
+kernel vec4 kern(sampler s, __color foo, vec4 parm3)
 {
   vec2 p = exp(vec2(2,2));
   vec2 dc = destCoord();

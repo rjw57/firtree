@@ -164,7 +164,8 @@ public:
         returnType(retType),
         mangledName(*name + '('),
         op(tOp),
-        defined(false) { }
+        defined(false),
+        kernel(false) { }
 	virtual ~TFunction();
     virtual bool isFunction() const { return true; }    
     

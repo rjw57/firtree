@@ -56,6 +56,7 @@ enum TOperator {
     EOpSequence,        // denotes a list of statements, or parameters, etc.
     EOpFunctionCall,    
     EOpFunction,        // For function definition
+    EOpKernel,          // For kernel definition. FIRTREE only
     EOpParameters,      // an aggregate listing the parameters to a function
 
     //

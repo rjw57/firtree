@@ -270,6 +270,8 @@ bool OutputAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTravers
     case EOpSequence:      out.debug << "Sequence\n"; return true;
     case EOpComma:         out.debug << "Comma\n"; return true;
     case EOpFunction:      out.debug << "Function Definition: " << node->getName(); break;
+    // FIRTREE
+    case EOpKernel:        out.debug << "Kernel Definition: " << node->getName(); break;
     case EOpFunctionCall:  out.debug << "Function Call: " << node->getName(); break;
     case EOpParameters:    out.debug << "Function Parameters: ";              break;
     

@@ -2343,7 +2343,12 @@ function_definition
         }
         parseContext.symbolTable.pop();
         $$ = parseContext.intermediate.growAggregate($1.intermAggregate, $3, 0);
-        parseContext.intermediate.setAggregateOperator($$, EOpFunction, $1.line);
+        // FIRTREE only
+        if($1.function->isKernel()) {
+            parseContext.intermediate.setAggregateOperator($$, EOpKernel, $1.line);
+        } else {
+            parseContext.intermediate.setAggregateOperator($$, EOpFunction, $1.line);
+        }
         $$->getAsAggregate()->setName($1.function->getMangledName().c_str());
         $$->getAsAggregate()->setType($1.function->getReturnType());
         

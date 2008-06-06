@@ -19,4 +19,4 @@ SET(COMPILER_SOURCES
 )
 
 ADD_LIBRARY(compiler ${COMPILER_SOURCES})
-TARGET_LINK_LIBRARIES(compiler glslang frontend irbackend -lpthread)
+TARGET_LINK_LIBRARIES(compiler glslang frontend irbackend glslbackend -lpthread)

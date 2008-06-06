@@ -4,6 +4,9 @@
 #
 # See LICENSE file for distribution rights.
 
-ADD_SUBDIRECTORY(irdump)
-ADD_SUBDIRECTORY(glsl)
+SET(BACKEND_SOURCES
+	glsl.h	glsl.cpp
+)
+
+ADD_LIBRARY(glslbackend ${BACKEND_SOURCES})
 

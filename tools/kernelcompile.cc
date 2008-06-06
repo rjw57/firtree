@@ -20,6 +20,7 @@
 #include <compiler/include/main.h>
 
 #include <compiler/backends/irdump/irdump.h>
+#include <compiler/backends/glsl/glsl.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
       buffer[n] = 0;
 
       try {
-         Firtree::IRDumpBackend be(stdout);
+         Firtree::GLSLBackend be("block_1_");
          Firtree::Compiler c(be);
          bool ret = c.Compile((const char**)(&buffer), 1);
 
@@ -64,6 +65,8 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Error compiling shader.\n");
             printf("Compiler info log:\n%s\n", c.GetInfoLog());
             return 3;
+         } else {
+            printf("Compiled GLSL:\n%s\n", be.GetOutput());
          }
       } catch(Firtree::Exception e) {
          fprintf(stderr, "Exception caught: %s\n", e.GetMessage().c_str());

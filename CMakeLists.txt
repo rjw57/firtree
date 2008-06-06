@@ -36,9 +36,6 @@ ADD_SUBDIRECTORY(glsl-frontend)
 # The kernel language compiler
 ADD_SUBDIRECTORY(compiler)
 
-# The kernel language parser
-ADD_SUBDIRECTORY(local-mesa)
-
 # Some tools
 ADD_SUBDIRECTORY(tools)
 

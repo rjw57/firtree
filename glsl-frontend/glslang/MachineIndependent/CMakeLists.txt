@@ -48,4 +48,4 @@ INCLUDE_DIRECTORIES(
 )
 
 ADD_LIBRARY(glslang SHARED ${GLSLANG_SOURCES})
-TARGET_LINK_LIBRARIES(glslang Ossource CodeGen InitializeDll)
+TARGET_LINK_LIBRARIES(glslang Ossource InitializeDll)

@@ -5,8 +5,16 @@ vec4 halfVec(vec4 a)
 
 kernel vec4 kern(sampler s, __color foo, vec4 parm3)
 {
+  vec4 j;
   vec2 p = exp(vec2(2,2));
+  vec4 test = vec4(6,7,8,9);
   vec2 dc = destCoord();
+  j = vec4(1,2,3,4);
+
+  {
+    vec4 j;
+    j = vec4(6,7,8,9);
+  }
   float a = compare(-1.0, 7.0, 5.0);
   vec2 sc = cossin_(4.0);
   vec4 pm = premultiply(foo);

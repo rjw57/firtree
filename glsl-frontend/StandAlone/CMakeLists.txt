@@ -14,5 +14,5 @@ SET(STANDALONE_SOURCES
 )
 
 ADD_EXECUTABLE(StandAlone ${STANDALONE_SOURCES})
-TARGET_LINK_LIBRARIES(StandAlone glslang -lpthread)
+TARGET_LINK_LIBRARIES(StandAlone glslang CodeGen -lpthread)
 

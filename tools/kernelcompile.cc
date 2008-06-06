@@ -19,6 +19,8 @@
 #include <compiler/include/compiler.h>
 #include <compiler/include/main.h>
 
+#include <compiler/backends/irdump/irdump.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,7 +42,7 @@ int main(int argc, char *argv[])
    FILE* pInFile = fopen(inFile, "rb");
    if(!pInFile)
    {
-      fprintf(stderr, "Error openign file: %s.\n", inFile);
+      fprintf(stderr, "Error opening file: %s.\n", inFile);
       return 2;
    }
 
@@ -53,14 +55,14 @@ int main(int argc, char *argv[])
       buffer[n] = 0;
 
       try {
-         Firtree::NullBackend be;
+         Firtree::IRDumpBackend be(stdout);
          Firtree::Compiler c(be);
          bool ret = c.Compile((const char**)(&buffer), 1);
 
-         printf("Compiler info log:\n%s\n", c.GetInfoLog());
          if(!ret)
          {
             fprintf(stderr, "Error compiling shader.\n");
+            printf("Compiler info log:\n%s\n", c.GetInfoLog());
             return 3;
          }
       } catch(Firtree::Exception e) {

@@ -4,7 +4,13 @@
 #
 # See LICENSE file for distribution rights.
 
+INCLUDE_DIRECTORIES(
+	"${CMAKE_CURRENT_SOURCE_DIR}/../"
+	"${CMAKE_CURRENT_SOURCE_DIR}/../glsl-frontend/"
+)
+
 ADD_SUBDIRECTORY(frontend)
+ADD_SUBDIRECTORY(backends)
 
 SET(COMPILER_SOURCES
 	include/compiler.h 	include/main.h
@@ -12,7 +18,5 @@ SET(COMPILER_SOURCES
 	compiler.cpp		main.cpp
 )
 
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../glsl-frontend/")
-
 ADD_LIBRARY(compiler ${COMPILER_SOURCES})
-TARGET_LINK_LIBRARIES(compiler glslang frontend -lpthread)
+TARGET_LINK_LIBRARIES(compiler glslang frontend irbackend -lpthread)

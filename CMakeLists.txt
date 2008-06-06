@@ -33,6 +33,9 @@ ENDIF(UNIX AND NOT WIN32)
 # The kernel language frontend
 ADD_SUBDIRECTORY(glsl-frontend)
 
+# The kernel language compiler
+ADD_SUBDIRECTORY(compiler)
+
 # The kernel language parser
 ADD_SUBDIRECTORY(local-mesa)
 

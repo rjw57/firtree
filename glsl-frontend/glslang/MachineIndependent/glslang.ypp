@@ -70,20 +70,33 @@ Jutta Degener, 1995
     extern void yyerror(char*);    
 #endif
 
-// FIRTREE modification
 #define FRAG_VERT_ONLY(S, L) {                                                  \
     if (parseContext.language != EShLangFragment &&                             \
-	parseContext.language != EShLangKernel &&				\
+        parseContext.language != EShLangVertex) {                               \
+        parseContext.error(L, " supported in vertex/fragment shaders only ", S, "", "");   \
+        parseContext.recover();                                                            \
+    }                                                                           \
+}
+
+// FIRTREE only
+#define FRAG_VERT_KERNEL_ONLY(S, L) {                                            \
+    if (parseContext.language != EShLangFragment &&                             \
+        parseContext.language != EShLangKernel &&                               \
         parseContext.language != EShLangVertex) {                               \
         parseContext.error(L, " supported in vertex/fragment/kernel shaders only ", S, "", "");   \
         parseContext.recover();                                                            \
     }                                                                           \
 }
 
-// FIRTREE only
 #define KERNEL_ONLY(S, L) {                                                     \
     if (parseContext.language != EShLangKernel) {                               \
-        parseContext.error(L, " supported in vertex shaders only ", S, "", "");            \
+        parseContext.error(L, " supported in kernel shaders only ", S, "", "");            \
+        parseContext.recover();                                                            \
+    }                                                                           \
+}
+#define NOT_KERNEL(S, L) {                                                     \
+    if (parseContext.language == EShLangKernel) {                               \
+        parseContext.error(L, " not supported in kernel shaders ", S, "", "");            \
         parseContext.recover();                                                            \
     }                                                                           \
 }
@@ -293,6 +306,7 @@ postfix_expression
         $$ = $1;
     } 
     | postfix_expression LEFT_BRACKET integer_expression RIGHT_BRACKET {
+        NOT_KERNEL("array dereference", $2.line);
         if (!$1->isArray() && !$1->isMatrix() && !$1->isVector()) {
             if ($1->getAsSymbolNode())
                 parseContext.error($2.line, " left of '[' is not of type array, matrix, or vector ", $1->getAsSymbolNode()->getSymbol().c_str(), "");
@@ -821,7 +835,7 @@ unary_operator
 multiplicative_expression
     : unary_expression { $$ = $1; }
     | multiplicative_expression STAR unary_expression {
-        FRAG_VERT_ONLY("*", $2.line);
+        FRAG_VERT_KERNEL_ONLY("*", $2.line);
         $$ = parseContext.intermediate.addBinaryMath(EOpMul, $1, $3, $2.line, parseContext.symbolTable);
         if ($$ == 0) {
             parseContext.binaryOpError($2.line, "*", $1->getCompleteString(), $3->getCompleteString());
@@ -830,7 +844,7 @@ multiplicative_expression
         }
     }
     | multiplicative_expression SLASH unary_expression {
-        FRAG_VERT_ONLY("/", $2.line); 
+        FRAG_VERT_KERNEL_ONLY("/", $2.line); 
         $$ = parseContext.intermediate.addBinaryMath(EOpDiv, $1, $3, $2.line, parseContext.symbolTable);
         if ($$ == 0) {
             parseContext.binaryOpError($2.line, "/", $1->getCompleteString(), $3->getCompleteString());
@@ -1077,8 +1091,8 @@ assignment_expression
 
 assignment_operator
     : EQUAL        {                                    $$.line = $1.line; $$.op = EOpAssign; }
-    | MUL_ASSIGN   { FRAG_VERT_ONLY("*=", $1.line);     $$.line = $1.line; $$.op = EOpMulAssign; }
-    | DIV_ASSIGN   { FRAG_VERT_ONLY("/=", $1.line);     $$.line = $1.line; $$.op = EOpDivAssign; }
+    | MUL_ASSIGN   { FRAG_VERT_KERNEL_ONLY("*=", $1.line);     $$.line = $1.line; $$.op = EOpMulAssign; }
+    | DIV_ASSIGN   { FRAG_VERT_KERNEL_ONLY("/=", $1.line);     $$.line = $1.line; $$.op = EOpDivAssign; }
     | MOD_ASSIGN   { PACK_UNPACK_ONLY("%=", $1.line);   $$.line = $1.line; $$.op = EOpModAssign; }
     | ADD_ASSIGN   {                                    $$.line = $1.line; $$.op = EOpAddAssign; }
     | SUB_ASSIGN   {                                    $$.line = $1.line; $$.op = EOpSubAssign; }
@@ -1245,6 +1259,8 @@ parameter_declarator
         $$.param = param;
     }
     | type_specifier IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $2.line);
+
         // Check that we can make an array out of this type
         if (parseContext.arrayTypeErrorCheck($3.line, $1))
             parseContext.recover();
@@ -1340,6 +1356,7 @@ init_declarator_list
             parseContext.recover();
     }
     | init_declarator_list COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $3.line);
         if (parseContext.structQualifierErrorCheck($3.line, $1.type))
             parseContext.recover();
             
@@ -1358,6 +1375,7 @@ init_declarator_list
         }
     }
     | init_declarator_list COMMA IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $4.line);
         if (parseContext.structQualifierErrorCheck($3.line, $1.type))
             parseContext.recover();
             
@@ -1379,6 +1397,7 @@ init_declarator_list
         }
     }
     | init_declarator_list COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer {
+        NOT_KERNEL("arrays", $4.line);
         if (parseContext.structQualifierErrorCheck($3.line, $1.type))
             parseContext.recover();
             
@@ -1412,6 +1431,7 @@ init_declarator_list
         }
     }
     | init_declarator_list COMMA IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET EQUAL initializer {
+        NOT_KERNEL("arrays", $4.line);
         if (parseContext.structQualifierErrorCheck($3.line, $1.type))
             parseContext.recover();
             
@@ -1488,6 +1508,7 @@ single_declaration
             parseContext.recover();
     }
     | fully_specified_type IDENTIFIER LEFT_BRACKET RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $3.line);
         $$.intermAggregate = 0;
         if (parseContext.structQualifierErrorCheck($2.line, $1))
             parseContext.recover();
@@ -1507,6 +1528,7 @@ single_declaration
         }
     }
     | fully_specified_type IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $3.line);
         $$.intermAggregate = 0;
         if (parseContext.structQualifierErrorCheck($2.line, $1))
             parseContext.recover();
@@ -1530,6 +1552,7 @@ single_declaration
         }
     }
     | fully_specified_type IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer {
+        NOT_KERNEL("arrays", $3.line);
         $$.intermAggregate = 0;
 
         if (parseContext.structQualifierErrorCheck($2.line, $1))
@@ -1565,6 +1588,7 @@ single_declaration
         }
     }
     | fully_specified_type IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET EQUAL initializer {
+        NOT_KERNEL("arrays", $3.line);
         $$.intermAggregate = 0;
 
         if (parseContext.structQualifierErrorCheck($2.line, $1))
@@ -1759,6 +1783,7 @@ type_specifier
         $$ = $1;
     }
     | type_specifier_nonarray LEFT_BRACKET constant_expression RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $2.line);
         $$ = $1;
         
         if (parseContext.arrayTypeErrorCheck($2.line, $1))
@@ -2015,6 +2040,7 @@ struct_declarator
         $$.type->setFieldName(*$1.string);
     }
     | IDENTIFIER LEFT_BRACKET constant_expression RIGHT_BRACKET {
+        NOT_KERNEL("arrays", $2.line);
         $$.type = new TType(EbtVoid);
         $$.line = $1.line;
         $$.type->setFieldName(*$1.string);

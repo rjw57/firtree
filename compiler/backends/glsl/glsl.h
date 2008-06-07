@@ -60,17 +60,35 @@ class GLSLBackend : public Backend
     protected:
         std::string     m_Prefix;
         std::string     m_Output;
+        bool            m_SuccessFlag;
+
+        bool            m_InParams;
+        bool            m_InFunction;
+        bool            m_ProcessedOneParam;
 
         struct Priv;
         Priv*           m_Priv;
 
-        bool ProcessTopLevelAggregate(TIntermAggregate* a);
-        bool ProcessFunctionDefinition(TIntermAggregate* func, bool isKernel);
+        void VisitSymbol(TIntermSymbol* n);
+        void VisitConstantUnion(TIntermConstantUnion* n);
+        bool VisitBinary(bool preVisit, TIntermBinary* n);
+        bool VisitUnary(bool preVisit, TIntermUnary* n);
+        bool VisitSelection(bool preVisit, TIntermSelection* n);
+        bool VisitAggregate(bool preVisit, TIntermAggregate* n);
+        bool VisitLoop(bool preVisit, TIntermLoop* n);
+        bool VisitBranch(bool preVisit, TIntermBranch* n);
 
         void AppendGLSLType(TType* t);
         void AppendPrefix() { AppendOutput(m_Prefix.c_str()); }
 
         void AppendOutput(const char* s, ...);
+
+        void AddSymbol(const char* name, const char* typePrefix);
+        void AddSymbol(int id, const char* typePrefix);
+        const char* GetSymbol(const char* name);
+        const char* GetSymbol(int id);
+
+        friend class GLSLTrav;
 };
 
 } // namespace Firtree

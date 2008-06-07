@@ -43,8 +43,44 @@ class GLSLTrav : public TIntermTraverser
         GLSLTrav(GLSLBackend& be) 
             :   TIntermTraverser()
             ,    m_Backend(be) 
-            { }
+            { 
+                visitSymbol = VisitSymbol;
+                visitConstantUnion = VisitConstantUnion;
+                visitBinary = VisitBinary;
+                visitUnary = VisitUnary;
+                visitSelection = VisitSelection;
+                visitAggregate = VisitAggregate;
+                visitLoop = VisitLoop;
+                visitBranch = VisitBranch;
+                preVisit = true;
+                postVisit = true;
+            }
         GLSLBackend& be() { return m_Backend; }
+
+        static void VisitSymbol(TIntermSymbol* n, TIntermTraverser* t) {
+            (reinterpret_cast<GLSLTrav*>(t))->be().VisitSymbol(n);
+        }
+        static void VisitConstantUnion(TIntermConstantUnion* n, TIntermTraverser* t) {
+            (reinterpret_cast<GLSLTrav*>(t))->be().VisitConstantUnion(n);
+        }
+        static bool VisitBinary(bool p, TIntermBinary* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitBinary(p,n);
+        }
+        static bool VisitUnary(bool p, TIntermUnary* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitUnary(p,n);
+        }
+        static bool VisitSelection(bool p, TIntermSelection* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitSelection(p,n);
+        }
+        static bool VisitAggregate(bool p, TIntermAggregate* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitAggregate(p,n);
+        }
+        static bool VisitLoop(bool p, TIntermLoop* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitLoop(p,n);
+        }
+        static bool VisitBranch(bool p, TIntermBranch* n, TIntermTraverser* t) {
+            return (reinterpret_cast<GLSLTrav*>(t))->be().VisitBranch(p,n);
+        }
 
     protected:
         GLSLBackend&  m_Backend;
@@ -72,83 +108,138 @@ bool GLSLBackend::Generate(TIntermNode* root)
         return false;
 
     m_Priv->symbolMap.clear();
+    
+    m_SuccessFlag = true;
 
-    return ProcessTopLevelAggregate(rootAgg);
+    m_InParams = false;
+    m_InFunction = false;
+
+    GLSLTrav trav(*this);
+    root->traverse(&trav);
+
+    return m_SuccessFlag;
 }
 
 //=============================================================================
-bool GLSLBackend::ProcessTopLevelAggregate(TIntermAggregate* root)
+#define FAIL_RET(...) do {FIRTREE_WARNING(__VA_ARGS__); m_SuccessFlag = false; return false;} while(0)
+#define FAIL(...) do {FIRTREE_WARNING(__VA_ARGS__); m_SuccessFlag = false;} while(0)
+
+//=============================================================================
+void GLSLBackend::VisitSymbol(TIntermSymbol* n)
 {
-    if(root->getOp() != EOpSequence)
+    if(m_InParams)
     {
-        FIRTREE_WARNING("Root node not sequence.");
-        return false;
-    }
+        // Skip samplers.
+        if(n->getTypePointer()->getBasicType() == EbtSampler)
+            return;
 
-    TIntermSequence& seq = root->getSequence();
-
-    bool emittedKernel = false;
-
-    for(TIntermSequence::iterator i = seq.begin(); i != seq.end(); i++)
-    {
-        // For each top-level node, check it is 
-        //   a) an aggreagate,
-        //   b) a function,
-        //   c) the (one and only) kernel.
-        
-        TIntermAggregate* agg = (*i)->getAsAggregate();
-
-        if(agg == NULL)
+        if(m_ProcessedOneParam)
         {
-            FIRTREE_WARNING("Top-level node not aggregate.");
-            return false;
+            AppendOutput(", ");
+        } else {
+            m_ProcessedOneParam = true;
         }
 
-        switch(agg->getOp())
+        switch(n->getQualifier())
         {
-            case EOpFunction:
-                ProcessFunctionDefinition(agg, false);
+            case EvqIn:
+                AppendOutput("in ");
                 break;
-
-            case EOpKernel:
-                if(emittedKernel)
-                {
-                    FIRTREE_WARNING("There must be only one kernel function per kernel.");
-                    return false;
-                }
-
-                ProcessFunctionDefinition(agg, true);
-
-                emittedKernel = true;
+            case EvqOut:
+                AppendOutput("out ");
                 break;
-
-            default:
-                FIRTREE_WARNING("Unknown top-level node type: %i\n", agg->getOp());
-                return false;
+            case EvqInOut:
+                AppendOutput("inout ");
+                break;
         }
-    }
 
-    if(!emittedKernel)
+        AppendGLSLType(n->getTypePointer()); AppendOutput(" ");
+        AddSymbol(n->getId(), "param_");
+        AppendOutput(GetSymbol(n->getId()));
+    } else {
+        AppendOutput("/* %s */", n->getSymbol().c_str());
+    }
+}
+
+//=============================================================================
+void GLSLBackend::VisitConstantUnion(TIntermConstantUnion* n)
+{
+}
+
+//=============================================================================
+bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
+{
+    return true;
+}
+
+//=============================================================================
+bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
+{
+    return true;
+}
+
+//=============================================================================
+bool GLSLBackend::VisitSelection(bool preVisit, TIntermSelection* n)
+{
+    return true;
+}
+
+//=============================================================================
+bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
+{
+    switch(n->getOp())
     {
-        FIRTREE_WARNING("No kernel definition found.");
-        return false;
+        case EOpFunction:
+        case EOpKernel:
+            if(preVisit) 
+            { 
+                AppendOutput("// %s definition (name: %s)\n", 
+                        (n->getOp() == EOpFunction) ? "Function" : "Kernel",
+                        n->getName().c_str());
+
+                // Add this ntion to the symbol map.
+                AddSymbol(n->getName().c_str(), "n_");
+
+                AppendGLSLType(n->getTypePointer()); 
+                AppendOutput(" ");
+                AppendOutput("%s_%s", m_Prefix.c_str(), 
+                        GetSymbol(n->getName().c_str()));
+
+                m_InFunction = true;
+            } else {
+                m_InFunction = false;
+
+                AppendOutput("}\n\n");
+            }
+            break;
+        case EOpParameters:
+            if(preVisit) 
+            {
+                AppendOutput("(");
+                m_InParams = true;
+                m_ProcessedOneParam = false;
+            } else {
+                m_InParams = false;
+                AppendOutput(")\n{\n");
+            }
+            break;
+        default:
+            FIRTREE_WARNING("Unhandled aggregate operator: %i", n->getOp());
     }
 
     return true;
 }
 
 //=============================================================================
-bool GLSLBackend::ProcessFunctionDefinition(TIntermAggregate* func, bool isKernel)
+bool GLSLBackend::VisitLoop(bool preVisit, TIntermLoop* n)
 {
-    AppendOutput("// %s definition (name: %s)\n", isKernel ? "Function" : "Kernel",
-            func->getName().c_str());
+    FAIL_RET("Loops not supported yet.");
+}
 
-    // Add this function to the symbol map.
-    m_Priv->symbolMap[func->getName()] = TString("func_") + String(m_Priv->symbolMap.size());
-
-    AppendGLSLType(func->getTypePointer()); 
-    AppendOutput(" ");
-    AppendOutput("%s_%s", m_Prefix.c_str(), m_Priv->symbolMap[func->getName()].c_str());
+//=============================================================================
+bool GLSLBackend::VisitBranch(bool preVisit, TIntermBranch* n)
+{
+    return true;
 }
 
 //=============================================================================
@@ -214,6 +305,32 @@ void GLSLBackend::AppendOutput(const char* format, ...)
     m_Output.append(message);
 
     free(message);
+}
+
+//=============================================================================
+void GLSLBackend::AddSymbol(int id, const char* typePrefix)
+{
+    m_Priv->symbolMap["I" + String(id)] = 
+        TString(typePrefix) + String(m_Priv->symbolMap.size());
+}
+
+//=============================================================================
+void GLSLBackend::AddSymbol(const char* name, const char* typePrefix)
+{
+    m_Priv->symbolMap["N" + TString(name)] = 
+        TString(typePrefix) + String(m_Priv->symbolMap.size());
+}
+
+//=============================================================================
+const char* GLSLBackend::GetSymbol(int id)
+{
+    return m_Priv->symbolMap["I" + String(id)].c_str();
+}
+
+//=============================================================================
+const char* GLSLBackend::GetSymbol(const char* name)
+{
+    return m_Priv->symbolMap["N" + TString(name)].c_str();
 }
 
 //=============================================================================

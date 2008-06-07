@@ -157,7 +157,8 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
         AddSymbol(n->getId(), "param_");
         AppendOutput(GetSymbol(n->getId()));
     } else {
-        AppendOutput("/* %s */", n->getSymbol().c_str());
+        AddSymbol(n->getId(), "tmp_");
+        AppendOutput("/* %s */", GetSymbol(n->getId()));
     }
 }
 

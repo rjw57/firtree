@@ -8,9 +8,9 @@ void pointlessFunc(int a)
   int b = a++;
 }
 
-vec4 halfVec(vec4 foo)
+vec4 halfVec(vec4 foo, float fac)
 {
-  return 0.5 * foo;
+  return fac * foo;
 }
 
 kernel vec4 kern(sampler s, __color foo, vec4 parm3)
@@ -19,7 +19,7 @@ kernel vec4 kern(sampler s, __color foo, vec4 parm3)
   float g = f * 6.0 + 1.0;
   vec4 j;
   vec2 p = exp(vec2(2,2));
-  vec4 test = vec4(6,7,8,9);
+  vec4 test = halfVec(vec4(6,7,8,9), 0.5);
   vec2 dc = destCoord();
   j = vec4(1,2,3,4);
 
@@ -39,5 +39,5 @@ kernel vec4 kern(sampler s, __color foo, vec4 parm3)
   */
   a += p.x;
   vec4 og = sample(s, vec2(1,1)) * foo;
-  return vec4(1,1,1,1);
+  return noparamFunc();
 }

@@ -41,6 +41,7 @@ struct GLSLBackend::Priv
         ~Priv() { }
 
         std::map<int, std::string>  symbolMap;
+        std::map<std::string, std::string>  funcMap;
         std::stack<TString>         temporaryStack;
         unsigned int                temporaryId;
         unsigned int                funccounter;
@@ -317,6 +318,26 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = %s[%s];\n", tmp, left.c_str(), right.c_str());
                 break;
+            case EOpMin:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = min(%s,%s);\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpMax:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = max(%s,%s);\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpStep:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = step(%s,%s);\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpDot:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = dot(%s,%s);\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpCross:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = cross(%s,%s);\n", tmp, left.c_str(), right.c_str());
+                break;
             default:
                 AppendOutput("/* ");
                 AppendGLSLType(n->getTypePointer());
@@ -428,6 +449,52 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = inversesqrt(%s);\n", tmp, operand.c_str());
                 break;
+            case EOpAbs:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = abs(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSign:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = sign(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpFloor:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = floor(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpCeil:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = ceil(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpFract:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = fract(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpLength:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = length(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpNormalize:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = normalize(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSinCos:
+            case EOpSinCosRange:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_sincos(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpCosSin:
+            case EOpCosSinRange:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_cossin(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpPremultiply:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_premultiply(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpUnPremultiply:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_unpremultiply(%s);\n", tmp, operand.c_str());
+                break;
             default:
                 AppendOutput("/* ");
                 AppendGLSLType(n->getTypePointer());
@@ -491,8 +558,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
 
                 AppendGLSLType(n->getTypePointer()); 
                 AppendOutput(" ");
-                AppendOutput("%s_func_%i", m_Prefix.c_str(), 
-                        m_Priv->funccounter++);
+                AppendOutput("%s", AddFunction(n->getName().c_str()));
 
                 m_InFunction = true;
                 if(n->getOp() == EOpKernel)
@@ -535,22 +601,56 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
             }
             break;
         case EOpFunctionCall:
+        case EOpCompare:
+        case EOpClamp:
+        case EOpSmoothStep:
+            if(!preVisit) 
             {
-                if(!preVisit) 
+                // Pop the arguments.
+                std::vector<std::string> params;
+                for(int i=0; i<n->getSequence().size(); i++)
                 {
-                    // Pop the arguments.
-                    std::vector<std::string> params;
-                    for(int i=0; i<n->getSequence().size(); i++)
+                    params.push_back(std::string(PopTemporary()));
+                }
+
+                const char* tmp = AddTemporary();
+                PushTemporary(tmp);
+
+                AppendGLSLType(n->getTypePointer()); 
+
+                const char* funcname = "UNTITLED_FUNC";
+                switch(n->getOp())
+                {
+                    case EOpFunctionCall:
+                        funcname = GetFunction(n->getName().c_str());
+                        break;
+                    case EOpCompare:
+                        funcname = "__builtin_compare";
+                        break;
+                    case EOpClamp:
+                        funcname = "clamp";
+                        break;
+                    case EOpSmoothStep:
+                        funcname = "smoothstep";
+                        break;
+                }
+
+                AppendOutput(" %s = %s(", tmp, funcname);
+
+                bool first = true;
+                for(std::vector<std::string>::reverse_iterator i=params.rbegin();
+                        i != params.rend(); i++)
+                {
+                    if(!first)
                     {
-                        params.push_back(std::string(PopTemporary()));
+                        AppendOutput(", ");
                     }
 
-                    const char* tmp = AddTemporary();
-                    PushTemporary(tmp);
-
-                    AppendGLSLType(n->getTypePointer()); 
-                    AppendOutput(" %s = /* FUNCCALL */;\n", tmp);
+                    AppendOutput("%s", (*i).c_str());
+                    first = false;
                 }
+
+                AppendOutput(");\n");
             }
             break;
         default:
@@ -691,6 +791,23 @@ const char* GLSLBackend::GetSymbol(int id)
         return NULL;
     }
     return val.c_str();
+}
+
+//=============================================================================
+const char* GLSLBackend::AddFunction(const char* name)
+{
+    static char valstr[255];
+    snprintf(valstr, 255, "%s_func_%i", 
+            m_Prefix.c_str(), m_Priv->funccounter++);
+    m_Priv->funcMap[std::string(name)] = std::string(valstr);
+
+    return GetFunction(name);
+}
+
+//=============================================================================
+const char* GLSLBackend::GetFunction(const char* name)
+{
+    return m_Priv->funcMap[std::string(name)].c_str();
 }
 
 //=============================================================================

@@ -85,12 +85,14 @@ class GLSLBackend : public Backend
         void AppendOutput(const char* s, ...);
 
         void AddSymbol(int id, const char* typePrefix);
+        const char* GetSymbol(int id);
+
+        const char* AddFunction(const char* name);
+        const char* GetFunction(const char* name);
 
         const char* AddTemporary(); 
         void PushTemporary(const char* t);
         const char* PopTemporary();
-
-        const char* GetSymbol(int id);
 
         friend class GLSLTrav;
 };

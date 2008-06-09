@@ -173,6 +173,12 @@ const char* _OperatorNames[] = {
     "EOpCompare",    // FIRTREE only
     "EOpPremultiply",    // FIRTREE only
     "EOpUnPremultiply",    // FIRTREE only
+    "EOpSample",    // FIRTREE only
+    "EOpSamplerCoord",    // FIRTREE only
+    "EOpSamplerExtent",    // FIRTREE only
+    "EOpSamplerOrigin",    // FIRTREE only
+    "EOpSamplerSize",    // FIRTREE only
+    "EOpSamplerTransform",    // FIRTREE only
 
     //
     // Branch

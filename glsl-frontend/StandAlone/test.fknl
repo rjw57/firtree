@@ -5,6 +5,7 @@ vec4 noparamFunc()
 
 void pointlessFunc(int a)
 {
+  int b = a++;
 }
 
 vec4 halfVec(vec4 foo)

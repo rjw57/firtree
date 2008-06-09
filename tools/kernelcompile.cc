@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
       buffer[n] = 0;
 
       try {
-         Firtree::GLSLBackend be("BLOCKID");
+         Firtree::GLSLBackend be("$$BLOCKID$$");
          Firtree::Compiler c(be);
          bool ret = c.Compile((const char**)(&buffer), 1);
 

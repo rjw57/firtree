@@ -140,31 +140,29 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
 {
     if(m_InParams && !m_InKernel)
     {
-        if(!m_InKernel)
+        if(m_ProcessedOneParam)
         {
-            if(m_ProcessedOneParam)
-            {
-                AppendOutput(", ");
-            } else {
-                m_ProcessedOneParam = true;
-            }
-
-            switch(n->getQualifier())
-            {
-                case EvqIn:
-                    AppendOutput("in ");
-                    break;
-                case EvqOut:
-                    AppendOutput("out ");
-                    break;
-                case EvqInOut:
-                    AppendOutput("inout ");
-                    break;
-            }
-
-            AppendGLSLType(n->getTypePointer()); AppendOutput(" ");
-            AppendOutput(GetSymbol(n->getId()));
+            AppendOutput(", ");
+        } else {
+            m_ProcessedOneParam = true;
         }
+
+        switch(n->getQualifier())
+        {
+            case EvqIn:
+                AppendOutput("in ");
+                break;
+            case EvqOut:
+                AppendOutput("out ");
+                break;
+            case EvqInOut:
+                AppendOutput("inout ");
+                break;
+        }
+
+        AddSymbol(n->getId(), "param_");
+        AppendGLSLType(n->getTypePointer()); AppendOutput(" ");
+        AppendOutput(GetSymbol(n->getId()));
     } else {
         const char* symname = GetSymbol(n->getId());
         if(symname == NULL)
@@ -175,7 +173,7 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
             AppendOutput(" %s;\n", symname);
         }
 
-        if(strncmp(symname, "param", 5) == 0)
+        if(m_InKernel && (strncmp(symname, "param", 5) == 0))
         {
             static char fullname[255];
             snprintf(fullname, 255, "%s_params.%s",

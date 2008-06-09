@@ -138,44 +138,52 @@ bool GLSLBackend::Generate(TIntermNode* root)
 //=============================================================================
 void GLSLBackend::VisitSymbol(TIntermSymbol* n)
 {
-    if(m_InParams)
+    if(m_InParams && !m_InKernel)
     {
-        // Skip samplers.
-        if(n->getTypePointer()->getBasicType() == EbtSampler)
-            return;
-
-        if(m_ProcessedOneParam)
+        if(!m_InKernel)
         {
-            AppendOutput(", ");
-        } else {
-            m_ProcessedOneParam = true;
-        }
+            if(m_ProcessedOneParam)
+            {
+                AppendOutput(", ");
+            } else {
+                m_ProcessedOneParam = true;
+            }
 
-        switch(n->getQualifier())
-        {
-            case EvqIn:
-                AppendOutput("in ");
-                break;
-            case EvqOut:
-                AppendOutput("out ");
-                break;
-            case EvqInOut:
-                AppendOutput("inout ");
-                break;
-        }
+            switch(n->getQualifier())
+            {
+                case EvqIn:
+                    AppendOutput("in ");
+                    break;
+                case EvqOut:
+                    AppendOutput("out ");
+                    break;
+                case EvqInOut:
+                    AppendOutput("inout ");
+                    break;
+            }
 
-        AppendGLSLType(n->getTypePointer()); AppendOutput(" ");
-        AddSymbol(n->getId(), "param_");
-        AppendOutput(GetSymbol(n->getId()));
+            AppendGLSLType(n->getTypePointer()); AppendOutput(" ");
+            AppendOutput(GetSymbol(n->getId()));
+        }
     } else {
-        if(GetSymbol(n->getId()) == NULL)
+        const char* symname = GetSymbol(n->getId());
+        if(symname == NULL)
         {
             AddSymbol(n->getId(), "sym_");
             AppendGLSLType(n->getTypePointer()); 
-            AppendOutput(" %s;\n", GetSymbol(n->getId()));
+            symname = GetSymbol(n->getId());
+            AppendOutput(" %s;\n", symname);
         }
 
-        PushTemporary(GetSymbol(n->getId()));
+        if(strncmp(symname, "param", 5) == 0)
+        {
+            static char fullname[255];
+            snprintf(fullname, 255, "%s_params.%s",
+                    m_Prefix.c_str(), symname);
+            PushTemporary(fullname);
+        } else {
+            PushTemporary(symname);
+        }
     }
 }
 
@@ -450,6 +458,35 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpKernel:
             if(preVisit) 
             { 
+                if(n->getOp() == EOpKernel)
+                {
+                    TIntermSequence& paramSequence =
+                        n->getSequence()[0]->getAsAggregate()->getSequence();
+                    
+                    if(paramSequence.size() > 0)
+                    {
+                        // Kernels have their 'parameters' passed via
+                        // a uniform structure.
+                        AppendOutput("struct %s_uniforms { \n", 
+                                m_Prefix.c_str());
+
+                        for(TIntermSequence::iterator i = paramSequence.begin();
+                                i != paramSequence.end(); i++)
+                        {
+                            TIntermSymbol* ns = (*i)->getAsSymbolNode();
+                            AddSymbol(ns->getId(), "param_");
+                            AppendOutput("  ");
+                            AppendGLSLType(ns->getTypePointer()); 
+                            AppendOutput(" %s;\n", 
+                                    GetSymbol(ns->getId()));
+                        }
+
+                        AppendOutput("};\n\n");
+                        AppendOutput("uniform %s_uniforms %s_params;\n\n",
+                                m_Prefix.c_str(), m_Prefix.c_str());
+                    }
+                }
+
                 AppendOutput("// %s definition (name: %s)\n", 
                         (n->getOp() == EOpFunction) ? "Function" : "Kernel",
                         n->getName().c_str());
@@ -605,6 +642,9 @@ void GLSLBackend::AppendGLSLType(TType* t)
                 break;
             case EbtBool:
                 AppendOutput("bool");
+                break;
+            case EbtSampler:
+                AppendOutput("int /*sampler*/"); // Samplers are basically indicies.
                 break;
             default:
                 FIRTREE_WARNING("Unknown basic type: %i", t->getBasicType());

@@ -64,6 +64,7 @@ class GLSLBackend : public Backend
 
         bool            m_InParams;
         bool            m_InFunction;
+        bool            m_InKernel;
         bool            m_ProcessedOneParam;
 
         struct Priv;
@@ -83,9 +84,12 @@ class GLSLBackend : public Backend
 
         void AppendOutput(const char* s, ...);
 
-        void AddSymbol(const char* name, const char* typePrefix);
         void AddSymbol(int id, const char* typePrefix);
-        const char* GetSymbol(const char* name);
+
+        const char* AddTemporary(); 
+        void PushTemporary(const char* t);
+        const char* PopTemporary();
+
         const char* GetSymbol(int id);
 
         friend class GLSLTrav;

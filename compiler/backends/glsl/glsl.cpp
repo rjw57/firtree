@@ -27,13 +27,23 @@
 #include "glslang/Public/ShaderLang.h"
 
 #include <map>
+#include <stack>
 
 namespace Firtree {
+
+extern const char* _OperatorNames[];
 
 //=============================================================================
 struct GLSLBackend::Priv
 {
-    std::map<TString, TString>   symbolMap;
+    public:
+        Priv() : temporaryId(0), funccounter(0) { }
+        ~Priv() { }
+
+        std::map<int, std::string>  symbolMap;
+        std::stack<TString>         temporaryStack;
+        unsigned int                temporaryId;
+        unsigned int                funccounter;
 };
 
 //=============================================================================
@@ -113,6 +123,7 @@ bool GLSLBackend::Generate(TIntermNode* root)
 
     m_InParams = false;
     m_InFunction = false;
+    m_InKernel = false;
 
     GLSLTrav trav(*this);
     root->traverse(&trav);
@@ -157,32 +168,277 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
         AddSymbol(n->getId(), "param_");
         AppendOutput(GetSymbol(n->getId()));
     } else {
-        AddSymbol(n->getId(), "tmp_");
-        AppendOutput("/* %s */", GetSymbol(n->getId()));
+        if(GetSymbol(n->getId()) == NULL)
+        {
+            AddSymbol(n->getId(), "sym_");
+            AppendGLSLType(n->getTypePointer()); 
+            AppendOutput(" %s;\n", GetSymbol(n->getId()));
+        }
+
+        PushTemporary(GetSymbol(n->getId()));
     }
 }
 
 //=============================================================================
 void GLSLBackend::VisitConstantUnion(TIntermConstantUnion* n)
 {
+    const char* tmp = AddTemporary();
+    PushTemporary(tmp);
+
+    constUnion* array = n->getUnionArrayPointer();
+    TType* t = n->getTypePointer();
+
+    AppendGLSLType(n->getTypePointer());
+    AppendOutput(" %s = ", tmp);
+
+    if(t->isVector())
+    {
+        AppendGLSLType(n->getTypePointer());
+        AppendOutput("(");
+
+        for(int i=0; i<t->getNominalSize(); i++)
+        {
+            switch(t->getBasicType())
+            {
+                case EbtFloat:
+                    AppendOutput("%f", array[i].getFConst());
+                    break;
+                case EbtInt:
+                    AppendOutput("%i", array[i].getIConst());
+                    break;
+                case EbtBool:
+                    AppendOutput("%s", array[i].getBConst() ? "true" : "false");
+                    break;
+                default:
+                    AppendOutput("/* ??? */");
+                    break;
+            }
+            if(i+1 < t->getNominalSize())
+            {
+                AppendOutput(",");
+            }
+        }
+
+        AppendOutput(");\n");
+    } else {
+        switch(t->getBasicType())
+        {
+            case EbtFloat:
+                AppendOutput("%f;\n", array[0].getFConst());
+                break;
+            case EbtInt:
+                AppendOutput("%i;\n", array[0].getIConst());
+                break;
+            case EbtBool:
+                AppendOutput("%s;\n", array[0].getBConst() ? "true" : "false");
+                break;
+            default:
+                AppendOutput("/* ??? */");
+                break;
+        }
+    }
 }
 
 //=============================================================================
 bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
 {
+    if(!preVisit)
+    {
+        TString right(PopTemporary());
+        TString left(PopTemporary());
+        
+        const char* tmp = AddTemporary();
+        PushTemporary(tmp);
+
+        switch(n->getOp())
+        {
+            case EOpAdd:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s + %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpSub:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s - %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpMul:
+            case EOpVectorTimesScalar:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s * %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpDiv:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s / %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpEqual:
+            case EOpVectorEqual:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s == %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpNotEqual:
+            case EOpVectorNotEqual:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s != %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpLessThan:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s < %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpGreaterThan:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s > %s;\n", tmp, left.c_str(), right.c_str());
+                break;
+            case EOpAssign:
+                PopTemporary(); // Not needed.
+                AppendOutput("%s = %s;\n", left.c_str(), right.c_str());
+                break;
+            case EOpAddAssign:
+                PopTemporary(); // Not needed.
+                AppendOutput("%s += %s;\n", left.c_str(), right.c_str());
+                break;
+            case EOpSubAssign:
+                PopTemporary(); // Not needed.
+                AppendOutput("%s -= %s;\n", left.c_str(), right.c_str());
+                break;
+            case EOpMulAssign:
+                PopTemporary(); // Not needed.
+                AppendOutput("%s *= %s;\n", left.c_str(), right.c_str());
+                break;
+            case EOpDivAssign:
+                PopTemporary(); // Not needed.
+                AppendOutput("%s /= %s;\n", left.c_str(), right.c_str());
+                break;
+            case EOpIndexDirect:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s[%s];\n", tmp, left.c_str(), right.c_str());
+                break;
+            default:
+                AppendOutput("/* ");
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s ?binop %s? %s*/\n",
+                        tmp,
+                        left.c_str(),
+                        _OperatorNames[n->getOp()],
+                        right.c_str());
+                break;
+        }
+    }
+
     return true;
 }
 
 //=============================================================================
 bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
 {
+    if(!preVisit)
+    {
+        TString operand(PopTemporary());
+        const char* tmp = AddTemporary();
+        PushTemporary(tmp);
+
+        switch(n->getOp())
+        {
+            case EOpNegative:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = -%s;\n", tmp, operand.c_str());
+                break;
+            case EOpPostIncrement:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s;\n", tmp, operand.c_str());
+                AppendOutput(" ++%s;\n", operand.c_str());
+                break;
+            case EOpPostDecrement:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = %s;\n", tmp, operand.c_str());
+                AppendOutput(" --%s;\n", operand.c_str());
+                break;
+            case EOpPreIncrement:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = ++%s;\n", tmp, operand.c_str());
+                break;
+            case EOpPreDecrement:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = --%s\n", tmp, operand.c_str());
+                break;
+            case EOpRadians:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = radians(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpDegrees:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = degrees(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSin:
+            case EOpSinRange:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = sin(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpCos:
+            case EOpCosRange:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = cos(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpTan:
+            case EOpTanRange:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = tan(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpAsin:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = asin(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpAcos:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = acos(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpAtan:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = atan(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpPow:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = pow(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpExp:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = exp(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpLog:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = log(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpExp2:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = exp2(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpLog2:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = log2(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSqrt:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = sqrt(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpInverseSqrt:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = inversesqrt(%s);\n", tmp, operand.c_str());
+                break;
+            default:
+                AppendOutput("/* ");
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = ?unop %s? (%s) */\n", tmp,
+                        _OperatorNames[n->getOp()], operand.c_str());
+                break;
+        }
+    }
+
     return true;
 }
 
 //=============================================================================
 bool GLSLBackend::VisitSelection(bool preVisit, TIntermSelection* n)
 {
-    return true;
+    FIRTREE_WARNING("Selection not handled.\n");
+    return false;
 }
 
 //=============================================================================
@@ -198,17 +454,19 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         (n->getOp() == EOpFunction) ? "Function" : "Kernel",
                         n->getName().c_str());
 
-                // Add this ntion to the symbol map.
-                AddSymbol(n->getName().c_str(), "n_");
-
                 AppendGLSLType(n->getTypePointer()); 
                 AppendOutput(" ");
-                AppendOutput("%s_%s", m_Prefix.c_str(), 
-                        GetSymbol(n->getName().c_str()));
+                AppendOutput("%s_func_%i", m_Prefix.c_str(), 
+                        m_Priv->funccounter++);
 
                 m_InFunction = true;
+                if(n->getOp() == EOpKernel)
+                {
+                    m_InKernel = true;
+                }
             } else {
                 m_InFunction = false;
+                m_InKernel = false;
 
                 AppendOutput("}\n\n");
             }
@@ -217,15 +475,68 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
             if(preVisit) 
             {
                 AppendOutput("(");
+
                 m_InParams = true;
                 m_ProcessedOneParam = false;
+
+                // If inside a kernel, add the kernel parameters
+                if(m_InKernel)
+                {
+                    AppendOutput("in vec2 destCoord");
+                    m_ProcessedOneParam = true;
+                }
             } else {
                 m_InParams = false;
                 AppendOutput(")\n{\n");
             }
             break;
+        case EOpSequence:
+            /* We can pretty much ignore these. */
+            break;
+        case EOpDestCoord:
+            if(!preVisit) 
+            {
+                PushTemporary("destCoord");
+            }
+            break;
+        case EOpFunctionCall:
+            {
+                if(!preVisit) 
+                {
+                    // Pop the arguments.
+                    std::vector<std::string> params;
+                    for(int i=0; i<n->getSequence().size(); i++)
+                    {
+                        params.push_back(std::string(PopTemporary()));
+                    }
+
+                    const char* tmp = AddTemporary();
+                    PushTemporary(tmp);
+
+                    AppendGLSLType(n->getTypePointer()); 
+                    AppendOutput(" %s = /* FUNCCALL */;\n", tmp);
+                }
+            }
+            break;
         default:
-            FIRTREE_WARNING("Unhandled aggregate operator: %i", n->getOp());
+            {
+                if(!preVisit) 
+                {
+                    // Pop the arguments.
+                    std::vector<std::string> params;
+                    for(int i=0; i<n->getSequence().size(); i++)
+                    {
+                        params.push_back(std::string(PopTemporary()));
+                    }
+                    const char* tmp = AddTemporary();
+                    PushTemporary(tmp);
+                    AppendGLSLType(n->getTypePointer()); 
+                    AppendOutput(" %s;", tmp);
+                    AppendOutput(" /* = ?aggregate %s */\n", 
+                            _OperatorNames[n->getOp()]);
+                }
+            }
+            break;
     }
 
     return true;
@@ -240,6 +551,23 @@ bool GLSLBackend::VisitLoop(bool preVisit, TIntermLoop* n)
 //=============================================================================
 bool GLSLBackend::VisitBranch(bool preVisit, TIntermBranch* n)
 {
+    if(!preVisit) 
+    { 
+        switch(n->getFlowOp())
+        {
+            case EOpReturn:
+                {
+                    const char* tmp = PopTemporary();
+                    AppendOutput("return %s;\n", tmp);
+                    break;
+                }
+            default:
+                AppendOutput("/* ?branch %s */\n",
+                        _OperatorNames[n->getFlowOp()]);
+                break;
+        }
+    }
+
     return true;
 }
 
@@ -311,28 +639,247 @@ void GLSLBackend::AppendOutput(const char* format, ...)
 //=============================================================================
 void GLSLBackend::AddSymbol(int id, const char* typePrefix)
 {
-    m_Priv->symbolMap["I" + String(id)] = 
-        TString(typePrefix) + String(m_Priv->symbolMap.size());
-}
-
-//=============================================================================
-void GLSLBackend::AddSymbol(const char* name, const char* typePrefix)
-{
-    m_Priv->symbolMap["N" + TString(name)] = 
-        TString(typePrefix) + String(m_Priv->symbolMap.size());
+    static char valstr[255];
+    snprintf(valstr, 255, "%s%i", typePrefix, m_Priv->symbolMap.size());
+    m_Priv->symbolMap[id] = std::string(valstr);
 }
 
 //=============================================================================
 const char* GLSLBackend::GetSymbol(int id)
 {
-    return m_Priv->symbolMap["I" + String(id)].c_str();
+    std::string& val = m_Priv->symbolMap[id];
+    if(val.empty())
+    {
+        return NULL;
+    }
+    return val.c_str();
 }
 
 //=============================================================================
-const char* GLSLBackend::GetSymbol(const char* name)
+const char* GLSLBackend::AddTemporary()
 {
-    return m_Priv->symbolMap["N" + TString(name)].c_str();
+    
+    TString tempName = "tmp_" + String(m_Priv->temporaryId++);
+    return tempName.c_str();
 }
+
+//=============================================================================
+void GLSLBackend::PushTemporary(const char* t)
+{
+    m_Priv->temporaryStack.push(TString(t));
+}
+
+//=============================================================================
+const char* GLSLBackend::PopTemporary()
+{
+    static TString lastTop;
+    lastTop = m_Priv->temporaryStack.top().c_str();
+    m_Priv->temporaryStack.pop();
+    return lastTop.c_str();
+}
+
+//=============================================================================
+const char* _OperatorNames[] = {
+    "EOpNull",            // if in a node", should only mean a node is still being built
+    "EOpSequence",        // denotes a list of statements, or parameters", etc.
+    "EOpFunctionCall",    
+    "EOpFunction",        // For function definition
+    "EOpKernel",          // For kernel definition. FIRTREE only
+    "EOpParameters",      // an aggregate listing the parameters to a function
+
+    //
+    // Unary operators
+    //
+    
+    "EOpNegative",
+    "EOpLogicalNot",
+    "EOpVectorLogicalNot",
+    "EOpBitwiseNot",
+
+    "EOpPostIncrement",
+    "EOpPostDecrement",
+    "EOpPreIncrement",
+    "EOpPreDecrement",
+
+    "EOpConvIntToBool",
+    "EOpConvFloatToBool",
+    "EOpConvBoolToFloat",
+    "EOpConvIntToFloat",
+    "EOpConvFloatToInt",
+    "EOpConvBoolToInt",
+
+    //
+    // binary operations
+    //
+
+    "EOpAdd",
+    "EOpSub",
+    "EOpMul",
+    "EOpDiv",
+    "EOpMod",
+    "EOpRightShift",
+    "EOpLeftShift",
+    "EOpAnd",
+    "EOpInclusiveOr",
+    "EOpExclusiveOr",
+    "EOpEqual",
+    "EOpNotEqual",
+    "EOpVectorEqual",
+    "EOpVectorNotEqual",
+    "EOpLessThan",
+    "EOpGreaterThan",
+    "EOpLessThanEqual",
+    "EOpGreaterThanEqual",
+    "EOpComma",
+
+    "EOpVectorTimesScalar",
+    "EOpVectorTimesMatrix",
+    "EOpMatrixTimesVector",
+    "EOpMatrixTimesScalar",
+
+    "EOpLogicalOr",
+    "EOpLogicalXor",
+    "EOpLogicalAnd",
+
+    "EOpIndexDirect",
+    "EOpIndexIndirect",
+    "EOpIndexDirectStruct",
+
+    "EOpVectorSwizzle",
+
+    //
+    // Built-in functions potentially mapped to operators
+    //
+
+    "EOpRadians",
+    "EOpDegrees",
+    "EOpSin",
+    "EOpCos",
+    "EOpTan",
+    "EOpAsin",
+    "EOpAcos",
+    "EOpAtan",
+
+    //
+    // FIRTREE only
+    // 
+    "EOpSinRange",
+    "EOpCosRange",
+    "EOpTanRange",
+    "EOpSinCos",
+    "EOpCosSin",
+    "EOpSinCosRange",
+    "EOpCosSinRange",
+
+    "EOpPow",
+    "EOpExp",
+    "EOpLog",
+    "EOpExp2",
+    "EOpLog2",
+    "EOpSqrt",
+    "EOpInverseSqrt",
+
+    "EOpAbs",
+    "EOpSign",
+    "EOpFloor",
+    "EOpCeil",
+    "EOpFract",
+    "EOpMin",
+    "EOpMax",
+    "EOpClamp",
+    "EOpMix",
+    "EOpStep",
+    "EOpSmoothStep",
+
+    "EOpLength",
+    "EOpDistance",
+    "EOpDot",
+    "EOpCross",
+    "EOpNormalize",
+    "EOpFaceForward",
+    "EOpReflect",
+    "EOpRefract",
+
+    "EOpDPdx",            // Fragment only
+    "EOpDPdy",            // Fragment only
+    "EOpFwidth",          // Fragment only
+
+    "EOpMatrixTimesMatrix",
+
+    "EOpAny",
+    "EOpAll",
+    
+    "EOpItof",         // pack/unpack only
+    "EOpFtoi",         // pack/unpack only    
+    "EOpSkipPixels",   // pack/unpack only
+    "EOpReadInput",    // unpack only
+    "EOpWritePixel",   // unpack only
+    "EOpBitmapLsb",    // unpack only
+    "EOpBitmapMsb",    // unpack only
+    "EOpWriteOutput",  // pack only
+    "EOpReadPixel",    // pack only
+
+    "EOpDestCoord",    // FIRTREE only
+    "EOpCompare",    // FIRTREE only
+    "EOpPremultiply",    // FIRTREE only
+    "EOpUnPremultiply",    // FIRTREE only
+
+    //
+    // Branch
+    //
+
+    "EOpKill",            // Fragment only
+    "EOpReturn",
+    "EOpBreak",
+    "EOpContinue",
+
+    //
+    // Constructors
+    //
+
+    "EOpConstructInt",
+    "EOpConstructBool",
+    "EOpConstructFloat",
+    "EOpConstructVec2",
+    "EOpConstructVec3",
+    "EOpConstructVec4",
+    "EOpConstructBVec2",
+    "EOpConstructBVec3",
+    "EOpConstructBVec4",
+    "EOpConstructIVec2",
+    "EOpConstructIVec3",
+    "EOpConstructIVec4",
+    "EOpConstructMat2",
+    "EOpConstructMat3",
+    "EOpConstructMat4",
+    "EOpConstructStruct",
+
+    //
+    // moves
+    //
+    
+    "EOpAssign",
+    "EOpAddAssign",
+    "EOpSubAssign",
+    "EOpMulAssign",
+    "EOpVectorTimesMatrixAssign",
+    "EOpVectorTimesScalarAssign",
+    "EOpMatrixTimesScalarAssign",
+    "EOpMatrixTimesMatrixAssign",
+    "EOpDivAssign",
+    "EOpModAssign",
+    "EOpAndAssign",
+    "EOpInclusiveOrAssign",
+    "EOpExclusiveOrAssign",
+    "EOpLeftShiftAssign",
+    "EOpRightShiftAssign",
+
+    //
+    // Array operators
+    //
+
+    "EOpArrayLength",
+};
 
 //=============================================================================
 } // namespace Firtree

@@ -1018,6 +1018,12 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
     	symbolTable.relateToOperator("compare",          EOpCompare);
     	symbolTable.relateToOperator("premultiply",          EOpPremultiply);
     	symbolTable.relateToOperator("unpremultiply",          EOpUnPremultiply);
+    	symbolTable.relateToOperator("sample",          EOpSample);
+    	symbolTable.relateToOperator("samplerCoord",          EOpSample);
+    	symbolTable.relateToOperator("samplerExtent",          EOpSamplerExtent);
+    	symbolTable.relateToOperator("samplerOrigin",          EOpSamplerOrigin);
+    	symbolTable.relateToOperator("samplerSize",          EOpSamplerSize);
+    	symbolTable.relateToOperator("samplerTransform",          EOpSamplerTransform);
         break;
 	default: assert(false && "Language not supported");
     }

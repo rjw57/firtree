@@ -332,6 +332,12 @@ bool OutputAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTravers
     // FIRTREE only
     case EOpDestCoord: out.debug << "kernel-destination-coord"; break;
     case EOpCompare: out.debug << "compare ( ($1<0) ? $2:$3 )"; break;
+    case EOpSample: out.debug << "sample"; break;
+    case EOpSamplerCoord: out.debug << "samplerCoord"; break;
+    case EOpSamplerExtent: out.debug << "samplerExtent"; break;
+    case EOpSamplerOrigin: out.debug << "samplerOrigin"; break;
+    case EOpSamplerSize: out.debug << "samplerSize"; break;
+    case EOpSamplerTransform: out.debug << "samplerTransform"; break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }

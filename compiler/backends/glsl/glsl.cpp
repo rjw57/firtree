@@ -576,7 +576,12 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
 
                 AppendGLSLType(n->getTypePointer()); 
                 AppendOutput(" ");
-                AppendOutput("%s", AddFunction(n->getName().c_str()));
+                if(n->getOp() == EOpFunction)
+                {
+                    AppendOutput("%s", AddFunction(n->getName().c_str()));
+                } else {
+                    AppendOutput("%s_kernel", m_Prefix.c_str());
+                }
 
                 m_InFunction = true;
                 if(n->getOp() == EOpKernel)

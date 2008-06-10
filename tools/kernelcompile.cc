@@ -28,18 +28,98 @@
 
 void Usage()
 {
-   fprintf(stderr, "Usage: kernelcompile <kernel file>\n");
+   fprintf(stderr, "Usage: kernelcompile [-b <irdump|glsl>] <kernel file>\n");
 }
+
+void printParameter(Firtree::GLSLBackend::Parameter& param)
+{
+   printf(" %s -> %s", param.humanName.c_str(), param.uniformName.c_str());
+   printf(" (");
+   switch(param.basicType)
+   {
+      case Firtree::GLSLBackend::Parameter::Int:
+         printf("int");
+         break;
+      case Firtree::GLSLBackend::Parameter::Float:
+         printf("float");
+         break;
+      case Firtree::GLSLBackend::Parameter::Bool:
+         printf("bool");
+         break;
+      case Firtree::GLSLBackend::Parameter::Sampler:
+         printf("sampler");
+         break;
+      default:
+         printf("????");
+         break;
+   }
+   printf(" x %i", param.vectorSize);
+   if(param.isColor) {
+      printf(" [color]");
+   }
+   printf(")\n");
+}
+
+enum Backend {
+   IRDump,
+   GLSL,
+};
 
 int main(int argc, char *argv[])
 {
-   if(argc != 2)
+   if(argc == 1)
    {
       Usage();
       return 1;
    }
 
-   const char* inFile = argv[1];
+   int index = 1;
+   const char* inFile = NULL;
+   Backend backend = GLSL;
+
+   while((index < argc) && (argv[index][0] == '-'))
+   {
+      switch(argv[index][1])
+      {
+         case 'b':
+            index++;
+            if(index<argc)
+            {
+               if(0 == strcmp(argv[index], "irdump")) {
+                  backend = IRDump;
+               } else if(0 == strcmp(argv[index], "glsl")) {
+                  backend = GLSL;
+               } else {
+                  fprintf(stderr, "Unknown backend: %s\n", argv[index]);
+                  Usage();
+                  return 1;
+               }
+            } else {
+               fprintf(stderr, "Option -b requires an argument\n");
+               Usage();
+               return 1;
+            }
+            break;
+         default:
+            fprintf(stderr, "unknown option: %c\n", argv[index][1]);
+            Usage();
+            return 1;
+      }
+
+      index++;
+   }
+
+   if(index<argc)
+   {
+      inFile = argv[index];
+   }
+
+   if(inFile == NULL)
+   {
+      Usage();
+      return 1;
+   }
+
    FILE* pInFile = fopen(inFile, "rb");
    if(!pInFile)
    {
@@ -56,8 +136,19 @@ int main(int argc, char *argv[])
       buffer[n] = 0;
 
       try {
-         Firtree::GLSLBackend be("$$BLOCKID$$");
-         Firtree::Compiler c(be);
+         Firtree::Backend* be = NULL;
+
+         switch(backend)
+         {
+            case GLSL:
+               be = new Firtree::GLSLBackend("$BLOCK$");
+               break;
+            case IRDump:
+               be = new Firtree::IRDumpBackend(stdout);
+               break;
+         }
+
+         Firtree::Compiler c(*be);
          bool ret = c.Compile((const char**)(&buffer), 1);
 
          printf("Compiler info log:\n%s\n", c.GetInfoLog());
@@ -66,7 +157,20 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Error compiling shader.\n");
             return 3;
          } else {
-            printf("Compiled GLSL:\n%s\n", be.GetOutput());
+            if(backend == GLSL)
+            {
+               printf("Compiled GLSL:\n%s\n", 
+                     reinterpret_cast<Firtree::GLSLBackend*>(be)->GetOutput());
+
+               printf("Input parameters:\n");
+               Firtree::GLSLBackend::Parameters& params = 
+                  reinterpret_cast<Firtree::GLSLBackend*>(be)->GetInputParameters();
+               for(Firtree::GLSLBackend::Parameters::iterator i = params.begin();
+                     i != params.end(); i++)
+               {
+                  printParameter(*i);
+               }
+            }
          }
       } catch(Firtree::Exception e) {
          fprintf(stderr, "Exception caught: %s\n", e.GetMessage().c_str());

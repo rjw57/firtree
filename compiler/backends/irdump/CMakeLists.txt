@@ -6,6 +6,7 @@
 
 SET(BACKEND_SOURCES
 	irdump.h	irdump.cpp
+	../utils.h	../utils.cpp
 )
 
 ADD_LIBRARY(irbackend ${BACKEND_SOURCES})

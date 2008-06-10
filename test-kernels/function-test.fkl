@@ -1,6 +1,6 @@
 // Trivial function test
 
-float half(float a)
+float halfVec(float a)
 {
     return 0.5*a;
 }
@@ -12,10 +12,10 @@ vec4 offset_sin(vec4 a)
 
 kernel vec4 testKernel(float param, float p2)
 {
-    float a = half(param);
-    float b = half(p2);
+    float a = halfVec(param);
+    float b = halfVec(p2);
     vec4 c = offset_sin(vec4(a,a,0,0));
-    float d = destCoord();
+    vec2 d = destCoord();
 
     return c;
 }

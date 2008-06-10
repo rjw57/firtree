@@ -26,12 +26,12 @@
 #include "glslang/Include/intermediate.h"
 #include "glslang/Public/ShaderLang.h"
 
+#include "../utils.h"
+
 #include <map>
 #include <stack>
 
 namespace Firtree {
-
-extern const char* _OperatorNames[];
 
 //=============================================================================
 struct GLSLBackend::Priv
@@ -344,9 +344,9 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 AppendOutput(" %s = %s ?binop %s? %s*/\n",
                         tmp,
                         left.c_str(),
-                        _OperatorNames[n->getOp()],
+                        OperatorCodeToDescription(n->getOp()),
                         right.c_str());
-                FAIL_RET("Unknown unary op: %s", _OperatorNames[n->getOp()]);
+                FAIL_RET("Unknown unary op: %s", OperatorCodeToDescription(n->getOp()));
                 break;
         }
     }
@@ -515,8 +515,8 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendOutput("/* ");
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = ?unop %s? (%s) */\n", tmp,
-                        _OperatorNames[n->getOp()], operand.c_str());
-                FAIL_RET("Unknown unary op: %s", _OperatorNames[n->getOp()]);
+                        OperatorCodeToDescription(n->getOp()), operand.c_str());
+                FAIL_RET("Unknown unary op: %s", OperatorCodeToDescription(n->getOp()));
                 break;
         }
     }
@@ -544,6 +544,8 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                 {
                     TIntermSequence& paramSequence =
                         n->getSequence()[0]->getAsAggregate()->getSequence();
+
+                    m_InputParameters.clear();
                     
                     if(paramSequence.size() > 0)
                     {
@@ -556,12 +558,41 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                                 i != paramSequence.end(); i++)
                         {
                             TIntermSymbol* ns = (*i)->getAsSymbolNode();
+                            TType* t = ns->getTypePointer();
                             AddSymbol(ns->getId(), "param_");
                             AppendOutput("  ");
-                            AppendGLSLType(ns->getTypePointer()); 
+                            AppendGLSLType(t);
                             AppendOutput(" %s; ", 
                                     GetSymbol(ns->getId()));
                             AppendOutput("/* orig: %s */\n", ns->getSymbol().c_str());
+
+                            Parameter paramStruct;
+                            paramStruct.humanName =
+                                std::string(ns->getSymbol().c_str());
+                            paramStruct.uniformName =
+                                std::string(GetSymbol(ns->getId()));
+                            paramStruct.vectorSize = t->getNominalSize();
+                            paramStruct.isColor = t->isColor();
+
+                            switch(t->getBasicType())
+                            {
+                                case EbtFloat:
+                                    paramStruct.basicType = Parameter::Float;
+                                    break;
+                                case EbtInt:
+                                    paramStruct.basicType = Parameter::Int;
+                                    break;
+                                case EbtBool:
+                                    paramStruct.basicType = Parameter::Bool;
+                                    break;
+                                case EbtSampler:
+                                    paramStruct.basicType = Parameter::Sampler;
+                                    break;
+                                default:
+                                    FAIL_RET("Unknown parameter type to kernel.");
+                            }
+
+                            m_InputParameters.push_back(paramStruct);
                         }
 
                         AppendOutput("};\n\n");
@@ -629,6 +660,18 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpSmoothStep:
         case EOpSample:
         case EOpSamplerTransform:
+        case EOpConstructInt:
+        case EOpConstructBool:
+        case EOpConstructFloat:
+        case EOpConstructVec2:
+        case EOpConstructVec3:
+        case EOpConstructVec4:
+        case EOpConstructBVec2:
+        case EOpConstructBVec3:
+        case EOpConstructBVec4:
+        case EOpConstructIVec2:
+        case EOpConstructIVec3:
+        case EOpConstructIVec4:
             if(!preVisit) 
             {
                 // Pop the arguments.
@@ -663,6 +706,42 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpSamplerTransform:
                         funcname = "__builtin_sampler_transform";
+                        break;
+                    case EOpConstructInt:
+                        funcname = "int";
+                        break;
+                    case EOpConstructBool:
+                        funcname = "bool";
+                        break;
+                    case EOpConstructFloat:
+                        funcname = "float";
+                        break;
+                    case EOpConstructVec2:
+                        funcname = "vec2";
+                        break;
+                    case EOpConstructVec3:
+                        funcname = "vec3";
+                        break;
+                    case EOpConstructVec4:
+                        funcname = "vec4";
+                        break;
+                    case EOpConstructBVec2:
+                        funcname = "bvec2";
+                        break;
+                    case EOpConstructBVec3:
+                        funcname = "bvec3";
+                        break;
+                    case EOpConstructBVec4:
+                        funcname = "bvec4";
+                        break;
+                    case EOpConstructIVec2:
+                        funcname = "ivec2";
+                        break;
+                    case EOpConstructIVec3:
+                        funcname = "ivec3";
+                        break;
+                    case EOpConstructIVec4:
+                        funcname = "ivec4";
                         break;
                 }
 
@@ -699,9 +778,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                     AppendGLSLType(n->getTypePointer()); 
                     AppendOutput(" %s;", tmp);
                     AppendOutput(" /* = ?aggregate %s */\n", 
-                            _OperatorNames[n->getOp()]);
+                            OperatorCodeToDescription(n->getOp()));
 
-                    FAIL_RET("Unknown aggregate op: %s", _OperatorNames[n->getOp()]);
+                    FAIL_RET("Unknown aggregate op: %s", OperatorCodeToDescription(n->getOp()));
                 }
             }
             break;
@@ -731,8 +810,8 @@ bool GLSLBackend::VisitBranch(bool preVisit, TIntermBranch* n)
                 }
             default:
                 AppendOutput("/* ?branch %s */\n",
-                        _OperatorNames[n->getFlowOp()]);
-                FAIL_RET("Unknown branch op: %s", _OperatorNames[n->getFlowOp()]);
+                        OperatorCodeToDescription(n->getFlowOp()));
+                FAIL_RET("Unknown branch op: %s", OperatorCodeToDescription(n->getFlowOp()));
                 break;
         }
     }
@@ -871,215 +950,6 @@ const char* GLSLBackend::PopTemporary()
     m_Priv->temporaryStack.pop();
     return lastTop.c_str();
 }
-
-//=============================================================================
-const char* _OperatorNames[] = {
-    "EOpNull",            // if in a node", should only mean a node is still being built
-    "EOpSequence",        // denotes a list of statements, or parameters", etc.
-    "EOpFunctionCall",    
-    "EOpFunction",        // For function definition
-    "EOpKernel",          // For kernel definition. FIRTREE only
-    "EOpParameters",      // an aggregate listing the parameters to a function
-
-    //
-    // Unary operators
-    //
-    
-    "EOpNegative",
-    "EOpLogicalNot",
-    "EOpVectorLogicalNot",
-    "EOpBitwiseNot",
-
-    "EOpPostIncrement",
-    "EOpPostDecrement",
-    "EOpPreIncrement",
-    "EOpPreDecrement",
-
-    "EOpConvIntToBool",
-    "EOpConvFloatToBool",
-    "EOpConvBoolToFloat",
-    "EOpConvIntToFloat",
-    "EOpConvFloatToInt",
-    "EOpConvBoolToInt",
-
-    //
-    // binary operations
-    //
-
-    "EOpAdd",
-    "EOpSub",
-    "EOpMul",
-    "EOpDiv",
-    "EOpMod",
-    "EOpRightShift",
-    "EOpLeftShift",
-    "EOpAnd",
-    "EOpInclusiveOr",
-    "EOpExclusiveOr",
-    "EOpEqual",
-    "EOpNotEqual",
-    "EOpVectorEqual",
-    "EOpVectorNotEqual",
-    "EOpLessThan",
-    "EOpGreaterThan",
-    "EOpLessThanEqual",
-    "EOpGreaterThanEqual",
-    "EOpComma",
-
-    "EOpVectorTimesScalar",
-    "EOpVectorTimesMatrix",
-    "EOpMatrixTimesVector",
-    "EOpMatrixTimesScalar",
-
-    "EOpLogicalOr",
-    "EOpLogicalXor",
-    "EOpLogicalAnd",
-
-    "EOpIndexDirect",
-    "EOpIndexIndirect",
-    "EOpIndexDirectStruct",
-
-    "EOpVectorSwizzle",
-
-    //
-    // Built-in functions potentially mapped to operators
-    //
-
-    "EOpRadians",
-    "EOpDegrees",
-    "EOpSin",
-    "EOpCos",
-    "EOpTan",
-    "EOpAsin",
-    "EOpAcos",
-    "EOpAtan",
-
-    //
-    // FIRTREE only
-    // 
-    "EOpSinRange",
-    "EOpCosRange",
-    "EOpTanRange",
-    "EOpSinCos",
-    "EOpCosSin",
-    "EOpSinCosRange",
-    "EOpCosSinRange",
-
-    "EOpPow",
-    "EOpExp",
-    "EOpLog",
-    "EOpExp2",
-    "EOpLog2",
-    "EOpSqrt",
-    "EOpInverseSqrt",
-
-    "EOpAbs",
-    "EOpSign",
-    "EOpFloor",
-    "EOpCeil",
-    "EOpFract",
-    "EOpMin",
-    "EOpMax",
-    "EOpClamp",
-    "EOpMix",
-    "EOpStep",
-    "EOpSmoothStep",
-
-    "EOpLength",
-    "EOpDistance",
-    "EOpDot",
-    "EOpCross",
-    "EOpNormalize",
-    "EOpFaceForward",
-    "EOpReflect",
-    "EOpRefract",
-
-    "EOpDPdx",            // Fragment only
-    "EOpDPdy",            // Fragment only
-    "EOpFwidth",          // Fragment only
-
-    "EOpMatrixTimesMatrix",
-
-    "EOpAny",
-    "EOpAll",
-    
-    "EOpItof",         // pack/unpack only
-    "EOpFtoi",         // pack/unpack only    
-    "EOpSkipPixels",   // pack/unpack only
-    "EOpReadInput",    // unpack only
-    "EOpWritePixel",   // unpack only
-    "EOpBitmapLsb",    // unpack only
-    "EOpBitmapMsb",    // unpack only
-    "EOpWriteOutput",  // pack only
-    "EOpReadPixel",    // pack only
-
-    "EOpDestCoord",    // FIRTREE only
-    "EOpCompare",    // FIRTREE only
-    "EOpPremultiply",    // FIRTREE only
-    "EOpUnPremultiply",    // FIRTREE only
-    "EOpSample",    // FIRTREE only
-    "EOpSamplerCoord",    // FIRTREE only
-    "EOpSamplerExtent",    // FIRTREE only
-    "EOpSamplerOrigin",    // FIRTREE only
-    "EOpSamplerSize",    // FIRTREE only
-    "EOpSamplerTransform",    // FIRTREE only
-
-    //
-    // Branch
-    //
-
-    "EOpKill",            // Fragment only
-    "EOpReturn",
-    "EOpBreak",
-    "EOpContinue",
-
-    //
-    // Constructors
-    //
-
-    "EOpConstructInt",
-    "EOpConstructBool",
-    "EOpConstructFloat",
-    "EOpConstructVec2",
-    "EOpConstructVec3",
-    "EOpConstructVec4",
-    "EOpConstructBVec2",
-    "EOpConstructBVec3",
-    "EOpConstructBVec4",
-    "EOpConstructIVec2",
-    "EOpConstructIVec3",
-    "EOpConstructIVec4",
-    "EOpConstructMat2",
-    "EOpConstructMat3",
-    "EOpConstructMat4",
-    "EOpConstructStruct",
-
-    //
-    // moves
-    //
-    
-    "EOpAssign",
-    "EOpAddAssign",
-    "EOpSubAssign",
-    "EOpMulAssign",
-    "EOpVectorTimesMatrixAssign",
-    "EOpVectorTimesScalarAssign",
-    "EOpMatrixTimesScalarAssign",
-    "EOpMatrixTimesMatrixAssign",
-    "EOpDivAssign",
-    "EOpModAssign",
-    "EOpAndAssign",
-    "EOpInclusiveOrAssign",
-    "EOpExclusiveOrAssign",
-    "EOpLeftShiftAssign",
-    "EOpRightShiftAssign",
-
-    //
-    // Array operators
-    //
-
-    "EOpArrayLength",
-};
 
 //=============================================================================
 } // namespace Firtree

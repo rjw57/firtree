@@ -29,6 +29,7 @@
 #include <compiler/include/main.h>
 
 #include <stdio.h>
+#include <vector>
 
 // Forward declaration of intermediate representation node (from GLSL frontend).
 class TIntermNode;
@@ -46,9 +47,29 @@ class TType;
 namespace Firtree {
 
 //=============================================================================
-// A simple intermediate representation dumping backend.
+// The GLSL backend
 class GLSLBackend : public Backend
 {
+    public:
+        // A kernel input parameter
+        struct Parameter {
+            enum {
+                Int, 
+                Float,
+                Bool,
+                Sampler,
+            }                       basicType;
+            int                     vectorSize; //< In range [1,4].
+            std::string             humanName;  //< The human readable name from
+                                                //< The original dource.
+            std::string             uniformName;    //< The name used in the
+                                                    //< kernel's uniform structure.
+                                                   
+            bool                    isColor : 1;
+        };
+
+        typedef std::vector<Parameter> Parameters;
+
     public:
         GLSLBackend(const char* prefix);
         virtual ~GLSLBackend();
@@ -56,6 +77,8 @@ class GLSLBackend : public Backend
         bool Generate(TIntermNode* root);
         
         const char* GetOutput() { return m_Output.c_str(); }
+        
+        Parameters& GetInputParameters() { return m_InputParameters; }
 
     protected:
         std::string     m_Prefix;
@@ -66,6 +89,8 @@ class GLSLBackend : public Backend
         bool            m_InFunction;
         bool            m_InKernel;
         bool            m_ProcessedOneParam;
+
+        Parameters      m_InputParameters;
 
         struct Priv;
         Priv*           m_Priv;

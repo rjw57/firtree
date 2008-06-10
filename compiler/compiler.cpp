@@ -44,7 +44,7 @@ Compiler::Compiler(Backend& backend)
 
     ShInitialize();
 
-    m_Priv->compiler = ShConstructCompiler(EShLangKernel, EDebugOpIntermediate /* no debug opts */ );
+    m_Priv->compiler = ShConstructCompiler(EShLangKernel, 0 /* no debug opts */ );
 
     // Check compiler was created.
     if(m_Priv->compiler == 0)
@@ -97,7 +97,7 @@ bool Compiler::Compile(const char** sourceLines, unsigned int lineCount)
     // Call the GLSL compiler front end
     TBuiltInResource resources;
     int ret = ShCompile(m_Priv->compiler, lines, 1 /* multiple strings */,
-            EShOptNone, &resources, EDebugOpIntermediate /* no debug opts */);
+            EShOptNone, &resources, 0 /* no debug opts */);
 
     // Delete line buffer.
     delete[] lines;

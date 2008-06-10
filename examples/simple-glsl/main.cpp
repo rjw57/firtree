@@ -27,15 +27,27 @@
 
 using namespace Firtree;
 
-const char* g_KernelSource = 
+const char* g_CheckerKernelSource = 
 "    kernel vec4 testKernel(void)"
 "    {"
-"        float squareSize = 25.0;"
+"        float squareSize = 10.0;"
 "        vec2 dc = mod(destCoord(), squareSize*2.0);"
 "        vec2 discriminant = step(squareSize, dc);"
 "        float flag = discriminant.x + discriminant.y - "
 "                     2.0*discriminant.x*discriminant.y;"
 "        return vec4((0.25 + 0.5*flag) * vec3(1,1,1), 1);"
+"    }"
+;
+
+const char* g_KernelSource = 
+"    kernel vec4 testKernel(void)"
+"    {"
+"        float dotPitch = 60.0;"
+"        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
+"        float discriminant = 1.0 - smoothstep(0.3*dotPitch-0.5,"
+"               0.3*dotPitch+0.5, length(dc));"
+"        discriminant = sqrt(discriminant);"
+"        return vec4(discriminant,discriminant,0,1);"
 "    }"
 ;
 

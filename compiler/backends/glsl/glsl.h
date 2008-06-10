@@ -77,12 +77,14 @@ class GLSLBackend : public Backend
         bool Generate(TIntermNode* root);
         
         const char* GetOutput() { return m_Output.c_str(); }
+        const char* GetOutputKernelName() { return m_OutputKernelName.c_str(); }
         
         Parameters& GetInputParameters() { return m_InputParameters; }
 
     protected:
         std::string     m_Prefix;
         std::string     m_Output;
+        std::string     m_OutputKernelName;
         bool            m_SuccessFlag;
 
         bool            m_InParams;

@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
          switch(backend)
          {
             case GLSL:
-               be = new Firtree::GLSLBackend("$BLOCK$");
+               be = new Firtree::GLSLBackend("BLOCK");
                break;
             case IRDump:
                be = new Firtree::IRDumpBackend(stdout);

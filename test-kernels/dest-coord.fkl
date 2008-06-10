@@ -1,9 +1,9 @@
 // Trivial test of destCoord.
 
-kernel vec4 destCoordKernel()
+kernel vec4 testKernel(void)
 {
     vec2 dc = destCoord();
-    return vec4(1,1,1,1);
+    return vec4(dc/700.0,1,1);
 }
 
 // vim:sw=4:ts=4:et:cindent:filetype=c

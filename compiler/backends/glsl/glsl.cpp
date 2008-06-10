@@ -251,11 +251,24 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
 {
     if(!preVisit)
     {
-        TString right(PopTemporary());
-        TString left(PopTemporary());
+        std::string right(PopTemporary());
+        std::string left(PopTemporary());
         
-        const char* tmp = AddTemporary();
-        PushTemporary(tmp);
+        const char* tmp = NULL;
+        switch(n->getOp())
+        {
+            case EOpAssign:
+            case EOpAddAssign:
+            case EOpSubAssign:
+            case EOpMulAssign:
+            case EOpDivAssign:
+                /* These do not create temporaries. */
+                break;
+
+            default:
+                tmp = AddTemporary();
+                PushTemporary(tmp);
+        }
 
         switch(n->getOp())
         {
@@ -295,48 +308,28 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 AppendOutput(" %s = %s > %s;\n", tmp, left.c_str(), right.c_str());
                 break;
             case EOpAssign:
-                PopTemporary(); // Not needed.
                 AppendOutput("%s = %s;\n", left.c_str(), right.c_str());
+                PushTemporary(left.c_str());
                 break;
             case EOpAddAssign:
-                PopTemporary(); // Not needed.
                 AppendOutput("%s += %s;\n", left.c_str(), right.c_str());
+                PushTemporary(left.c_str());
                 break;
             case EOpSubAssign:
-                PopTemporary(); // Not needed.
                 AppendOutput("%s -= %s;\n", left.c_str(), right.c_str());
+                PushTemporary(left.c_str());
                 break;
             case EOpMulAssign:
-                PopTemporary(); // Not needed.
                 AppendOutput("%s *= %s;\n", left.c_str(), right.c_str());
+                PushTemporary(left.c_str());
                 break;
             case EOpDivAssign:
-                PopTemporary(); // Not needed.
                 AppendOutput("%s /= %s;\n", left.c_str(), right.c_str());
+                PushTemporary(left.c_str());
                 break;
             case EOpIndexDirect:
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = %s[%s];\n", tmp, left.c_str(), right.c_str());
-                break;
-            case EOpMin:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = min(%s,%s);\n", tmp, left.c_str(), right.c_str());
-                break;
-            case EOpMax:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = max(%s,%s);\n", tmp, left.c_str(), right.c_str());
-                break;
-            case EOpStep:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = step(%s,%s);\n", tmp, left.c_str(), right.c_str());
-                break;
-            case EOpDot:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = dot(%s,%s);\n", tmp, left.c_str(), right.c_str());
-                break;
-            case EOpCross:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = cross(%s,%s);\n", tmp, left.c_str(), right.c_str());
                 break;
             default:
                 AppendOutput("/* ");
@@ -611,7 +604,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                 {
                     AppendOutput("%s", AddFunction(n->getName().c_str()));
                 } else {
-                    AppendOutput("%s_kernel", m_Prefix.c_str());
+                    m_OutputKernelName = m_Prefix;
+                    m_OutputKernelName += "_kernel";
+                    AppendOutput(m_OutputKernelName.c_str());
                 }
 
                 m_InFunction = true;
@@ -651,6 +646,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpDestCoord:
             if(!preVisit) 
             {
+                // AppendOutput("/* destcoord */\n");
                 PushTemporary("destCoord");
             }
             break;
@@ -658,6 +654,12 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpCompare:
         case EOpClamp:
         case EOpSmoothStep:
+        case EOpMod:
+        case EOpMin:
+        case EOpMax:
+        case EOpStep:
+        case EOpDot:
+        case EOpCross:
         case EOpSample:
         case EOpSamplerTransform:
         case EOpConstructInt:
@@ -697,6 +699,24 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpClamp:
                         funcname = "clamp";
+                        break;
+                    case EOpMod:
+                        funcname = "mod";
+                        break;
+                    case EOpMin:
+                        funcname = "min";
+                        break;
+                    case EOpMax:
+                        funcname = "max";
+                        break;
+                    case EOpStep:
+                        funcname = "step";
+                        break;
+                    case EOpDot:
+                        funcname = "dot";
+                        break;
+                    case EOpCross:
+                        funcname = "cross";
                         break;
                     case EOpSmoothStep:
                         funcname = "smoothstep";
@@ -939,6 +959,7 @@ const char* GLSLBackend::AddTemporary()
 //=============================================================================
 void GLSLBackend::PushTemporary(const char* t)
 {
+    // printf("Pushing: %s\n", t);
     m_Priv->temporaryStack.push(TString(t));
 }
 
@@ -947,6 +968,7 @@ const char* GLSLBackend::PopTemporary()
 {
     static TString lastTop;
     lastTop = m_Priv->temporaryStack.top().c_str();
+    // printf("Popping: %s\n", lastTop.c_str());
     m_Priv->temporaryStack.pop();
     return lastTop.c_str();
 }

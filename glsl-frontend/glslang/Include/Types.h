@@ -119,7 +119,7 @@ public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
     explicit TType(TBasicType t, TQualifier q = EvqTemporary, int s = 1, bool m = false, bool a = false) :
                             type(t), qualifier(q), size(s), matrix(m), array(a), arraySize(0),
-                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0)
+                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0), color(0)
                             { }
 			    // FIRTREE modified.
     explicit TType(const TPublicType &p) :
@@ -133,7 +133,7 @@ public:
                             }
     explicit TType(TTypeList* userDef, const TString& n) :
                             type(EbtStruct), qualifier(EvqTemporary), size(1), matrix(false), array(false), arraySize(0),
-                            structure(userDef), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0) {
+                            structure(userDef), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), color(0) {
 								typeName = NewPoolTString(n.c_str());
                             }
 	explicit TType() {}

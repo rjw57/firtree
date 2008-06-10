@@ -39,6 +39,9 @@ ADD_SUBDIRECTORY(compiler)
 # Some tools
 ADD_SUBDIRECTORY(tools)
 
+# Some examplers
+ADD_SUBDIRECTORY(examples)
+
 # Ignore some files in svn.
 SET(CPACK_SOURCE_IGNORE_FILES 
     CMakeCache.txt

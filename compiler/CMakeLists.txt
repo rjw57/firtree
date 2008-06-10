@@ -14,8 +14,10 @@ ADD_SUBDIRECTORY(backends)
 
 SET(COMPILER_SOURCES
 	include/compiler.h 	include/main.h
+	include/kernel.h
 
 	compiler.cpp		main.cpp
+	kernel.cpp
 )
 
 ADD_LIBRARY(compiler ${COMPILER_SOURCES})

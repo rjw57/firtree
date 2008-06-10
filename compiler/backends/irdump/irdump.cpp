@@ -56,7 +56,7 @@ IRDumpBackend::~IRDumpBackend()
 void irPrintNodeHeader(TIntermNode* n, TIntermTraverser* t)
 {
     IRTrav* trav = reinterpret_cast<IRTrav*>(t);
-    fprintf(trav->os(), "<!-- input line: %i --> ", n->getLine());
+    // fprintf(trav->os(), "<!-- input line: %i --> ", n->getLine());
     for(int i=0; i<t->depth; i++)
     {
         fprintf(trav->os(), "  ");

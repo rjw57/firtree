@@ -265,6 +265,9 @@ public:
     const char* getQualifierString() const { return ::getQualifierString(qualifier); }
     TTypeList* getStruct() { return structure; }
 
+    // FIRTREE only
+    bool isColor() { return color; }
+
     int getObjectSize() const
     {
         int totalSize;

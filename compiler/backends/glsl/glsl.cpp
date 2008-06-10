@@ -346,6 +346,7 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                         left.c_str(),
                         _OperatorNames[n->getOp()],
                         right.c_str());
+                FAIL_RET("Unknown unary op: %s", _OperatorNames[n->getOp()]);
                 break;
         }
     }
@@ -494,12 +495,28 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
             case EOpUnPremultiply:
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = __builtin_unpremultiply(%s);\n", tmp, operand.c_str());
+            case EOpSamplerCoord:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_sampler_coord(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSamplerExtent:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_sampler_extent(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSamplerOrigin:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_sampler_origin(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpSamplerSize:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = __builtin_sampler_size(%s);\n", tmp, operand.c_str());
                 break;
             default:
                 AppendOutput("/* ");
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = ?unop %s? (%s) */\n", tmp,
                         _OperatorNames[n->getOp()], operand.c_str());
+                FAIL_RET("Unknown unary op: %s", _OperatorNames[n->getOp()]);
                 break;
         }
     }
@@ -510,7 +527,7 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
 //=============================================================================
 bool GLSLBackend::VisitSelection(bool preVisit, TIntermSelection* n)
 {
-    FIRTREE_WARNING("Selection not handled.\n");
+    FAIL_RET("Selection op not handled");
     return false;
 }
 
@@ -542,8 +559,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                             AddSymbol(ns->getId(), "param_");
                             AppendOutput("  ");
                             AppendGLSLType(ns->getTypePointer()); 
-                            AppendOutput(" %s;\n", 
+                            AppendOutput(" %s; ", 
                                     GetSymbol(ns->getId()));
+                            AppendOutput("/* orig: %s */\n", ns->getSymbol().c_str());
                         }
 
                         AppendOutput("};\n\n");
@@ -604,6 +622,8 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpCompare:
         case EOpClamp:
         case EOpSmoothStep:
+        case EOpSample:
+        case EOpSamplerTransform:
             if(!preVisit) 
             {
                 // Pop the arguments.
@@ -632,6 +652,12 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpSmoothStep:
                         funcname = "smoothstep";
+                        break;
+                    case EOpSample:
+                        funcname = "__builtin_sample";
+                        break;
+                    case EOpSamplerTransform:
+                        funcname = "__builtin_sampler_transform";
                         break;
                 }
 
@@ -669,6 +695,8 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                     AppendOutput(" %s;", tmp);
                     AppendOutput(" /* = ?aggregate %s */\n", 
                             _OperatorNames[n->getOp()]);
+
+                    FAIL_RET("Unknown aggregate op: %s", _OperatorNames[n->getOp()]);
                 }
             }
             break;
@@ -699,6 +727,7 @@ bool GLSLBackend::VisitBranch(bool preVisit, TIntermBranch* n)
             default:
                 AppendOutput("/* ?branch %s */\n",
                         _OperatorNames[n->getFlowOp()]);
+                FAIL_RET("Unknown branch op: %s", _OperatorNames[n->getFlowOp()]);
                 break;
         }
     }
@@ -723,7 +752,7 @@ void GLSLBackend::AppendGLSLType(TType* t)
                 AppendOutput("bvec%i", t->getNominalSize());
                 break;
             default:
-                FIRTREE_WARNING("Unknown basic type: %i", t->getBasicType());
+                FAIL("Unknown basic type: %i", t->getBasicType());
                 break;
         }
     } else {
@@ -745,9 +774,14 @@ void GLSLBackend::AppendGLSLType(TType* t)
                 AppendOutput("int /*sampler*/"); // Samplers are basically indicies.
                 break;
             default:
-                FIRTREE_WARNING("Unknown basic type: %i", t->getBasicType());
+                FAIL("Unknown basic type: %i", t->getBasicType());
                 break;
         }
+    }
+
+    if(t->isColor())
+    {
+        AppendOutput(" /*__color*/");
     }
 }
 

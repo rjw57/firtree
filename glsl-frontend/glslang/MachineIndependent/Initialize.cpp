@@ -1019,7 +1019,7 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
     	symbolTable.relateToOperator("premultiply",          EOpPremultiply);
     	symbolTable.relateToOperator("unpremultiply",          EOpUnPremultiply);
     	symbolTable.relateToOperator("sample",          EOpSample);
-    	symbolTable.relateToOperator("samplerCoord",          EOpSample);
+    	symbolTable.relateToOperator("samplerCoord",          EOpSamplerCoord);
     	symbolTable.relateToOperator("samplerExtent",          EOpSamplerExtent);
     	symbolTable.relateToOperator("samplerOrigin",          EOpSamplerOrigin);
     	symbolTable.relateToOperator("samplerSize",          EOpSamplerSize);

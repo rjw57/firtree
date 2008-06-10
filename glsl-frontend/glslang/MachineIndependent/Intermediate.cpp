@@ -281,7 +281,7 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermNode* childNode, 
         line = child->getLine();
     node->setLine(line);
     node->setOperand(child);
-    
+
     if (! node->promote(infoSink))
         return 0;
 
@@ -783,6 +783,15 @@ bool TIntermUnary::promote(TInfoSink&)
     case EOpAll:
     case EOpVectorLogicalNot:
         return true;
+
+    // FIRTREE only. Sampler unary operators act on... well, samplers.
+    case EOpSamplerCoord:
+    case EOpSamplerExtent:
+    case EOpSamplerOrigin:
+    case EOpSamplerSize:
+        if (operand->getBasicType() != EbtSampler)
+            return false;
+	break;
 
     default:
         if (operand->getBasicType() != EbtFloat)

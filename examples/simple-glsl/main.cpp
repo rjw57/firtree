@@ -29,7 +29,8 @@
 using namespace Firtree;
 
 const char* g_CheckerKernelSource = 
-"    kernel vec4 testKernel(float squareSize, __color backColor, __color foreColor)"
+"    kernel vec4 checkerKernel(float squareSize, __color backColor,"
+"                              __color foreColor)"
 "    {"
 "        vec2 dc = mod(destCoord(), squareSize*2.0);"
 "        vec2 discriminant = step(squareSize, dc);"
@@ -42,8 +43,9 @@ const char* g_CheckerKernelSource =
 Kernel g_CheckerKernel(g_CheckerKernelSource);
 KernelSamplerParameter g_CheckerSampler(g_CheckerKernel);
 
-const char* g_KernelSource = 
-"    kernel vec4 testKernel(float dotPitch, __color backColor, __color dotColor)"
+const char* g_SpotKernelSource = 
+"    kernel vec4 spotKernel(float dotPitch, __color backColor,"
+"                           __color dotColor)"
 "    {"
 "        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
 "        float discriminant = smoothstep(0.3*dotPitch-0.5,"
@@ -53,7 +55,7 @@ const char* g_KernelSource =
 "    }"
 ;
 
-Kernel g_SpotKernel(g_KernelSource);
+Kernel g_SpotKernel(g_SpotKernelSource);
 KernelSamplerParameter g_SpotSampler(g_SpotKernel);
 
 const char* g_OverKernelSource = 
@@ -93,6 +95,26 @@ void render(float epoch)
 
     CHECK( glUseProgram(g_ShaderProg) );
     try {
+        g_SpotKernel.SetValueForKey(20.f * (1.0f + (float)sin(0.01f*epoch)) + 20.f,
+                "dotPitch");
+
+        g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
+
+        glColor3f(1,0,0);
+        glBegin(GL_QUADS);
+           glVertex2f(0,0);
+           glVertex2f(width,0);
+           glVertex2f(width,height);
+           glVertex2f(0,height);
+        glEnd();
+    } catch(Firtree::Exception e) {
+        fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
+    }
+}
+
+void initialize_kernels()
+{
+    try {
         static float squareColor[] = {0.75, 0.75, 0.75, 0.75};
         static float backColor[] = {0.25, 0.25, 0.25, 0.25};
         static float dotColor[] = {1.0, 0.0, 0.0, 1.0};
@@ -104,17 +126,6 @@ void render(float epoch)
 
         g_SpotKernel.SetValueForKey(dotColor, 4, "dotColor");
         g_SpotKernel.SetValueForKey(clearColor, 4, "backColor");
-        g_SpotKernel.SetValueForKey(53.f, "dotPitch");
-
-        g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
-
-        glColor3f(1,0,0);
-        glBegin(GL_QUADS);
-           glVertex2f(0,0);
-           glVertex2f(width,0);
-           glVertex2f(width,height);
-           glVertex2f(0,height);
-        glEnd();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -138,10 +149,10 @@ void context_created()
         return;
     }
 
-    float angle = 0.4f;
+    float angle = 0.2f;
     float spotTransform[] = {
-        cos(angle), -sin(angle), 100.f,
-        sin(angle),  cos(angle), 20.f,
+        cos(angle), -sin(angle), -320.f,
+        sin(angle),  cos(angle), -240.f,
     };
 
     g_SpotSampler.SetTransform(spotTransform);
@@ -202,6 +213,8 @@ void context_created()
         free(log);
         exit(2);
     }
+
+    initialize_kernels();
 }
 
 // vim:sw=4:ts=4:cindent:et

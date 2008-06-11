@@ -21,6 +21,8 @@
 // This file implements the FIRTREE compiler utility functions.
 //=============================================================================
 
+#include "backends/glsl/glutil.h"
+
 #include "include/kernel.h"
 
 #include <compiler/include/compiler.h>
@@ -44,6 +46,8 @@ static PFNGLUNIFORM4IPROC glUniform4i = NULL;
 
 static void* _KernelGetOpenGLProcAddress(const char* name);
 
+using namespace Firtree::GLSLInternal;
+
 namespace Firtree {
 
 //=============================================================================
@@ -52,7 +56,7 @@ static void _KernelEnsureAPI()
 #   define ENSURE_API(name, type) do { \
     if(NULL == name) \
     { \
-        name = (type)_KernelGetOpenGLProcAddress(#name); \
+        name = (type)GetProcAddress(#name); \
         if(NULL == name) { \
             FIRTREE_ERROR(#name " not supported."); \
         } \
@@ -252,7 +256,7 @@ KernelConstParameter* Kernel::ConstParameterForKeyAndType(const char* key,
 //=============================================================================
 KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 {
-       KernelParameter* kp = ParameterForKey(key);
+    KernelParameter* kp = ParameterForKey(key);
 
     if(kp == NULL) { return NULL; }
 
@@ -368,6 +372,41 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         }
                     }
                     break;
+                case KernelConstParameter::Bool:
+                case KernelConstParameter::Int:
+                    {
+                        static int vec[4];
+                        for(int j=0; j<cp->GetSize(); j++)
+                        {
+                            vec[j] = cp->GetIntValue(j);
+                        }
+
+                        switch(cp->GetSize())
+                        {
+                            case 1:
+                                glUniform1i(uniformLoc, vec[0]);
+                                break;
+                            case 2:
+                                glUniform2i(uniformLoc, vec[0], vec[1]);
+                                break;
+                            case 3:
+                                glUniform3i(uniformLoc, vec[0], vec[1], vec[2]);
+                                break;
+                            case 4:
+                                glUniform4i(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                break;
+                            default:
+                                FIRTREE_ERROR("Parameter %s has invalid size: %i",
+                                        paramName.c_str(), cp->GetSize());
+                        }
+
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+                        }
+                    }
+                    break;
                 default:
                     FIRTREE_WARNING("Const parameter setting implemented for this type: %s",
                             paramName.c_str());
@@ -382,14 +421,6 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 }
 
 } // namespace Firtree 
-
-/* LINUX SPECIFIC. FIXME: MOVE TO DIFFERENT FILE */
-#include <GL/glx.h>
-
-static void* _KernelGetOpenGLProcAddress(const char* name)
-{
-    return (void*)(glXGetProcAddress((const GLubyte*)(name)));
-}
 
 //=============================================================================
 // vim:sw=4:ts=4:cindent:et

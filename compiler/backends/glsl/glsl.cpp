@@ -42,7 +42,7 @@ struct GLSLBackend::Priv
 
         std::map<int, std::string>  symbolMap;
         std::map<std::string, std::string>  funcMap;
-        std::stack<TString>         temporaryStack;
+        std::stack<std::string>     temporaryStack;
         unsigned int                temporaryId;
         unsigned int                funccounter;
 };
@@ -352,7 +352,7 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
 {
     if(!preVisit)
     {
-        TString operand(PopTemporary());
+        std::string operand(PopTemporary());
         const char* tmp = AddTemporary();
         PushTemporary(tmp);
 
@@ -490,7 +490,7 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendOutput(" %s = __builtin_unpremultiply(%s);\n", tmp, operand.c_str());
             case EOpSamplerCoord:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = __builtin_sampler_coord(%s);\n", tmp, operand.c_str());
+                AppendOutput(" %s = __builtin_sampler_transform(%s, destCoord);\n", tmp, operand.c_str());
                 break;
             case EOpSamplerExtent:
                 AppendGLSLType(n->getTypePointer());
@@ -498,11 +498,11 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 break;
             case EOpSamplerOrigin:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = __builtin_sampler_origin(%s);\n", tmp, operand.c_str());
+                AppendOutput(" %s = (__builtin_sampler_extent(%s)).xy;\n", tmp, operand.c_str());
                 break;
             case EOpSamplerSize:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = __builtin_sampler_size(%s);\n", tmp, operand.c_str());
+                AppendOutput(" %s = (__builtin_sampler_extent(%s)).zw;\n", tmp, operand.c_str());
                 break;
             default:
                 AppendOutput("/* ");
@@ -660,6 +660,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpStep:
         case EOpDot:
         case EOpCross:
+        case EOpMix:
         case EOpSample:
         case EOpSamplerTransform:
         case EOpConstructInt:
@@ -717,6 +718,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpCross:
                         funcname = "cross";
+                        break;
+                    case EOpMix:
+                        funcname = "mix";
                         break;
                     case EOpSmoothStep:
                         funcname = "smoothstep";
@@ -960,13 +964,13 @@ const char* GLSLBackend::AddTemporary()
 void GLSLBackend::PushTemporary(const char* t)
 {
     // printf("Pushing: %s\n", t);
-    m_Priv->temporaryStack.push(TString(t));
+    m_Priv->temporaryStack.push(t);
 }
 
 //=============================================================================
 const char* GLSLBackend::PopTemporary()
 {
-    static TString lastTop;
+    static std::string lastTop;
     lastTop = m_Priv->temporaryStack.top().c_str();
     // printf("Popping: %s\n", lastTop.c_str());
     m_Priv->temporaryStack.pop();

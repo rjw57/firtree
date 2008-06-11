@@ -29,30 +29,44 @@
 using namespace Firtree;
 
 const char* g_CheckerKernelSource = 
-"    kernel vec4 testKernel(void)"
+"    kernel vec4 testKernel(float squareSize, __color backColor, __color foreColor)"
 "    {"
-"        float squareSize = 10.0;"
 "        vec2 dc = mod(destCoord(), squareSize*2.0);"
 "        vec2 discriminant = step(squareSize, dc);"
 "        float flag = discriminant.x + discriminant.y - "
 "                     2.0*discriminant.x*discriminant.y;"
-"        return vec4((0.25 + 0.5*flag) * vec3(1,1,1), 1);"
+"        return mix(backColor, foreColor, flag);"
 "    }"
 ;
+
+Kernel g_CheckerKernel(g_CheckerKernelSource);
+KernelSamplerParameter g_CheckerSampler(g_CheckerKernel);
 
 const char* g_KernelSource = 
-"    kernel vec4 testKernel(float dotPitch)"
+"    kernel vec4 testKernel(float dotPitch, __color backColor, __color dotColor)"
 "    {"
 "        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
-"        float discriminant = 1.0 - smoothstep(0.3*dotPitch-0.5,"
+"        float discriminant = smoothstep(0.3*dotPitch-0.5,"
 "               0.3*dotPitch+0.5, length(dc));"
 "        discriminant = sqrt(discriminant);"
-"        return vec4(discriminant,discriminant,0,1);"
+"        return mix(dotColor, backColor, discriminant);"
 "    }"
 ;
 
-Kernel g_FirtreeKernel(g_KernelSource);
-KernelSamplerParameter g_GlobalSampler("foo", g_FirtreeKernel);
+Kernel g_SpotKernel(g_KernelSource);
+KernelSamplerParameter g_SpotSampler(g_SpotKernel);
+
+const char* g_OverKernelSource = 
+"    kernel vec4 compositeOver(sampler a, sampler b)"
+"    {"
+"        vec4 aCol = sample(a, samplerCoord(a));"
+"        vec4 bCol = sample(b, samplerCoord(b));"
+"        return aCol + bCol * (1.0 - aCol.a);"
+"    }"
+;
+
+Kernel g_OverKernel(g_OverKernelSource);
+KernelSamplerParameter g_GlobalSampler(g_OverKernel);
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -78,21 +92,32 @@ void render(float epoch)
     glDisable(GL_DEPTH_TEST);
 
     CHECK( glUseProgram(g_ShaderProg) );
-
     try {
-        g_FirtreeKernel.SetValueForKey(30.0 + 10.0*sin(0.1*epoch), "dotPitch");
+        static float squareColor[] = {0.75, 0.75, 0.75, 0.75};
+        static float backColor[] = {0.25, 0.25, 0.25, 0.25};
+        static float dotColor[] = {1.0, 0.0, 0.0, 1.0};
+        static float clearColor[] = {0.0, 0.0, 0.0, 0.0};
+
+        g_CheckerKernel.SetValueForKey(10.f, "squareSize");
+        g_CheckerKernel.SetValueForKey(backColor, 4, "backColor");
+        g_CheckerKernel.SetValueForKey(squareColor, 4, "foreColor");
+
+        g_SpotKernel.SetValueForKey(dotColor, 4, "dotColor");
+        g_SpotKernel.SetValueForKey(clearColor, 4, "backColor");
+        g_SpotKernel.SetValueForKey(40.f, "dotPitch");
+
         g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
+
+        glColor3f(1,0,0);
+        glBegin(GL_QUADS);
+           glVertex2f(0,0);
+           glVertex2f(width,0);
+           glVertex2f(width,height);
+           glVertex2f(0,height);
+        glEnd();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
-
-    glColor3f(1,0,0);
-    glBegin(GL_QUADS);
-      glVertex2f(0,0);
-      glVertex2f(width,0);
-      glVertex2f(width,height);
-      glVertex2f(0,height);
-    glEnd();
 }
 
 void context_created()
@@ -113,7 +138,12 @@ void context_created()
         return;
     }
 
-    g_GlobalSampler.SetBlockPrefix("toplevel");
+    g_OverKernel.SetValueForKey(g_SpotSampler, "a");
+    g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
+
+    std::string shaderSource;
+    g_GlobalSampler.BuildGLSL(shaderSource);
+
     if(!g_GlobalSampler.IsValid())
     {
         fprintf(stderr, "Error compiling kernel.\n%s\n",
@@ -121,17 +151,6 @@ void context_created()
         exit(3);
     }
 
-    std::string shaderSource;
-    g_GlobalSampler.BuildTopLevelGLSL(shaderSource);
-
-    shaderSource += "void main() { vec2 destCoord = gl_FragCoord.xy;\n";
-
-    std::string sampleString;
-    g_GlobalSampler.BuildSampleGLSL(sampleString, 
-            "destCoord", "gl_FragColor");
-    shaderSource += sampleString;
-
-    shaderSource += "\n}\n";
     printf("Compiled source:\n%s\n", shaderSource.c_str());
 
     g_FragShaderObj = glCreateShader(GL_FRAGMENT_SHADER_ARB);

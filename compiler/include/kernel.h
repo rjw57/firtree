@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace Firtree {
 
@@ -39,24 +40,14 @@ class Kernel;
 class KernelParameter
 {
     public:
-        KernelParameter(const char* name);
+        KernelParameter();
+        KernelParameter(const KernelParameter& p);
         virtual ~KernelParameter();
-
-        virtual void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
-        virtual const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
-
-        const std::string& GetName() const { return m_Name; }
-
-        const std::string& GetGLSLName() const { return m_GLSLName; }
-        void SetGLSLName(const std::string& n) { m_GLSLName = n; }
 
         virtual KernelConstParameter* GetAsConst() { return NULL; }
         virtual KernelSamplerParameter* GetAsSampler() { return NULL; }
 
     private:
-        std::string         m_Name;
-        std::string         m_GLSLName;
-        std::string         m_BlockPrefix;
 };
 
 //=============================================================================
@@ -68,7 +59,7 @@ class KernelConstParameter : public KernelParameter
         };
 
     public:
-        KernelConstParameter(const char* name);
+        KernelConstParameter();
         virtual ~KernelConstParameter();
 
         virtual KernelConstParameter* GetAsConst() { return this; }
@@ -104,15 +95,14 @@ class KernelConstParameter : public KernelParameter
 class KernelSamplerParameter : public KernelParameter
 {
     public:
-        KernelSamplerParameter(const char* name, Kernel& kernel);
+        KernelSamplerParameter(const KernelSamplerParameter& sampler);
+        KernelSamplerParameter(Kernel& kernel);
         virtual ~KernelSamplerParameter();
 
         virtual KernelSamplerParameter* GetAsSampler() { return this; }
 
-        virtual void SetBlockPrefix(const char* p);
-
         /// Write any top-level GLSL for this shader into dest.
-        virtual void BuildTopLevelGLSL(std::string& dest);
+        virtual bool BuildTopLevelGLSL(std::string& dest);
 
         /// Write GLSL to assign result of sampling shader at
         /// samplerCoordVar to resultVar 
@@ -120,15 +110,45 @@ class KernelSamplerParameter : public KernelParameter
                 const char* samplerCoordVar,
                 const char* resultVar);
 
+        /// Write GLSL to construct sampler extent vector to dest.
+        virtual void BuildSamplerExtentGLSL(std::string& dest);
+
+        /// Write GLSL to construct sampler transform matrix to dest.
+        virtual void BuildSamplerTransformGLSL(std::string& dest);
+
         virtual bool IsValid() const { return m_KernelCompileStatus; }
 
-        const Kernel& GetKernel() const { return m_Kernel; }
+        Kernel& GetKernel() const { return m_Kernel; }
 
         void SetGLSLUniforms(unsigned int program);
+
+        void SetSamplerIndex(int i) { m_SamplerIndex = i; }
+        int GetSamplerIndex() const  { return m_SamplerIndex; }
+
+        void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
+        const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
+
+        const float* GetExtent() const { return m_Extent; }
+        const float* GetTransform() const { return m_Transform; }
+
+        bool BuildGLSL(std::string& dest);
 
     private:
         Kernel&         m_Kernel;
         bool            m_KernelCompileStatus;
+
+        /// Affine transformation to map from world co-ordinates
+        /// to sampler co-ordinates.
+        float           m_Transform[6];
+
+        /// Origin ans size of sampler in world co-ordinates.
+        float           m_Extent[4];
+
+        int             m_SamplerIndex;
+
+        std::string     m_BlockPrefix;
+
+        void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
 };
 
 //=============================================================================
@@ -149,11 +169,21 @@ class Kernel
         const char* GetInfoLog() const { return m_InfoLog.c_str(); }
 
         void SetValueForKey(float value, const char* key);
+        void SetValueForKey(const float* value, int count, const char* key);
+        void SetValueForKey(int value, const char* key);
+        void SetValueForKey(const int* value, int count, const char* key);
+        void SetValueForKey(bool value, const char* key);
+        void SetValueForKey(const bool* value, int count, const char* key);
 
-        std::vector<KernelParameter*>& GetParameters() { return m_Parameters; }
+        void SetValueForKey(const KernelSamplerParameter& sampler, const char* key);
+
+        const char* GetUniformNameForKey(const char* key);
+
+        std::map<std::string, KernelParameter*>& GetParameters() { return m_Parameters; }
 
     private:
-        std::vector<KernelParameter*>   m_Parameters;
+        std::map<std::string, KernelParameter*>   m_Parameters;
+        std::map<std::string, std::string>   m_UniformNameMap;
         std::string                     m_CompiledGLSL;
         std::string                     m_InfoLog;
         std::string                     m_CompiledKernelName;

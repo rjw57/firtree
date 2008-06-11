@@ -28,7 +28,46 @@
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+
+static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = NULL;
+static PFNGLUNIFORM1FPROC glUniform1f = NULL;
+static PFNGLUNIFORM2FPROC glUniform2f = NULL;
+static PFNGLUNIFORM3FPROC glUniform3f = NULL;
+static PFNGLUNIFORM4FPROC glUniform4f = NULL;
+static PFNGLUNIFORM1IPROC glUniform1i = NULL;
+static PFNGLUNIFORM2IPROC glUniform2i = NULL;
+static PFNGLUNIFORM3IPROC glUniform3i = NULL;
+static PFNGLUNIFORM4IPROC glUniform4i = NULL;
+
+static void* _KernelGetOpenGLProcAddress(const char* name);
+
 namespace Firtree {
+
+//=============================================================================
+static void _KernelEnsureAPI() 
+{
+#   define ENSURE_API(name, type) do { \
+    if(NULL == name) \
+    { \
+        name = (type)_KernelGetOpenGLProcAddress(#name); \
+        if(NULL == name) { \
+            FIRTREE_ERROR(#name " not supported."); \
+        } \
+    } } while(0)
+
+    ENSURE_API(glGetUniformLocation, PFNGLGETUNIFORMLOCATIONPROC);
+    ENSURE_API(glUniform1f, PFNGLUNIFORM1FPROC);
+    ENSURE_API(glUniform2f, PFNGLUNIFORM2FPROC);
+    ENSURE_API(glUniform3f, PFNGLUNIFORM3FPROC);
+    ENSURE_API(glUniform4f, PFNGLUNIFORM4FPROC);
+    ENSURE_API(glUniform1i, PFNGLUNIFORM1IPROC);
+    ENSURE_API(glUniform2i, PFNGLUNIFORM2IPROC);
+    ENSURE_API(glUniform3i, PFNGLUNIFORM3IPROC);
+    ENSURE_API(glUniform4i, PFNGLUNIFORM4IPROC);
+}
 
 //=============================================================================
 KernelParameter::KernelParameter(const char* name)
@@ -68,6 +107,7 @@ Kernel::Kernel(const char* source)
 //=============================================================================
 Kernel::~Kernel()
 {
+    ClearParameters();
 }
 
 //=============================================================================
@@ -75,7 +115,8 @@ bool Kernel::Compile(const char* blockName)
 {
     const char* pSrc = m_Source.c_str();
 
-    m_Parameters.clear();
+    ClearParameters();
+
     m_CompiledGLSL.clear();
     m_InfoLog.clear();
     m_CompiledKernelName.clear();
@@ -112,21 +153,22 @@ bool Kernel::Compile(const char* blockName)
             case GLSLBackend::Parameter::Float:
             case GLSLBackend::Parameter::Bool:
                 {
-                    KernelConstParameter kp(p.humanName.c_str());
-                    kp.SetSize(p.vectorSize);
-                    kp.SetGLSLName(p.uniformName);
-                    kp.SetIsColor(p.isColor);
+                    KernelConstParameter* kp = 
+                        new KernelConstParameter(p.humanName.c_str());
+                    kp->SetSize(p.vectorSize);
+                    kp->SetGLSLName(p.uniformName);
+                    kp->SetIsColor(p.isColor);
 
                     switch(p.basicType)
                     {
                         case GLSLBackend::Parameter::Int:
-                            kp.SetBaseType(KernelConstParameter::Int);
+                            kp->SetBaseType(KernelConstParameter::Int);
                             break;
                         case GLSLBackend::Parameter::Float:
-                            kp.SetBaseType(KernelConstParameter::Float);
+                            kp->SetBaseType(KernelConstParameter::Float);
                             break;
                         case GLSLBackend::Parameter::Bool:
-                            kp.SetBaseType(KernelConstParameter::Bool);
+                            kp->SetBaseType(KernelConstParameter::Bool);
                             break;
                     }
 
@@ -140,6 +182,81 @@ bool Kernel::Compile(const char* blockName)
     }
 
     return true;
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(float value, const char* key)
+{
+    KernelConstParameter* p = ConstParameterForKeyAndType(key, 
+            KernelConstParameter::Float);
+
+    if(p == NULL) {
+        FIRTREE_ERROR("No parameter: %s.", key);
+    }
+
+    if(p->GetSize() != 1)
+    {
+        FIRTREE_ERROR("Parameter %s soes not have size 1 as expected.", key);
+    }
+
+    p->SetFloatValue(value, 0);
+}
+
+//=============================================================================
+void Kernel::ClearParameters()
+{
+    for(std::vector<KernelParameter*>::iterator i = m_Parameters.begin();
+            i != m_Parameters.end(); i++)
+    {
+        if(*i != NULL)
+        {
+            delete *i;
+        }
+    }
+
+    m_Parameters.clear();
+}
+
+//=============================================================================
+KernelParameter* Kernel::ParameterForKey(const char* key)
+{
+    for(std::vector<KernelParameter*>::iterator i = m_Parameters.begin();
+            i != m_Parameters.end(); i++)
+    {
+        KernelParameter* param = *i;
+        if(param->GetName() == key)
+        {
+            return param;
+        }
+    }
+
+    return NULL;
+}
+
+//=============================================================================
+KernelConstParameter* Kernel::ConstParameterForKeyAndType(const char* key, 
+        KernelConstParameter::BaseType type)
+{
+    KernelParameter* kp = ParameterForKey(key);
+
+    if(kp == NULL) { return NULL; }
+
+    KernelConstParameter* kcp = kp->GetAsConst();
+    if(kcp == NULL) { return NULL; }
+
+    if(kcp->GetBaseType() != type) { return NULL; }
+
+    return kcp;
+}
+
+//=============================================================================
+KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
+{
+       KernelParameter* kp = ParameterForKey(key);
+
+    if(kp == NULL) { return NULL; }
+
+    return kp->GetAsSampler();
 }
 
 //=============================================================================
@@ -183,7 +300,97 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
     dest = result;
 }
 
+//=============================================================================
+void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
+{
+    _KernelEnsureAPI();
+
+    std::vector<KernelParameter*>& params = m_Kernel.GetParameters();
+
+    std::string uniPrefix = GetBlockPrefix();
+    uniPrefix += "_params.";
+
+    for(std::vector<KernelParameter*>::iterator i = params.begin();
+            i != params.end(); i++)
+    {
+        KernelParameter* p = *i;
+        std::string paramName = uniPrefix + p->GetGLSLName();
+
+        // Find this parameter's uniform location
+        GLint uniformLoc = glGetUniformLocation(program, paramName.c_str());
+        if(uniformLoc == -1)
+        {
+            FIRTREE_ERROR("Uniform '%s' not found in program.", paramName.c_str());
+        }
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+        }
+
+        if(p->GetAsConst() != NULL)
+        {
+            KernelConstParameter* cp = p->GetAsConst();
+
+            switch(cp->GetBaseType())
+            {
+                case KernelConstParameter::Float:
+                    {
+                        static float vec[4];
+                        for(int j=0; j<cp->GetSize(); j++)
+                        {
+                            vec[j] = cp->GetFloatValue(j);
+                        }
+
+                        switch(cp->GetSize())
+                        {
+                            case 1:
+                                glUniform1f(uniformLoc, vec[0]);
+                                break;
+                            case 2:
+                                glUniform2f(uniformLoc, vec[0], vec[1]);
+                                break;
+                            case 3:
+                                glUniform3f(uniformLoc, vec[0], vec[1], vec[2]);
+                                break;
+                            case 4:
+                                glUniform4f(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                break;
+                            default:
+                                FIRTREE_ERROR("Parameter %s has invalid size: %i",
+                                        paramName.c_str(), cp->GetSize());
+                        }
+
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+                        }
+                    }
+                    break;
+                default:
+                    FIRTREE_WARNING("Const parameter setting implemented for this type: %s",
+                            paramName.c_str());
+                    break;
+            }
+        } else if(p->GetAsSampler() != NULL) 
+        {
+        } else {
+            FIRTREE_ERROR("Unknown kernel parameter type.");
+        }
+    }
+}
+
 } // namespace Firtree 
+
+/* LINUX SPECIFIC. FIXME: MOVE TO DIFFERENT FILE */
+#include <GL/glx.h>
+
+static void* _KernelGetOpenGLProcAddress(const char* name)
+{
+    return (void*)(glXGetProcAddress((const GLubyte*)(name)));
+}
 
 //=============================================================================
 // vim:sw=4:ts=4:cindent:et
+//

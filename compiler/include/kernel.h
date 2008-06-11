@@ -43,11 +43,11 @@ class KernelParameter
         virtual ~KernelParameter();
 
         virtual void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
-        virtual const char* GetBlockPrefix() { return m_BlockPrefix.c_str(); }
+        virtual const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
 
-        const std::string& GetName() { return m_Name; }
+        const std::string& GetName() const { return m_Name; }
 
-        const std::string& GetGLSLName() { return m_GLSLName; }
+        const std::string& GetGLSLName() const { return m_GLSLName; }
         void SetGLSLName(const std::string& n) { m_GLSLName = n; }
 
         virtual KernelConstParameter* GetAsConst() { return NULL; }
@@ -124,6 +124,8 @@ class KernelSamplerParameter : public KernelParameter
 
         const Kernel& GetKernel() const { return m_Kernel; }
 
+        void SetGLSLUniforms(unsigned int program);
+
     private:
         Kernel&         m_Kernel;
         bool            m_KernelCompileStatus;
@@ -146,12 +148,23 @@ class Kernel
         const char* GetCompiledKernelName() const { return m_CompiledKernelName.c_str(); }
         const char* GetInfoLog() const { return m_InfoLog.c_str(); }
 
+        void SetValueForKey(float value, const char* key);
+
+        std::vector<KernelParameter*>& GetParameters() { return m_Parameters; }
+
     private:
-        std::vector<KernelParameter>    m_Parameters;
+        std::vector<KernelParameter*>   m_Parameters;
         std::string                     m_CompiledGLSL;
         std::string                     m_InfoLog;
         std::string                     m_CompiledKernelName;
         std::string                     m_Source;
+
+        void ClearParameters();
+
+        KernelParameter* ParameterForKey(const char* key);
+        KernelConstParameter* ConstParameterForKeyAndType(const char* key, 
+                KernelConstParameter::BaseType type);
+        KernelSamplerParameter* SamplerParameterForKey(const char* key);
 };
 
 }

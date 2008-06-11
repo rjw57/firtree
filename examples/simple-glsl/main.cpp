@@ -19,6 +19,7 @@
 #include "common.h"
 
 #include "compiler/include/kernel.h"
+#include "compiler/include/main.h"
 
 #include <stdlib.h>
 
@@ -40,9 +41,8 @@ const char* g_CheckerKernelSource =
 ;
 
 const char* g_KernelSource = 
-"    kernel vec4 testKernel(void)"
+"    kernel vec4 testKernel(float dotPitch)"
 "    {"
-"        float dotPitch = 60.0;"
 "        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
 "        float discriminant = 1.0 - smoothstep(0.3*dotPitch-0.5,"
 "               0.3*dotPitch+0.5, length(dc));"
@@ -52,6 +52,7 @@ const char* g_KernelSource =
 ;
 
 Kernel g_FirtreeKernel(g_KernelSource);
+KernelSamplerParameter g_GlobalSampler("foo", g_FirtreeKernel);
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -77,6 +78,13 @@ void render(float epoch)
     glDisable(GL_DEPTH_TEST);
 
     CHECK( glUseProgram(g_ShaderProg) );
+
+    try {
+        g_FirtreeKernel.SetValueForKey(30.0 + 10.0*sin(0.1*epoch), "dotPitch");
+        g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
+    } catch(Firtree::Exception e) {
+        fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
+    }
 
     glColor3f(1,0,0);
     glBegin(GL_QUADS);
@@ -105,23 +113,21 @@ void context_created()
         return;
     }
 
-    KernelSamplerParameter samplerParam("foo", g_FirtreeKernel);
-    samplerParam.SetBlockPrefix("foo");
-    samplerParam.SetBlockPrefix("toplevel");
-    if(!samplerParam.IsValid())
+    g_GlobalSampler.SetBlockPrefix("toplevel");
+    if(!g_GlobalSampler.IsValid())
     {
         fprintf(stderr, "Error compiling kernel.\n%s\n",
-                samplerParam.GetKernel().GetInfoLog());
+                g_GlobalSampler.GetKernel().GetInfoLog());
         exit(3);
     }
 
     std::string shaderSource;
-    samplerParam.BuildTopLevelGLSL(shaderSource);
+    g_GlobalSampler.BuildTopLevelGLSL(shaderSource);
 
     shaderSource += "void main() { vec2 destCoord = gl_FragCoord.xy;\n";
 
     std::string sampleString;
-    samplerParam.BuildSampleGLSL(sampleString, 
+    g_GlobalSampler.BuildSampleGLSL(sampleString, 
             "destCoord", "gl_FragColor");
     shaderSource += sampleString;
 

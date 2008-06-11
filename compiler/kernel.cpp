@@ -594,6 +594,12 @@ void KernelSamplerParameter::BuildSamplerTransformGLSL(std::string& dest)
 }
 
 //=============================================================================
+void KernelSamplerParameter::SetTransform(const float* f)
+{
+    memcpy(m_Transform, f, 6*sizeof(float));
+}
+
+//=============================================================================
 void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
     _KernelEnsureAPI();

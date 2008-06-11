@@ -104,7 +104,7 @@ void render(float epoch)
 
         g_SpotKernel.SetValueForKey(dotColor, 4, "dotColor");
         g_SpotKernel.SetValueForKey(clearColor, 4, "backColor");
-        g_SpotKernel.SetValueForKey(40.f, "dotPitch");
+        g_SpotKernel.SetValueForKey(53.f, "dotPitch");
 
         g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
 
@@ -138,6 +138,13 @@ void context_created()
         return;
     }
 
+    float angle = 0.4f;
+    float spotTransform[] = {
+        cos(angle), -sin(angle), 100.f,
+        sin(angle),  cos(angle), 20.f,
+    };
+
+    g_SpotSampler.SetTransform(spotTransform);
     g_OverKernel.SetValueForKey(g_SpotSampler, "a");
     g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
 

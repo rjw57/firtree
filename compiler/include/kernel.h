@@ -131,6 +131,8 @@ class KernelSamplerParameter : public KernelParameter
         const float* GetExtent() const { return m_Extent; }
         const float* GetTransform() const { return m_Transform; }
 
+        void SetTransform(const float* f);
+
         bool BuildGLSL(std::string& dest);
 
     private:

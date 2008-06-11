@@ -95,7 +95,7 @@ void render(float epoch)
 
     CHECK( glUseProgram(g_ShaderProg) );
     try {
-        g_SpotKernel.SetValueForKey(20.f * (1.0f + (float)sin(0.01f*epoch)) + 20.f,
+        g_SpotKernel.SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
 
         g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
@@ -115,9 +115,10 @@ void render(float epoch)
 void initialize_kernels()
 {
     try {
+        // All colors have pre-multiplied alpha.
         static float squareColor[] = {0.75, 0.75, 0.75, 0.75};
         static float backColor[] = {0.25, 0.25, 0.25, 0.25};
-        static float dotColor[] = {1.0, 0.0, 0.0, 1.0};
+        static float dotColor[] = {0.7, 0.0, 0.0, 0.7};
         static float clearColor[] = {0.0, 0.0, 0.0, 0.0};
 
         g_CheckerKernel.SetValueForKey(10.f, "squareSize");

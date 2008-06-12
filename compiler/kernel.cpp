@@ -492,7 +492,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
             KernelSamplerParameter* ksp = (*i).second->GetAsSampler();
             if(ksp != NULL)
             {
-                FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
+                // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
                 std::string prefix(GetBlockPrefix());
                 prefix += "_";
                 prefix += (*i).first;

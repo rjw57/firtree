@@ -473,10 +473,6 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = atan(%s);\n", tmp, operand.c_str());
                 break;
-            case EOpPow:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = pow(%s);\n", tmp, operand.c_str());
-                break;
             case EOpExp:
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = exp(%s);\n", tmp, operand.c_str());
@@ -719,6 +715,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpDot:
         case EOpCross:
         case EOpMix:
+        case EOpPow:
         case EOpReflect:
         case EOpSample:
         case EOpSamplerTransform:
@@ -780,6 +777,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpMix:
                         funcname = "mix";
+                        break;
+                    case EOpPow:
+                        funcname = "pow";
                         break;
                     case EOpSmoothStep:
                         funcname = "smoothstep";

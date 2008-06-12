@@ -92,6 +92,7 @@ KernelConstParameter::~KernelConstParameter()
 
 //=============================================================================
 Kernel::Kernel()
+    :   m_IsCompiled(false)
 {
 }
 
@@ -108,11 +109,14 @@ Kernel::~Kernel()
 }
 
 //=============================================================================
-bool Kernel::Compile(const char* blockName)
+void Kernel::SetSource(const char* source)
 {
-    const char* pSrc = m_Source.c_str();
+    m_IsCompiled = false;
 
-    // ClearParameters();
+    // Set the source cache
+    m_Source = source;
+
+    // Attempt to compile the kernel.
 
     m_CompiledGLSL.clear();
     m_InfoLog.clear();
@@ -126,13 +130,13 @@ bool Kernel::Compile(const char* blockName)
     }
     */
 
-    GLSLBackend be(blockName);
+    GLSLBackend be("$$BLOCK$$");
     Compiler c(be);
-    bool rv = c.Compile(&pSrc, 1);
+    bool rv = c.Compile(&source, 1);
     m_InfoLog = c.GetInfoLog();
     if(!rv)
     {
-        return false;
+        return;
     }
 
     m_CompiledGLSL = be.GetOutput();
@@ -185,7 +189,52 @@ bool Kernel::Compile(const char* blockName)
         }
     }
 
-    return true;
+    m_IsCompiled = true;
+}
+
+//=============================================================================
+const char* Kernel::GetCompiledGLSL() const {
+    return m_BlockReplacedGLSL.c_str();
+}
+
+//=============================================================================
+const char* Kernel::GetCompiledKernelName() const {
+    return m_BlockReplacedKernelName.c_str();
+}
+
+//=============================================================================
+bool Kernel::Compile(const char* blockName)
+{
+    if(!m_IsCompiled)
+        return false;
+
+    // Set the block name.
+    m_BlockName = blockName;
+
+    // Form the blockname replaces source
+
+    std::string findWhat("$$BLOCK$$");
+
+    int pos = 0;
+
+    m_BlockReplacedGLSL = m_CompiledGLSL;
+    while(1)
+    {
+        pos = m_BlockReplacedGLSL.find(findWhat, pos);
+        if (pos==-1) break;
+        m_BlockReplacedGLSL.replace(pos,findWhat.size(),m_BlockName);
+    }
+
+    pos = 0;
+    m_BlockReplacedKernelName = m_CompiledKernelName;
+    while(1)
+    {
+        pos = m_BlockReplacedKernelName.find(findWhat, pos);
+        if (pos==-1) break;
+        m_BlockReplacedKernelName.replace(pos,findWhat.size(),m_BlockName);
+    }
+
+    return m_IsCompiled;
 }
 
 //=============================================================================

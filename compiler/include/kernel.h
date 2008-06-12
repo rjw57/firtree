@@ -161,13 +161,13 @@ class Kernel
         Kernel(const char* source);
         ~Kernel();
 
-        void SetSource(const char* source) { m_Source = source; }
+        void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }
 
         bool Compile(const char* blockName);
 
-        const char* GetCompiledGLSL() const { return m_CompiledGLSL.c_str(); }
-        const char* GetCompiledKernelName() const { return m_CompiledKernelName.c_str(); }
+        const char* GetCompiledGLSL() const;
+        const char* GetCompiledKernelName() const;
         const char* GetInfoLog() const { return m_InfoLog.c_str(); }
 
         void SetValueForKey(float value, const char* key);
@@ -190,6 +190,12 @@ class Kernel
         std::string                     m_InfoLog;
         std::string                     m_CompiledKernelName;
         std::string                     m_Source;
+        std::string                     m_BlockName;
+
+        std::string                     m_BlockReplacedGLSL;
+        std::string                     m_BlockReplacedKernelName;
+
+        bool                            m_IsCompiled;
 
         void ClearParameters();
 

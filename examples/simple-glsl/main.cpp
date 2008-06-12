@@ -58,16 +58,45 @@ Kernel g_SpotKernel(g_SpotKernelSource);
 KernelSamplerParameter g_SpotSampler(g_SpotKernel);
 
 const char* g_OverKernelSource = 
-"    kernel vec4 compositeOver(sampler a, sampler b)"
+"    kernel vec4 compositeOver(sampler a, sampler b, float phase)"
 "    {"
-"        vec4 aCol = sample(a, samplerCoord(a));"
-"        vec4 bCol = sample(b, samplerCoord(b));"
-"        return aCol + bCol * (1.0 - aCol.a);"
+"        vec4 aOut = sample(a, samplerCoord(a));"
+"        vec4 bOut = sample(b, samplerCoord(b));"
+"        return aOut + bOut * (1.0 - aOut.a);"
 "    }"
 ;
 
 Kernel g_OverKernel(g_OverKernelSource);
-KernelSamplerParameter g_GlobalSampler(g_OverKernel);
+KernelSamplerParameter g_OverSampler(g_OverKernel);
+
+const char* g_RippleKernelSource = 
+"    kernel vec4 compositeOver(sampler a, float phase)"
+"    {"
+"        vec2 center = vec2(320, 240);"
+"        vec3 params = vec3(0.1 /* freq */, phase, 100 /* sigma */);"
+"        vec2 delta = destCoord() - center;"
+"        float dist = length(delta);"
+"        float exponentialTerm = exp(-0.5 * dist*dist / (params.z*params.z));"
+"        float heightNorm = 50.0;"
+"        float heightDifferential = 0.0;"
+"        heightDifferential += params.x*cos(params.x*dist+params.y) *"
+"              exponentialTerm;"
+"        vec3 normal = normalize(vec3(2.0*delta*heightDifferential, heightNorm));"
+
+"        vec3 incident = vec3(0,0,-1);"
+"        vec3 outDir = normalize(reflect(incident, normal*0.5));"
+"        delta = 15.0 * outDir.xy;"
+"        float specular = max(0.0, dot(normal, normalize(vec3(1,-1,0.1))));"
+"        return sample(a, samplerTransform(a, destCoord() + delta)) + "
+"               vec4(specular, specular, specular, 0.0);"
+"    }"
+;
+
+Kernel g_RippleKernel(g_RippleKernelSource);
+KernelSamplerParameter g_RippleSampler(g_RippleKernel);
+
+#define g_GlobalSampler g_OverSampler
+//#define g_GlobalSampler g_RippleSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -96,6 +125,9 @@ void render(float epoch)
     try {
         g_SpotKernel.SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
+        g_SpotKernel.SetValueForKey(30.f, "dotPitch");
+
+        g_RippleKernel.SetValueForKey(-epoch * 0.1f, "phase");
 
         g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
 
@@ -126,6 +158,18 @@ void initialize_kernels()
 
         g_SpotKernel.SetValueForKey(dotColor, 4, "dotColor");
         g_SpotKernel.SetValueForKey(clearColor, 4, "backColor");
+
+        float angle = 0.2f;
+        float spotTransform[] = {
+            cos(angle), -sin(angle), -320.f,
+            sin(angle),  cos(angle), -240.f,
+        };
+        g_SpotSampler.SetTransform(spotTransform);
+
+        g_OverKernel.SetValueForKey(g_SpotSampler, "a");
+        g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
+
+        g_RippleKernel.SetValueForKey(g_OverSampler, "a");
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -152,14 +196,7 @@ void context_created()
     const GLubyte* versionStr = glGetString(GL_SHADING_LANGUAGE_VERSION);
     printf("Shader langugage version supported: %s.\n", versionStr);
 
-    float angle = 0.2f;
-    float spotTransform[] = {
-        cos(angle), -sin(angle), -320.f,
-        sin(angle),  cos(angle), -240.f,
-    };
-    g_SpotSampler.SetTransform(spotTransform);
-    g_OverKernel.SetValueForKey(g_SpotSampler, "a");
-    g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
+    initialize_kernels();
 
     std::string shaderSource;
     //g_GlobalSampler.BuildGLSL(shaderSource);
@@ -216,8 +253,6 @@ void context_created()
         free(log);
         exit(2);
     }
-
-    initialize_kernels();
 }
 
 // vim:sw=4:ts=4:cindent:et

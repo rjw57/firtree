@@ -47,8 +47,7 @@ const char* g_SpotKernelSource =
 "                           __color dotColor)"
 "    {"
 "        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
-"        float discriminant = smoothstep(0.3*dotPitch-0.5,"
-"               0.3*dotPitch+0.5, length(dc));"
+"        float discriminant = clamp(length(dc) - 0.3*dotPitch, 0.0, 1.0);"
 "        discriminant = sqrt(discriminant);"
 "        return mix(dotColor, backColor, discriminant);"
 "    }"
@@ -113,6 +112,8 @@ KernelSamplerParameter g_OverSampler2(g_OverKernel2);
 //#define g_GlobalSampler g_RippleSampler
 //#define g_GlobalSampler g_GradientSampler
 #define g_GlobalSampler g_OverSampler2
+//#define g_GlobalSampler g_CheckerSampler
+//#define g_GlobalSampler g_SpotSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;

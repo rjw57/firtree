@@ -613,7 +613,7 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
     }
 
     dest += "void main() {\n"
-        "vec2 destCoord = gl_FragCoord.xy;\n";
+        "vec3 inCoord = vec3(gl_FragCoord.xy, 1.0);\n";
 
     snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
             m_Transform[0], m_Transform[1], m_Transform[2]);
@@ -622,7 +622,7 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             m_Transform[3], m_Transform[4], m_Transform[5]);
     dest += countStr;
 
-    dest += "destCoord = vec2(dot(destCoord, row1), dot(destCoord, row2));\n";
+    dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
     BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
     dest += tempStr;
     dest += "\n}\n";

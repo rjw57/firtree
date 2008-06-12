@@ -4,6 +4,17 @@
 #
 # See LICENSE file for distribution rights.
 
+FIND_PACKAGE(OpenGL)
+FIND_PACKAGE(GLEW)
+
+IF(NOT OPENGL_LIBRARIES)
+    MESSAGE(SEND_ERROR "OpenGL required.")
+ENDIF(NOT OPENGL_LIBRARIES)
+
+IF(NOT GLEW_FOUND)
+    MESSAGE(SEND_ERROR "GLEW required.")
+ENDIF(NOT GLEW_FOUND)
+
 INCLUDE_DIRECTORIES(
 	"${CMAKE_CURRENT_SOURCE_DIR}/../"
 	"${CMAKE_CURRENT_SOURCE_DIR}/../glsl-frontend/"
@@ -12,13 +23,36 @@ INCLUDE_DIRECTORIES(
 ADD_SUBDIRECTORY(frontend)
 ADD_SUBDIRECTORY(backends)
 
+# Set platform-specific variables
+IF(APPLE)
+        SET(FIRTREE_APPLE 1)
+ENDIF(APPLE)
+IF(UNIX)
+        SET(FIRTREE_UNIX 1)
+ENDIF(UNIX)
+IF(WIN32)
+        SET(FIRTREE_WIN32 1)
+ENDIF(WIN32)
+IF(CYGWIN)
+        SET(FIRTREE_CYGWIN 1)
+ENDIF(CYGWIN)
+
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
+    CONFIGURE_FILE(
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h"
+        @ONLY)
+ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
+
 SET(COMPILER_SOURCES
 	include/compiler.h 	include/main.h
-	include/kernel.h
+	include/kernel.h	include/platform.h
+	include/opengl.h
 
 	compiler.cpp		main.cpp
 	kernel.cpp
 )
 
 ADD_LIBRARY(compiler ${COMPILER_SOURCES})
+
 TARGET_LINK_LIBRARIES(compiler glslang frontend irbackend glslbackend -lpthread)

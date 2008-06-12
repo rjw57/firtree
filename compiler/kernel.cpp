@@ -30,20 +30,7 @@
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
-
-static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = NULL;
-static PFNGLUNIFORM1FPROC glUniform1f = NULL;
-static PFNGLUNIFORM2FPROC glUniform2f = NULL;
-static PFNGLUNIFORM3FPROC glUniform3f = NULL;
-static PFNGLUNIFORM4FPROC glUniform4f = NULL;
-static PFNGLUNIFORM1IPROC glUniform1i = NULL;
-static PFNGLUNIFORM2IPROC glUniform2i = NULL;
-static PFNGLUNIFORM3IPROC glUniform3i = NULL;
-static PFNGLUNIFORM4IPROC glUniform4i = NULL;
-static PFNGLUNIFORMMATRIX2X3FVPROC glUniformMatrix2x3fv = NULL;
+#include "include/opengl.h"
 
 static void* _KernelGetOpenGLProcAddress(const char* name);
 
@@ -54,25 +41,23 @@ namespace Firtree {
 //=============================================================================
 static void _KernelEnsureAPI() 
 {
-#   define ENSURE_API(name, type) do { \
-    if(NULL == name) \
-    { \
-        name = (type)GetProcAddress(#name); \
-        if(NULL == name) { \
-            FIRTREE_ERROR(#name " not supported."); \
-        } \
-    } } while(0)
+    static bool initialised = false;
+    if(!initialised)
+    {
+        initialised = true;
 
-    ENSURE_API(glGetUniformLocation, PFNGLGETUNIFORMLOCATIONPROC);
-    ENSURE_API(glUniform1f, PFNGLUNIFORM1FPROC);
-    ENSURE_API(glUniform2f, PFNGLUNIFORM2FPROC);
-    ENSURE_API(glUniform3f, PFNGLUNIFORM3FPROC);
-    ENSURE_API(glUniform4f, PFNGLUNIFORM4FPROC);
-    ENSURE_API(glUniform1i, PFNGLUNIFORM1IPROC);
-    ENSURE_API(glUniform2i, PFNGLUNIFORM2IPROC);
-    ENSURE_API(glUniform3i, PFNGLUNIFORM3IPROC);
-    ENSURE_API(glUniform4i, PFNGLUNIFORM4IPROC);
-    ENSURE_API(glUniformMatrix2x3fv, PFNGLUNIFORMMATRIX2X3FVPROC);
+        GLenum err = glewInit();
+        if (GLEW_OK != err)
+        {
+            FIRTREE_ERROR("Could not initialize GLEW: %s", 
+                    glewGetErrorString(err));
+        }
+
+        if(!GLEW_ARB_shading_language_100 || !GLEW_ARB_shader_objects)
+        {
+            FIRTREE_ERROR("OpenGL shader language support required.");
+        }
+    }
 }
 
 //=============================================================================
@@ -409,8 +394,6 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
 
     if(!IsValid())
         return false;
-    
-    dest = "#version 120\n";
 
     std::vector<KernelSamplerParameter*> children;
     AddChildSamplersToVector(children);
@@ -423,6 +406,8 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             "vec4 __builtin_sample(int s, vec2 dc);\n";
     }
 
+    dest += "struct _mat23 { vec3 row1; vec3 row2; };\n";
+
     dest += body;
 
     if(children.size() > 0)
@@ -430,7 +415,7 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
         std::string samplerTableName = GetBlockPrefix();
         samplerTableName += "_samplerTable";
 
-        dest += "struct sampler { vec4 extent; mat2x3 transform; };\n";
+        dest += "struct sampler { vec4 extent; _mat23 transform; };\n";
         dest += "uniform sampler ";
         dest += samplerTableName;
         dest += "[";
@@ -441,7 +426,10 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
         dest += 
             "vec2 __builtin_sampler_transform(int s, vec2 v) { "
 //            "  return v; }\n"
-            "  return vec3(v,1.0) * " + samplerTableName + "[s].transform; }\n"
+            "  vec3 a = vec3(v,1.0);"
+            "  return vec2("
+            "     dot(a, " + samplerTableName + "[s].transform.row1), "
+            "     dot(a, " + samplerTableName + "[s].transform.row2) ); }\n"
             "vec4 __builtin_sampler_extent(int s) { "
             "  return " + samplerTableName + "[s].extent; }\n"
             "vec4 __builtin_sample(int s, vec2 dc) { \n"
@@ -467,16 +455,18 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
     }
 
     dest += "void main() { vec2 destCoord = gl_FragCoord.xy;\n";
+    /*
     dest += "mat2x3 transform = ";
     BuildSamplerTransformGLSL(tempStr);
     dest += tempStr;
     dest += ";\n";
     dest += "destCoord = vec3(destCoord, 1) * transform;\n";
+    */
     BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
     dest += tempStr;
     dest += "\n}\n";
 
-    return IsValid();
+    return true;
 }
 
 //=============================================================================
@@ -497,12 +487,12 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
     for(std::map<std::string, KernelParameter*>::iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
     {
-        // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)
         {
             KernelSamplerParameter* ksp = (*i).second->GetAsSampler();
             if(ksp != NULL)
             {
+                FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
                 std::string prefix(GetBlockPrefix());
                 prefix += "_";
                 prefix += (*i).first;
@@ -515,7 +505,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
                 if(!ksp->IsValid())
                 {
                     // HACK!
-                    fprintf(stderr, "%s\n", ksp->GetKernel().GetInfoLog());
+                    fprintf(stderr, "Compilation failed: %s\n", ksp->GetKernel().GetInfoLog());
                     m_KernelCompileStatus = false;
                     return false;
                 }
@@ -525,7 +515,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 
     dest += m_Kernel.GetCompiledGLSL();
 
-    return true;
+    return IsValid();
 }
 
 //=============================================================================
@@ -632,10 +622,13 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
             std::string extentName = paramName + "extent";
             GLint extentUniLoc = 
-                glGetUniformLocation(program, extentName.c_str());
-            std::string transformName = paramName + "transform";
-            GLint transformUniLoc = 
-                glGetUniformLocation(program, transformName.c_str());
+                glGetUniformLocationARB(program, extentName.c_str());
+            std::string transformName1 = paramName + "transform.row1";
+            GLint transformUniLoc1 = 
+                glGetUniformLocationARB(program, transformName1.c_str());
+            std::string transformName2 = paramName + "transform.row2";
+            GLint transformUniLoc2 = 
+                glGetUniformLocationARB(program, transformName2.c_str());
             GLenum err = glGetError();
             if(err != GL_NO_ERROR)
             {
@@ -657,7 +650,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             if(extentUniLoc != -1)
             {
                 const float* extent = child->GetExtent();
-                glUniform4f(extentUniLoc, extent[0], extent[1],
+                glUniform4fARB(extentUniLoc, extent[0], extent[1],
                         extent[2], extent[3]);
                 err = glGetError();
                 if(err != GL_NO_ERROR)
@@ -666,20 +659,21 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                 }
             }
  
-            if(transformUniLoc != -1)
+            const float* transform = child->GetTransform();
+            if(transformUniLoc1 != -1)
             {
-                const float* transform = child->GetTransform();
-                /*
-                FIRTREE_DEBUG("Transform: [ %f, %f, %f ; %f, %f, %f ]",
-                        transform[0], transform[1], transform[2],
-                        transform[3], transform[4], transform[5]);
-                        */
-                glUniformMatrix2x3fv(transformUniLoc, 1, GL_FALSE, transform);
-                err = glGetError();
-                if(err != GL_NO_ERROR)
-                {
-                    FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-                }
+                glUniform3fvARB(transformUniLoc1, 1, transform);
+            }
+
+            if(transformUniLoc2 != - 1)
+            {
+                glUniform3fvARB(transformUniLoc2, 1, transform + 3);
+            }
+
+            err = glGetError();
+            if(err != GL_NO_ERROR)
+            {
+                FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
             }
        }
     }
@@ -704,7 +698,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         std::string paramName = uniPrefix + uniName;
 
         // Find this parameter's uniform location
-        GLint uniformLoc = glGetUniformLocation(program, paramName.c_str());
+        GLint uniformLoc = glGetUniformLocationARB(program, paramName.c_str());
 
         GLenum err = glGetError();
         if(err != GL_NO_ERROR)
@@ -742,16 +736,16 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         switch(cp->GetSize())
                         {
                             case 1:
-                                glUniform1f(uniformLoc, vec[0]);
+                                glUniform1fARB(uniformLoc, vec[0]);
                                 break;
                             case 2:
-                                glUniform2f(uniformLoc, vec[0], vec[1]);
+                                glUniform2fARB(uniformLoc, vec[0], vec[1]);
                                 break;
                             case 3:
-                                glUniform3f(uniformLoc, vec[0], vec[1], vec[2]);
+                                glUniform3fARB(uniformLoc, vec[0], vec[1], vec[2]);
                                 break;
                             case 4:
-                                glUniform4f(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                glUniform4fARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
                                 break;
                             default:
                                 FIRTREE_ERROR("Parameter %s has invalid size: %i",
@@ -777,16 +771,16 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         switch(cp->GetSize())
                         {
                             case 1:
-                                glUniform1i(uniformLoc, vec[0]);
+                                glUniform1iARB(uniformLoc, vec[0]);
                                 break;
                             case 2:
-                                glUniform2i(uniformLoc, vec[0], vec[1]);
+                                glUniform2iARB(uniformLoc, vec[0], vec[1]);
                                 break;
                             case 3:
-                                glUniform3i(uniformLoc, vec[0], vec[1], vec[2]);
+                                glUniform3iARB(uniformLoc, vec[0], vec[1], vec[2]);
                                 break;
                             case 4:
-                                glUniform4i(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                glUniform4iARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
                                 break;
                             default:
                                 FIRTREE_ERROR("Parameter %s has invalid size: %i",
@@ -807,7 +801,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             }
         } else if(p->GetAsSampler() != NULL) 
         {
-            glUniform1i(uniformLoc, p->GetAsSampler()->GetSamplerIndex());
+            glUniform1iARB(uniformLoc, p->GetAsSampler()->GetSamplerIndex());
             err = glGetError();
             if(err != GL_NO_ERROR)
             {

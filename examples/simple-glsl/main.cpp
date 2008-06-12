@@ -23,8 +23,7 @@
 
 #include <stdlib.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include <compiler/include/opengl.h>
 
 using namespace Firtree;
 
@@ -93,7 +92,7 @@ void render(float epoch)
 {
     glDisable(GL_DEPTH_TEST);
 
-    CHECK( glUseProgram(g_ShaderProg) );
+    CHECK( glUseProgramObjectARB(g_ShaderProg) );
     try {
         g_SpotKernel.SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
@@ -143,36 +142,39 @@ void context_created()
     }
     fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
-    if(!GLEW_VERSION_2_0)
+    if(!GLEW_ARB_shading_language_100 || !GLEW_ARB_shader_objects)
     {
-        fprintf(stdout, "OpenGL 2.0 or greater required.\n");
+        fprintf(stdout, "OpenGL shading langugage required.\n");
         exit(1);
         return;
     }
+
+    const GLubyte* versionStr = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    printf("Shader langugage version supported: %s.\n", versionStr);
 
     float angle = 0.2f;
     float spotTransform[] = {
         cos(angle), -sin(angle), -320.f,
         sin(angle),  cos(angle), -240.f,
     };
-
     g_SpotSampler.SetTransform(spotTransform);
     g_OverKernel.SetValueForKey(g_SpotSampler, "a");
     g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
 
     std::string shaderSource;
-    g_GlobalSampler.BuildGLSL(shaderSource);
+    //g_GlobalSampler.BuildGLSL(shaderSource);
+    bool retVal = g_GlobalSampler.BuildGLSL(shaderSource);
 
-    if(!g_GlobalSampler.IsValid())
+    if(!retVal)
     {
-        fprintf(stderr, "Error compiling kernel.\n%s\n",
+        fprintf(stderr, "Error compiling kernel:\n%s\n",
                 g_GlobalSampler.GetKernel().GetInfoLog());
         exit(3);
     }
 
     printf("Compiled source:\n%s\n", shaderSource.c_str());
 
-    g_FragShaderObj = glCreateShader(GL_FRAGMENT_SHADER_ARB);
+    g_FragShaderObj = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
     if(g_FragShaderObj == 0)
     {
         fprintf(stderr, "Error creating shader object.\n");
@@ -180,36 +182,36 @@ void context_created()
     }
 
     const char* pSrc = shaderSource.c_str();
-    CHECK( glShaderSource(g_FragShaderObj, 1, &pSrc, NULL) );
-    CHECK( glCompileShader(g_FragShaderObj) );
+    CHECK( glShaderSourceARB(g_FragShaderObj, 1, &pSrc, NULL) );
+    CHECK( glCompileShaderARB(g_FragShaderObj) );
 
-    int status = 0;
-    CHECK( glGetShaderiv(g_FragShaderObj, GL_COMPILE_STATUS, &status) );
+    GLint status = 0;
+    CHECK( glGetObjectParameterivARB(g_FragShaderObj, GL_OBJECT_COMPILE_STATUS_ARB, &status) );
     if(status != GL_TRUE)
     {
         fprintf(stderr, "Error compiling shader:\n");
 
-        int logLen = 0;
-        CHECK( glGetShaderiv(g_FragShaderObj, GL_INFO_LOG_LENGTH, &logLen) );
+        GLint logLen = 0;
+        CHECK( glGetObjectParameterivARB(g_FragShaderObj, GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetShaderInfoLog(g_FragShaderObj, logLen, &logLen, log) );
+        CHECK( glGetInfoLogARB(g_FragShaderObj, logLen, &logLen, log) );
         fprintf(stderr, "%s\n", log);
         free(log);
         exit(2);
     }
 
-    CHECK( g_ShaderProg = glCreateProgram() );
-    CHECK( glAttachShader(g_ShaderProg, g_FragShaderObj) );
-    CHECK( glLinkProgram(g_ShaderProg) );
-    CHECK( glGetProgramiv(g_ShaderProg, GL_LINK_STATUS, &status) );
+    CHECK( g_ShaderProg = glCreateProgramObjectARB() );
+    CHECK( glAttachObjectARB(g_ShaderProg, g_FragShaderObj) );
+    CHECK( glLinkProgramARB(g_ShaderProg) );
+    CHECK( glGetObjectParameterivARB(g_ShaderProg, GL_OBJECT_LINK_STATUS_ARB, &status) );
     if(status != GL_TRUE)
     {
         fprintf(stderr, "Error linking shader:\n");
 
-        int logLen = 0;
-        CHECK( glGetProgramiv(g_ShaderProg, GL_INFO_LOG_LENGTH, &logLen) );
+        GLint logLen = 0;
+        CHECK( glGetObjectParameterivARB(g_ShaderProg, GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetProgramInfoLog(g_ShaderProg, logLen, &logLen, log) );
+        CHECK( glGetInfoLogARB(g_ShaderProg, logLen, &logLen, log) );
         fprintf(stderr, "%s\n", log);
         free(log);
         exit(2);

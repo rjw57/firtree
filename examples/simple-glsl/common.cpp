@@ -23,9 +23,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
+#include <compiler/include/opengl.h>
 
 /** 
  * This file contains the common routines used by (almost) all of the test

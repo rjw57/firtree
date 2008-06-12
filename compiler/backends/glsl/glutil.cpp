@@ -22,15 +22,19 @@
 
 #include "glutil.h"
 
-#include <GL/gl.h>
-#include <GL/glx.h>
+#include "../../include/opengl.h"
 
 namespace Firtree { namespace GLSLInternal {
     
 // ============================================================================
 void* GetProcAddress(const char *procName)
 {
+#if defined(GLOO_UNIX) && !defined(GLOO_APPLE)
     return (void*)(glXGetProcAddress((const GLubyte*)procName));
+#else
+#   warning Compiling a stub version of GetProcAddress.
+    return NULL;
+#endif
 }
 
 //=============================================================================

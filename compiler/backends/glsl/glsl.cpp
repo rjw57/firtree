@@ -743,8 +743,6 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                 const char* tmp = AddTemporary();
                 PushTemporary(tmp);
 
-                AppendGLSLType(n->getTypePointer()); 
-
                 const char* funcname = "UNTITLED_FUNC";
                 switch(n->getOp())
                 {
@@ -831,7 +829,16 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                 }
 
-                AppendOutput(" %s = %s(", tmp, funcname);
+                if(n->getOp() != EOpSample)
+                {
+                    AppendGLSLType(n->getTypePointer()); 
+                    AppendOutput(" %s = %s(", tmp, funcname);
+                } else {
+                    AppendGLSLType(n->getTypePointer()); 
+                    AppendOutput(" %s = %s_", tmp, funcname);
+                    AppendOutput(m_Prefix.c_str());
+                    AppendOutput("_kernel(");
+                }
 
                 bool first = true;
                 for(std::vector<std::string>::reverse_iterator i=params.rbegin();

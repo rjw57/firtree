@@ -70,7 +70,7 @@ Kernel g_OverKernel(g_OverKernelSource);
 KernelSamplerParameter g_OverSampler(g_OverKernel);
 
 const char* g_RippleKernelSource = 
-"    kernel vec4 compositeOver(sampler a, float phase)"
+"    kernel vec4 ripple(sampler a, float phase)"
 "    {"
 "        vec2 center = vec2(320, 240);"
 "        vec3 params = vec3(0.1 /* freq */, phase, 100 /* sigma */);"
@@ -95,8 +95,8 @@ const char* g_RippleKernelSource =
 Kernel g_RippleKernel(g_RippleKernelSource);
 KernelSamplerParameter g_RippleSampler(g_RippleKernel);
 
-#define g_GlobalSampler g_OverSampler
-//#define g_GlobalSampler g_RippleSampler
+//#define g_GlobalSampler g_OverSampler
+#define g_GlobalSampler g_RippleSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;

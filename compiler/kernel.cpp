@@ -443,9 +443,48 @@ KernelSamplerParameter::~KernelSamplerParameter()
 }
 
 //=============================================================================
+static void WriteSamplerFunctionForKernel(std::string& dest,
+        Kernel& kernel)
+{
+    static char idxStr[255]; 
+    std::string tempStr;
+
+    dest += "vec4 __builtin_sample_";
+    dest += kernel.GetCompiledKernelName();
+    dest += "(int sampler, vec2 samplerCoord) {\n";
+    dest += "  vec4 result = vec4(0,0,0,0);\n";
+
+    // Find all sampler parameters
+    std::map<std::string, KernelParameter*>& params = kernel.GetParameters();
+    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+            i != params.end(); i++)
+    {
+        KernelParameter *pKP = (*i).second;
+        if(pKP != NULL)
+        {
+            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            if(pKSP != NULL)
+            {
+                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {";
+                pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+                dest += tempStr;
+                dest += "}\n";
+            }
+        }
+    }
+
+    dest += "  return result;\n";
+    dest += "}\n";
+}
+
+//=============================================================================
 bool KernelSamplerParameter::BuildGLSL(std::string& dest)
 {
     std::string body, tempStr;
+    static char countStr[255]; 
 
     // Compile all the kernels...
     BuildTopLevelGLSL(body);
@@ -458,10 +497,22 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
 
     if(children.size() > 0)
     {
+        for(int i=0; i<children.size(); i++)
+        {
+            KernelSamplerParameter* child = children[i];
+            children[i]->SetSamplerIndex(i);
+
+            dest += "vec4 __builtin_sample_";
+            dest += child->GetKernel().GetCompiledKernelName();
+            dest += "(int sampler, vec2 samplerCoord);\n";
+        }
+
+        dest += "vec4 __builtin_sample_";
+        dest += m_Kernel.GetCompiledKernelName();
+        dest += "(int sampler, vec2 samplerCoord);\n";
         dest += 
             "vec2 __builtin_sampler_transform(int s, vec2 v);\n"
-            "vec4 __builtin_sampler_extent(int s);\n"
-            "vec4 __builtin_sample(int s, vec2 dc);\n";
+            "vec4 __builtin_sampler_extent(int s);\n";
     }
 
     dest += "struct _mat23 { vec3 row1; vec3 row2; };\n";
@@ -477,9 +528,19 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
         dest += "uniform sampler ";
         dest += samplerTableName;
         dest += "[";
-        char countStr[255]; snprintf(countStr, 255, "%i", children.size());
+        snprintf(countStr, 255, "%i", children.size());
         dest += countStr;
         dest += "];\n";
+
+        for(int i=0; i<children.size(); i++)
+        {
+            KernelSamplerParameter* child = children[i];
+
+            // Each child gets it's own sampler function.
+            WriteSamplerFunctionForKernel(dest, child->GetKernel());
+        }
+
+        WriteSamplerFunctionForKernel(dest, m_Kernel);
 
         dest += 
             "vec2 __builtin_sampler_transform(int s, vec2 v) { "
@@ -489,27 +550,7 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             "     dot(a, " + samplerTableName + "[s].transform.row1), "
             "     dot(a, " + samplerTableName + "[s].transform.row2) ); }\n"
             "vec4 __builtin_sampler_extent(int s) { "
-            "  return " + samplerTableName + "[s].extent; }\n"
-            "vec4 __builtin_sample(int s, vec2 dc) { \n"
-            "  vec4 result = vec4(0,0,0,0);\n";
-
-        for(int i=0; i<children.size(); i++)
-        {
-            KernelSamplerParameter* child = children[i];
-
-            snprintf(countStr, 255, "%i", i);
-            children[i]->SetSamplerIndex(i);
-            dest += "if(s == ";
-            dest += countStr;
-            dest += ") {\n";
-            child->BuildSampleGLSL(tempStr, "dc", "result");
-            dest += tempStr;
-            dest += "}\n";
-        }
-
-        dest +=
-            "  return result; }\n"
-            ;
+            "  return " + samplerTableName + "[s].extent; }\n";
     }
 
     dest += "void main() { vec2 destCoord = gl_FragCoord.xy;\n";

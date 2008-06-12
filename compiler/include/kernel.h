@@ -179,7 +179,6 @@ class Kernel
         void SetValueForKey(const int* value, int count, const char* key);
         void SetValueForKey(bool value, const char* key);
         void SetValueForKey(const bool* value, int count, const char* key);
-
         void SetValueForKey(const KernelSamplerParameter& sampler, const char* key);
 
         const char* GetUniformNameForKey(const char* key);

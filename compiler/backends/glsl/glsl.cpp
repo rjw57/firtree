@@ -251,10 +251,68 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
 {
     if(!preVisit)
     {
+        const char* tmp = NULL;
+
+        // Vector swizzles are tricksy beasts
+        if(n->getOp() == EOpVectorSwizzle)
+        {
+            AppendGLSLType(n->getTypePointer());
+
+            TIntermAggregate* right = n->getRight()->getAsAggregate();
+            if((right == NULL) || (right->getOp() != EOpSequence))
+            {
+                FAIL_RET("Swizzle operation RHS is not sequence.");
+            }
+
+            // Should be a sequence of const unions.
+            TIntermSequence& seq = right->getSequence();
+            std::string swizzleStr;
+            for(TIntermSequence::iterator i=seq.begin(); i!=seq.end(); i++)
+            {
+                TIntermConstantUnion* swizzleOp = (*i)->getAsConstantUnion();
+                if((swizzleOp == NULL) || 
+                        (swizzleOp->getBasicType() != EbtInt) ||
+                        (swizzleOp->getNominalSize() != 1))
+                {
+                    FAIL_RET("Swizzle operation not specified via integer constant unions.");
+                }
+
+                // Pop the unused temporary which was generated visiting const union.
+                PopTemporary(); 
+
+                int swizzleIdx = swizzleOp->getUnionArrayPointer()[0].getIConst();
+                switch(swizzleIdx)
+                {
+                    case 0:
+                        swizzleStr += 'x';
+                        break;
+                    case 1:
+                        swizzleStr += 'y';
+                        break;
+                    case 2:
+                        swizzleStr += 'z';
+                        break;
+                    case 3:
+                        swizzleStr += 'w';
+                        break;
+                    default:
+                        FAIL_RET("Invalid swizzle index: %i", swizzleIdx);
+                        break;
+                }
+            }
+
+            std::string left(PopTemporary());
+
+            tmp = AddTemporary();
+            PushTemporary(tmp);
+            AppendOutput(" %s = %s.%s;\n", tmp, left.c_str(), swizzleStr.c_str());
+
+            return true;
+        }
+
         std::string right(PopTemporary());
         std::string left(PopTemporary());
         
-        const char* tmp = NULL;
         switch(n->getOp())
         {
             case EOpAssign:
@@ -339,7 +397,7 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                         left.c_str(),
                         OperatorCodeToDescription(n->getOp()),
                         right.c_str());
-                FAIL_RET("Unknown unary op: %s", OperatorCodeToDescription(n->getOp()));
+                FAIL_RET("Unknown binary op: %s", OperatorCodeToDescription(n->getOp()));
                 break;
         }
     }
@@ -661,6 +719,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpDot:
         case EOpCross:
         case EOpMix:
+        case EOpReflect:
         case EOpSample:
         case EOpSamplerTransform:
         case EOpConstructInt:
@@ -724,6 +783,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                     case EOpSmoothStep:
                         funcname = "smoothstep";
+                        break;
+                    case EOpReflect:
+                        funcname = "reflect";
                         break;
                     case EOpSample:
                         funcname = "__builtin_sample";

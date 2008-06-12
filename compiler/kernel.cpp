@@ -443,19 +443,19 @@ KernelSamplerParameter::~KernelSamplerParameter()
 }
 
 //=============================================================================
-static void WriteSamplerFunctionForKernel(std::string& dest,
+static void WriteSamplerFunctionsForKernel(std::string& dest,
         Kernel& kernel)
 {
     static char idxStr[255]; 
     std::string tempStr;
+   
+    std::map<std::string, KernelParameter*>& params = kernel.GetParameters();
 
     dest += "vec4 __builtin_sample_";
     dest += kernel.GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
 
-    // Find all sampler parameters
-    std::map<std::string, KernelParameter*>& params = kernel.GetParameters();
     for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
             i != params.end(); i++)
     {
@@ -477,6 +477,75 @@ static void WriteSamplerFunctionForKernel(std::string& dest,
     }
 
     dest += "  return result;\n";
+    dest += "}\n";
+    
+    dest += "vec2 __builtin_sampler_transform_";
+    dest += kernel.GetCompiledKernelName();
+    dest += "(int sampler, vec2 samplerCoord) {\n";
+    dest += "  vec3 row1 = vec3(1,0,0);\n";
+    dest += "  vec3 row2 = vec3(0,1,0);\n";
+
+    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+            i != params.end(); i++)
+    {
+        KernelParameter *pKP = (*i).second;
+        if(pKP != NULL)
+        {
+            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            if(pKSP != NULL)
+            {
+                const float* transform = pKSP->GetTransform();
+                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {\n";
+                dest += "row1 = vec3(";
+                snprintf(idxStr, 255, "%f,%f,%f", transform[0], transform[1], transform[2]);
+                dest += idxStr;
+                dest += ");\n";
+                dest += "row2 = vec3(";
+                snprintf(idxStr, 255, "%f,%f,%f", transform[3], transform[4], transform[5]);
+                dest += idxStr;
+                dest += ");\n";
+                dest += "}\n";
+            }
+        }
+    }
+
+    dest += "  vec3 inVal = vec3(samplerCoord, 1.0);\n";
+    dest += "  vec2 result = vec2(dot(row1, inVal), dot(row2, inVal));\n";
+    dest += "  return result;\n";
+    dest += "}\n";
+ 
+    dest += "vec4 __builtin_sampler_extent_";
+    dest += kernel.GetCompiledKernelName();
+    dest += "(int sampler) {\n";
+    dest += "  vec4 retVal = vec4(0,0,0,0);\n";
+
+    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+            i != params.end(); i++)
+    {
+        KernelParameter *pKP = (*i).second;
+        if(pKP != NULL)
+        {
+            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            if(pKSP != NULL)
+            {
+                const float* extent = pKSP->GetExtent();
+                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {\n";
+                dest += "retVal = vec4(";
+                snprintf(idxStr, 255, "%f,%f,%f,%f", extent[0], extent[1], extent[2], extent[3]); 
+                dest += idxStr;
+                dest += ");\n";
+                dest += "}\n";
+            }
+        }
+    }
+
+    dest += "  return retVal;\n";
     dest += "}\n";
 }
 
@@ -505,52 +574,42 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             dest += "vec4 __builtin_sample_";
             dest += child->GetKernel().GetCompiledKernelName();
             dest += "(int sampler, vec2 samplerCoord);\n";
+
+            dest += "vec2 __builtin_sampler_transform_";
+            dest += child->GetKernel().GetCompiledKernelName();
+            dest += "(int sampler, vec2 samplerCoord);\n";
+
+            dest += "vec4 __builtin_sampler_extent_";
+            dest += child->GetKernel().GetCompiledKernelName();
+            dest += "(int sampler);\n";
         }
 
         dest += "vec4 __builtin_sample_";
         dest += m_Kernel.GetCompiledKernelName();
         dest += "(int sampler, vec2 samplerCoord);\n";
-        dest += 
-            "vec2 __builtin_sampler_transform(int s, vec2 v);\n"
-            "vec4 __builtin_sampler_extent(int s);\n";
-    }
 
-    dest += "struct _mat23 { vec3 row1; vec3 row2; };\n";
+        dest += "vec2 __builtin_sampler_transform_";
+        dest += m_Kernel.GetCompiledKernelName();
+        dest += "(int sampler, vec2 samplerCoord);\n";
+
+        dest += "vec4 __builtin_sampler_extent_";
+        dest += m_Kernel.GetCompiledKernelName();
+        dest += "(int sampler);\n";
+    }
 
     dest += body;
 
     if(children.size() > 0)
     {
-        std::string samplerTableName = GetBlockPrefix();
-        samplerTableName += "_samplerTable";
-
-        dest += "struct sampler { vec4 extent; _mat23 transform; };\n";
-        dest += "uniform sampler ";
-        dest += samplerTableName;
-        dest += "[";
-        snprintf(countStr, 255, "%i", children.size());
-        dest += countStr;
-        dest += "];\n";
-
         for(int i=0; i<children.size(); i++)
         {
             KernelSamplerParameter* child = children[i];
 
             // Each child gets it's own sampler function.
-            WriteSamplerFunctionForKernel(dest, child->GetKernel());
+            WriteSamplerFunctionsForKernel(dest, child->GetKernel());
         }
 
-        WriteSamplerFunctionForKernel(dest, m_Kernel);
-
-        dest += 
-            "vec2 __builtin_sampler_transform(int s, vec2 v) { "
-//            "  return v; }\n"
-            "  vec3 a = vec3(v,1.0);"
-            "  return vec2("
-            "     dot(a, " + samplerTableName + "[s].transform.row1), "
-            "     dot(a, " + samplerTableName + "[s].transform.row2) ); }\n"
-            "vec4 __builtin_sampler_extent(int s) { "
-            "  return " + samplerTableName + "[s].extent; }\n";
+        WriteSamplerFunctionsForKernel(dest, m_Kernel);
     }
 
     dest += "void main() { vec2 destCoord = gl_FragCoord.xy;\n";
@@ -702,80 +761,12 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
     // Setup any sampler parameters.
     std::vector<KernelSamplerParameter*> children;
     AddChildSamplersToVector(children);
-    if(children.size() > 0)
+    for(int i=0; i<children.size(); i++)
     {
-        std::string samplerTableName = GetBlockPrefix();
-        samplerTableName += "_samplerTable";
+        KernelSamplerParameter* child = children[i];
 
-        for(int i=0; i<children.size(); i++)
-        {
-            KernelSamplerParameter* child = children[i];
-
-            // Set all the child's uniforms
-            child->SetGLSLUniforms(program);
-
-            std::string paramName = samplerTableName;
-            char idxStr[255]; snprintf(idxStr, 255, "%i", i);
-            paramName += "[";
-            paramName += idxStr;
-            paramName += "].";
-
-            std::string extentName = paramName + "extent";
-            GLint extentUniLoc = 
-                glGetUniformLocationARB(program, extentName.c_str());
-            std::string transformName1 = paramName + "transform.row1";
-            GLint transformUniLoc1 = 
-                glGetUniformLocationARB(program, transformName1.c_str());
-            std::string transformName2 = paramName + "transform.row2";
-            GLint transformUniLoc2 = 
-                glGetUniformLocationARB(program, transformName2.c_str());
-            GLenum err = glGetError();
-            if(err != GL_NO_ERROR)
-            {
-                FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-            }
-
-            /*
-            if(extentUniLoc == -1)
-            {
-                FIRTREE_WARNING("Sample table extent location not found.");
-            }
-
-            if(transformUniLoc == -1)
-            {
-                FIRTREE_WARNING("Sample table transform location not found.");
-            }
-            */
-
-            if(extentUniLoc != -1)
-            {
-                const float* extent = child->GetExtent();
-                glUniform4fARB(extentUniLoc, extent[0], extent[1],
-                        extent[2], extent[3]);
-                err = glGetError();
-                if(err != GL_NO_ERROR)
-                {
-                    FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-                }
-            }
- 
-            const float* transform = child->GetTransform();
-            if(transformUniLoc1 != -1)
-            {
-                glUniform3fvARB(transformUniLoc1, 1, transform);
-            }
-
-            if(transformUniLoc2 != - 1)
-            {
-                glUniform3fvARB(transformUniLoc2, 1, transform + 3);
-            }
-
-            err = glGetError();
-            if(err != GL_NO_ERROR)
-            {
-                FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-            }
-       }
+        // Set all the child's uniforms
+        child->SetGLSLUniforms(program);
     }
 
     for(std::map<std::string, KernelParameter*>::iterator i = params.begin();

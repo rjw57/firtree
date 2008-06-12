@@ -1,6 +1,6 @@
 /* 
  * FIRTREE - A generic image processing system.
- * Copyright (C) 2008 Rich Wareham <srichwareham@gmail.com>
+ * Copyright (C) 2008 Rich Wareham <richwareham@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published by
@@ -544,19 +544,27 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendOutput(" %s = __builtin_unpremultiply(%s);\n", tmp, operand.c_str());
             case EOpSamplerCoord:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = __builtin_sampler_transform(%s, destCoord);\n", tmp, operand.c_str());
+                AppendOutput(" %s = __builtin_sampler_transform_", tmp);
+                AppendOutput(m_Prefix.c_str());
+                AppendOutput("_kernel(%s, destCoord);\n", operand.c_str());
                 break;
             case EOpSamplerExtent:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = __builtin_sampler_extent(%s);\n", tmp, operand.c_str());
+                AppendOutput(" %s = __builtin_sampler_extent_", tmp);
+                AppendOutput(m_Prefix.c_str());
+                AppendOutput("_kernel(%s);\n", operand.c_str());
                 break;
             case EOpSamplerOrigin:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = (__builtin_sampler_extent(%s)).xy;\n", tmp, operand.c_str());
+                AppendOutput(" %s = _(_builtin_sampler_extent_", tmp);
+                AppendOutput(m_Prefix.c_str());
+                AppendOutput("_kernel(%s)).xy;\n", operand.c_str());
                 break;
             case EOpSamplerSize:
                 AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = (__builtin_sampler_extent(%s)).zw;\n", tmp, operand.c_str());
+                AppendOutput(" %s = _(_builtin_sampler_extent_", tmp);
+                AppendOutput(m_Prefix.c_str());
+                AppendOutput("_kernel(%s)).zw;\n", operand.c_str());
                 break;
             default:
                 AppendOutput("/* ");
@@ -829,15 +837,19 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         break;
                 }
 
-                if(n->getOp() != EOpSample)
+                switch(n->getOp())
                 {
-                    AppendGLSLType(n->getTypePointer()); 
-                    AppendOutput(" %s = %s(", tmp, funcname);
-                } else {
-                    AppendGLSLType(n->getTypePointer()); 
-                    AppendOutput(" %s = %s_", tmp, funcname);
-                    AppendOutput(m_Prefix.c_str());
-                    AppendOutput("_kernel(");
+                    case EOpSample:
+                    case EOpSamplerTransform:
+                        AppendGLSLType(n->getTypePointer()); 
+                        AppendOutput(" %s = %s_", tmp, funcname);
+                        AppendOutput(m_Prefix.c_str());
+                        AppendOutput("_kernel(");
+                        break;
+                    default:
+                        AppendGLSLType(n->getTypePointer()); 
+                        AppendOutput(" %s = %s(", tmp, funcname);
+                        break;
                 }
 
                 bool first = true;

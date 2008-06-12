@@ -85,7 +85,7 @@ const char* g_RippleKernelSource =
 
 "        vec3 incident = vec3(0,0,-1);"
 "        vec3 outDir = normalize(reflect(incident, normal*0.5));"
-"        delta = 15.0 * outDir.xy;"
+"        delta = 40.0 * outDir.xy;"
 "        float specular = max(0.0, dot(normal, normalize(vec3(1,-1,0.1))));"
 "        return sample(a, samplerTransform(a, destCoord() + delta)) + "
 "               vec4(specular, specular, specular, 0.0);"
@@ -95,8 +95,24 @@ const char* g_RippleKernelSource =
 Kernel g_RippleKernel(g_RippleKernelSource);
 KernelSamplerParameter g_RippleSampler(g_RippleKernel);
 
+const char* g_GradientKernelSource = 
+"    kernel vec4 gradientKernel()"
+"    {"
+"        float lambda = clamp(destCoord().x / 600.0, 0.0, 1.0);"
+"        return mix(vec4(0,0,0,0), vec4(0,1,0,1), lambda);"
+"    }"
+;
+
+Kernel g_GradientKernel(g_GradientKernelSource);
+KernelSamplerParameter g_GradientSampler(g_GradientKernel);
+
+Kernel g_OverKernel2(g_OverKernelSource);
+KernelSamplerParameter g_OverSampler2(g_OverKernel2);
+
 //#define g_GlobalSampler g_OverSampler
-#define g_GlobalSampler g_RippleSampler
+//#define g_GlobalSampler g_RippleSampler
+//#define g_GlobalSampler g_GradientSampler
+#define g_GlobalSampler g_OverSampler2
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -170,6 +186,9 @@ void initialize_kernels()
         g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
 
         g_RippleKernel.SetValueForKey(g_OverSampler, "a");
+
+        g_OverKernel2.SetValueForKey(g_GradientSampler, "b");
+        g_OverKernel2.SetValueForKey(g_RippleKernel, "a");
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }

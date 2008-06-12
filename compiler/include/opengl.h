@@ -35,8 +35,10 @@
 # endif
 # include <GL/gl.h>
 # include <GL/glu.h>
-# include <GL/glx.h>
-# include <GL/glxext.h>
+# if !defined(FIRTREE_NO_GLX)
+#  include <GL/glx.h>
+#  include <GL/glxext.h>
+# endif
 # ifdef FIRTREE_HAVE_GLUT
 #  define HAVE_FREEGLUT // FIXME: Hell of an assumption!
 #  include <GL/glut.h>

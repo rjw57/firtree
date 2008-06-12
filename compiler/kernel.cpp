@@ -30,6 +30,7 @@
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
+#define FIRTREE_NO_GLX
 #include "include/opengl.h"
 
 static void* _KernelGetOpenGLProcAddress(const char* name);

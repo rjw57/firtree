@@ -141,7 +141,7 @@ void render(float epoch)
     try {
         g_SpotKernel.SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
-        g_SpotKernel.SetValueForKey(30.f, "dotPitch");
+ //       g_SpotKernel.SetValueForKey(30.f, "dotPitch");
 
         g_RippleKernel.SetValueForKey(-epoch * 0.1f, "phase");
 

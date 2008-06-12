@@ -164,7 +164,10 @@ class Kernel
         void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }
 
-        bool Compile(const char* blockName);
+        bool GetIsCompiled() const { return m_IsCompiled; }
+
+        void SetBlockName(const char* blockName);
+        const char* GetBlockName() const { return m_BlockName.c_str(); }
 
         const char* GetCompiledGLSL() const;
         const char* GetCompiledKernelName() const;
@@ -203,6 +206,7 @@ class Kernel
         KernelConstParameter* ConstParameterForKeyAndType(const char* key, 
                 KernelConstParameter::BaseType type);
         KernelSamplerParameter* SamplerParameterForKey(const char* key);
+        void UpdateBlockNameReplacedSourceCache();
 };
 
 }

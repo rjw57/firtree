@@ -190,6 +190,8 @@ void Kernel::SetSource(const char* source)
     }
 
     m_IsCompiled = true;
+
+    UpdateBlockNameReplacedSourceCache();
 }
 
 //=============================================================================
@@ -203,16 +205,24 @@ const char* Kernel::GetCompiledKernelName() const {
 }
 
 //=============================================================================
-bool Kernel::Compile(const char* blockName)
+void Kernel::SetBlockName(const char* blockName)
 {
-    if(!m_IsCompiled)
-        return false;
-
     // Set the block name.
     m_BlockName = blockName;
 
-    // Form the blockname replaces source
+    if(!m_IsCompiled)
+        return;
 
+    UpdateBlockNameReplacedSourceCache();
+}
+
+//=============================================================================
+void Kernel::UpdateBlockNameReplacedSourceCache()
+{
+    if(!m_IsCompiled)
+        return;
+
+    // Form the blockname replaced source
     std::string findWhat("$$BLOCK$$");
 
     int pos = 0;
@@ -233,8 +243,6 @@ bool Kernel::Compile(const char* blockName)
         if (pos==-1) break;
         m_BlockReplacedKernelName.replace(pos,findWhat.size(),m_BlockName);
     }
-
-    return m_IsCompiled;
 }
 
 //=============================================================================
@@ -522,7 +530,8 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
 //=============================================================================
 bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 {
-    m_KernelCompileStatus = m_Kernel.Compile(GetBlockPrefix());
+    m_Kernel.SetBlockName(GetBlockPrefix());
+    m_KernelCompileStatus = m_Kernel.GetIsCompiled();
 
     if(!IsValid())
         return false;

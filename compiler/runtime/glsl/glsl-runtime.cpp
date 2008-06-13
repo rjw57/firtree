@@ -59,42 +59,6 @@ static void _KernelEnsureAPI()
 }
 
 //=============================================================================
-Parameter::Parameter()
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
-Parameter::Parameter(const Parameter& p)
-{
-    Parameter();
-}
-
-//=============================================================================
-Parameter::~Parameter()
-{
-}
-
-//=============================================================================
-NumericParameter::NumericParameter()
-    :   Parameter()
-    ,   m_BaseType(NumericParameter::Float)
-    ,   m_Size(0)
-{
-}
-
-//=============================================================================
-NumericParameter::~NumericParameter()
-{
-}
-
-//=============================================================================
-Parameter* NumericParameter::NewNumericParameter()
-{
-    return new NumericParameter();
-}
-
-//=============================================================================
 Kernel::Kernel()
     :   ReferenceCounted()
     ,   m_IsCompiled(false)
@@ -104,7 +68,7 @@ Kernel::Kernel()
 //=============================================================================
 Kernel::Kernel(const char* source)
 {
-    SetSource(source);
+    this->SetSource(source);
 }
 
 //=============================================================================
@@ -418,14 +382,7 @@ KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 
     if(kp == NULL) { return NULL; }
 
-    return kp->GetAsSampler();
-}
-
-//=============================================================================
-Parameter* KernelSamplerParameter::Sampler(
-        const KernelSamplerParameter& sampler)
-{
-    return new KernelSamplerParameter(sampler);
+    return (KernelSamplerParameter*)(kp->GetAsSampler());
 }
 
 //=============================================================================
@@ -436,35 +393,13 @@ Parameter* KernelSamplerParameter::Sampler(Kernel* kernel)
 
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Kernel* kernel)
-    :   Parameter()
+    :   SamplerParameter()
     ,   m_Kernel(kernel)
     ,   m_KernelCompileStatus(false)
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
 {
     m_Kernel->Retain();
-
-    float identityTransform[6] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-    };
-    memcpy(m_Transform, identityTransform, 6*sizeof(float));
-
-    m_Extent[0] = m_Extent[1] = 0.0f;
-    m_Extent[2] = m_Extent[3] = 0.0f;
-}
-
-//=============================================================================
-KernelSamplerParameter::KernelSamplerParameter(const KernelSamplerParameter& sampler)
-    :   Parameter(sampler)
-    ,   m_Kernel(sampler.GetKernel())
-    ,   m_KernelCompileStatus(false)
-    ,   m_SamplerIndex(-1)
-    ,   m_BlockPrefix("toplevel")
-{
-    m_Kernel->Retain();
-    memcpy(m_Transform, sampler.m_Transform, 6*sizeof(float));
-    memcpy(m_Extent, sampler.m_Extent, 4*sizeof(float));
 }
 
 //=============================================================================
@@ -493,7 +428,8 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            KernelSamplerParameter *pKSP = 
+                (KernelSamplerParameter*)(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
                 snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
@@ -522,7 +458,8 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            KernelSamplerParameter *pKSP = 
+                (KernelSamplerParameter*)(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
                 const float* transform = pKSP->GetTransform();
@@ -559,7 +496,8 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = pKP->GetAsSampler();
+            KernelSamplerParameter *pKSP = 
+                (KernelSamplerParameter*)(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
                 const float* extent = pKSP->GetExtent();
@@ -646,11 +584,12 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
     dest += "void main() {\n"
         "vec3 inCoord = vec3(gl_FragCoord.xy, 1.0);\n";
 
+    const float *transform = this->GetTransform();
     snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
-            m_Transform[0], m_Transform[1], m_Transform[2]);
+            transform[0], transform[1], transform[2]);
     dest += countStr;
     snprintf(countStr, 255, "vec3 row2 = vec3(%f,%f,%f);\n", 
-            m_Transform[3], m_Transform[4], m_Transform[5]);
+            transform[3], transform[4], transform[5]);
     dest += countStr;
 
     dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
@@ -682,7 +621,8 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
     {
         if((*i).second != NULL)
         {
-            KernelSamplerParameter* ksp = (*i).second->GetAsSampler();
+            KernelSamplerParameter* ksp = 
+                (KernelSamplerParameter*)((*i).second->GetAsSampler());
             if(ksp != NULL)
             {
                 // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
@@ -725,7 +665,8 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)
         {
-            KernelSamplerParameter* ksp = (*i).second->GetAsSampler();
+            KernelSamplerParameter* ksp = 
+                (KernelSamplerParameter*)((*i).second->GetAsSampler());
             if(ksp != NULL)
             {
                 ksp->AddChildSamplersToVector(sampVec);
@@ -747,12 +688,6 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
     result += samplerCoordVar;
     result += ");";
     dest = result;
-}
-
-//=============================================================================
-void KernelSamplerParameter::SetTransform(const float* f)
-{
-    memcpy(m_Transform, f, 6*sizeof(float));
 }
 
 //=============================================================================
@@ -899,7 +834,9 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             }
         } else if(p->GetAsSampler() != NULL) 
         {
-            glUniform1iARB(uniformLoc, p->GetAsSampler()->GetSamplerIndex());
+            KernelSamplerParameter* ksp = 
+                (KernelSamplerParameter*)(p->GetAsSampler());
+            glUniform1iARB(uniformLoc, ksp->GetSamplerIndex());
             err = glGetError();
             if(err != GL_NO_ERROR)
             {

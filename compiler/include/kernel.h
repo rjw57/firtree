@@ -117,11 +117,11 @@ class SamplerParameter : public Parameter
     public:
         virtual SamplerParameter* GetAsSampler() { return this; }
 
-        void SetExtent(const float* e);
-        const float* GetExtent() const { return m_Extent; }
+        virtual void SetExtent(const float* e);
+        virtual const float* GetExtent() const { return m_Extent; }
 
-        void SetTransform(const float* f);
-        const float* GetTransform() const { return m_Transform; }
+        virtual void SetTransform(const float* f);
+        virtual const float* GetTransform() const { return m_Transform; }
 
     private:
         /// Affine transformation to map from world co-ordinates

@@ -75,7 +75,6 @@ Kernel::Kernel()
 //=============================================================================
 Kernel::Kernel(const char* source)
 {
-    this->SetSource(source);
 }
 
 //=============================================================================
@@ -87,6 +86,9 @@ Kernel::~Kernel()
 SamplerParameter::SamplerParameter()
     :   Parameter()
 {
+    m_Transform[0] = 1.0f; m_Transform[1] = 0.0f; m_Transform[2] = 0.0f;
+    m_Transform[3] = 0.0f; m_Transform[4] = 1.0f; m_Transform[5] = 0.0f;
+    m_Extent[0] = m_Extent[1] = m_Extent[2] = m_Extent[3] = 0.0f;
 }
 
 //=============================================================================

@@ -50,12 +50,12 @@ class ReferenceCounted {
 };
 
 //=============================================================================
-class KernelParameter : public ReferenceCounted
+class Parameter : public ReferenceCounted
 {
     public:
-        KernelParameter();
-        KernelParameter(const KernelParameter& p);
-        virtual ~KernelParameter();
+        Parameter();
+        Parameter(const Parameter& p);
+        virtual ~Parameter();
 
         virtual NumericParameter* GetAsNumeric() { return NULL; }
         virtual KernelSamplerParameter* GetAsSampler() { return NULL; }
@@ -64,7 +64,7 @@ class KernelParameter : public ReferenceCounted
 };
 
 //=============================================================================
-class NumericParameter : public KernelParameter
+class NumericParameter : public Parameter
 {
     public:
         enum BaseType {
@@ -76,7 +76,7 @@ class NumericParameter : public KernelParameter
         virtual ~NumericParameter();
 
     public:
-        static KernelParameter* NewNumericParameter();
+        static Parameter* NewNumericParameter();
 
         virtual NumericParameter* GetAsNumeric() { return this; }
 
@@ -108,7 +108,7 @@ class NumericParameter : public KernelParameter
 };
 
 //=============================================================================
-class KernelSamplerParameter : public KernelParameter
+class KernelSamplerParameter : public Parameter
 {
     protected:
         KernelSamplerParameter(const KernelSamplerParameter& sampler);
@@ -116,8 +116,8 @@ class KernelSamplerParameter : public KernelParameter
         virtual ~KernelSamplerParameter();
 
     public:
-        static KernelParameter* Sampler(const KernelSamplerParameter& sampler);
-        static KernelParameter* Sampler(Kernel* kernel);
+        static Parameter* Sampler(const KernelSamplerParameter& sampler);
+        static Parameter* Sampler(Kernel* kernel);
 
         virtual KernelSamplerParameter* GetAsSampler() { return this; }
 
@@ -201,10 +201,10 @@ class Kernel : public ReferenceCounted
 
         const char* GetUniformNameForKey(const char* key);
 
-        std::map<std::string, KernelParameter*>& GetParameters() { return m_Parameters; }
+        std::map<std::string, Parameter*>& GetParameters() { return m_Parameters; }
 
     private:
-        std::map<std::string, KernelParameter*>   m_Parameters;
+        std::map<std::string, Parameter*>   m_Parameters;
         std::map<std::string, std::string>   m_UniformNameMap;
         std::string                     m_CompiledGLSL;
         std::string                     m_InfoLog;
@@ -219,7 +219,7 @@ class Kernel : public ReferenceCounted
 
         void ClearParameters();
 
-        KernelParameter* ParameterForKey(const char* key);
+        Parameter* ParameterForKey(const char* key);
         NumericParameter* NumericParameterForKeyAndType(const char* key, 
                 NumericParameter::BaseType type);
         KernelSamplerParameter* SamplerParameterForKey(const char* key);

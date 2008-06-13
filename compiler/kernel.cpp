@@ -62,25 +62,25 @@ static void _KernelEnsureAPI()
 }
 
 //=============================================================================
-KernelParameter::KernelParameter()
+Parameter::Parameter()
     :   ReferenceCounted()
 {
 }
 
 //=============================================================================
-KernelParameter::KernelParameter(const KernelParameter& p)
+Parameter::Parameter(const Parameter& p)
 {
-    KernelParameter();
+    Parameter();
 }
 
 //=============================================================================
-KernelParameter::~KernelParameter()
+Parameter::~Parameter()
 {
 }
 
 //=============================================================================
 NumericParameter::NumericParameter()
-    :   KernelParameter()
+    :   Parameter()
     ,   m_BaseType(NumericParameter::Float)
     ,   m_Size(0)
 {
@@ -92,7 +92,7 @@ NumericParameter::~NumericParameter()
 }
 
 //=============================================================================
-KernelParameter* NumericParameter::NewNumericParameter()
+Parameter* NumericParameter::NewNumericParameter()
 {
     return new NumericParameter();
 }
@@ -348,7 +348,7 @@ void Kernel::SetValueForKey(KernelSamplerParameter* sampler, const char* key)
 
     if(m_Parameters.count(key) > 0)
     {
-        KernelParameter* p = m_Parameters[key];
+        Parameter* p = m_Parameters[key];
         if(p != NULL)
         {
             p->Release();
@@ -374,7 +374,7 @@ const char* Kernel::GetUniformNameForKey(const char* key)
 //=============================================================================
 void Kernel::ClearParameters()
 {
-    for(std::map<std::string, KernelParameter*>::iterator i = m_Parameters.begin();
+    for(std::map<std::string, Parameter*>::iterator i = m_Parameters.begin();
             i != m_Parameters.end(); i++)
     {
         if((*i).second != NULL)
@@ -388,7 +388,7 @@ void Kernel::ClearParameters()
 }
 
 //=============================================================================
-KernelParameter* Kernel::ParameterForKey(const char* key)
+Parameter* Kernel::ParameterForKey(const char* key)
 {
     if(m_Parameters.count(std::string(key)) > 0)
     {
@@ -402,7 +402,7 @@ KernelParameter* Kernel::ParameterForKey(const char* key)
 NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key, 
         NumericParameter::BaseType type)
 {
-    KernelParameter* kp = ParameterForKey(key);
+    Parameter* kp = ParameterForKey(key);
 
     if(kp == NULL) { return NULL; }
 
@@ -417,7 +417,7 @@ NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key,
 //=============================================================================
 KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 {
-    KernelParameter* kp = ParameterForKey(key);
+    Parameter* kp = ParameterForKey(key);
 
     if(kp == NULL) { return NULL; }
 
@@ -425,21 +425,21 @@ KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 }
 
 //=============================================================================
-KernelParameter* KernelSamplerParameter::Sampler(
+Parameter* KernelSamplerParameter::Sampler(
         const KernelSamplerParameter& sampler)
 {
     return new KernelSamplerParameter(sampler);
 }
 
 //=============================================================================
-KernelParameter* KernelSamplerParameter::Sampler(Kernel* kernel)
+Parameter* KernelSamplerParameter::Sampler(Kernel* kernel)
 {
     return new KernelSamplerParameter(kernel);
 }
 
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Kernel* kernel)
-    :   KernelParameter()
+    :   Parameter()
     ,   m_Kernel(kernel)
     ,   m_KernelCompileStatus(false)
     ,   m_SamplerIndex(-1)
@@ -459,7 +459,7 @@ KernelSamplerParameter::KernelSamplerParameter(Kernel* kernel)
 
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(const KernelSamplerParameter& sampler)
-    :   KernelParameter(sampler)
+    :   Parameter(sampler)
     ,   m_Kernel(sampler.GetKernel())
     ,   m_KernelCompileStatus(false)
     ,   m_SamplerIndex(-1)
@@ -483,17 +483,17 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     static char idxStr[255]; 
     std::string tempStr;
    
-    std::map<std::string, KernelParameter*>& params = kernel->GetParameters();
+    std::map<std::string, Parameter*>& params = kernel->GetParameters();
 
     dest += "vec4 __builtin_sample_";
     dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
 
-    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::iterator i = params.begin();
             i != params.end(); i++)
     {
-        KernelParameter *pKP = (*i).second;
+        Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
             KernelSamplerParameter *pKSP = pKP->GetAsSampler();
@@ -519,10 +519,10 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "  vec3 row1 = vec3(1,0,0);\n";
     dest += "  vec3 row2 = vec3(0,1,0);\n";
 
-    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::iterator i = params.begin();
             i != params.end(); i++)
     {
-        KernelParameter *pKP = (*i).second;
+        Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
             KernelSamplerParameter *pKSP = pKP->GetAsSampler();
@@ -556,10 +556,10 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "(int sampler) {\n";
     dest += "  vec4 retVal = vec4(0,0,0,0);\n";
 
-    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::iterator i = params.begin();
             i != params.end(); i++)
     {
-        KernelParameter *pKP = (*i).second;
+        Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
             KernelSamplerParameter *pKSP = pKP->GetAsSampler();
@@ -677,10 +677,10 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 
     // Recurse down through kernel's sampler parameters.
 
-    std::map<std::string, KernelParameter*>& kernelParams = 
+    std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
 
-    for(std::map<std::string, KernelParameter*>::iterator i=kernelParams.begin();
+    for(std::map<std::string, Parameter*>::iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
     {
         if((*i).second != NULL)
@@ -719,10 +719,10 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 void KernelSamplerParameter::AddChildSamplersToVector(
         std::vector<KernelSamplerParameter*>& sampVec)
 {
-    std::map<std::string, KernelParameter*>& kernelParams = 
+    std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
 
-    for(std::map<std::string, KernelParameter*>::iterator i=kernelParams.begin();
+    for(std::map<std::string, Parameter*>::iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
     {
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
@@ -763,7 +763,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
     _KernelEnsureAPI();
 
-    std::map<std::string, KernelParameter*>& params = m_Kernel->GetParameters();
+    std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
     std::string uniPrefix = GetBlockPrefix();
     uniPrefix += "_params.";
@@ -779,10 +779,10 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         child->SetGLSLUniforms(program);
     }
 
-    for(std::map<std::string, KernelParameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::iterator i = params.begin();
             i != params.end(); i++)
     {
-        KernelParameter* p = (*i).second;
+        Parameter* p = (*i).second;
 
         if(p == NULL)
         {

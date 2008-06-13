@@ -112,12 +112,12 @@ class KernelSamplerParameter : public KernelParameter
 {
     protected:
         KernelSamplerParameter(const KernelSamplerParameter& sampler);
-        KernelSamplerParameter(Kernel& kernel);
+        KernelSamplerParameter(Kernel* kernel);
         virtual ~KernelSamplerParameter();
 
     public:
         static KernelParameter* Sampler(const KernelSamplerParameter& sampler);
-        static KernelParameter* Sampler(Kernel& kernel);
+        static KernelParameter* Sampler(Kernel* kernel);
 
         virtual KernelSamplerParameter* GetAsSampler() { return this; }
 
@@ -132,7 +132,7 @@ class KernelSamplerParameter : public KernelParameter
 
         virtual bool IsValid() const { return m_KernelCompileStatus; }
 
-        Kernel& GetKernel() const { return m_Kernel; }
+        Kernel* GetKernel() const { return m_Kernel; }
 
         void SetGLSLUniforms(unsigned int program);
 
@@ -150,7 +150,7 @@ class KernelSamplerParameter : public KernelParameter
         bool BuildGLSL(std::string& dest);
 
     private:
-        Kernel&         m_Kernel;
+        Kernel*         m_Kernel;
         bool            m_KernelCompileStatus;
 
         /// Affine transformation to map from world co-ordinates
@@ -168,12 +168,16 @@ class KernelSamplerParameter : public KernelParameter
 };
 
 //=============================================================================
-class Kernel
+class Kernel : public ReferenceCounted
 {
-    public:
+    protected:
         Kernel();
         Kernel(const char* source);
-        ~Kernel();
+        virtual ~Kernel();
+
+    public:
+        static Kernel* NewKernel();
+        static Kernel* NewKernel(const char* source);
 
         void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }

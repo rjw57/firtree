@@ -99,7 +99,8 @@ KernelParameter* KernelConstParameter::ConstParameter()
 
 //=============================================================================
 Kernel::Kernel()
-    :   m_IsCompiled(false)
+    :   ReferenceCounted()
+    ,   m_IsCompiled(false)
 {
 }
 
@@ -114,6 +115,12 @@ Kernel::~Kernel()
 {
     ClearParameters();
 }
+
+//=============================================================================
+Kernel* Kernel::NewKernel() { return new Kernel(); }
+
+//=============================================================================
+Kernel* Kernel::NewKernel(const char* source) { return new Kernel(source); }
 
 //=============================================================================
 void Kernel::SetSource(const char* source)
@@ -425,19 +432,21 @@ KernelParameter* KernelSamplerParameter::Sampler(
 }
 
 //=============================================================================
-KernelParameter* KernelSamplerParameter::Sampler(Kernel& kernel)
+KernelParameter* KernelSamplerParameter::Sampler(Kernel* kernel)
 {
     return new KernelSamplerParameter(kernel);
 }
 
 //=============================================================================
-KernelSamplerParameter::KernelSamplerParameter(Kernel& kernel)
+KernelSamplerParameter::KernelSamplerParameter(Kernel* kernel)
     :   KernelParameter()
     ,   m_Kernel(kernel)
     ,   m_KernelCompileStatus(false)
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
 {
+    m_Kernel->Retain();
+
     float identityTransform[6] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -456,6 +465,7 @@ KernelSamplerParameter::KernelSamplerParameter(const KernelSamplerParameter& sam
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
 {
+    m_Kernel->Retain();
     memcpy(m_Transform, sampler.m_Transform, 6*sizeof(float));
     memcpy(m_Extent, sampler.m_Extent, 4*sizeof(float));
 }
@@ -463,19 +473,20 @@ KernelSamplerParameter::KernelSamplerParameter(const KernelSamplerParameter& sam
 //=============================================================================
 KernelSamplerParameter::~KernelSamplerParameter()
 {
+    m_Kernel->Release();
 }
 
 //=============================================================================
 static void WriteSamplerFunctionsForKernel(std::string& dest,
-        Kernel& kernel)
+        Kernel* kernel)
 {
     static char idxStr[255]; 
     std::string tempStr;
    
-    std::map<std::string, KernelParameter*>& params = kernel.GetParameters();
+    std::map<std::string, KernelParameter*>& params = kernel->GetParameters();
 
     dest += "vec4 __builtin_sample_";
-    dest += kernel.GetCompiledKernelName();
+    dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
 
@@ -503,7 +514,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "}\n";
     
     dest += "vec2 __builtin_sampler_transform_";
-    dest += kernel.GetCompiledKernelName();
+    dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec3 row1 = vec3(1,0,0);\n";
     dest += "  vec3 row2 = vec3(0,1,0);\n";
@@ -541,7 +552,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "}\n";
  
     dest += "vec4 __builtin_sampler_extent_";
-    dest += kernel.GetCompiledKernelName();
+    dest += kernel->GetCompiledKernelName();
     dest += "(int sampler) {\n";
     dest += "  vec4 retVal = vec4(0,0,0,0);\n";
 
@@ -595,28 +606,28 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             children[i]->SetSamplerIndex(i);
 
             dest += "vec4 __builtin_sample_";
-            dest += child->GetKernel().GetCompiledKernelName();
+            dest += child->GetKernel()->GetCompiledKernelName();
             dest += "(int sampler, vec2 samplerCoord);\n";
 
             dest += "vec2 __builtin_sampler_transform_";
-            dest += child->GetKernel().GetCompiledKernelName();
+            dest += child->GetKernel()->GetCompiledKernelName();
             dest += "(int sampler, vec2 samplerCoord);\n";
 
             dest += "vec4 __builtin_sampler_extent_";
-            dest += child->GetKernel().GetCompiledKernelName();
+            dest += child->GetKernel()->GetCompiledKernelName();
             dest += "(int sampler);\n";
         }
 
         dest += "vec4 __builtin_sample_";
-        dest += m_Kernel.GetCompiledKernelName();
+        dest += m_Kernel->GetCompiledKernelName();
         dest += "(int sampler, vec2 samplerCoord);\n";
 
         dest += "vec2 __builtin_sampler_transform_";
-        dest += m_Kernel.GetCompiledKernelName();
+        dest += m_Kernel->GetCompiledKernelName();
         dest += "(int sampler, vec2 samplerCoord);\n";
 
         dest += "vec4 __builtin_sampler_extent_";
-        dest += m_Kernel.GetCompiledKernelName();
+        dest += m_Kernel->GetCompiledKernelName();
         dest += "(int sampler);\n";
     }
 
@@ -656,8 +667,8 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
 //=============================================================================
 bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 {
-    m_Kernel.SetBlockName(GetBlockPrefix());
-    m_KernelCompileStatus = m_Kernel.GetIsCompiled();
+    m_Kernel->SetBlockName(GetBlockPrefix());
+    m_KernelCompileStatus = m_Kernel->GetIsCompiled();
 
     if(!IsValid())
         return false;
@@ -667,7 +678,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
     // Recurse down through kernel's sampler parameters.
 
     std::map<std::string, KernelParameter*>& kernelParams = 
-        m_Kernel.GetParameters();
+        m_Kernel->GetParameters();
 
     for(std::map<std::string, KernelParameter*>::iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
@@ -690,7 +701,8 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
                 if(!ksp->IsValid())
                 {
                     // HACK!
-                    fprintf(stderr, "Compilation failed: %s\n", ksp->GetKernel().GetInfoLog());
+                    fprintf(stderr, "Compilation failed: %s\n", 
+                            ksp->GetKernel()->GetInfoLog());
                     m_KernelCompileStatus = false;
                     return false;
                 }
@@ -698,7 +710,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
         }
     }
 
-    dest += m_Kernel.GetCompiledGLSL();
+    dest += m_Kernel->GetCompiledGLSL();
 
     return IsValid();
 }
@@ -708,7 +720,7 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         std::vector<KernelSamplerParameter*>& sampVec)
 {
     std::map<std::string, KernelParameter*>& kernelParams = 
-        m_Kernel.GetParameters();
+        m_Kernel->GetParameters();
 
     for(std::map<std::string, KernelParameter*>::iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
@@ -733,7 +745,7 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
 {
     std::string result = resultVar;
     result += " = ";
-    result += m_Kernel.GetCompiledKernelName();
+    result += m_Kernel->GetCompiledKernelName();
     result += "(";
     result += samplerCoordVar;
     result += ");";
@@ -751,7 +763,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
     _KernelEnsureAPI();
 
-    std::map<std::string, KernelParameter*>& params = m_Kernel.GetParameters();
+    std::map<std::string, KernelParameter*>& params = m_Kernel->GetParameters();
 
     std::string uniPrefix = GetBlockPrefix();
     uniPrefix += "_params.";
@@ -778,7 +790,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             continue;
         }
 
-        const char* uniName = m_Kernel.GetUniformNameForKey((*i).first.c_str());
+        const char* uniName = m_Kernel->GetUniformNameForKey((*i).first.c_str());
         if(uniName == NULL)
         {
             FIRTREE_WARNING("Unknown parameter: %s", (*i).first.c_str());

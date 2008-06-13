@@ -39,7 +39,7 @@ const char* g_CheckerKernelSource =
 "    }"
 ;
 
-Kernel g_CheckerKernel(g_CheckerKernelSource);
+Kernel* g_CheckerKernel = Kernel::NewKernel(g_CheckerKernelSource);
 KernelSamplerParameter* g_CheckerSampler = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_CheckerKernel);
 
@@ -54,7 +54,7 @@ const char* g_SpotKernelSource =
 "    }"
 ;
 
-Kernel g_SpotKernel(g_SpotKernelSource);
+Kernel* g_SpotKernel = Kernel::NewKernel(g_SpotKernelSource);
 KernelSamplerParameter* g_SpotSampler = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_SpotKernel);
 
@@ -67,7 +67,7 @@ const char* g_OverKernelSource =
 "    }"
 ;
 
-Kernel g_OverKernel(g_OverKernelSource);
+Kernel* g_OverKernel = Kernel::NewKernel(g_OverKernelSource);
 KernelSamplerParameter* g_OverSampler = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_OverKernel);
 
@@ -94,7 +94,7 @@ const char* g_RippleKernelSource =
 "    }"
 ;
 
-Kernel g_RippleKernel(g_RippleKernelSource);
+Kernel* g_RippleKernel = Kernel::NewKernel(g_RippleKernelSource);
 KernelSamplerParameter* g_RippleSampler = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_RippleKernel);
 
@@ -106,11 +106,11 @@ const char* g_GradientKernelSource =
 "    }"
 ;
 
-Kernel g_GradientKernel(g_GradientKernelSource);
+Kernel* g_GradientKernel = Kernel::NewKernel(g_GradientKernelSource);
 KernelSamplerParameter* g_GradientSampler = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_GradientKernel);
 
-Kernel g_OverKernel2(g_OverKernelSource);
+Kernel* g_OverKernel2 = Kernel::NewKernel(g_OverKernelSource);
 KernelSamplerParameter* g_OverSampler2 = (KernelSamplerParameter*)
     KernelSamplerParameter::Sampler(g_OverKernel2);
 
@@ -146,11 +146,11 @@ void render(float epoch)
 
     CHECK( glUseProgramObjectARB(g_ShaderProg) );
     try {
-        g_SpotKernel.SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
+        g_SpotKernel->SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
- //       g_SpotKernel.SetValueForKey(30.f, "dotPitch");
+ //       g_SpotKernel->SetValueForKey(30.f, "dotPitch");
 
-        g_RippleKernel.SetValueForKey(-epoch * 0.1f, "phase");
+        g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
         g_GlobalSampler->SetGLSLUniforms(g_ShaderProg);
 
@@ -175,12 +175,12 @@ void initialize_kernels()
         static float dotColor[] = {0.7, 0.0, 0.0, 0.7};
         static float clearColor[] = {0.0, 0.0, 0.0, 0.0};
 
-        g_CheckerKernel.SetValueForKey(10.f, "squareSize");
-        g_CheckerKernel.SetValueForKey(backColor, 4, "backColor");
-        g_CheckerKernel.SetValueForKey(squareColor, 4, "foreColor");
+        g_CheckerKernel->SetValueForKey(10.f, "squareSize");
+        g_CheckerKernel->SetValueForKey(backColor, 4, "backColor");
+        g_CheckerKernel->SetValueForKey(squareColor, 4, "foreColor");
 
-        g_SpotKernel.SetValueForKey(dotColor, 4, "dotColor");
-        g_SpotKernel.SetValueForKey(clearColor, 4, "backColor");
+        g_SpotKernel->SetValueForKey(dotColor, 4, "dotColor");
+        g_SpotKernel->SetValueForKey(clearColor, 4, "backColor");
 
         float angle = 0.2f;
         float spotTransform[] = {
@@ -189,13 +189,13 @@ void initialize_kernels()
         };
         g_SpotSampler->SetTransform(spotTransform);
 
-        g_OverKernel.SetValueForKey(g_SpotSampler, "a");
-        g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
+        g_OverKernel->SetValueForKey(g_SpotSampler, "a");
+        g_OverKernel->SetValueForKey(g_CheckerSampler, "b");
 
-        g_RippleKernel.SetValueForKey(g_OverSampler, "a");
+        g_RippleKernel->SetValueForKey(g_OverSampler, "a");
 
-        g_OverKernel2.SetValueForKey(g_GradientSampler, "b");
-        g_OverKernel2.SetValueForKey(g_RippleSampler, "a");
+        g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
+        g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -231,7 +231,7 @@ void context_created()
     if(!retVal)
     {
         fprintf(stderr, "Error compiling kernel:\n%s\n",
-                g_GlobalSampler->GetKernel().GetInfoLog());
+                g_GlobalSampler->GetKernel()->GetInfoLog());
         exit(3);
     }
 

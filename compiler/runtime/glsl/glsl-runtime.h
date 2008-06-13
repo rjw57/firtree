@@ -21,8 +21,8 @@
 //=============================================================================
 
 //=============================================================================
-#ifndef FIRTREE_KERNEL_H
-#define FIRTREE_KERNEL_H
+#ifndef FIRTREE_GLSL_RUNTIME_H
+#define FIRTREE_GLSL_RUNTIME_H
 //=============================================================================
 
 #include <stdlib.h>
@@ -30,13 +30,12 @@
 #include <vector>
 #include <map>
 
-namespace Firtree {
+namespace Firtree { namespace GLSL {
 
 class NumericParameter;
-class SamplerParameter;
+class KernelSamplerParameter;
 class Kernel;
 
-//=============================================================================
 // THIS IS NOT THREAD SAFE!
 class ReferenceCounted {
     public:
@@ -59,7 +58,8 @@ class Parameter : public ReferenceCounted
         virtual ~Parameter();
 
         virtual NumericParameter* GetAsNumeric() { return NULL; }
-        virtual SamplerParameter* GetAsSampler() { return NULL; }
+        virtual KernelSamplerParameter* GetAsSampler() { return NULL; }
+
     private:
 };
 
@@ -108,28 +108,63 @@ class NumericParameter : public Parameter
 };
 
 //=============================================================================
-class SamplerParameter : public Parameter
+class KernelSamplerParameter : public Parameter
 {
     protected:
-        SamplerParameter();
-        virtual ~SamplerParameter();
+        KernelSamplerParameter(const KernelSamplerParameter& sampler);
+        KernelSamplerParameter(Kernel* kernel);
+        virtual ~KernelSamplerParameter();
 
     public:
-        virtual SamplerParameter* GetAsSampler() { return this; }
+        static Parameter* Sampler(const KernelSamplerParameter& sampler);
+        static Parameter* Sampler(Kernel* kernel);
 
-        void SetExtent(const float* e);
+        virtual KernelSamplerParameter* GetAsSampler() { return this; }
+
+        /// Write any top-level GLSL for this shader into dest.
+        virtual bool BuildTopLevelGLSL(std::string& dest);
+
+        /// Write GLSL to assign result of sampling shader at
+        /// samplerCoordVar to resultVar 
+        virtual void BuildSampleGLSL(std::string& dest,
+                const char* samplerCoordVar,
+                const char* resultVar);
+
+        virtual bool IsValid() const { return m_KernelCompileStatus; }
+
+        Kernel* GetKernel() const { return m_Kernel; }
+
+        void SetGLSLUniforms(unsigned int program);
+
+        void SetSamplerIndex(int i) { m_SamplerIndex = i; }
+        int GetSamplerIndex() const  { return m_SamplerIndex; }
+
+        void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
+        const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
+
         const float* GetExtent() const { return m_Extent; }
-
-        void SetTransform(const float* f);
         const float* GetTransform() const { return m_Transform; }
 
+        void SetTransform(const float* f);
+
+        bool BuildGLSL(std::string& dest);
+
     private:
+        Kernel*         m_Kernel;
+        bool            m_KernelCompileStatus;
+
         /// Affine transformation to map from world co-ordinates
         /// to sampler co-ordinates.
         float           m_Transform[6];
 
         /// Origin ans size of sampler in world co-ordinates.
         float           m_Extent[4];
+
+        int             m_SamplerIndex;
+
+        std::string     m_BlockPrefix;
+
+        void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
 };
 
 //=============================================================================
@@ -141,25 +176,60 @@ class Kernel : public ReferenceCounted
         virtual ~Kernel();
 
     public:
-        virtual void SetSource(const char* source) = 0;
-        virtual const char* GetSource() const = 0;
+        static Kernel* NewKernel();
+        static Kernel* NewKernel(const char* source);
 
-        virtual void SetValueForKey(float value, const char* key) = 0;
-        virtual void SetValueForKey(const float* value, int count, const char* key) = 0;
-        virtual void SetValueForKey(int value, const char* key) = 0;
-        virtual void SetValueForKey(const int* value, int count, const char* key) = 0;
-        virtual void SetValueForKey(bool value, const char* key) = 0;
-        virtual void SetValueForKey(const bool* value, int count, const char* key) = 0;
-        virtual void SetValueForKey(SamplerParameter* sampler, const char* key) = 0;
+        void SetSource(const char* source);
+        const char* GetSource() const { return m_Source.c_str(); }
 
-        virtual std::map<std::string, Parameter*>& GetParameters() = 0;
+        bool GetIsCompiled() const { return m_IsCompiled; }
+
+        void SetBlockName(const char* blockName);
+        const char* GetBlockName() const { return m_BlockName.c_str(); }
+
+        const char* GetCompiledGLSL() const;
+        const char* GetCompiledKernelName() const;
+        const char* GetInfoLog() const { return m_InfoLog.c_str(); }
+
+        void SetValueForKey(float value, const char* key);
+        void SetValueForKey(const float* value, int count, const char* key);
+        void SetValueForKey(int value, const char* key);
+        void SetValueForKey(const int* value, int count, const char* key);
+        void SetValueForKey(bool value, const char* key);
+        void SetValueForKey(const bool* value, int count, const char* key);
+        void SetValueForKey(KernelSamplerParameter* sampler, const char* key);
+
+        const char* GetUniformNameForKey(const char* key);
+
+        std::map<std::string, Parameter*>& GetParameters() { return m_Parameters; }
+
     private:
+        std::map<std::string, Parameter*>   m_Parameters;
+        std::map<std::string, std::string>   m_UniformNameMap;
+        std::string                     m_CompiledGLSL;
+        std::string                     m_InfoLog;
+        std::string                     m_CompiledKernelName;
+        std::string                     m_Source;
+        std::string                     m_BlockName;
+
+        std::string                     m_BlockReplacedGLSL;
+        std::string                     m_BlockReplacedKernelName;
+
+        bool                            m_IsCompiled;
+
+        void ClearParameters();
+
+        Parameter* ParameterForKey(const char* key);
+        NumericParameter* NumericParameterForKeyAndType(const char* key, 
+                NumericParameter::BaseType type);
+        KernelSamplerParameter* SamplerParameterForKey(const char* key);
+        void UpdateBlockNameReplacedSourceCache();
 };
 
-}
+} }
 
 //=============================================================================
-#endif // FIRTREE_KERNEL_H
+#endif // FIRTREE_GLSL_RUNTIME_H
 //=============================================================================
 
 //=============================================================================

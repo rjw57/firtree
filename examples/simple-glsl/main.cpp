@@ -18,7 +18,7 @@
 
 #include "common.h"
 
-#include "compiler/include/kernel.h"
+#include "compiler/runtime/glsl/glsl-runtime.h"
 #include "compiler/include/main.h"
 
 #include <stdlib.h>
@@ -39,9 +39,9 @@ const char* g_CheckerKernelSource =
 "    }"
 ;
 
-Kernel* g_CheckerKernel = Kernel::NewKernel(g_CheckerKernelSource);
-KernelSamplerParameter* g_CheckerSampler = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_CheckerKernel);
+GLSL::Kernel* g_CheckerKernel = GLSL::Kernel::NewKernel(g_CheckerKernelSource);
+GLSL::KernelSamplerParameter* g_CheckerSampler = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_CheckerKernel);
 
 const char* g_SpotKernelSource = 
 "    kernel vec4 spotKernel(float dotPitch, __color backColor,"
@@ -53,9 +53,9 @@ const char* g_SpotKernelSource =
 "    }"
 ;
 
-Kernel* g_SpotKernel = Kernel::NewKernel(g_SpotKernelSource);
-KernelSamplerParameter* g_SpotSampler = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_SpotKernel);
+GLSL::Kernel* g_SpotKernel = GLSL::Kernel::NewKernel(g_SpotKernelSource);
+GLSL::KernelSamplerParameter* g_SpotSampler = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_SpotKernel);
 
 const char* g_OverKernelSource = 
 "    kernel vec4 compositeOver(sampler a, sampler b, float phase)"
@@ -66,9 +66,9 @@ const char* g_OverKernelSource =
 "    }"
 ;
 
-Kernel* g_OverKernel = Kernel::NewKernel(g_OverKernelSource);
-KernelSamplerParameter* g_OverSampler = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_OverKernel);
+GLSL::Kernel* g_OverKernel = GLSL::Kernel::NewKernel(g_OverKernelSource);
+GLSL::KernelSamplerParameter* g_OverSampler = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_OverKernel);
 
 const char* g_RippleKernelSource = 
 "    kernel vec4 ripple(sampler a, float phase)"
@@ -93,9 +93,9 @@ const char* g_RippleKernelSource =
 "    }"
 ;
 
-Kernel* g_RippleKernel = Kernel::NewKernel(g_RippleKernelSource);
-KernelSamplerParameter* g_RippleSampler = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_RippleKernel);
+GLSL::Kernel* g_RippleKernel = GLSL::Kernel::NewKernel(g_RippleKernelSource);
+GLSL::KernelSamplerParameter* g_RippleSampler = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_RippleKernel);
 
 const char* g_GradientKernelSource = 
 "    kernel vec4 gradientKernel()"
@@ -105,13 +105,13 @@ const char* g_GradientKernelSource =
 "    }"
 ;
 
-Kernel* g_GradientKernel = Kernel::NewKernel(g_GradientKernelSource);
-KernelSamplerParameter* g_GradientSampler = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_GradientKernel);
+GLSL::Kernel* g_GradientKernel = GLSL::Kernel::NewKernel(g_GradientKernelSource);
+GLSL::KernelSamplerParameter* g_GradientSampler = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_GradientKernel);
 
-Kernel* g_OverKernel2 = Kernel::NewKernel(g_OverKernelSource);
-KernelSamplerParameter* g_OverSampler2 = (KernelSamplerParameter*)
-    KernelSamplerParameter::Sampler(g_OverKernel2);
+GLSL::Kernel* g_OverKernel2 = GLSL::Kernel::NewKernel(g_OverKernelSource);
+GLSL::KernelSamplerParameter* g_OverSampler2 = (GLSL::KernelSamplerParameter*)
+    GLSL::KernelSamplerParameter::Sampler(g_OverKernel2);
 
 //#define g_GlobalSampler g_OverSampler
 //#define g_GlobalSampler g_RippleSampler

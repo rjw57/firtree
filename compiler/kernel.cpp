@@ -63,6 +63,7 @@ static void _KernelEnsureAPI()
 
 //=============================================================================
 KernelParameter::KernelParameter()
+    :   ReferenceCounted()
 {
 }
 
@@ -88,6 +89,12 @@ KernelConstParameter::KernelConstParameter()
 //=============================================================================
 KernelConstParameter::~KernelConstParameter()
 {
+}
+
+//=============================================================================
+KernelParameter* KernelConstParameter::ConstParameter()
+{
+    return new KernelConstParameter();
 }
 
 //=============================================================================
@@ -159,7 +166,7 @@ void Kernel::SetSource(const char* source)
                 case GLSLBackend::Parameter::Bool:
                     {
                         KernelConstParameter* kp = 
-                            new KernelConstParameter();
+                            KernelConstParameter::ConstParameter()->GetAsConst();
                         kp->SetSize(p.vectorSize);
                         kp->SetIsColor(p.isColor);
 
@@ -327,20 +334,23 @@ void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 }
 
 //=============================================================================
-void Kernel::SetValueForKey(const KernelSamplerParameter& sampler, const char* key)
+void Kernel::SetValueForKey(KernelSamplerParameter* sampler, const char* key)
 {
+    if(sampler == NULL)
+        return;
+
     if(m_Parameters.count(key) > 0)
     {
         KernelParameter* p = m_Parameters[key];
         if(p != NULL)
         {
-            delete p;
+            p->Release();
             m_Parameters[key] = NULL;
         }
     }
 
-    KernelSamplerParameter* ks = new KernelSamplerParameter(sampler);
-    m_Parameters[key] = ks;
+    sampler->Retain();
+    m_Parameters[key] = sampler;
 }
 
 //=============================================================================
@@ -362,7 +372,7 @@ void Kernel::ClearParameters()
     {
         if((*i).second != NULL)
         {
-            delete (*i).second;
+            (*i).second->Release();
         }
     }
 
@@ -405,6 +415,19 @@ KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
     if(kp == NULL) { return NULL; }
 
     return kp->GetAsSampler();
+}
+
+//=============================================================================
+KernelParameter* KernelSamplerParameter::Sampler(
+        const KernelSamplerParameter& sampler)
+{
+    return new KernelSamplerParameter(sampler);
+}
+
+//=============================================================================
+KernelParameter* KernelSamplerParameter::Sampler(Kernel& kernel)
+{
+    return new KernelSamplerParameter(kernel);
 }
 
 //=============================================================================
@@ -714,34 +737,6 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
     result += "(";
     result += samplerCoordVar;
     result += ");";
-    dest = result;
-}
-
-//=============================================================================
-void KernelSamplerParameter::BuildSamplerExtentGLSL(std::string& dest)
-{
-    static char paramStr[255];
-    snprintf(paramStr, 255, "%f,%f,%f,%f", m_Extent[0], m_Extent[1],
-            m_Extent[2], m_Extent[3]);
-    std::string result = "vec4(";
-    result += paramStr;
-    result += ")";
-    dest = result;
-}
-
-//=============================================================================
-void KernelSamplerParameter::BuildSamplerTransformGLSL(std::string& dest)
-{
-    static char floatStr[255];
-    std::string result = "mat2x3(";
-
-    for(int i=0; i<6; i++)
-    {
-        if(i != 0) { result += ", "; }
-        snprintf(floatStr, 255, "%f", m_Transform[i]);
-        result += floatStr;
-    }
-    result += ")";
     dest = result;
 }
 

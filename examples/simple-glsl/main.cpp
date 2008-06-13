@@ -40,7 +40,8 @@ const char* g_CheckerKernelSource =
 ;
 
 Kernel g_CheckerKernel(g_CheckerKernelSource);
-KernelSamplerParameter g_CheckerSampler(g_CheckerKernel);
+KernelSamplerParameter* g_CheckerSampler = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_CheckerKernel);
 
 const char* g_SpotKernelSource = 
 "    kernel vec4 spotKernel(float dotPitch, __color backColor,"
@@ -54,7 +55,8 @@ const char* g_SpotKernelSource =
 ;
 
 Kernel g_SpotKernel(g_SpotKernelSource);
-KernelSamplerParameter g_SpotSampler(g_SpotKernel);
+KernelSamplerParameter* g_SpotSampler = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_SpotKernel);
 
 const char* g_OverKernelSource = 
 "    kernel vec4 compositeOver(sampler a, sampler b, float phase)"
@@ -66,7 +68,8 @@ const char* g_OverKernelSource =
 ;
 
 Kernel g_OverKernel(g_OverKernelSource);
-KernelSamplerParameter g_OverSampler(g_OverKernel);
+KernelSamplerParameter* g_OverSampler = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_OverKernel);
 
 const char* g_RippleKernelSource = 
 "    kernel vec4 ripple(sampler a, float phase)"
@@ -92,7 +95,8 @@ const char* g_RippleKernelSource =
 ;
 
 Kernel g_RippleKernel(g_RippleKernelSource);
-KernelSamplerParameter g_RippleSampler(g_RippleKernel);
+KernelSamplerParameter* g_RippleSampler = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_RippleKernel);
 
 const char* g_GradientKernelSource = 
 "    kernel vec4 gradientKernel()"
@@ -103,10 +107,12 @@ const char* g_GradientKernelSource =
 ;
 
 Kernel g_GradientKernel(g_GradientKernelSource);
-KernelSamplerParameter g_GradientSampler(g_GradientKernel);
+KernelSamplerParameter* g_GradientSampler = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_GradientKernel);
 
 Kernel g_OverKernel2(g_OverKernelSource);
-KernelSamplerParameter g_OverSampler2(g_OverKernel2);
+KernelSamplerParameter* g_OverSampler2 = (KernelSamplerParameter*)
+    KernelSamplerParameter::Sampler(g_OverKernel2);
 
 //#define g_GlobalSampler g_OverSampler
 //#define g_GlobalSampler g_RippleSampler
@@ -146,7 +152,7 @@ void render(float epoch)
 
         g_RippleKernel.SetValueForKey(-epoch * 0.1f, "phase");
 
-        g_GlobalSampler.SetGLSLUniforms(g_ShaderProg);
+        g_GlobalSampler->SetGLSLUniforms(g_ShaderProg);
 
         glColor3f(1,0,0);
         glBegin(GL_QUADS);
@@ -181,7 +187,7 @@ void initialize_kernels()
             cos(angle), -sin(angle), -320.f,
             sin(angle),  cos(angle), -240.f,
         };
-        g_SpotSampler.SetTransform(spotTransform);
+        g_SpotSampler->SetTransform(spotTransform);
 
         g_OverKernel.SetValueForKey(g_SpotSampler, "a");
         g_OverKernel.SetValueForKey(g_CheckerSampler, "b");
@@ -189,7 +195,7 @@ void initialize_kernels()
         g_RippleKernel.SetValueForKey(g_OverSampler, "a");
 
         g_OverKernel2.SetValueForKey(g_GradientSampler, "b");
-        g_OverKernel2.SetValueForKey(g_RippleKernel, "a");
+        g_OverKernel2.SetValueForKey(g_RippleSampler, "a");
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -220,12 +226,12 @@ void context_created()
 
     std::string shaderSource;
     //g_GlobalSampler.BuildGLSL(shaderSource);
-    bool retVal = g_GlobalSampler.BuildGLSL(shaderSource);
+    bool retVal = g_GlobalSampler->BuildGLSL(shaderSource);
 
     if(!retVal)
     {
         fprintf(stderr, "Error compiling kernel:\n%s\n",
-                g_GlobalSampler.GetKernel().GetInfoLog());
+                g_GlobalSampler->GetKernel().GetInfoLog());
         exit(3);
     }
 

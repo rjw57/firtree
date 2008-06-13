@@ -36,8 +36,21 @@ class KernelConstParameter;
 class KernelSamplerParameter;
 class Kernel;
 
+// THIS IS NOT THREAD SAFE!
+class ReferenceCounted {
+    public:
+        ReferenceCounted() : m_RefCount(1) { }
+        virtual ~ReferenceCounted() { }
+
+        void Retain() { m_RefCount++; }
+        void Release() { if(m_RefCount <= 1) { delete this; } }
+
+    private:
+        unsigned int m_RefCount;
+};
+
 //=============================================================================
-class KernelParameter
+class KernelParameter : public ReferenceCounted
 {
     public:
         KernelParameter();
@@ -58,9 +71,12 @@ class KernelConstParameter : public KernelParameter
             Int, Float, Bool,
         };
 
-    public:
+    protected:
         KernelConstParameter();
         virtual ~KernelConstParameter();
+
+    public:
+        static KernelParameter* ConstParameter();
 
         virtual KernelConstParameter* GetAsConst() { return this; }
 
@@ -94,10 +110,14 @@ class KernelConstParameter : public KernelParameter
 //=============================================================================
 class KernelSamplerParameter : public KernelParameter
 {
-    public:
+    protected:
         KernelSamplerParameter(const KernelSamplerParameter& sampler);
         KernelSamplerParameter(Kernel& kernel);
         virtual ~KernelSamplerParameter();
+
+    public:
+        static KernelParameter* Sampler(const KernelSamplerParameter& sampler);
+        static KernelParameter* Sampler(Kernel& kernel);
 
         virtual KernelSamplerParameter* GetAsSampler() { return this; }
 
@@ -109,12 +129,6 @@ class KernelSamplerParameter : public KernelParameter
         virtual void BuildSampleGLSL(std::string& dest,
                 const char* samplerCoordVar,
                 const char* resultVar);
-
-        /// Write GLSL to construct sampler extent vector to dest.
-        virtual void BuildSamplerExtentGLSL(std::string& dest);
-
-        /// Write GLSL to construct sampler transform matrix to dest.
-        virtual void BuildSamplerTransformGLSL(std::string& dest);
 
         virtual bool IsValid() const { return m_KernelCompileStatus; }
 
@@ -179,7 +193,7 @@ class Kernel
         void SetValueForKey(const int* value, int count, const char* key);
         void SetValueForKey(bool value, const char* key);
         void SetValueForKey(const bool* value, int count, const char* key);
-        void SetValueForKey(const KernelSamplerParameter& sampler, const char* key);
+        void SetValueForKey(KernelSamplerParameter* sampler, const char* key);
 
         const char* GetUniformNameForKey(const char* key);
 

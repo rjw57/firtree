@@ -79,22 +79,22 @@ KernelParameter::~KernelParameter()
 }
 
 //=============================================================================
-KernelConstParameter::KernelConstParameter()
+NumericParameter::NumericParameter()
     :   KernelParameter()
-    ,   m_BaseType(KernelConstParameter::Float)
+    ,   m_BaseType(NumericParameter::Float)
     ,   m_Size(0)
 {
 }
 
 //=============================================================================
-KernelConstParameter::~KernelConstParameter()
+NumericParameter::~NumericParameter()
 {
 }
 
 //=============================================================================
-KernelParameter* KernelConstParameter::ConstParameter()
+KernelParameter* NumericParameter::NewNumericParameter()
 {
-    return new KernelConstParameter();
+    return new NumericParameter();
 }
 
 //=============================================================================
@@ -172,21 +172,21 @@ void Kernel::SetSource(const char* source)
                 case GLSLBackend::Parameter::Float:
                 case GLSLBackend::Parameter::Bool:
                     {
-                        KernelConstParameter* kp = 
-                            KernelConstParameter::ConstParameter()->GetAsConst();
+                        NumericParameter* kp = 
+                            NumericParameter::NewNumericParameter()->GetAsNumeric();
                         kp->SetSize(p.vectorSize);
                         kp->SetIsColor(p.isColor);
 
                         switch(p.basicType)
                         {
                             case GLSLBackend::Parameter::Int:
-                                kp->SetBaseType(KernelConstParameter::Int);
+                                kp->SetBaseType(NumericParameter::Int);
                                 break;
                             case GLSLBackend::Parameter::Float:
-                                kp->SetBaseType(KernelConstParameter::Float);
+                                kp->SetBaseType(NumericParameter::Float);
                                 break;
                             case GLSLBackend::Parameter::Bool:
-                                kp->SetBaseType(KernelConstParameter::Bool);
+                                kp->SetBaseType(NumericParameter::Bool);
                                 break;
                         }
 
@@ -268,8 +268,8 @@ void Kernel::SetValueForKey(float value, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(const float* value, int count, const char* key)
 {
-    KernelConstParameter* p = ConstParameterForKeyAndType(key, 
-            KernelConstParameter::Float);
+    NumericParameter* p = NumericParameterForKeyAndType(key, 
+            NumericParameter::Float);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -295,8 +295,8 @@ void Kernel::SetValueForKey(int value, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(const int* value, int count, const char* key)
 {
-    KernelConstParameter* p = ConstParameterForKeyAndType(key, 
-            KernelConstParameter::Int);
+    NumericParameter* p = NumericParameterForKeyAndType(key, 
+            NumericParameter::Int);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -322,8 +322,8 @@ void Kernel::SetValueForKey(bool value, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 {
-    KernelConstParameter* p = ConstParameterForKeyAndType(key, 
-            KernelConstParameter::Bool);
+    NumericParameter* p = NumericParameterForKeyAndType(key, 
+            NumericParameter::Bool);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -399,14 +399,14 @@ KernelParameter* Kernel::ParameterForKey(const char* key)
 }
 
 //=============================================================================
-KernelConstParameter* Kernel::ConstParameterForKeyAndType(const char* key, 
-        KernelConstParameter::BaseType type)
+NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key, 
+        NumericParameter::BaseType type)
 {
     KernelParameter* kp = ParameterForKey(key);
 
     if(kp == NULL) { return NULL; }
 
-    KernelConstParameter* kcp = kp->GetAsConst();
+    NumericParameter* kcp = kp->GetAsNumeric();
     if(kcp == NULL) { return NULL; }
 
     if(kcp->GetBaseType() != type) { return NULL; }
@@ -820,13 +820,13 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             continue;
         }
 
-        if(p->GetAsConst() != NULL)
+        if(p->GetAsNumeric() != NULL)
         {
-            KernelConstParameter* cp = p->GetAsConst();
+            NumericParameter* cp = p->GetAsNumeric();
 
             switch(cp->GetBaseType())
             {
-                case KernelConstParameter::Float:
+                case NumericParameter::Float:
                     {
                         static float vec[4];
                         for(int j=0; j<cp->GetSize(); j++)
@@ -860,8 +860,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         }
                     }
                     break;
-                case KernelConstParameter::Bool:
-                case KernelConstParameter::Int:
+                case NumericParameter::Bool:
+                case NumericParameter::Int:
                     {
                         static int vec[4];
                         for(int j=0; j<cp->GetSize(); j++)
@@ -896,7 +896,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                     }
                     break;
                 default:
-                    FIRTREE_WARNING("Const parameter setting implemented for this type: %s",
+                    FIRTREE_WARNING("Numeric parameter setting implemented for this type: %s",
                             paramName.c_str());
                     break;
             }

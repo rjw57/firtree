@@ -32,7 +32,7 @@
 
 namespace Firtree {
 
-class KernelConstParameter;
+class NumericParameter;
 class KernelSamplerParameter;
 class Kernel;
 
@@ -57,14 +57,14 @@ class KernelParameter : public ReferenceCounted
         KernelParameter(const KernelParameter& p);
         virtual ~KernelParameter();
 
-        virtual KernelConstParameter* GetAsConst() { return NULL; }
+        virtual NumericParameter* GetAsNumeric() { return NULL; }
         virtual KernelSamplerParameter* GetAsSampler() { return NULL; }
 
     private:
 };
 
 //=============================================================================
-class KernelConstParameter : public KernelParameter
+class NumericParameter : public KernelParameter
 {
     public:
         enum BaseType {
@@ -72,13 +72,13 @@ class KernelConstParameter : public KernelParameter
         };
 
     protected:
-        KernelConstParameter();
-        virtual ~KernelConstParameter();
+        NumericParameter();
+        virtual ~NumericParameter();
 
     public:
-        static KernelParameter* ConstParameter();
+        static KernelParameter* NewNumericParameter();
 
-        virtual KernelConstParameter* GetAsConst() { return this; }
+        virtual NumericParameter* GetAsNumeric() { return this; }
 
         float GetFloatValue(int idx) { return m_Value[idx].f; }
         int GetIntValue(int idx) { return m_Value[idx].i; }
@@ -220,8 +220,8 @@ class Kernel : public ReferenceCounted
         void ClearParameters();
 
         KernelParameter* ParameterForKey(const char* key);
-        KernelConstParameter* ConstParameterForKeyAndType(const char* key, 
-                KernelConstParameter::BaseType type);
+        NumericParameter* NumericParameterForKeyAndType(const char* key, 
+                NumericParameter::BaseType type);
         KernelSamplerParameter* SamplerParameterForKey(const char* key);
         void UpdateBlockNameReplacedSourceCache();
 };

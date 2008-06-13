@@ -48,8 +48,7 @@ const char* g_SpotKernelSource =
 "                           __color dotColor)"
 "    {"
 "        vec2 dc = mod(destCoord(), dotPitch) - 0.5*dotPitch;"
-"        float discriminant = clamp(length(dc) - 0.3*dotPitch - 1.0, 0.0, 2.0) * 0.5;"
-"        discriminant = sqrt(discriminant);"
+"        float discriminant = clamp(length(dc) - 0.3*dotPitch - 0.5, 0.0, 1.0);"
 "        return mix(dotColor, backColor, discriminant);"
 "    }"
 ;

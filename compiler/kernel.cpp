@@ -61,7 +61,7 @@ NumericParameter::~NumericParameter()
 }
 
 //=============================================================================
-Parameter* NumericParameter::NewNumericParameter()
+Parameter* NumericParameter::Create()
 {
     return new NumericParameter();
 }

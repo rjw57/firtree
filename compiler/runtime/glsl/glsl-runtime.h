@@ -41,11 +41,11 @@ class Kernel;
 class KernelSamplerParameter : public SamplerParameter
 {
     protected:
-        KernelSamplerParameter(Kernel* kernel);
+        KernelSamplerParameter(Firtree::Kernel* kernel);
         virtual ~KernelSamplerParameter();
 
     public:
-        static Parameter* Sampler(Kernel* kernel);
+        static SamplerParameter* Create(Firtree::Kernel* kernel);
 
         virtual SamplerParameter* GetAsSampler() { return this; }
 
@@ -84,7 +84,7 @@ class KernelSamplerParameter : public SamplerParameter
 };
 
 //=============================================================================
-class Kernel : public ReferenceCounted
+class Kernel : public Firtree::Kernel
 {
     protected:
         Kernel();
@@ -92,8 +92,8 @@ class Kernel : public ReferenceCounted
         virtual ~Kernel();
 
     public:
-        static Kernel* NewKernel();
-        static Kernel* NewKernel(const char* source);
+        static Firtree::Kernel* Create();
+        static Firtree::Kernel* Create(const char* source);
 
         virtual void SetSource(const char* source);
         virtual const char* GetSource() const { return m_Source.c_str(); }
@@ -104,7 +104,7 @@ class Kernel : public ReferenceCounted
         virtual void SetValueForKey(const int* value, int count, const char* key);
         virtual void SetValueForKey(bool value, const char* key);
         virtual void SetValueForKey(const bool* value, int count, const char* key);
-        virtual void SetValueForKey(KernelSamplerParameter* sampler, const char* key);
+        virtual void SetValueForKey(SamplerParameter* sampler, const char* key);
 
         std::map<std::string, Parameter*>& GetParameters() { return m_Parameters; }
 

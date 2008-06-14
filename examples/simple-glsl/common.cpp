@@ -37,7 +37,7 @@ static int var_epoch = 1; /* Vary epoch count depending on actual
 			     framerate? */
 static int delay = 1;  /* Introduce a delay to keep constant FPS? */
 
-#define DEFAULT_FPS 600000
+#define DEFAULT_FPS 60
 
 int mainWindow;
 

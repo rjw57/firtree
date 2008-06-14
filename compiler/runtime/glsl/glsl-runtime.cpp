@@ -60,7 +60,7 @@ static void _KernelEnsureAPI()
 
 //=============================================================================
 Kernel::Kernel()
-    :   ReferenceCounted()
+    :   Firtree::Kernel()
     ,   m_IsCompiled(false)
 {
 }
@@ -78,10 +78,10 @@ Kernel::~Kernel()
 }
 
 //=============================================================================
-Kernel* Kernel::NewKernel() { return new Kernel(); }
+Firtree::Kernel* Kernel::Create() { return new Kernel(); }
 
 //=============================================================================
-Kernel* Kernel::NewKernel(const char* source) { return new Kernel(source); }
+Firtree::Kernel* Kernel::Create(const char* source) { return new Kernel(source); }
 
 //=============================================================================
 void Kernel::SetSource(const char* source)
@@ -134,7 +134,7 @@ void Kernel::SetSource(const char* source)
                 case GLSLBackend::Parameter::Bool:
                     {
                         NumericParameter* kp = 
-                            NumericParameter::NewNumericParameter()->GetAsNumeric();
+                            NumericParameter::Create()->GetAsNumeric();
                         kp->SetSize(p.vectorSize);
                         kp->SetIsColor(p.isColor);
 
@@ -302,7 +302,7 @@ void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 }
 
 //=============================================================================
-void Kernel::SetValueForKey(KernelSamplerParameter* sampler, const char* key)
+void Kernel::SetValueForKey(SamplerParameter* sampler, const char* key)
 {
     if(sampler == NULL)
         return;
@@ -386,19 +386,20 @@ KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 }
 
 //=============================================================================
-Parameter* KernelSamplerParameter::Sampler(Kernel* kernel)
+SamplerParameter* KernelSamplerParameter::Create(Firtree::Kernel* kernel)
 {
     return new KernelSamplerParameter(kernel);
 }
 
 //=============================================================================
-KernelSamplerParameter::KernelSamplerParameter(Kernel* kernel)
+KernelSamplerParameter::KernelSamplerParameter(Firtree::Kernel* kernel)
     :   SamplerParameter()
-    ,   m_Kernel(kernel)
     ,   m_KernelCompileStatus(false)
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
 {
+    // HACK: Check this casr
+    m_Kernel = (GLSL::Kernel*)(kernel);
     m_Kernel->Retain();
 }
 

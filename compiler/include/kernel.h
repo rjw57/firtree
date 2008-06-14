@@ -76,7 +76,7 @@ class NumericParameter : public Parameter
         virtual ~NumericParameter();
 
     public:
-        static Parameter* NewNumericParameter();
+        static Parameter* Create();
 
         virtual NumericParameter* GetAsNumeric() { return this; }
 

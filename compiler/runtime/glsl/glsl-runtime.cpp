@@ -302,7 +302,7 @@ void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 }
 
 //=============================================================================
-void Kernel::SetValueForKey(SamplerParameter* sampler, const char* key)
+void Kernel::SetValueForKey(Firtree::SamplerParameter* sampler, const char* key)
 {
     if(sampler == NULL)
         return;
@@ -392,11 +392,22 @@ SamplerParameter* KernelSamplerParameter::Create(Firtree::Kernel* kernel)
 }
 
 //=============================================================================
-KernelSamplerParameter::KernelSamplerParameter(Firtree::Kernel* kernel)
-    :   SamplerParameter()
-    ,   m_KernelCompileStatus(false)
+SamplerParameter::SamplerParameter()
+    :   Firtree::SamplerParameter()
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
+{
+}
+
+//=============================================================================
+SamplerParameter::~SamplerParameter()
+{
+}
+
+//=============================================================================
+KernelSamplerParameter::KernelSamplerParameter(Firtree::Kernel* kernel)
+    :   Firtree::GLSL::SamplerParameter()
+    ,   m_KernelCompileStatus(false)
 {
     // HACK: Check this casr
     m_Kernel = (GLSL::Kernel*)(kernel);

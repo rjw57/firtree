@@ -38,7 +38,43 @@ class KernelSamplerParameter;
 class Kernel;
 
 //=============================================================================
-class KernelSamplerParameter : public SamplerParameter
+class SamplerParameter : public Firtree::SamplerParameter
+{
+    protected:
+        SamplerParameter();
+        virtual ~SamplerParameter();
+
+    public:
+        virtual SamplerParameter* GetAsSampler() { return this; }
+
+        /// Write any top-level GLSL for this shader into dest.
+        virtual bool BuildTopLevelGLSL(std::string& dest) = 0;
+
+        /// Write GLSL to assign result of sampling shader at
+        /// samplerCoordVar to resultVar 
+        virtual void BuildSampleGLSL(std::string& dest,
+                const char* samplerCoordVar,
+                const char* resultVar) = 0;
+
+        virtual bool IsValid() const = 0;
+        virtual void SetGLSLUniforms(unsigned int program) = 0;
+        virtual bool BuildGLSL(std::string& dest) = 0;
+
+        void SetSamplerIndex(int i) { m_SamplerIndex = i; }
+        int GetSamplerIndex() const  { return m_SamplerIndex; }
+
+        void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
+        const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
+
+    private:
+        int             m_SamplerIndex;
+        std::string     m_BlockPrefix;
+
+        void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
+};
+
+//=============================================================================
+class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 {
     protected:
         KernelSamplerParameter(Firtree::Kernel* kernel);
@@ -46,8 +82,6 @@ class KernelSamplerParameter : public SamplerParameter
 
     public:
         static SamplerParameter* Create(Firtree::Kernel* kernel);
-
-        virtual SamplerParameter* GetAsSampler() { return this; }
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest);
@@ -59,26 +93,16 @@ class KernelSamplerParameter : public SamplerParameter
                 const char* resultVar);
 
         virtual bool IsValid() const { return m_KernelCompileStatus; }
+        virtual void SetGLSLUniforms(unsigned int program);
+
+        // Build an entire shader for this sampler in GLSL.
+        virtual bool BuildGLSL(std::string& dest);
 
         Kernel* GetKernel() const { return m_Kernel; }
-
-        void SetGLSLUniforms(unsigned int program);
-
-        void SetSamplerIndex(int i) { m_SamplerIndex = i; }
-        int GetSamplerIndex() const  { return m_SamplerIndex; }
-
-        void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
-        const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
-
-        bool BuildGLSL(std::string& dest);
 
     private:
         Kernel*         m_Kernel;
         bool            m_KernelCompileStatus;
-
-        int             m_SamplerIndex;
-
-        std::string     m_BlockPrefix;
 
         void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
 };
@@ -104,7 +128,7 @@ class Kernel : public Firtree::Kernel
         virtual void SetValueForKey(const int* value, int count, const char* key);
         virtual void SetValueForKey(bool value, const char* key);
         virtual void SetValueForKey(const bool* value, int count, const char* key);
-        virtual void SetValueForKey(SamplerParameter* sampler, const char* key);
+        virtual void SetValueForKey(Firtree::SamplerParameter* sampler, const char* key);
 
         std::map<std::string, Parameter*>& GetParameters() { return m_Parameters; }
 

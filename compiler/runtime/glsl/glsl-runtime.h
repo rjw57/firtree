@@ -34,8 +34,11 @@
 
 namespace Firtree { namespace GLSL {
 
-class KernelSamplerParameter;
+class SamplerParameter;
 class Kernel;
+
+//=============================================================================
+bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* sampler);
 
 //=============================================================================
 class SamplerParameter : public Firtree::SamplerParameter
@@ -58,7 +61,7 @@ class SamplerParameter : public Firtree::SamplerParameter
 
         virtual bool IsValid() const = 0;
         virtual void SetGLSLUniforms(unsigned int program) = 0;
-        virtual bool BuildGLSL(std::string& dest) = 0;
+        // virtual bool BuildGLSL(std::string& dest) = 0;
 
         void SetSamplerIndex(int i) { m_SamplerIndex = i; }
         int GetSamplerIndex() const  { return m_SamplerIndex; }
@@ -69,8 +72,6 @@ class SamplerParameter : public Firtree::SamplerParameter
     private:
         int             m_SamplerIndex;
         std::string     m_BlockPrefix;
-
-        void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
 };
 
 //=============================================================================
@@ -96,7 +97,7 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
         virtual void SetGLSLUniforms(unsigned int program);
 
         // Build an entire shader for this sampler in GLSL.
-        virtual bool BuildGLSL(std::string& dest);
+        // virtual bool BuildGLSL(std::string& dest);
 
         Kernel* GetKernel() const { return m_Kernel; }
 
@@ -104,7 +105,10 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
         Kernel*         m_Kernel;
         bool            m_KernelCompileStatus;
 
-        void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
+    protected:
+        virtual void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
+
+        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
 };
 
 //=============================================================================

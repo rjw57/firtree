@@ -220,8 +220,7 @@ void context_created()
 
     std::string shaderSource;
     //g_GlobalSampler.BuildGLSL(shaderSource);
-    bool retVal = ((GLSL::KernelSamplerParameter*)g_GlobalSampler)->
-        BuildGLSL(shaderSource);
+    bool retVal = GLSL::BuildGLSLShaderForSampler(shaderSource, g_GlobalSampler);
 
     if(!retVal)
     {

@@ -531,19 +531,21 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 }
 
 //=============================================================================
-bool KernelSamplerParameter::BuildGLSL(std::string& dest)
+bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
 {
+    GLSL::SamplerParameter* sampler = (GLSL::SamplerParameter*)s;
+
     std::string body, tempStr;
     static char countStr[255]; 
 
     // Compile all the kernels...
-    BuildTopLevelGLSL(body);
+    sampler->BuildTopLevelGLSL(body);
 
-    if(!IsValid())
+    if(!sampler->IsValid())
         return false;
 
     std::vector<KernelSamplerParameter*> children;
-    AddChildSamplersToVector(children);
+    ((KernelSamplerParameter*)sampler)->AddChildSamplersToVector(children);
 
     if(children.size() > 0)
     {
@@ -566,15 +568,15 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
         }
 
         dest += "vec4 __builtin_sample_";
-        dest += m_Kernel->GetCompiledKernelName();
+        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
         dest += "(int sampler, vec2 samplerCoord);\n";
 
         dest += "vec2 __builtin_sampler_transform_";
-        dest += m_Kernel->GetCompiledKernelName();
+        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
         dest += "(int sampler, vec2 samplerCoord);\n";
 
         dest += "vec4 __builtin_sampler_extent_";
-        dest += m_Kernel->GetCompiledKernelName();
+        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
         dest += "(int sampler);\n";
     }
 
@@ -590,13 +592,14 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
             WriteSamplerFunctionsForKernel(dest, child->GetKernel());
         }
 
-        WriteSamplerFunctionsForKernel(dest, m_Kernel);
+        WriteSamplerFunctionsForKernel(dest, 
+                ((KernelSamplerParameter*)sampler)->GetKernel());
     }
 
     dest += "void main() {\n"
         "vec3 inCoord = vec3(gl_FragCoord.xy, 1.0);\n";
 
-    const float *transform = this->GetTransform();
+    const float *transform = sampler->GetTransform();
     snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
             transform[0], transform[1], transform[2]);
     dest += countStr;
@@ -605,7 +608,7 @@ bool KernelSamplerParameter::BuildGLSL(std::string& dest)
     dest += countStr;
 
     dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
-    BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
+    sampler->BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
     dest += tempStr;
     dest += "\n}\n";
 

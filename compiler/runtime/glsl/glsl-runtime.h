@@ -72,6 +72,12 @@ class SamplerParameter : public Firtree::SamplerParameter
     private:
         int             m_SamplerIndex;
         std::string     m_BlockPrefix;
+
+    public:
+        virtual void AddChildSamplersToVector(
+                std::vector<GLSL::SamplerParameter*>& sampVec) = 0;
+
+        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
 };
 
 //=============================================================================
@@ -105,10 +111,9 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
         Kernel*         m_Kernel;
         bool            m_KernelCompileStatus;
 
-    protected:
-        virtual void AddChildSamplersToVector(std::vector<KernelSamplerParameter*>& sampVec);
-
-        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
+    public:
+        virtual void AddChildSamplersToVector(
+                std::vector<GLSL::SamplerParameter*>& sampVec);
 };
 
 //=============================================================================

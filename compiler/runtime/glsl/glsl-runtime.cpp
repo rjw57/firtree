@@ -538,46 +538,21 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
     std::string body, tempStr;
     static char countStr[255]; 
 
-    // Compile all the kernels...
     sampler->BuildTopLevelGLSL(body);
 
     if(!sampler->IsValid())
         return false;
 
-    std::vector<KernelSamplerParameter*> children;
-    ((KernelSamplerParameter*)sampler)->AddChildSamplersToVector(children);
+    std::vector<SamplerParameter*> children;
+    ((GLSL::SamplerParameter*)sampler)->AddChildSamplersToVector(children);
 
     if(children.size() > 0)
     {
         for(int i=0; i<children.size(); i++)
         {
-            KernelSamplerParameter* child = children[i];
+            SamplerParameter* child = children[i];
             children[i]->SetSamplerIndex(i);
-
-            dest += "vec4 __builtin_sample_";
-            dest += child->GetKernel()->GetCompiledKernelName();
-            dest += "(int sampler, vec2 samplerCoord);\n";
-
-            dest += "vec2 __builtin_sampler_transform_";
-            dest += child->GetKernel()->GetCompiledKernelName();
-            dest += "(int sampler, vec2 samplerCoord);\n";
-
-            dest += "vec4 __builtin_sampler_extent_";
-            dest += child->GetKernel()->GetCompiledKernelName();
-            dest += "(int sampler);\n";
         }
-
-        dest += "vec4 __builtin_sample_";
-        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
-        dest += "(int sampler, vec2 samplerCoord);\n";
-
-        dest += "vec2 __builtin_sampler_transform_";
-        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
-        dest += "(int sampler, vec2 samplerCoord);\n";
-
-        dest += "vec4 __builtin_sampler_extent_";
-        dest += ((KernelSamplerParameter*)sampler)->GetKernel()->GetCompiledKernelName();
-        dest += "(int sampler);\n";
     }
 
     dest += body;
@@ -586,7 +561,8 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
     {
         for(int i=0; i<children.size(); i++)
         {
-            KernelSamplerParameter* child = children[i];
+            KernelSamplerParameter* child = 
+                (KernelSamplerParameter*)(children[i]);
 
             // Each child gets it's own sampler function.
             WriteSamplerFunctionsForKernel(dest, child->GetKernel());
@@ -625,6 +601,19 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
         return false;
 
     dest = "";
+
+    // Declare the sampling functions.
+    dest += "vec4 __builtin_sample_";
+    dest += GetKernel()->GetCompiledKernelName();
+    dest += "(int sampler, vec2 samplerCoord);\n";
+
+    dest += "vec2 __builtin_sampler_transform_";
+    dest += GetKernel()->GetCompiledKernelName();
+    dest += "(int sampler, vec2 samplerCoord);\n";
+
+    dest += "vec4 __builtin_sampler_extent_";
+    dest += GetKernel()->GetCompiledKernelName();
+    dest += "(int sampler);\n";
 
     // Recurse down through kernel's sampler parameters.
 
@@ -669,7 +658,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 
 //=============================================================================
 void KernelSamplerParameter::AddChildSamplersToVector(
-        std::vector<KernelSamplerParameter*>& sampVec)
+        std::vector<GLSL::SamplerParameter*>& sampVec)
 {
     std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
@@ -680,8 +669,8 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)
         {
-            KernelSamplerParameter* ksp = 
-                (KernelSamplerParameter*)((*i).second->GetAsSampler());
+            SamplerParameter* ksp = 
+                (SamplerParameter*)((*i).second->GetAsSampler());
             if(ksp != NULL)
             {
                 ksp->AddChildSamplersToVector(sampVec);
@@ -716,11 +705,11 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
     uniPrefix += "_params.";
 
     // Setup any sampler parameters.
-    std::vector<KernelSamplerParameter*> children;
+    std::vector<SamplerParameter*> children;
     AddChildSamplersToVector(children);
     for(int i=0; i<children.size(); i++)
     {
-        KernelSamplerParameter* child = children[i];
+        SamplerParameter* child = children[i];
 
         // Set all the child's uniforms
         child->SetGLSLUniforms(program);

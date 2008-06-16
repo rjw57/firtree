@@ -89,20 +89,12 @@ SamplerParameter::SamplerParameter()
     :   Parameter()
     ,   m_Transform(AffineTransform::Identity())
 {
-    m_Extent[0] = m_Extent[1] = -FLT_MAX;
-    m_Extent[2] = m_Extent[3] = FLT_MAX;
 }
 
 //=============================================================================
 SamplerParameter::~SamplerParameter()
 {
     m_Transform->Release();
-}
-
-//=============================================================================
-void SamplerParameter::SetExtent(const float* e)
-{
-    memcpy(m_Extent, e, 4*sizeof(float));
 }
 
 //=============================================================================
@@ -114,6 +106,11 @@ void SamplerParameter::SetTransform(const AffineTransform* f)
     AffineTransform* oldTrans = m_Transform;
     m_Transform = f->Copy();
     if(oldTrans != NULL) { oldTrans->Release(); }
+}
+
+const Rect2D SamplerParameter::GetExtent() const 
+{
+    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
 
 } // namespace Firtree 

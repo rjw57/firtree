@@ -106,8 +106,7 @@ class SamplerParameter : public Parameter
     public:
         virtual SamplerParameter* GetAsSampler() { return this; }
 
-        virtual void SetExtent(const float* e);
-        virtual const float* GetExtent() const { return m_Extent; }
+        virtual const Rect2D GetExtent() const;
 
         virtual void SetTransform(const AffineTransform* f);
         virtual const AffineTransform* GetTransform() const { return m_Transform; }
@@ -116,9 +115,6 @@ class SamplerParameter : public Parameter
         /// Affine transformation to map from world co-ordinates
         /// to sampler co-ordinates.
         AffineTransform*    m_Transform;
-
-        /// Origin ans size of sampler in world co-ordinates.
-        float           m_Extent[4];
 };
 
 //=============================================================================

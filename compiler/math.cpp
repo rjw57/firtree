@@ -30,6 +30,50 @@
 namespace Firtree {
 // ===============================================================================
 
+// ===============================================================================
+Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
+{
+    float minx = Max(a.MinX(), b.MinX());
+    float miny = Max(a.MinY(), b.MinY());
+    float maxx = Min(a.MaxX(), b.MaxX());
+    float maxy = Min(a.MaxY(), b.MaxY());
+
+    return RectFromBounds(minx,miny,maxx,maxy);
+}
+
+// ===============================================================================
+Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
+{
+    float minx = Min(a.MinX(), b.MinX());
+    float miny = Min(a.MinY(), b.MinY());
+    float maxx = Max(a.MaxX(), b.MaxX());
+    float maxy = Max(a.MaxY(), b.MaxY());
+
+    return RectFromBounds(minx,miny,maxx,maxy);
+}
+
+// ===============================================================================
+Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
+{
+    Point2D a(inRect.MinX(), inRect.MaxY());
+    Point2D b(inRect.MaxX(), inRect.MaxY());
+    Point2D c(inRect.MinX(), inRect.MinY());
+    Point2D d(inRect.MaxX(), inRect.MinY());
+
+    a = t->TransformPoint(a);
+    b = t->TransformPoint(b);
+    c = t->TransformPoint(c);
+    d = t->TransformPoint(d);
+
+    float minx = Min(Min(a.X, b.X), Min(c.X, d.X));
+    float miny = Min(Min(a.Y, b.Y), Min(c.Y, d.Y));
+    float maxx = Max(Max(a.X, b.X), Max(c.X, d.X));
+    float maxy = Max(Max(a.Y, b.Y), Max(c.Y, d.Y));
+
+    return RectFromBounds(minx,miny,maxx,maxy);
+}
+
+
 static const float deg2rad = M_PI * 2.f / 360.f;
 static const float rad2deg = 360.f / (M_PI * 2.f);
 

@@ -110,12 +110,15 @@ SamplerParameter* g_GradientSampler = GLSL::CreateKernelSampler(g_GradientKernel
 Kernel* g_OverKernel2 = GLSL::CreateKernel(g_OverKernelSource);
 SamplerParameter* g_OverSampler2 = GLSL::CreateKernelSampler(g_OverKernel2);
 
+SamplerParameter* g_LenaSampler = NULL;
+
 //#define g_GlobalSampler g_OverSampler
 //#define g_GlobalSampler g_RippleSampler
 //#define g_GlobalSampler g_GradientSampler
 //#define g_GlobalSampler g_CheckerSampler
 //#define g_GlobalSampler g_SpotSampler
 #define g_GlobalSampler g_OverSampler2
+//#define g_GlobalSampler g_LenaSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -156,12 +159,28 @@ void render(float epoch)
 
         GLSL::SetGLSLUniformsForSampler(g_GlobalSampler, g_ShaderProg);
 
+        Rect2D extent = g_GlobalSampler->GetExtent();
+#if 0
+        printf("Extent: (%f,%f) -> (%f,%f)\n",
+                extent.MinX(), extent.MinY(),
+                extent.MaxX(), extent.MaxY());
+#endif
+
+        Rect2D outQuad(0,0,width,height);
+        outQuad = RectIntersect(extent, outQuad);
+
+#if 0
+        printf("Drawing rect: (%f,%f) -> (%f,%f)\n",
+                outQuad.MinX(), outQuad.MinY(),
+                outQuad.MaxX(), outQuad.MaxY());
+#endif
+
         glColor3f(1,0,0);
         glBegin(GL_QUADS);
-           glVertex2f(0,0);
-           glVertex2f(width,0);
-           glVertex2f(width,height);
-           glVertex2f(0,height);
+           glVertex2f(outQuad.MinX(), outQuad.MinY());
+           glVertex2f(outQuad.MinX(), outQuad.MaxY());
+           glVertex2f(outQuad.MaxX(), outQuad.MaxY());
+           glVertex2f(outQuad.MaxX(), outQuad.MinY());
         glEnd();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
@@ -208,20 +227,20 @@ void initialize_kernels()
             return;
         }
 
-        SamplerParameter* lenaSampler = 
+        g_LenaSampler = 
             GLSL::CreateTextureSampler(g_LenaTexture);
         SamplerParameter* fogSampler = 
             GLSL::CreateTextureSampler(g_FogTexture);
 
-        AffineTransform* lenaTrans = lenaSampler->GetTransform()->Copy();
+        AffineTransform* lenaTrans = g_LenaSampler->GetTransform()->Copy();
         lenaTrans->TranslateBy(-256, -256);
         lenaTrans->ScaleBy(0.5f);
         lenaTrans->RotateByDegrees(45.f);
         lenaTrans->TranslateBy(320.f, 240.f);
-        lenaSampler->SetTransform(lenaTrans);
+        g_LenaSampler->SetTransform(lenaTrans);
         lenaTrans->Release();
 
-        g_OverKernel->SetValueForKey(lenaSampler, "a");
+        g_OverKernel->SetValueForKey(g_LenaSampler, "a");
         g_OverKernel->SetValueForKey(g_CheckerSampler, "b");
 
         g_RippleKernel->SetValueForKey(g_OverSampler, "a");
@@ -229,7 +248,7 @@ void initialize_kernels()
         g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
 
-        lenaSampler->Release();
+        g_LenaSampler->Release();
         fogSampler->Release();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());

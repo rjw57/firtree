@@ -518,13 +518,15 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 (KernelSamplerParameter*)(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
-                const float* extent = pKSP->GetExtent();
+                const Rect2D& extent = pKSP->GetExtent();
                 snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
                 dest += ") {\n";
                 dest += "retVal = vec4(";
-                snprintf(idxStr, 255, "%f,%f,%f,%f", extent[0], extent[1], extent[2], extent[3]); 
+                snprintf(idxStr, 255, "%f,%f,%f,%f",
+                        extent.Origin.X, extent.Origin.Y,
+                        extent.Size.Width, extent.Size.Height);
                 dest += idxStr;
                 dest += ");\n";
                 dest += "}\n";
@@ -909,13 +911,18 @@ TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
 
+    m_Definition = Rect2D(0.f, 0.f, 1.f, 1.f);
+
     AffineTransform* t = GetTransform()->Copy();
     t->ScaleBy(w, h);
     SetTransform(t);
     t->Release();
+}
 
-    float extent[] = { 0.f, 0.f, w, h };
-    SetExtent(extent);
+//=============================================================================
+const Rect2D TextureSamplerParameter::GetExtent() const 
+{
+    return RectTransform(m_Definition, GetTransform());
 }
 
 //=============================================================================

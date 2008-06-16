@@ -33,6 +33,12 @@
 namespace Firtree {
 // ============================================================================
 
+class AffineTransform;
+
+// ============================================================================
+static const float Min(const float a, const float b) { return (a<b) ? a : b; }
+static const float Max(const float a, const float b) { return (a>b) ? a : b; }
+
 // ============================================================================
 // 2D point
 struct Point2D
@@ -69,7 +75,29 @@ struct Rect2D
 	Rect2D(const Point2D& o, const Size2D& s) : Origin(o), Size(s) { }
 	Rect2D(float x, float y, float w, float h) 
 	    :	Origin(x,y), Size(w,h) { }
+
+	float MinX() const { return Origin.X; }
+	float MaxX() const { return Origin.X + Size.Width; }
+	float MinY() const { return Origin.Y; }
+	float MaxY() const { return Origin.Y + Size.Height; }
 };
+
+// ============================================================================
+static Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
+{
+    return Rect2D(minx,miny,maxx-minx,maxy-miny);
+}
+
+// ============================================================================
+Rect2D RectIntersect(const Rect2D& a, const Rect2D& b);
+
+// ============================================================================
+Rect2D RectUnion(const Rect2D& a, const Rect2D& b);
+
+// ============================================================================
+/// Return the bounding rectangle from the result of applying the transformation
+/// t to the rectangle a.
+Rect2D RectTransform(const Rect2D& a, const AffineTransform* t);
 
 // ============================================================================
 // Affine transformation

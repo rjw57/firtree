@@ -82,6 +82,8 @@ class TextureSamplerParameter : public GLSL::SamplerParameter
     public:
         static SamplerParameter* Create(unsigned int texObj);
 
+        virtual const Rect2D GetExtent() const;
+
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest);
 
@@ -100,6 +102,7 @@ class TextureSamplerParameter : public GLSL::SamplerParameter
         unsigned int GetGLTextureUnit() const { return m_TextureUnit; }
 
     private:
+        Rect2D              m_Definition;
         unsigned int        m_TextureUnit;
         unsigned int        m_TexObj;
 };

@@ -123,6 +123,8 @@ SamplerParameter* g_LenaSampler = NULL;
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
 
+GLSL::RenderingContext* g_RenderingContext = NULL;
+
 #define CHECK(a) do { \
     { do { (a); } while(0); } \
     GLenum _err = glGetError(); \
@@ -141,15 +143,7 @@ void finalise_test()
 
 void render(float epoch)
 {
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
 
-    glClearColor(0,0,0,1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    CHECK( glUseProgramObjectARB(g_ShaderProg) );
     try {
         g_SpotKernel->SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,
                 "dotPitch");
@@ -157,31 +151,8 @@ void render(float epoch)
 
         g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
-        GLSL::SetGLSLUniformsForSampler(g_GlobalSampler, g_ShaderProg);
-
-        Rect2D extent = g_GlobalSampler->GetExtent();
-#if 0
-        printf("Extent: (%f,%f) -> (%f,%f)\n",
-                extent.MinX(), extent.MinY(),
-                extent.MaxX(), extent.MaxY());
-#endif
-
         Rect2D outQuad(0,0,width,height);
-        outQuad = RectIntersect(extent, outQuad);
-
-#if 0
-        printf("Drawing rect: (%f,%f) -> (%f,%f)\n",
-                outQuad.MinX(), outQuad.MinY(),
-                outQuad.MaxX(), outQuad.MaxY());
-#endif
-
-        glColor3f(1,0,0);
-        glBegin(GL_QUADS);
-           glVertex2f(outQuad.MinX(), outQuad.MinY());
-           glVertex2f(outQuad.MinX(), outQuad.MaxY());
-           glVertex2f(outQuad.MaxX(), outQuad.MaxY());
-           glVertex2f(outQuad.MaxX(), outQuad.MinY());
-        glEnd();
+        GLSL::RenderInRect(g_RenderingContext, outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -277,62 +248,12 @@ void context_created()
     const GLubyte* versionStr = glGetString(GL_SHADING_LANGUAGE_VERSION);
     printf("Shader langugage version supported: %s.\n", versionStr);
 
-    initialize_kernels();
-
-    std::string shaderSource;
-    //g_GlobalSampler.BuildGLSL(shaderSource);
-    bool retVal = GLSL::BuildGLSLShaderForSampler(shaderSource, g_GlobalSampler);
-
-    if(!retVal)
-    {
-        fprintf(stderr, "Error compiling kernel:\n%s\n",
-                GLSL::GetInfoLogForSampler(g_GlobalSampler));
-        exit(3);
-    }
-
-    printf("Compiled source:\n%s\n", shaderSource.c_str());
-
-    g_FragShaderObj = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-    if(g_FragShaderObj == 0)
-    {
-        fprintf(stderr, "Error creating shader object.\n");
-        return;
-    }
-
-    const char* pSrc = shaderSource.c_str();
-    CHECK( glShaderSourceARB(g_FragShaderObj, 1, &pSrc, NULL) );
-    CHECK( glCompileShaderARB(g_FragShaderObj) );
-
-    GLint status = 0;
-    CHECK( glGetObjectParameterivARB(g_FragShaderObj, GL_OBJECT_COMPILE_STATUS_ARB, &status) );
-    if(status != GL_TRUE)
-    {
-        fprintf(stderr, "Error compiling shader:\n");
-
-        GLint logLen = 0;
-        CHECK( glGetObjectParameterivARB(g_FragShaderObj, GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
-        char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetInfoLogARB(g_FragShaderObj, logLen, &logLen, log) );
-        fprintf(stderr, "%s\n", log);
-        free(log);
-        exit(2);
-    }
-
-    CHECK( g_ShaderProg = glCreateProgramObjectARB() );
-    CHECK( glAttachObjectARB(g_ShaderProg, g_FragShaderObj) );
-    CHECK( glLinkProgramARB(g_ShaderProg) );
-    CHECK( glGetObjectParameterivARB(g_ShaderProg, GL_OBJECT_LINK_STATUS_ARB, &status) );
-    if(status != GL_TRUE)
-    {
-        fprintf(stderr, "Error linking shader:\n");
-
-        GLint logLen = 0;
-        CHECK( glGetObjectParameterivARB(g_ShaderProg, GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
-        char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetInfoLogARB(g_ShaderProg, logLen, &logLen, log) );
-        fprintf(stderr, "%s\n", log);
-        free(log);
-        exit(2);
+    try{
+        initialize_kernels();
+        g_RenderingContext = GLSL::CreateRenderingContext(g_GlobalSampler);
+    } catch(Firtree::Exception e) {
+        fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
+        exit(1);
     }
 }
 

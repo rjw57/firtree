@@ -83,16 +83,17 @@ struct Rect2D
 };
 
 // ============================================================================
-static Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
-{
-    return Rect2D(minx,miny,maxx-minx,maxy-miny);
-}
+Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy);
 
 // ============================================================================
 Rect2D RectIntersect(const Rect2D& a, const Rect2D& b);
 
 // ============================================================================
 Rect2D RectUnion(const Rect2D& a, const Rect2D& b);
+
+// ============================================================================
+Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY);
+
 
 // ============================================================================
 /// Return the bounding rectangle from the result of applying the transformation

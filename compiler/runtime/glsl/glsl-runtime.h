@@ -29,6 +29,8 @@
 
 namespace Firtree { namespace GLSL {
 
+struct RenderingContext;
+
 //=============================================================================
 bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* sampler);
 
@@ -47,6 +49,14 @@ Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel);
 //=============================================================================
 Firtree::Kernel* CreateKernel(const char* source);
 
+//=============================================================================
+RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler);
+
+//=============================================================================
+void ReleaseRenderingContext(RenderingContext*);
+
+//=============================================================================
+void RenderInRect(RenderingContext* context, const Rect2D& destRect);
 
 } }
 

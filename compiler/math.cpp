@@ -30,6 +30,16 @@
 namespace Firtree {
 // ===============================================================================
 
+// ============================================================================
+Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
+{
+    if((minx>maxx) || (miny>maxy))
+    {
+        return Rect2D(maxx,maxy,0,0);
+    }
+    return Rect2D(minx,miny,maxx-minx,maxy-miny);
+}
+
 // ===============================================================================
 Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
 {
@@ -71,6 +81,13 @@ Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
     float maxy = Max(Max(a.Y, b.Y), Max(c.Y, d.Y));
 
     return RectFromBounds(minx,miny,maxx,maxy);
+}
+
+// ============================================================================
+Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY)
+{
+    return RectFromBounds(a.MinX()+deltaX, a.MinY()+deltaY, 
+            a.MaxX()-deltaX, a.MaxY()-deltaY);
 }
 
 

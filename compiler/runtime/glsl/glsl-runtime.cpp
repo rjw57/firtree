@@ -1045,6 +1045,147 @@ const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler)
     return s->GetKernel()->GetInfoLog();
 }
 
+//=============================================================================
+struct RenderingContext {
+    GLuint                   Program;
+    GLuint                   FragShader;
+    GLSL::SamplerParameter*  Sampler;
+};
+
+//=============================================================================
+#define CHECK(a) do { \
+    { do { (a); } while(0); } \
+    GLenum _err = glGetError(); \
+    if(_err != GL_NO_ERROR) {  \
+        FIRTREE_ERROR("%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
+                gluErrorString(_err)); return false; \
+    } } while(0) 
+
+//=============================================================================
+RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler)
+{
+    GLSL::SamplerParameter* sampler = 
+        dynamic_cast<GLSL::SamplerParameter*>(topLevelSampler);
+
+    if(sampler == NULL)
+    {
+        return NULL;
+    }
+
+    RenderingContext* retVal = new RenderingContext();
+    retVal->Sampler = sampler;
+    retVal->Sampler->Retain();
+
+    std::string shaderSource;
+    bool success = GLSL::BuildGLSLShaderForSampler(shaderSource, retVal->Sampler);
+
+    if(!success)
+    {
+        FIRTREE_ERROR("Error compiling kernel:\n %s",
+                GLSL::GetInfoLogForSampler(sampler));
+        delete retVal;
+        return NULL;
+    }
+
+    retVal->FragShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+    if(retVal->FragShader == 0)
+    {
+        fprintf(stderr, "Error creating shader object.\n");
+        delete retVal;
+        return NULL;
+    }
+
+    const char* pSrc = shaderSource.c_str();
+    CHECK( glShaderSourceARB(retVal->FragShader, 1, &pSrc, NULL) );
+    CHECK( glCompileShaderARB(retVal->FragShader) );
+
+    GLint status = 0;
+    CHECK( glGetObjectParameterivARB(retVal->FragShader, 
+                GL_OBJECT_COMPILE_STATUS_ARB, &status) );
+    if(status != GL_TRUE)
+    {
+        GLint logLen = 0;
+        CHECK( glGetObjectParameterivARB(retVal->FragShader,
+                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
+        char* log = (char*) malloc(logLen + 1);
+        CHECK( glGetInfoLogARB(retVal->FragShader, logLen, &logLen, log) );
+        FIRTREE_ERROR("Error compiling shader: %s\n", log);
+        free(log);
+        delete retVal;
+        return NULL;
+    }
+
+    CHECK( retVal->Program = glCreateProgramObjectARB() );
+    CHECK( glAttachObjectARB(retVal->Program, retVal->FragShader) );
+    CHECK( glLinkProgramARB(retVal->Program) );
+    CHECK( glGetObjectParameterivARB(retVal->Program, 
+                GL_OBJECT_LINK_STATUS_ARB, &status) );
+
+    if(status != GL_TRUE)
+    {
+        GLint logLen = 0;
+        CHECK( glGetObjectParameterivARB(retVal->Program,
+                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
+        char* log = (char*) malloc(logLen + 1);
+        CHECK( glGetInfoLogARB(retVal->Program, logLen, &logLen, log) );
+        FIRTREE_ERROR("Error linking shader: %s\n", log);
+        free(log);
+        delete retVal;
+        return NULL;
+    }
+
+    return retVal;
+}
+
+//=============================================================================
+void ReleaseRenderingContext(RenderingContext* c)
+{
+    if(c != NULL) { 
+        glDeleteObjectARB(c->FragShader);
+        glDeleteObjectARB(c->Program);
+        delete c; 
+    }
+}
+
+//=============================================================================
+void RenderInRect(RenderingContext* context, const Rect2D& destRect)
+{
+    GLenum err;
+    if(context == NULL) { return; }
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgramObjectARB(context->Program);
+    if((err = glGetError()) != GL_NO_ERROR)
+    {
+        FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+        return;
+    }
+
+    GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
+
+    Rect2D extent = context->Sampler->GetExtent();
+    Rect2D renderRect = RectIntersect(destRect, extent);
+
+#if 0
+    printf("(%f,%f)->(%f,%f)\n",
+            renderRect.MinX(), renderRect.MinY(),
+            renderRect.MaxX(), renderRect.MaxY());
+#endif
+  
+    glBegin(GL_QUADS);
+    glVertex2f(renderRect.MinX(), renderRect.MinY());
+    glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    glVertex2f(renderRect.MaxX(), renderRect.MinY());
+    glEnd();
+}
+
 } } // namespace Firtree::GLSL
 
 //=============================================================================

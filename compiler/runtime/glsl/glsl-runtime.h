@@ -61,7 +61,6 @@ class SamplerParameter : public Firtree::SamplerParameter
 
         virtual bool IsValid() const = 0;
         virtual void SetGLSLUniforms(unsigned int program) = 0;
-        // virtual bool BuildGLSL(std::string& dest) = 0;
 
         void SetSamplerIndex(int i) { m_SamplerIndex = i; }
         int GetSamplerIndex() const  { return m_SamplerIndex; }
@@ -72,12 +71,38 @@ class SamplerParameter : public Firtree::SamplerParameter
     private:
         int             m_SamplerIndex;
         std::string     m_BlockPrefix;
+};
+
+//=============================================================================
+class TextureSamplerParameter : public GLSL::SamplerParameter
+{
+    protected:
+        TextureSamplerParameter(unsigned int texObj);
+        virtual ~TextureSamplerParameter();
 
     public:
-        virtual void AddChildSamplersToVector(
-                std::vector<GLSL::SamplerParameter*>& sampVec) = 0;
+        static SamplerParameter* Create(unsigned int texObj);
 
-        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
+        /// Write any top-level GLSL for this shader into dest.
+        virtual bool BuildTopLevelGLSL(std::string& dest);
+
+        /// Write GLSL to assign result of sampling shader at
+        /// samplerCoordVar to resultVar 
+        virtual void BuildSampleGLSL(std::string& dest,
+                const char* samplerCoordVar,
+                const char* resultVar);
+
+        virtual bool IsValid() const;
+        virtual void SetGLSLUniforms(unsigned int program);
+
+        unsigned int GetGLTextureObject() const { return m_TexObj; }
+
+        void SetGLTextureUnit(unsigned int i) { m_TextureUnit = i; }
+        unsigned int GetGLTextureUnit() const { return m_TextureUnit; }
+
+    private:
+        unsigned int        m_TextureUnit;
+        unsigned int        m_TexObj;
 };
 
 //=============================================================================
@@ -111,9 +136,11 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
         Kernel*         m_Kernel;
         bool            m_KernelCompileStatus;
 
-    public:
+    protected:
         virtual void AddChildSamplersToVector(
                 std::vector<GLSL::SamplerParameter*>& sampVec);
+
+        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
 };
 
 //=============================================================================

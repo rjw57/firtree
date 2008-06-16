@@ -27,6 +27,9 @@
 
 using namespace Firtree;
 
+GLuint g_LenaTexture = 0;
+GLuint g_FogTexture = 0;
+
 const char* g_CheckerKernelSource = 
 "    kernel vec4 checkerKernel(float squareSize, __color backColor,"
 "                              __color foreColor)"
@@ -183,15 +186,42 @@ void initialize_kernels()
         };
         g_SpotSampler->SetTransform(spotTransform);
 
-        g_OverKernel->SetValueForKey(g_SpotSampler, "a");
+        glGenTextures(1, &g_LenaTexture);
+        bool rv = InitialiseTextureFromFile(g_LenaTexture, "lena.png");
+        if(!rv)
+        {
+            fprintf(stderr, "Could not load texture image.\n");
+            exit(1);
+            return;
+        }
+
+        glGenTextures(1, &g_FogTexture);
+        rv = InitialiseTextureFromFile(g_FogTexture, "fog.png");
+        if(!rv)
+        {
+            fprintf(stderr, "Could not load fog texture image.\n");
+            exit(1);
+            return;
+        }
+
+        SamplerParameter* lenaSampler = 
+            GLSL::TextureSamplerParameter::Create(g_LenaTexture);
+        SamplerParameter* fogSampler = 
+            GLSL::TextureSamplerParameter::Create(g_FogTexture);
+
+        g_OverKernel->SetValueForKey(fogSampler, "a");
         g_OverKernel->SetValueForKey(g_CheckerSampler, "b");
 
         g_RippleKernel->SetValueForKey(g_OverSampler, "a");
 
-        g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
+        g_OverKernel2->SetValueForKey(lenaSampler, "b");
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
+
+        lenaSampler->Release();
+        fogSampler->Release();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
+        exit(1);
     }
 }
 

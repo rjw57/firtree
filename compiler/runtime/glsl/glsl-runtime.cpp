@@ -440,8 +440,8 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = 
-                (KernelSamplerParameter*)(pKP->GetAsSampler());
+            SamplerParameter *pKSP = 
+                dynamic_cast<SamplerParameter*>(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
                 snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
@@ -533,7 +533,11 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 //=============================================================================
 bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
 {
-    GLSL::SamplerParameter* sampler = (GLSL::SamplerParameter*)s;
+    GLSL::SamplerParameter* sampler = 
+        dynamic_cast<GLSL::SamplerParameter*>(s);
+
+    if(sampler == NULL)
+        return false;
 
     std::string body, tempStr;
     static char countStr[255]; 
@@ -544,14 +548,36 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
         return false;
 
     std::vector<SamplerParameter*> children;
-    ((GLSL::SamplerParameter*)sampler)->AddChildSamplersToVector(children);
+    KernelSamplerParameter* ksp = dynamic_cast<KernelSamplerParameter*>(s);
+    if(ksp != NULL)
+    {
+        ksp->AddChildSamplersToVector(children);
+    }
 
     if(children.size() > 0)
     {
+        int samplerIdx = 0;
+        int textureIdx = 0;
         for(int i=0; i<children.size(); i++)
         {
-            SamplerParameter* child = children[i];
-            children[i]->SetSamplerIndex(i);
+            SamplerParameter* child = 
+                dynamic_cast<GLSL::SamplerParameter*>(children[i]);
+            if(child != NULL)
+            {
+                if(child != NULL)
+                {
+                    child->SetSamplerIndex(samplerIdx);
+                    samplerIdx++;
+                }
+
+                TextureSamplerParameter* tsp =
+                    dynamic_cast<TextureSamplerParameter*>(child);
+                if(tsp != NULL)
+                {
+                    tsp->SetGLTextureUnit(textureIdx);
+                    textureIdx++;
+                }
+            }
         }
     }
 
@@ -562,10 +588,13 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
         for(int i=0; i<children.size(); i++)
         {
             KernelSamplerParameter* child = 
-                (KernelSamplerParameter*)(children[i]);
+                dynamic_cast<KernelSamplerParameter*>(children[i]);
 
-            // Each child gets it's own sampler function.
-            WriteSamplerFunctionsForKernel(dest, child->GetKernel());
+            if(child != NULL)
+            {
+                // Each child gets it's own sampler function.
+                WriteSamplerFunctionsForKernel(dest, child->GetKernel());
+            }
         }
 
         WriteSamplerFunctionsForKernel(dest, 
@@ -669,13 +698,19 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)
         {
-            SamplerParameter* ksp = 
-                (SamplerParameter*)((*i).second->GetAsSampler());
+            GLSL::SamplerParameter* sp = 
+                dynamic_cast<GLSL::SamplerParameter*>((*i).second->GetAsSampler());
+            if(sp == NULL)
+                continue;
+
+            KernelSamplerParameter* ksp = 
+                dynamic_cast<KernelSamplerParameter*>(sp);
             if(ksp != NULL)
             {
                 ksp->AddChildSamplersToVector(sampVec);
-                sampVec.push_back(ksp);
             }
+
+            sampVec.push_back(sp);
         }
     }
 }
@@ -848,6 +883,104 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             }
         } else {
             FIRTREE_ERROR("Unknown kernel parameter type.");
+        }
+    }
+}
+
+//=============================================================================
+TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
+    :   GLSL::SamplerParameter()
+    ,   m_TextureUnit(0)
+    ,   m_TexObj(texObj)
+{
+    GLint w, h;
+
+    glBindTexture(GL_TEXTURE_2D, texObj);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+
+    float transform[6];
+    memcpy(transform, GetTransform(), 6*sizeof(float));
+
+    transform[0] *= 1.0 / w;
+    transform[4] *= 1.0 / h;
+
+    SetTransform(transform);
+
+    float extent[] = { 0.f, 0.f, w, h };
+    SetExtent(extent);
+}
+
+//=============================================================================
+TextureSamplerParameter::~TextureSamplerParameter()
+{
+}
+
+//=============================================================================
+SamplerParameter* TextureSamplerParameter::Create(unsigned int texObj)
+{
+    return new TextureSamplerParameter(texObj);
+}
+
+//=============================================================================
+bool TextureSamplerParameter::BuildTopLevelGLSL(std::string& dest)
+{
+    dest = "uniform sampler2D ";
+    dest += GetBlockPrefix();
+    dest += "_texture;\n";
+
+    return true;
+}
+
+//=============================================================================
+void TextureSamplerParameter::BuildSampleGLSL(std::string& dest,
+        const char* samplerCoordVar, const char* resultVar)
+{
+    dest = resultVar;
+    dest += " = texture2D(";
+    dest += GetBlockPrefix();
+    dest += "_texture, ";
+    dest += samplerCoordVar;
+    dest += ");\n";
+}
+
+//=============================================================================
+bool TextureSamplerParameter::IsValid() const 
+{
+    return (m_TexObj != 0);
+}
+
+//=============================================================================
+void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
+{
+    if(!IsValid())
+        return;
+
+    std::string paramName(GetBlockPrefix());
+    paramName += "_texture";
+
+    GLint uniformLoc = glGetUniformLocationARB(program, paramName.c_str());
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+    }
+
+    if(uniformLoc != -1)
+    {
+        glActiveTexture(GL_TEXTURE0 + GetGLTextureUnit());
+        glBindTexture(GL_TEXTURE_2D, GetGLTextureObject());
+
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+
+        glUniform1iARB(uniformLoc, GetGLTextureUnit());
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
         }
     }
 }

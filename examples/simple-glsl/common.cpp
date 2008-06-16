@@ -22,8 +22,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <assert.h>
 
+#include <compiler/include/main.h>
+#include <compiler/include/platform.h>
 #include <compiler/include/opengl.h>
+
+#ifdef FIRTREE_WIN32
+#   include <wand/MagickWand.h>
+#else
+#   include <wand/magick-wand.h>
+#endif
 
 /** 
  * This file contains the common routines used by (almost) all of the test
@@ -42,7 +51,7 @@ static int delay = 1;  /* Introduce a delay to keep constant FPS? */
 int mainWindow;
 
 static int glutWin;
-static int frame = 0, time, timebase = 0;
+static int frame = 0, tickCount, timebase = 0;
 static int last_frame_time = 0;
 static float angle = 0.0;
 int fullscreen = 0;
@@ -76,16 +85,107 @@ void motion_cb(int x, int y);
 
 void init_cb(); 
 
+// ============================================================================
+bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
+{
+    static bool calledGenesis = false;
+    GLenum err;
+    
+    if(!calledGenesis)
+    {
+        MagickWandGenesis();
+        calledGenesis = true;
+    }
+
+    MagickWand* wand = NewMagickWand();
+    MagickBooleanType status = MagickReadImage(wand, pFileName);
+    if(status == MagickFalse)
+    {
+        return false;
+    }
+
+    MagickFlipImage(wand);
+
+    unsigned int w = MagickGetImageWidth(wand);
+    unsigned int h = MagickGetImageHeight(wand);
+
+    bool hasMatte = true;
+
+    glBindTexture(GL_TEXTURE_2D, texObj);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if((err == glGetError() != GL_NO_ERROR))
+    {
+	FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
+        return false;
+    }
+
+    unsigned char* image = new unsigned char[w * h * 4];
+
+    PixelIterator* pixit = NewPixelIterator(wand);
+    if(pixit == NULL)
+    {
+        wand = DestroyMagickWand(wand);
+        MagickWandTerminus();
+        return false;
+    }
+
+    unsigned char* curPixel = image;
+    for(unsigned int y=0; y<h; y++)
+    {
+        long unsigned int rowWidth;
+        PixelWand** pixels = PixelGetNextIteratorRow(pixit, &rowWidth);
+        if(pixels == NULL)
+        {
+            pixit = DestroyPixelIterator(pixit);
+            wand = DestroyMagickWand(wand);
+            MagickWandTerminus();
+            return false;
+        }
+        assert(rowWidth == w);
+
+        for(unsigned int x=0; x<rowWidth; x++)
+        {
+            // Convert the image to pre-multiplied alpha.
+            
+            float alpha = hasMatte ? PixelGetAlpha(pixels[x]) : 1.f;
+            curPixel[0] = (unsigned char)(255.0 * alpha * PixelGetRed(pixels[x]));
+            curPixel[1] = (unsigned char)(255.0 * alpha * PixelGetGreen(pixels[x]));
+            curPixel[2] = (unsigned char)(255.0 * alpha * PixelGetBlue(pixels[x]));
+            curPixel[3] = (unsigned char)(255.0 * alpha);
+
+            curPixel += 4;
+        }
+    }
+    
+    pixit = DestroyPixelIterator(pixit);
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, image);
+
+    delete [] image;
+
+    wand = DestroyMagickWand(wand);
+
+    //MagickWandTerminus();
+
+    if((err == glGetError() != GL_NO_ERROR))
+    {
+	FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
+        return false;
+    }
+
+    return true;
+}
+
 void idle_cb() {
   int dt;
   
   glutSetWindow(glutWin);
-  time = glutGet(GLUT_ELAPSED_TIME);
-  dt = time - last_frame_time;
+  tickCount = glutGet(GLUT_ELAPSED_TIME);
+  dt = tickCount - last_frame_time;
  
-  if(time - timebase > 1000) {
-    float fps = frame * 1000.0 / (time-timebase);
-    timebase = time;
+  if(tickCount - timebase > 1000) {
+    float fps = frame * 1000.0 / (tickCount-timebase);
+    timebase = tickCount;
     frame = 0;
     
     printf("FPS = %.5f\n",fps); 
@@ -103,7 +203,7 @@ void idle_cb() {
   
   frame ++;
  
-  last_frame_time = time;
+  last_frame_time = tickCount;
 }
 
 void timer_cb(int value) {
@@ -230,3 +330,5 @@ int main(int argc, char** argv) {
   
   return 0;
 }
+
+// vim:cindent:sw=4:ts=4:et

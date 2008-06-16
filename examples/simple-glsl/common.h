@@ -38,6 +38,10 @@ void render(float epoch);
 /* Called when the OpenGL context has been created */
 void context_created();
 
+/* UTILITIES */
+bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName);
+
+
 #define PI 3.1412
 #define FALSE 0
 #define TRUE 1

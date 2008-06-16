@@ -31,6 +31,20 @@
 namespace Firtree {
 // ============================================================================
 
+//=============================================================================
+// THIS IS NOT THREAD SAFE!
+class ReferenceCounted {
+    public:
+        ReferenceCounted() : m_RefCount(1) { }
+        virtual ~ReferenceCounted() { }
+
+        void Retain() { m_RefCount++; }
+        void Release() { if(m_RefCount <= 1) { delete this; } }
+
+    private:
+        unsigned int m_RefCount;
+};
+
 // ============================================================================
 // Exceptions
 

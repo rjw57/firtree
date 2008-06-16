@@ -60,9 +60,10 @@ SET(COMPILER_SOURCES
 	include/compiler.h 	include/main.h
 	include/kernel.h	include/platform.h
 	include/opengl.h
+	include/math.h
 
 	compiler.cpp		main.cpp
-	kernel.cpp
+	kernel.cpp		math.cpp
 
 	runtime/glsl/glsl-runtime.h
 	runtime/glsl/glsl-runtime.cpp

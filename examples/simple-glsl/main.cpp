@@ -139,6 +139,12 @@ void finalise_test()
 void render(float epoch)
 {
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     CHECK( glUseProgramObjectARB(g_ShaderProg) );
     try {
@@ -178,12 +184,11 @@ void initialize_kernels()
         g_SpotKernel->SetValueForKey(dotColor, 4, "dotColor");
         g_SpotKernel->SetValueForKey(clearColor, 4, "backColor");
 
-        float angle = 0.2f;
-        float spotTransform[] = {
-            cos(angle), -sin(angle), -320.f,
-            sin(angle),  cos(angle), -240.f,
-        };
-        g_SpotSampler->SetTransform(spotTransform);
+        AffineTransform* spotTrans = g_SpotSampler->GetTransform()->Copy();
+        spotTrans->RotateByDegrees(12.f);
+        spotTrans->TranslateBy(320.f, 240.f);
+        g_SpotSampler->SetTransform(spotTrans);
+        spotTrans->Release();
 
         glGenTextures(1, &g_LenaTexture);
         bool rv = InitialiseTextureFromFile(g_LenaTexture, "lena.png");
@@ -208,12 +213,18 @@ void initialize_kernels()
         SamplerParameter* fogSampler = 
             GLSL::CreateTextureSampler(g_FogTexture);
 
-        g_OverKernel->SetValueForKey(fogSampler, "a");
+        AffineTransform* lenaTrans = lenaSampler->GetTransform()->Copy();
+        lenaTrans->RotateByDegrees(12.f);
+        //lenaTrans->TranslateBy(320.f, 240.f);
+        lenaSampler->SetTransform(lenaTrans);
+        lenaTrans->Release();
+
+        g_OverKernel->SetValueForKey(lenaSampler, "a");
         g_OverKernel->SetValueForKey(g_CheckerSampler, "b");
 
         g_RippleKernel->SetValueForKey(g_OverSampler, "a");
 
-        g_OverKernel2->SetValueForKey(lenaSampler, "b");
+        g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
 
         lenaSampler->Release();

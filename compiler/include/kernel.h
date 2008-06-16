@@ -30,25 +30,14 @@
 #include <vector>
 #include <map>
 
+#include <compiler/include/main.h>
+#include <compiler/include/math.h>
+
 namespace Firtree {
 
 class NumericParameter;
 class SamplerParameter;
 class Kernel;
-
-//=============================================================================
-// THIS IS NOT THREAD SAFE!
-class ReferenceCounted {
-    public:
-        ReferenceCounted() : m_RefCount(1) { }
-        virtual ~ReferenceCounted() { }
-
-        void Retain() { m_RefCount++; }
-        void Release() { if(m_RefCount <= 1) { delete this; } }
-
-    private:
-        unsigned int m_RefCount;
-};
 
 //=============================================================================
 class Parameter : public ReferenceCounted
@@ -120,13 +109,13 @@ class SamplerParameter : public Parameter
         virtual void SetExtent(const float* e);
         virtual const float* GetExtent() const { return m_Extent; }
 
-        virtual void SetTransform(const float* f);
-        virtual const float* GetTransform() const { return m_Transform; }
+        virtual void SetTransform(const AffineTransform* f);
+        virtual const AffineTransform* GetTransform() const { return m_Transform; }
 
     private:
         /// Affine transformation to map from world co-ordinates
         /// to sampler co-ordinates.
-        float           m_Transform[6];
+        AffineTransform*    m_Transform;
 
         /// Origin ans size of sampler in world co-ordinates.
         float           m_Extent[4];

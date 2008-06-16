@@ -28,6 +28,8 @@
 #include <compiler/include/compiler.h>
 #include <compiler/include/main.h>
 
+#include <float.h>
+
 namespace Firtree {
 
 //=============================================================================
@@ -85,15 +87,16 @@ Kernel::~Kernel()
 //=============================================================================
 SamplerParameter::SamplerParameter()
     :   Parameter()
+    ,   m_Transform(AffineTransform::Identity())
 {
-    m_Transform[0] = 1.0f; m_Transform[1] = 0.0f; m_Transform[2] = 0.0f;
-    m_Transform[3] = 0.0f; m_Transform[4] = 1.0f; m_Transform[5] = 0.0f;
-    m_Extent[0] = m_Extent[1] = m_Extent[2] = m_Extent[3] = 0.0f;
+    m_Extent[0] = m_Extent[1] = -FLT_MAX;
+    m_Extent[2] = m_Extent[3] = FLT_MAX;
 }
 
 //=============================================================================
 SamplerParameter::~SamplerParameter()
 {
+    m_Transform->Release();
 }
 
 //=============================================================================
@@ -103,9 +106,14 @@ void SamplerParameter::SetExtent(const float* e)
 }
 
 //=============================================================================
-void SamplerParameter::SetTransform(const float* f)
+void SamplerParameter::SetTransform(const AffineTransform* f)
 {
-    memcpy(m_Transform, f, 6*sizeof(float));
+    if(f == NULL)
+        return;
+
+    AffineTransform* oldTrans = m_Transform;
+    m_Transform = f->Copy();
+    if(oldTrans != NULL) { oldTrans->Release(); }
 }
 
 } // namespace Firtree 

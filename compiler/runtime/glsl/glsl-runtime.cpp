@@ -474,20 +474,26 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 (KernelSamplerParameter*)(pKP->GetAsSampler());
             if(pKSP != NULL)
             {
-                const float* transform = pKSP->GetTransform();
+                AffineTransform* invTrans = pKSP->GetTransform()->Copy();
+                invTrans->Invert();
+                const AffineTransformStruct& transform =
+                    invTrans->GetTransformStruct();
                 snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
                 dest += ") {\n";
                 dest += "row1 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f", transform[0], transform[1], transform[2]);
+                snprintf(idxStr, 255, "%f,%f,%f",
+                        transform.m11, transform.m12, transform.tX);
                 dest += idxStr;
                 dest += ");\n";
                 dest += "row2 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f", transform[3], transform[4], transform[5]);
+                snprintf(idxStr, 255, "%f,%f,%f", 
+                        transform.m21, transform.m22, transform.tY);
                 dest += idxStr;
                 dest += ");\n";
                 dest += "}\n";
+                invTrans->Release();
             }
         }
     }
@@ -604,13 +610,17 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
     dest += "void main() {\n"
         "vec3 inCoord = vec3(gl_FragCoord.xy, 1.0);\n";
 
-    const float *transform = sampler->GetTransform();
+    AffineTransform* invTrans = sampler->GetTransform()->Copy();
+    invTrans->Invert();
+    const AffineTransformStruct& transform =
+        invTrans->GetTransformStruct();
     snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
-            transform[0], transform[1], transform[2]);
+            transform.m11, transform.m12, transform.tX);
     dest += countStr;
     snprintf(countStr, 255, "vec3 row2 = vec3(%f,%f,%f);\n", 
-            transform[3], transform[4], transform[5]);
+            transform.m21, transform.m22, transform.tY);
     dest += countStr;
+    invTrans->Release();
 
     dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
     sampler->BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
@@ -899,13 +909,10 @@ TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
 
-    float transform[6];
-    memcpy(transform, GetTransform(), 6*sizeof(float));
-
-    transform[0] *= 1.0 / w;
-    transform[4] *= 1.0 / h;
-
-    SetTransform(transform);
+    AffineTransform* t = GetTransform()->Copy();
+    t->ScaleBy(w, h);
+    SetTransform(t);
+    t->Release();
 
     float extent[] = { 0.f, 0.f, w, h };
     SetExtent(extent);

@@ -21,7 +21,7 @@
 // This file implements the FIRTREE compiler utility functions.
 //=============================================================================
 
-#include "glsl-runtime.h"
+#include "glsl-runtime-priv.h"
 
 #include <compiler/include/kernel.h>
 #include <compiler/include/compiler.h>
@@ -983,6 +983,52 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
         }
     }
+}
+
+//=============================================================================
+Firtree::SamplerParameter* CreateTextureSampler(unsigned int texObj)
+{
+    return TextureSamplerParameter::Create(texObj);
+}
+
+//=============================================================================
+Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel)
+{
+    return KernelSamplerParameter::Create(kernel);
+}
+
+//=============================================================================
+Firtree::Kernel* CreateKernel(const char* source)
+{
+    return GLSL::Kernel::Create(source);
+}
+
+//=============================================================================
+bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int prog)
+{
+    GLSL::SamplerParameter* s = 
+        dynamic_cast<GLSL::SamplerParameter*>(sampler);
+    if(s == NULL)
+    {
+        return false;
+    }
+
+    s->SetGLSLUniforms(prog);
+
+    return true;
+}
+
+//=============================================================================
+const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler)
+{
+    GLSL::KernelSamplerParameter* s = 
+        dynamic_cast<GLSL::KernelSamplerParameter*>(sampler);
+    if(s == NULL)
+    {
+        return NULL;
+    }
+
+    return s->GetKernel()->GetInfoLog();
 }
 
 } } // namespace Firtree::GLSL

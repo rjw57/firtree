@@ -55,6 +55,11 @@ static void _KernelEnsureAPI()
         {
             FIRTREE_ERROR("OpenGL shader language support required.");
         }
+
+        if(!GLEW_ARB_multitexture)
+        {
+            FIRTREE_ERROR("ARB_mulitexture support required.");
+        }
     }
 }
 
@@ -970,6 +975,8 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
     if(!IsValid())
         return;
 
+    _KernelEnsureAPI();
+
     std::string paramName(GetBlockPrefix());
     paramName += "_texture";
 
@@ -982,7 +989,7 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
 
     if(uniformLoc != -1)
     {
-        glActiveTexture(GL_TEXTURE0 + GetGLTextureUnit());
+        glActiveTextureARB(GL_TEXTURE0_ARB + GetGLTextureUnit());
         glBindTexture(GL_TEXTURE_2D, GetGLTextureObject());
 
         glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -1073,6 +1080,7 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
     }
 
     RenderingContext* retVal = new RenderingContext();
+
     retVal->Sampler = sampler;
     retVal->Sampler->Retain();
 
@@ -1161,12 +1169,13 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     GLenum err;
     if(context == NULL) { return; }
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glDisable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
+    //glBlendEquation(GL_FUNC_ADD);
+    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
 
     glUseProgramObjectARB(context->Program);
     if((err = glGetError()) != GL_NO_ERROR)

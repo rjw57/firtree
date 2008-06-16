@@ -117,8 +117,8 @@ SamplerParameter* g_LenaSampler = NULL;
 //#define g_GlobalSampler g_GradientSampler
 //#define g_GlobalSampler g_CheckerSampler
 //#define g_GlobalSampler g_SpotSampler
-//#define g_GlobalSampler g_OverSampler2
-#define g_GlobalSampler g_LenaSampler
+#define g_GlobalSampler g_OverSampler2
+//#define g_GlobalSampler g_LenaSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;

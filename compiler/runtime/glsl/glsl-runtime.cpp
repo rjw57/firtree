@@ -1173,9 +1173,10 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     glClear(GL_COLOR_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
-    //glEnable(GL_BLEND);
-    //glBlendEquation(GL_FUNC_ADD);
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+    // This causes a crash on OSX. No idea why :(
+    //  `-> glBlendEquation(GL_FUNC_ADD);
+    glEnable(GL_BLEND);
 
     glUseProgramObjectARB(context->Program);
     if((err = glGetError()) != GL_NO_ERROR)

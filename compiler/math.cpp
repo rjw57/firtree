@@ -158,8 +158,20 @@ bool AffineTransform::Invert()
     result.m12 = ood * -a.m12;
     result.m21 = ood * -a.m21;
 
-    result.tX = ood * (a.m21*a.tY - a.m22*a.tX);
-    result.tY = ood * (a.m12*a.tX - a.m11*a.tY);
+    result.tX = ood * (a.m12*a.tY - a.m22*a.tX);
+    result.tY = ood * (a.m21*a.tX - a.m11*a.tY);
+
+    /*
+    AffineTransformStruct check;
+    MultiplyAffineTransforms(check,result,a);
+    printf("M*M^-1: %f,%f,%f;%f,%f,%f\n",
+            check.m11, check.m12, check.tX,
+            check.m21, check.m22, check.tY);
+    MultiplyAffineTransforms(check,a,result);
+    printf("M^-1*M: %f,%f,%f;%f,%f,%f\n",
+            check.m11, check.m12, check.tX,
+            check.m21, check.m22, check.tY);
+            */
 
     AssignFromTransformStruct(result);
 
@@ -185,7 +197,7 @@ void AffineTransform::PrependTransform(const AffineTransform* t)
 void AffineTransform::RotateByDegrees(float deg)
 {
     AffineTransform* rot = AffineTransform::RotationByDegrees(deg);
-    PrependTransform(rot);
+    AppendTransform(rot);
     rot->Release();
 }
 
@@ -193,7 +205,7 @@ void AffineTransform::RotateByDegrees(float deg)
 void AffineTransform::RotateByRadians(float rad)
 {
     AffineTransform* rot = AffineTransform::RotationByRadians(rad);
-    PrependTransform(rot);
+    AppendTransform(rot);
     rot->Release();
 }
 
@@ -201,7 +213,7 @@ void AffineTransform::RotateByRadians(float rad)
 void AffineTransform::ScaleBy(float xscale, float yscale)
 {
     AffineTransform* s = AffineTransform::Scaling(xscale, yscale);
-    PrependTransform(s);
+    AppendTransform(s);
     s->Release();
 }
 

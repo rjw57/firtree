@@ -214,8 +214,10 @@ void initialize_kernels()
             GLSL::CreateTextureSampler(g_FogTexture);
 
         AffineTransform* lenaTrans = lenaSampler->GetTransform()->Copy();
-        lenaTrans->RotateByDegrees(12.f);
-        //lenaTrans->TranslateBy(320.f, 240.f);
+        lenaTrans->TranslateBy(-256, -256);
+        lenaTrans->ScaleBy(0.5f);
+        lenaTrans->RotateByDegrees(45.f);
+        lenaTrans->TranslateBy(320.f, 240.f);
         lenaSampler->SetTransform(lenaTrans);
         lenaTrans->Release();
 

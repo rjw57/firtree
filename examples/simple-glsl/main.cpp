@@ -117,21 +117,13 @@ SamplerParameter* g_LenaSampler = NULL;
 //#define g_GlobalSampler g_GradientSampler
 //#define g_GlobalSampler g_CheckerSampler
 //#define g_GlobalSampler g_SpotSampler
-#define g_GlobalSampler g_OverSampler2
-//#define g_GlobalSampler g_LenaSampler
+//#define g_GlobalSampler g_OverSampler2
+#define g_GlobalSampler g_LenaSampler
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
 
 GLSL::RenderingContext* g_RenderingContext = NULL;
-
-#define CHECK(a) do { \
-    { do { (a); } while(0); } \
-    GLenum _err = glGetError(); \
-    if(_err != GL_NO_ERROR) {  \
-        fprintf(stderr, "%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
-                gluErrorString(_err)); \
-    } } while(0) 
 
 void initialise_test(int *argc, char **argv, int window)
 {

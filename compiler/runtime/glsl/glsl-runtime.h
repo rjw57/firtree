@@ -56,7 +56,10 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
 void ReleaseRenderingContext(RenderingContext*);
 
 //=============================================================================
-void RenderInRect(RenderingContext* context, const Rect2D& destRect);
+void RenderInRect(RenderingContext* context, const Rect2D& destRect, const Rect2D& srcRect);
+
+//=============================================================================
+void RenderAtPoint(RenderingContext* context, const Point2D& location, const Rect2D& srcRect);
 
 } }
 

@@ -144,7 +144,7 @@ void render(float epoch)
         g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
         Rect2D outQuad(0,0,width,height);
-        GLSL::RenderInRect(g_RenderingContext, outQuad);
+        GLSL::RenderAtPoint(g_RenderingContext, Point2D(0,0), outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }

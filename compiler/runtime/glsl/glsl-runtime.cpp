@@ -610,7 +610,7 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
     }
 
     dest += "void main() {\n"
-        "vec3 inCoord = vec3(gl_FragCoord.xy, 1.0);\n";
+        "vec3 inCoord = vec3(gl_TexCoord[0].xy, 1.0);\n";
 
     AffineTransform* invTrans = sampler->GetTransform()->Copy();
     invTrans->Invert();
@@ -1148,7 +1148,15 @@ void ReleaseRenderingContext(RenderingContext* c)
 }
 
 //=============================================================================
-void RenderInRect(RenderingContext* context, const Rect2D& destRect)
+void RenderAtPoint(RenderingContext* context, const Point2D& location,
+        const Rect2D& srcRect)
+{
+    RenderInRect(context, Rect2D(location, srcRect.Size), srcRect);
+}
+
+//=============================================================================
+void RenderInRect(RenderingContext* context, const Rect2D& destRect, 
+        const Rect2D& srcRect)
 {
     GLenum err;
     if(context == NULL) { return; }
@@ -1169,8 +1177,10 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect)
 
     GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
 
-    Rect2D extent = context->Sampler->GetExtent();
-    Rect2D renderRect = RectIntersect(destRect, extent);
+    Rect2D renderRect = destRect;
+
+    //Rect2D extent = context->Sampler->GetExtent();
+    //Rect2D renderRect = RectIntersect(destRect, extent);
 
 #if 0
     printf("(%f,%f)->(%f,%f)\n",
@@ -1178,10 +1188,16 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect)
             renderRect.MaxX(), renderRect.MaxY());
 #endif
   
+    glActiveTextureARB(GL_TEXTURE0);
+
     glBegin(GL_QUADS);
+    glTexCoord2f(srcRect.MinX(), srcRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MinY());
+    glTexCoord2f(srcRect.MinX(), srcRect.MaxY());
     glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    glTexCoord2f(srcRect.MaxX(), srcRect.MaxY());
     glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    glTexCoord2f(srcRect.MaxX(), srcRect.MinY());
     glVertex2f(renderRect.MaxX(), renderRect.MinY());
     glEnd();
 }

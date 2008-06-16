@@ -113,9 +113,10 @@ bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
 
     glBindTexture(GL_TEXTURE_2D, texObj);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    if((err == glGetError()) != GL_NO_ERROR)
+    err = glGetError();
+    if(err != GL_NO_ERROR)
     {
-	FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
+        FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
         return false;
     }
 
@@ -167,9 +168,10 @@ bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
 
     //MagickWandTerminus();
 
-    if((err == glGetError()) != GL_NO_ERROR)
+    err = glGetError();
+    if(err != GL_NO_ERROR)
     {
-	FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
+        FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
         return false;
     }
 

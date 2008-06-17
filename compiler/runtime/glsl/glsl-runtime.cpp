@@ -1160,7 +1160,7 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
     }
 
     const char* pSrc = shaderSource.c_str();
-    printf(pSrc);
+    // printf(pSrc);
     CHECK( glShaderSourceARB(retVal->FragShader, 1, &pSrc, NULL) );
     CHECK( glCompileShaderARB(retVal->FragShader) );
 

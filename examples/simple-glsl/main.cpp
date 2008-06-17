@@ -137,6 +137,8 @@ void finalise_test()
 
 void render(float epoch)
 {
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     try {
         g_SpotKernel->SetValueForKey(10.f * (1.0f + (float)sin(0.01f*epoch)) + 30.f,

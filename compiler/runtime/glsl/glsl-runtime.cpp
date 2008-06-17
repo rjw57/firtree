@@ -1165,21 +1165,6 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
-    // This causes a crash on OSX. No idea why :(
-    //  `-> glBlendEquation(GL_FUNC_ADD);
-    glEnable(GL_BLEND);
-
-    glUseProgramObjectARB(context->Program);
-    if((err = glGetError()) != GL_NO_ERROR)
-    {
-        FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-        return;
-    }
-
-    GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
-
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
     // Firstly clip srcRect by extent
@@ -1200,6 +1185,21 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     // Do nothing if we've clipped everything away.
     if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
         return;
+
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+    // This causes a crash on OSX. No idea why :(
+    //  `-> glBlendEquation(GL_FUNC_ADD);
+    glEnable(GL_BLEND);
+
+    glUseProgramObjectARB(context->Program);
+    if((err = glGetError()) != GL_NO_ERROR)
+    {
+        FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+        return;
+    }
+
+    GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
 
 #if 0
     printf("(%f,%f)->(%f,%f)\n",

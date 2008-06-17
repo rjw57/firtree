@@ -1,23 +1,21 @@
-/* 
- * FIRTREE - A generic image processing system.
- * Copyright (C) 2007. 2008 Rich Wareham <srichwareham@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published by
- * the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+// FIRTREE - A generic image processing library
+// Copyright (C) 2007, 2008 Rich Wareham <richwareham@gmail.com>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License verstion as published
+// by the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// this program; if not, write to the Free Software Foundation, Inc., 51
+// Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 //=============================================================================
-// This file defines the FIRTREE compiler's ancillary infrastructure.
+/// \file main.h The main FIRTREE interfaces.
 //=============================================================================
 
 // ============================================================================
@@ -32,7 +30,27 @@ namespace Firtree {
 // ============================================================================
 
 //=============================================================================
-// THIS IS NOT THREAD SAFE!
+/// The base-class for a class capable of maintaining a reference count and
+/// auto-deleting. THIS CLASS IS NOT THREAD SAFE.
+///
+/// FIRTREE uses reference counting to allow multiple classes to 'claim 
+/// interest' in a particular object. The convention used in FIRTREE is 
+/// the following (any deviation has either a very good cause or is a bug).
+///
+/// * References returned from accessor methods are assumed to be valid for
+///   the lifetime of the object.
+///
+/// * Pointers returned from Create.*() methods are assumed to be 'owned' by
+///   the caller and should have Release() called on them when finished with.
+///
+/// * Pointers returned from Get.*() methods are assumed to only be valid 
+///   for the lifetime of the object. If you wish to keep them valid, call
+///   Release()/Retain() on them.
+///
+/// * Pointers passed to object methods are assumed to only be valid within
+///   that mathod. Should the object wish to retain the passed object, it
+///   should either be copied or retained.
+///
 class ReferenceCounted {
     public:
         ReferenceCounted() : m_RefCount(1) { }
@@ -46,7 +64,7 @@ class ReferenceCounted {
 };
 
 // ============================================================================
-// Exceptions
+// EXCEPTIONS
 
 /// Base class for all exceptions.
 class Exception {

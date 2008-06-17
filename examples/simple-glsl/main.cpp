@@ -112,13 +112,7 @@ SamplerParameter* g_OverSampler2 = GLSL::CreateKernelSampler(g_OverKernel2);
 
 SamplerParameter* g_LenaSampler = NULL;
 
-//#define g_GlobalSampler g_OverSampler
-//#define g_GlobalSampler g_RippleSampler
-//#define g_GlobalSampler g_GradientSampler
-//#define g_GlobalSampler g_CheckerSampler
-//#define g_GlobalSampler g_SpotSampler
-#define g_GlobalSampler g_OverSampler2
-//#define g_GlobalSampler g_LenaSampler
+SamplerParameter* g_GlobalSampler = NULL;
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -131,6 +125,14 @@ void initialise_test(int *argc, char **argv, int window)
 
 void finalise_test()
 {
+    printf("Cleaning up...\n");
+
+    FIRTREE_SAFE_RELEASE(g_RippleKernel);
+    FIRTREE_SAFE_RELEASE(g_SpotKernel);
+    ReleaseRenderingContext(g_RenderingContext);
+
+    printf("Allocated object count at exit (should be zero): %i\n",
+            ReferenceCounted::GetGlobalObjectCount());
 }
 
 void render(float epoch)
@@ -211,8 +213,26 @@ void initialize_kernels()
         g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
 
-        g_LenaSampler->Release();
-        fogSampler->Release();
+        g_GlobalSampler = g_OverSampler2;
+        g_GlobalSampler->Retain();
+
+        // Don't release these since we want to access them
+        // in the render loop.
+        // FIRTREE_SAFE_RELEASE(g_RippleKernel);
+        // FIRTREE_SAFE_RELEASE(g_SpotKernel);
+
+        FIRTREE_SAFE_RELEASE(fogSampler);
+        FIRTREE_SAFE_RELEASE(g_LenaSampler);
+        FIRTREE_SAFE_RELEASE(g_OverSampler2);
+        FIRTREE_SAFE_RELEASE(g_OverKernel2);
+        FIRTREE_SAFE_RELEASE(g_GradientSampler);
+        FIRTREE_SAFE_RELEASE(g_GradientKernel);
+        FIRTREE_SAFE_RELEASE(g_RippleSampler);
+        FIRTREE_SAFE_RELEASE(g_OverSampler);
+        FIRTREE_SAFE_RELEASE(g_OverKernel);
+        FIRTREE_SAFE_RELEASE(g_SpotSampler);
+        FIRTREE_SAFE_RELEASE(g_CheckerSampler);
+        FIRTREE_SAFE_RELEASE(g_CheckerKernel);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
         exit(1);
@@ -243,6 +263,7 @@ void context_created()
     try{
         initialize_kernels();
         g_RenderingContext = GLSL::CreateRenderingContext(g_GlobalSampler);
+        g_GlobalSampler->Release();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
         exit(1);

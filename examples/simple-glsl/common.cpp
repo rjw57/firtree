@@ -326,9 +326,9 @@ int main(int argc, char** argv) {
   init_cb(); 
   initialise_test(&argc, argv, glutWin);
 
-  glutMainLoop();
+  atexit(finalise_test);
 
-  finalise_test();
+  glutMainLoop();
   
   return 0;
 }

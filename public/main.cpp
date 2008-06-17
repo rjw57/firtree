@@ -33,6 +33,60 @@ namespace Firtree {
 // ===============================================================================
 
 // ===============================================================================
+size_t ReferenceCounted::ObjectCount(0);
+
+// ===============================================================================
+size_t ReferenceCounted::GetGlobalObjectCount()
+{ 
+    return ReferenceCounted::ObjectCount; 
+}
+
+// ===============================================================================
+ReferenceCounted::ReferenceCounted()
+    :   m_RefCount(1)
+{
+    ObjectCount++; 
+#ifdef FIRTREE_DEBUG_MEM
+    printf("Object: %p %i objects created.\n", this, ObjectCount);
+#endif
+}
+
+// ===============================================================================
+ReferenceCounted::~ReferenceCounted()
+{ 
+    ObjectCount--; 
+#ifdef FIRTREE_DEBUG_MEM
+    printf("Destructor of %p, %i left.\n", this, ObjectCount);
+#endif
+}
+
+// ===============================================================================
+void ReferenceCounted::Retain()
+{ 
+    m_RefCount++;
+#ifdef FIRTREE_DEBUG_MEM
+    printf("Object %p retained, refcount now: %i\n", this, m_RefCount);
+#endif
+}
+
+// ===============================================================================
+void ReferenceCounted::Release()
+{ 
+    assert(m_RefCount > 0); 
+    if(m_RefCount == 1) { 
+#ifdef FIRTREE_DEBUG_MEM
+        printf("Deleting: %p\n", this);
+#endif
+        delete this; 
+    } else { 
+        m_RefCount--;
+#ifdef FIRTREE_DEBUG_MEM
+        printf("Object %p released, refcount now: %i\n", this, m_RefCount);
+#endif
+    }
+}
+
+// ===============================================================================
 Exception::Exception(const char* message, const char* file, int line,
         const char* func)
 :   m_Message(message)

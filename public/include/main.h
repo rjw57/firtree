@@ -29,6 +29,11 @@
 namespace Firtree {
 // ============================================================================
 
+// Uncomment if you want detailed statistics of object allocation sent
+// to stdout.
+//
+// #define FIRTREE_DEBUG_MEM
+
 //=============================================================================
 /// The base-class for a class capable of maintaining a reference count and
 /// auto-deleting. THIS CLASS IS NOT THREAD SAFE.
@@ -52,16 +57,23 @@ namespace Firtree {
 ///   should either be copied or retained.
 ///
 class ReferenceCounted {
+    private:
+        static size_t ObjectCount;
+
     public:
-        ReferenceCounted() : m_RefCount(1) { }
-        virtual ~ReferenceCounted() { }
+        ReferenceCounted();
+        virtual ~ReferenceCounted();
 
-        void Retain() { m_RefCount++; }
-        void Release() { if(m_RefCount <= 1) { delete this; } }
+        void Retain();
+        void Release();
 
+        static size_t GetGlobalObjectCount();
     private:
         unsigned int m_RefCount;
 };
+
+#define FIRTREE_SAFE_RELEASE(a) do { \
+    if((a) != NULL) { (a)->Release(); a = NULL; } } while(0)
 
 // ============================================================================
 // EXCEPTIONS

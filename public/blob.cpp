@@ -36,14 +36,14 @@ namespace Firtree {
 
 // ===============================================================================
 Blob::Blob()
-    :   m_Length(0)
+    :   ReferenceCounted()
+    ,   m_Length(0)
     ,   m_Buffer(NULL)
 {
 }
 
 // ===============================================================================
 Blob::Blob(const void* buffer, size_t length)
-    :   ReferenceCounted()
 {
     Blob();
     AssignFromBuffer(buffer, length);
@@ -51,7 +51,6 @@ Blob::Blob(const void* buffer, size_t length)
 
 // ===============================================================================
 Blob::Blob(const Blob& blob)
-    :   ReferenceCounted()
 {
     Blob();
     AssignFromBlob(blob);

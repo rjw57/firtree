@@ -312,17 +312,14 @@ void Kernel::SetValueForKey(Firtree::SamplerParameter* sampler, const char* key)
     if(sampler == NULL)
         return;
 
+    sampler->Retain();
+
     if(m_Parameters.count(key) > 0)
     {
         Parameter* p = m_Parameters[key];
-        if(p != NULL)
-        {
-            p->Release();
-            m_Parameters[key] = NULL;
-        }
+        FIRTREE_SAFE_RELEASE(m_Parameters[key]);
     }
 
-    sampler->Retain();
     m_Parameters[key] = sampler;
 }
 
@@ -345,7 +342,8 @@ void Kernel::ClearParameters()
     {
         if((*i).second != NULL)
         {
-            (*i).second->Release();
+            Parameter* p = (*i).second;
+            FIRTREE_SAFE_RELEASE(p);
         }
     }
 
@@ -906,7 +904,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
 //=============================================================================
 TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
-    :   GLSL::SamplerParameter()
+    :   Firtree::GLSL::SamplerParameter()
     ,   m_TextureUnit(0)
     ,   m_TexObj(texObj)
 {
@@ -925,14 +923,14 @@ TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
 }
 
 //=============================================================================
-const Rect2D TextureSamplerParameter::GetExtent() const 
+TextureSamplerParameter::~TextureSamplerParameter()
 {
-    return RectTransform(m_Definition, GetTransform());
 }
 
 //=============================================================================
-TextureSamplerParameter::~TextureSamplerParameter()
+const Rect2D TextureSamplerParameter::GetExtent() const 
 {
+    return RectTransform(m_Definition, GetTransform());
 }
 
 //=============================================================================
@@ -1149,6 +1147,7 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
 void ReleaseRenderingContext(RenderingContext* c)
 {
     if(c != NULL) { 
+        FIRTREE_SAFE_RELEASE(c->Sampler);
         glDeleteObjectARB(c->FragShader);
         glDeleteObjectARB(c->Program);
         delete c; 

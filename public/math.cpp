@@ -116,11 +116,17 @@ static float ComputeDeterminant(const AffineTransformStruct& t)
 
 // ===============================================================================
 AffineTransform::AffineTransform()
+    :   ReferenceCounted()
 {
     m_Transform.m11 = 1.f; m_Transform.m12 = 0.f;
     m_Transform.m21 = 0.f; m_Transform.m22 = 1.f;
     m_Transform.tX = 0.f;
     m_Transform.tY = 0.f;
+}
+
+// ===============================================================================
+AffineTransform::~AffineTransform()
+{
 }
 
 // ===============================================================================
@@ -181,11 +187,6 @@ AffineTransform* AffineTransform::Translation(float x, float y)
 // ===============================================================================
 AffineTransform* AffineTransform::Copy() const {
     return new AffineTransform(*this);
-}
-
-// ===============================================================================
-AffineTransform::~AffineTransform()
-{
 }
 
 // ===============================================================================

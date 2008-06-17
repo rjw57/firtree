@@ -73,7 +73,7 @@ class SamplerParameter : public Firtree::SamplerParameter
 };
 
 //=============================================================================
-class TextureSamplerParameter : public GLSL::SamplerParameter
+class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
 {
     protected:
         TextureSamplerParameter(unsigned int texObj);

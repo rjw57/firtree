@@ -57,6 +57,7 @@ class Image : public ReferenceCounted
 
         /// Construct an image from a 8-bit/channel RGBA image in memory.
         /// 
+        /// \param blob The Blob object containing the image data.
         /// \param width The width of the image in pixels.
         /// \param height The height of the image in pixels.
         /// \param stride The number of bytes in one row of the image.

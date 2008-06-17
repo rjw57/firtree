@@ -33,8 +33,8 @@ namespace Firtree {
 /// An encapsulation of a binary blob of data.
 class Blob : public ReferenceCounted {
     protected:
-        /// Internal constructors. Use the Create.() methods instead.
         ///@{
+        /// Internal constructors. Use the Create.() methods instead.
         Blob(); 
         Blob(const void* buffer, size_t length);
         Blob(const Blob& blob);

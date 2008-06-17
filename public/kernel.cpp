@@ -152,30 +152,12 @@ void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 //=============================================================================
 SamplerParameter::SamplerParameter()
     :   Parameter()
-    ,   m_Transform(AffineTransform::Identity())
 {
 }
 
 //=============================================================================
 SamplerParameter::~SamplerParameter()
 {
-    m_Transform->Release();
-}
-
-//=============================================================================
-void SamplerParameter::SetTransform(const AffineTransform* f)
-{
-    if(f == NULL)
-        return;
-
-    AffineTransform* oldTrans = m_Transform;
-    m_Transform = f->Copy();
-    if(oldTrans != NULL) { oldTrans->Release(); }
-}
-
-const Rect2D SamplerParameter::GetExtent() const 
-{
-    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
 
 } // namespace Firtree 

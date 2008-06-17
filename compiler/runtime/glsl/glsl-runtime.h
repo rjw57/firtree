@@ -44,7 +44,15 @@ const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
 Firtree::SamplerParameter* CreateTextureSampler(unsigned int texObj);
 
 //=============================================================================
+Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+        unsigned int texObj, const AffineTransform* transform);
+
+//=============================================================================
 Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel);
+
+//=============================================================================
+Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
+        Firtree::Kernel* kernel, const AffineTransform* transform);
 
 //=============================================================================
 Firtree::Kernel* CreateKernel(const char* source);

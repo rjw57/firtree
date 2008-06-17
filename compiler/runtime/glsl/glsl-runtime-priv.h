@@ -47,7 +47,11 @@ class SamplerParameter : public Firtree::SamplerParameter
         virtual ~SamplerParameter();
 
     public:
-        virtual SamplerParameter* GetAsSampler() { return this; }
+        ///@{
+        /// Overloaded methods from Firtree::SamplerParameter.
+        virtual const Rect2D GetExtent() const;
+        virtual const AffineTransform* GetTransform() const { return m_Transform; }
+        ///@}
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest) = 0;
@@ -67,9 +71,15 @@ class SamplerParameter : public Firtree::SamplerParameter
         void SetBlockPrefix(const char* p) { m_BlockPrefix = p; }
         const char* GetBlockPrefix() const { return m_BlockPrefix.c_str(); }
 
+        virtual void SetTransform(const AffineTransform* f);
+
     private:
-        int             m_SamplerIndex;
-        std::string     m_BlockPrefix;
+        /// Affine transformation to map from world co-ordinates
+        /// to sampler co-ordinates.
+        AffineTransform*    m_Transform;
+
+        int                 m_SamplerIndex;
+        std::string         m_BlockPrefix;
 };
 
 //=============================================================================

@@ -138,14 +138,14 @@ Rect2D RectTransform(const Rect2D& a, const AffineTransform* t);
 /// use these directly. Instead, you'll use the AffineTransform wrapper class.
 struct AffineTransformStruct
 {
+    ///@{
     /// The matrix to apply to a point transformed by this affine transform.
-    /// @{
     float m11, m12;
     float m21, m22;
-    /// @}
+    ///@}
 
-    /// The offset to add to a point after transformation.
     ///@{
+    /// The offset to add to a point after transformation.
     float tX,  tY;
     ///@}
 };

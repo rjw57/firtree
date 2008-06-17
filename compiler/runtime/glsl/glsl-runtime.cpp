@@ -23,6 +23,8 @@
 
 #include "glsl-runtime-priv.h"
 
+#include <float.h>
+
 #define FIRTREE_NO_GLX
 #include <public/include/opengl.h>
 #include <public/include/main.h>
@@ -336,6 +338,7 @@ SamplerParameter* KernelSamplerParameter::Create(Firtree::Kernel* kernel)
 //=============================================================================
 SamplerParameter::SamplerParameter()
     :   Firtree::SamplerParameter()
+    ,   m_Transform(AffineTransform::Identity())
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
 {
@@ -344,6 +347,24 @@ SamplerParameter::SamplerParameter()
 //=============================================================================
 SamplerParameter::~SamplerParameter()
 {
+    m_Transform->Release();
+}
+
+//=============================================================================
+void SamplerParameter::SetTransform(const AffineTransform* f)
+{
+    if(f == NULL)
+        return;
+
+    AffineTransform* oldTrans = m_Transform;
+    m_Transform = f->Copy();
+    if(oldTrans != NULL) { oldTrans->Release(); }
+}
+
+//=============================================================================
+const Rect2D SamplerParameter::GetExtent() const 
+{
+    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
 
 //=============================================================================
@@ -941,6 +962,30 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
         }
     }
+}
+
+//=============================================================================
+Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+        unsigned int texObj, const AffineTransform* transform)
+{
+    SamplerParameter* rv = TextureSamplerParameter::Create(texObj);
+    AffineTransform* tc = rv->GetTransform()->Copy();
+    tc->AppendTransform(transform);
+    rv->SetTransform(tc);
+    tc->Release();
+    return rv;
+}
+
+//=============================================================================
+Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
+        Firtree::Kernel* kernel, const AffineTransform* transform)
+{
+    SamplerParameter* rv = KernelSamplerParameter::Create(kernel);
+    AffineTransform* tc = rv->GetTransform()->Copy();
+    tc->AppendTransform(transform);
+    rv->SetTransform(tc);
+    tc->Release();
+    return rv;
 }
 
 //=============================================================================

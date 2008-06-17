@@ -171,7 +171,7 @@ void initialize_kernels()
         AffineTransform* spotTrans = g_SpotSampler->GetTransform()->Copy();
         spotTrans->RotateByDegrees(12.f);
         spotTrans->TranslateBy(320.f, 240.f);
-        g_SpotSampler->SetTransform(spotTrans);
+        // g_SpotSampler->SetTransform(spotTrans);
         spotTrans->Release();
 
         glGenTextures(1, &g_LenaTexture);
@@ -192,17 +192,17 @@ void initialize_kernels()
             return;
         }
 
-        g_LenaSampler = 
-            GLSL::CreateTextureSampler(g_LenaTexture);
-        SamplerParameter* fogSampler = 
-            GLSL::CreateTextureSampler(g_FogTexture);
-
-        AffineTransform* lenaTrans = g_LenaSampler->GetTransform()->Copy();
+        AffineTransform* lenaTrans = AffineTransform::Identity();
         lenaTrans->TranslateBy(-256, -256);
         lenaTrans->ScaleBy(0.5f);
         lenaTrans->RotateByDegrees(45.f);
         lenaTrans->TranslateBy(320.f, 240.f);
-        g_LenaSampler->SetTransform(lenaTrans);
+
+        g_LenaSampler = 
+            GLSL::CreateTextureSamplerWithTransform(g_LenaTexture, lenaTrans);
+        SamplerParameter* fogSampler = 
+            GLSL::CreateTextureSampler(g_FogTexture);
+
         lenaTrans->Release();
 
         g_OverKernel->SetValueForKey(g_LenaSampler, "a");

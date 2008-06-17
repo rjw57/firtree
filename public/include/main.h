@@ -61,10 +61,10 @@ class ReferenceCounted {
         static size_t ObjectCount;
 
     protected:
+        /// @{
         /// Protected constructors/destructors. Allocation should be
         /// done via explicit static Create.*() methods which use
         /// the 'new' operator.
-        /// @{
         ReferenceCounted();
         virtual ~ReferenceCounted();
         /// @}
@@ -141,23 +141,23 @@ class ErrorException : public Exception {
 // ============================================================================
 // Error reporting
 
+///@{
 ///     Report a fatal error to the user. The default implementation is to
 ///     throw an ErrorException.
-///@{
 #define FIRTREE_ERROR(...) do {Firtree::Error(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Error(const char* file, int line, const char* func, const char* format, ...);
 ///@}
 
+///@{
 ///     Report a non-fatal warning to the user. The default implementation is
 ///     to print a message to stderr. It takes printf-style arguments.
-///@{
 #define FIRTREE_WARNING(...) do {Firtree::Warning(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Warning(const char* file, int line, const char* func, const char* format, ...);
 ///@}
 
+///@{
 ///     Report a debug message. The default implementation is
 ///     to print a message to stdout. It takes printf-style arguments.
-///@{
 #define FIRTREE_DEBUG(...) do {Firtree::Debug(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Debug(const char* file, int line, const char* func, const char* format, ...);
 ///@}

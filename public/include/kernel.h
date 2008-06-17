@@ -106,15 +106,8 @@ class SamplerParameter : public Parameter
     public:
         virtual SamplerParameter* GetAsSampler() { return this; }
 
-        virtual const Rect2D GetExtent() const;
-
-        virtual void SetTransform(const AffineTransform* f);
-        virtual const AffineTransform* GetTransform() const { return m_Transform; }
-
-    private:
-        /// Affine transformation to map from world co-ordinates
-        /// to sampler co-ordinates.
-        AffineTransform*    m_Transform;
+        virtual const Rect2D GetExtent() const = 0;
+        virtual const AffineTransform* GetTransform() const = 0;
 };
 
 //=============================================================================
@@ -123,9 +116,9 @@ class SamplerParameter : public Parameter
 class Kernel : public ReferenceCounted
 {
     protected:
+        ///@{
         /// Protected constructors/destructors. Use the various Kernel
         /// factory functions instead.
-        ///@{
         Kernel();
         Kernel(const char* source);
         virtual ~Kernel();
@@ -154,8 +147,8 @@ class Kernel : public ReferenceCounted
         /// are convenience wrappers around this method.
         virtual void SetValueForKey(Parameter* parameter, const char* key) = 0;
 
-        /// Accessors for the various scalar, vector and sampler parameters.
         ///@{
+        /// Accessors for the various scalar, vector and sampler parameters.
         void SetValueForKey(float value, const char* key);
         void SetValueForKey(const float* value, int count, 
                 const char* key);

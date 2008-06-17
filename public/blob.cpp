@@ -43,6 +43,17 @@ Blob::Blob()
 }
 
 // ===============================================================================
+Blob::Blob(size_t length)
+{
+    Blob();
+    m_Buffer = (uint8_t*)(malloc(length));
+    if(m_Buffer != NULL)
+    {
+        m_Length = length;
+    }
+}
+
+// ===============================================================================
 Blob::Blob(const void* buffer, size_t length)
 {
     Blob();
@@ -73,6 +84,12 @@ Blob::~Blob()
 Blob* Blob::Create() 
 {
     return new Blob(); 
+}
+
+// ===============================================================================
+Blob* Blob::CreateWithLength(size_t length) 
+{
+    return new Blob(length); 
 }
 
 // ===============================================================================

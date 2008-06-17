@@ -1162,9 +1162,6 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     GLenum err;
     if(context == NULL) { return; }
 
-    glClearColor(0,0,0,1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
     // Firstly clip srcRect by extent

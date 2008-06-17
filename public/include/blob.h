@@ -36,6 +36,7 @@ class Blob : public ReferenceCounted {
         ///@{
         /// Internal constructors. Use the Create.() methods instead.
         Blob(); 
+        Blob(size_t length);
         Blob(const void* buffer, size_t length);
         Blob(const Blob& blob);
         virtual ~Blob();
@@ -47,6 +48,10 @@ class Blob : public ReferenceCounted {
 
         /// Create an empty blob.
         static Blob*    Create();
+
+        /// Create a blob of a specified length. The contents of the 
+        /// blob are undefined.
+        static Blob*    CreateWithLength(size_t length);
 
         /// Create a blob by copying the contents of a buffer.
         static Blob*    CreateFromBuffer(const void* buffer, size_t length);

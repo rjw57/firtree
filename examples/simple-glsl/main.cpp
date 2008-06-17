@@ -20,6 +20,7 @@
 
 #include <public/include/opengl.h>
 #include <public/include/main.h>
+#include <public/include/image.h>
 
 #include "compiler/runtime/glsl/glsl-runtime.h"
 
@@ -175,6 +176,10 @@ void initialize_kernels()
         spotTrans->TranslateBy(320.f, 240.f);
         // g_SpotSampler->SetTransform(spotTrans);
         spotTrans->Release();
+
+        Image* lenaImage = Image::CreateFromFile("lena.png");
+        printf("Created lena: %p\n", lenaImage);
+        lenaImage->Release();
 
         glGenTextures(1, &g_LenaTexture);
         bool rv = InitialiseTextureFromFile(g_LenaTexture, "lena.png");

@@ -205,7 +205,7 @@ class Kernel : public Firtree::Kernel
         Parameter* ParameterForKey(const char* key);
         NumericParameter* NumericParameterForKeyAndType(const char* key, 
                 NumericParameter::BaseType type);
-        KernelSamplerParameter* SamplerParameterForKey(const char* key);
+        SamplerParameter* SamplerParameterForKey(const char* key);
         void UpdateBlockNameReplacedSourceCache();
 };
 

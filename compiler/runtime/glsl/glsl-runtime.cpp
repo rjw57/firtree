@@ -141,7 +141,8 @@ void Kernel::SetSource(const char* source)
                 case GLSLBackend::Parameter::Bool:
                     {
                         NumericParameter* kp = 
-                            NumericParameter::Create()->GetAsNumeric();
+                            dynamic_cast<NumericParameter*>
+                            (NumericParameter::Create());
                         kp->SetSize(p.vectorSize);
                         kp->SetIsColor(p.isColor);
 
@@ -311,7 +312,7 @@ NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key,
 
     if(kp == NULL) { return NULL; }
 
-    NumericParameter* kcp = kp->GetAsNumeric();
+    NumericParameter* kcp = dynamic_cast<NumericParameter*>(kp);
     if(kcp == NULL) { return NULL; }
 
     if(kcp->GetBaseType() != type) { return NULL; }
@@ -320,13 +321,14 @@ NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key,
 }
 
 //=============================================================================
-KernelSamplerParameter* Kernel::SamplerParameterForKey(const char* key)
+SamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 {
     Parameter* kp = ParameterForKey(key);
 
     if(kp == NULL) { return NULL; }
 
-    return (KernelSamplerParameter*)(kp->GetAsSampler());
+    SamplerParameter* sp = dynamic_cast<SamplerParameter*>(kp);
+    return sp;
 }
 
 //=============================================================================
@@ -404,7 +406,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         if(pKP != NULL)
         {
             SamplerParameter *pKSP = 
-                dynamic_cast<SamplerParameter*>(pKP->GetAsSampler());
+                dynamic_cast<SamplerParameter*>(pKP);
             if(pKSP != NULL)
             {
                 snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
@@ -433,15 +435,15 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = 
-                (KernelSamplerParameter*)(pKP->GetAsSampler());
-            if(pKSP != NULL)
+            SamplerParameter *pSP = 
+                dynamic_cast<SamplerParameter*>(pKP);
+            if(pSP != NULL)
             {
-                AffineTransform* invTrans = pKSP->GetTransform()->Copy();
+                AffineTransform* invTrans = pSP->GetTransform()->Copy();
                 invTrans->Invert();
                 const AffineTransformStruct& transform =
                     invTrans->GetTransformStruct();
-                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
                 dest += ") {\n";
@@ -477,12 +479,12 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         Parameter *pKP = (*i).second;
         if(pKP != NULL)
         {
-            KernelSamplerParameter *pKSP = 
-                (KernelSamplerParameter*)(pKP->GetAsSampler());
-            if(pKSP != NULL)
+            SamplerParameter *pSP = 
+                dynamic_cast<SamplerParameter*>(pKP);
+            if(pSP != NULL)
             {
-                const Rect2D& extent = pKSP->GetExtent();
-                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+                const Rect2D& extent = pSP->GetExtent();
+                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
                 dest += ") {\n";
@@ -629,21 +631,23 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
     {
         if((*i).second != NULL)
         {
-            KernelSamplerParameter* ksp = 
-                (KernelSamplerParameter*)((*i).second->GetAsSampler());
-            if(ksp != NULL)
+            SamplerParameter* sp = 
+                dynamic_cast<SamplerParameter*>((*i).second);
+            if(sp != NULL)
             {
                 // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
                 std::string prefix(GetBlockPrefix());
                 prefix += "_";
                 prefix += (*i).first;
 
-                ksp->SetBlockPrefix(prefix.c_str());
+                sp->SetBlockPrefix(prefix.c_str());
                 std::string samplerGLSL;
-                ksp->BuildTopLevelGLSL(samplerGLSL);
+                sp->BuildTopLevelGLSL(samplerGLSL);
                 dest += samplerGLSL;
 
-                if(!ksp->IsValid())
+                KernelSamplerParameter* ksp = 
+                    dynamic_cast<KernelSamplerParameter*>(sp);
+                if((ksp != NULL) && (!ksp->IsValid()))
                 {
                     // HACK!
                     fprintf(stderr, "Compilation failed: %s\n", 
@@ -674,7 +678,7 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         if((*i).second != NULL)
         {
             GLSL::SamplerParameter* sp = 
-                dynamic_cast<GLSL::SamplerParameter*>((*i).second->GetAsSampler());
+                dynamic_cast<GLSL::SamplerParameter*>((*i).second);
             if(sp == NULL)
                 continue;
 
@@ -766,10 +770,11 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             continue;
         }
 
-        if(p->GetAsNumeric() != NULL)
+        NumericParameter* cp = dynamic_cast<NumericParameter*>(p);
+        SamplerParameter* sp = 
+                dynamic_cast<SamplerParameter*>(p);
+        if(cp != NULL)
         {
-            NumericParameter* cp = p->GetAsNumeric();
-
             switch(cp->GetBaseType())
             {
                 case NumericParameter::TypeFloat:
@@ -846,11 +851,9 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                             paramName.c_str());
                     break;
             }
-        } else if(p->GetAsSampler() != NULL) 
+        } else if(sp != NULL) 
         {
-            KernelSamplerParameter* ksp = 
-                (KernelSamplerParameter*)(p->GetAsSampler());
-            glUniform1iARB(uniformLoc, ksp->GetSamplerIndex());
+            glUniform1iARB(uniformLoc, sp->GetSamplerIndex());
             err = glGetError();
             if(err != GL_NO_ERROR)
             {
@@ -1099,7 +1102,8 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
                     GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
         CHECK( glGetInfoLogARB(retVal->FragShader, logLen, &logLen, log) );
-        FIRTREE_ERROR("Error compiling shader: %s\n", log);
+        FIRTREE_ERROR("Error compiling shader: %s\nSource: %s\n", 
+                log, pSrc);
         free(log);
         delete retVal;
         return NULL;

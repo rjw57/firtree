@@ -44,9 +44,6 @@ class Parameter : public ReferenceCounted
         Parameter();
         Parameter(const Parameter& p);
         virtual ~Parameter();
-
-        virtual NumericParameter* GetAsNumeric() { return NULL; }
-        virtual SamplerParameter* GetAsSampler() { return NULL; }
     private:
 };
 
@@ -64,8 +61,6 @@ class NumericParameter : public Parameter
 
     public:
         static Parameter* Create();
-
-        virtual NumericParameter* GetAsNumeric() { return this; }
 
         float GetFloatValue(int idx) const { return m_Value[idx].f; }
         int GetIntValue(int idx) const { return m_Value[idx].i; }
@@ -104,8 +99,6 @@ class SamplerParameter : public Parameter
         virtual ~SamplerParameter();
 
     public:
-        virtual SamplerParameter* GetAsSampler() { return this; }
-
         virtual const Rect2D GetExtent() const = 0;
         virtual const AffineTransform* GetTransform() const = 0;
 };

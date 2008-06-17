@@ -18,12 +18,12 @@
 
 #include "common.h"
 
+#include <public/include/opengl.h>
+#include <public/include/main.h>
+
 #include "compiler/runtime/glsl/glsl-runtime.h"
-#include "compiler/include/main.h"
 
 #include <stdlib.h>
-
-#include <compiler/include/opengl.h>
 
 using namespace Firtree;
 

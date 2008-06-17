@@ -24,9 +24,9 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include <compiler/include/main.h>
-#include <compiler/include/platform.h>
-#include <compiler/include/opengl.h>
+#include <public/include/main.h>
+#include <public/include/platform.h>
+#include <public/include/opengl.h>
 
 #ifdef FIRTREE_WIN32
 #   include <wand/MagickWand.h>

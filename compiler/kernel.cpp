@@ -21,14 +21,13 @@
 // This file implements the FIRTREE compiler utility functions.
 //=============================================================================
 
-#include "backends/glsl/glutil.h"
-
-#include "include/kernel.h"
-
-#include <compiler/include/compiler.h>
-#include <compiler/include/main.h>
-
 #include <float.h>
+#include <public/include/main.h>
+
+#include "backends/glsl/glutil.h"
+#include <compiler/include/kernel.h>
+#include <compiler/include/compiler.h>
+
 
 namespace Firtree {
 
@@ -52,7 +51,7 @@ Parameter::~Parameter()
 //=============================================================================
 NumericParameter::NumericParameter()
     :   Parameter()
-    ,   m_BaseType(NumericParameter::Float)
+    ,   m_BaseType(NumericParameter::TypeFloat)
     ,   m_Size(0)
 {
 }

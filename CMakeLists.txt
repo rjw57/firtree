@@ -36,6 +36,9 @@ ADD_SUBDIRECTORY(glsl-frontend)
 # The kernel language compiler
 ADD_SUBDIRECTORY(compiler)
 
+# The public API
+ADD_SUBDIRECTORY(public)
+
 # Some tools
 ADD_SUBDIRECTORY(tools)
 

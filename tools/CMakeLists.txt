@@ -19,7 +19,7 @@ SET(TEST_COMPILER_SOURCES
 
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../")
 ADD_EXECUTABLE(kernelcompile ${TEST_COMPILER_SOURCES})
-TARGET_LINK_LIBRARIES(kernelcompile compiler)
+TARGET_LINK_LIBRARIES(kernelcompile firtree)
 
 # Vim modeline
 # vim:ts=4:sw=4:et

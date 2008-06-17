@@ -28,12 +28,7 @@ ENDIF(NOT GLEW_FOUND)
 
 INCLUDE_DIRECTORIES(
 	"${CMAKE_CURRENT_SOURCE_DIR}/../"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../glsl-frontend/"
 )
-
-ADD_SUBDIRECTORY(frontend)
-ADD_SUBDIRECTORY(backends)
-ADD_SUBDIRECTORY(runtime)
 
 # Set platform-specific variables
 IF(APPLE)
@@ -56,15 +51,13 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
         @ONLY)
 ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
 
-SET(COMPILER_SOURCES
-	include/compiler.h 	include/kernel.h
+SET(FIRTREE_SOURCES
+	include/main.h		include/platform.h	include/opengl.h
+	include/blob.h		include/math.h		
 
-	compiler.cpp		kernel.cpp
-
-	runtime/glsl/glsl-runtime.h
-	runtime/glsl/glsl-runtime.cpp
+	main.cpp		math.cpp		blob.cpp
 )
 
-ADD_LIBRARY(compiler ${COMPILER_SOURCES})
+ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 
-TARGET_LINK_LIBRARIES(compiler glslang frontend irbackend glslbackend -lpthread)
+TARGET_LINK_LIBRARIES(firtree compiler glslang frontend irbackend glslbackend -lpthread)

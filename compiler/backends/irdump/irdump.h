@@ -25,10 +25,11 @@
 #define FIRTREE_IRDUMP_H
 //=============================================================================
 
-#include <compiler/include/compiler.h>
-#include <compiler/include/main.h>
+#include <public/include/main.h>
 
 #include <stdio.h>
+
+#include <compiler/include/compiler.h>
 
 // Forward declaration of intermediate representation node (from GLSL frontend).
 class TIntermNode;

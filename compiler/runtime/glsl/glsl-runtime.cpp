@@ -23,14 +23,14 @@
 
 #include "glsl-runtime-priv.h"
 
+#define FIRTREE_NO_GLX
+#include <public/include/opengl.h>
+#include <public/include/main.h>
+
 #include <compiler/include/kernel.h>
 #include <compiler/include/compiler.h>
-#include <compiler/include/main.h>
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
-
-#define FIRTREE_NO_GLX
-#include <compiler/include/opengl.h>
 
 static void* _KernelGetOpenGLProcAddress(const char* name);
 
@@ -146,13 +146,13 @@ void Kernel::SetSource(const char* source)
                         switch(p.basicType)
                         {
                             case GLSLBackend::Parameter::Int:
-                                kp->SetBaseType(NumericParameter::Int);
+                                kp->SetBaseType(NumericParameter::TypeInteger);
                                 break;
                             case GLSLBackend::Parameter::Float:
-                                kp->SetBaseType(NumericParameter::Float);
+                                kp->SetBaseType(NumericParameter::TypeFloat);
                                 break;
                             case GLSLBackend::Parameter::Bool:
-                                kp->SetBaseType(NumericParameter::Bool);
+                                kp->SetBaseType(NumericParameter::TypeBool);
                                 break;
                         }
 
@@ -235,7 +235,7 @@ void Kernel::SetValueForKey(float value, const char* key)
 void Kernel::SetValueForKey(const float* value, int count, const char* key)
 {
     NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::Float);
+            NumericParameter::TypeFloat);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -262,7 +262,7 @@ void Kernel::SetValueForKey(int value, const char* key)
 void Kernel::SetValueForKey(const int* value, int count, const char* key)
 {
     NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::Int);
+            NumericParameter::TypeInteger);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -289,7 +289,7 @@ void Kernel::SetValueForKey(bool value, const char* key)
 void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 {
     NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::Bool);
+            NumericParameter::TypeBool);
 
     if(p == NULL) {
         FIRTREE_ERROR("No parameter: %s.", key);
@@ -814,7 +814,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
             switch(cp->GetBaseType())
             {
-                case NumericParameter::Float:
+                case NumericParameter::TypeFloat:
                     {
                         static float vec[4];
                         for(int j=0; j<cp->GetSize(); j++)
@@ -848,8 +848,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         }
                     }
                     break;
-                case NumericParameter::Bool:
-                case NumericParameter::Int:
+                case NumericParameter::TypeBool:
+                case NumericParameter::TypeInteger:
                     {
                         static int vec[4];
                         for(int j=0; j<cp->GetSize(); j++)

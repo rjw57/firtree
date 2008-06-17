@@ -30,8 +30,8 @@
 #include <vector>
 #include <map>
 
-#include <compiler/include/main.h>
-#include <compiler/include/math.h>
+#include <public/include/main.h>
+#include <public/include/math.h>
 
 namespace Firtree {
 
@@ -57,7 +57,7 @@ class NumericParameter : public Parameter
 {
     public:
         enum BaseType {
-            Int, Float, Bool,
+            TypeInteger, TypeFloat, TypeBool,
         };
 
     protected:

@@ -20,13 +20,14 @@
 // This file implements the FIRTREE compiler.
 //=============================================================================
 
+#include <public/include/main.h>
+
 #include "glslang/Include/ShHandle.h"
 #include "glslang/Public/ShaderLang.h"
 
 #include "frontend/glsl-compiler.h"
 
-#include "include/compiler.h"
-#include "include/main.h"
+#include <compiler/include/compiler.h>
 
 namespace Firtree {
 

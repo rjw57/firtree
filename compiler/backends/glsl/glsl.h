@@ -25,11 +25,12 @@
 #define FIRTREE_GLSL_H
 //=============================================================================
 
-#include <compiler/include/compiler.h>
-#include <compiler/include/main.h>
+#include <public/include/main.h>
 
 #include <stdio.h>
 #include <vector>
+
+#include <compiler/include/compiler.h>
 
 // Forward declaration of intermediate representation node (from GLSL frontend).
 class TIntermNode;

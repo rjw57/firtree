@@ -101,14 +101,13 @@ ImageImpl::~ImageImpl()
 Size2D ImageImpl::GetUnderlyingPixelSize() const
 {
     // Do we have a bitmap representation?
-    if((m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
-            (m_BitmapRep->ImageBlob->GetLength() > 0))
+    if(HasBitmapImageRep())
     {
         return Size2D(m_BitmapRep->Width, m_BitmapRep->Height);
     }
 
     // Do we have an OpenGL texture representation?
-    if(m_GLTexture != 0)
+    if(HasOpenGLTexture())
     {
         GLint w, h;
         glBindTexture(GL_TEXTURE_2D, m_GLTexture);
@@ -122,17 +121,29 @@ Size2D ImageImpl::GetUnderlyingPixelSize() const
 }
 
 //=============================================================================
+bool ImageImpl::HasOpenGLTexture() const
+{
+    return m_GLTexture != 0;
+}
+
+//=============================================================================
+bool ImageImpl::HasBitmapImageRep() const
+{
+    return (m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
+        (m_BitmapRep->ImageBlob->GetLength() > 0);
+}
+
+//=============================================================================
 unsigned int ImageImpl::GetAsOpenGLTexture()
 {
     // Trivial case: we already have a GL representation.
-    if(m_GLTexture != 0)
+    if(HasOpenGLTexture())
     {
         return m_GLTexture;
     }
 
     // We have to construct one. Try the binary rep first.
-    if((m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
-            (m_BitmapRep->ImageBlob->GetLength() > 0))
+    if(HasBitmapImageRep())
     {
         CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
@@ -149,6 +160,38 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     // If we get here, we have no way of constructing the texture.
     // Return 0 to signal this.
     return 0;
+}
+
+//=============================================================================
+BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
+{
+    // Trivial case where a bitmap rep exists
+    if(HasBitmapImageRep())
+    {
+        return m_BitmapRep;
+    }
+
+    // If we have an OpenGL texture, use that.
+    if(HasOpenGLTexture())
+    {
+        GLint w, h;
+        glBindTexture(GL_TEXTURE_2D, m_GLTexture);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+
+        Blob* imageBlob = Blob::CreateWithLength(w*h*4);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+                const_cast<uint8_t*>(imageBlob->GetBytes()));
+
+        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
+        m_BitmapRep = new BitmapImageRep(imageBlob,
+                w, h, w*4, false);
+        imageBlob->Release();
+        
+        return m_BitmapRep;
+    }
+
+    return NULL;
 }
 
 } } // namespace Firtree::Internal

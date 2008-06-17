@@ -56,6 +56,12 @@ class ImageImpl : public Image
         /// GetAsOpenGLTexture() or GetAsBitmapImageRep().
         Size2D GetUnderlyingPixelSize() const;
 
+        /// Return true if there is a cached OpenGL texture ready to use.
+        bool HasOpenGLTexture() const;
+
+        /// Return true if there is a cached BitmapImageRep ready to use.
+        bool HasBitmapImageRep() const;
+
         // ====================================================================
         // MUTATING METHODS
 
@@ -65,6 +71,10 @@ class ImageImpl : public Image
         
         /// Return an OpenGL texture object handle containing this image.
         unsigned int GetAsOpenGLTexture();
+
+        /// Return a pointer to a BitmapImageRep structure containing this
+        /// image.
+        BitmapImageRep* GetAsBitmapImageRep();
         
         ///@}
 

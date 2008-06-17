@@ -42,62 +42,97 @@ namespace Firtree {
 /// interest' in a particular object. The convention used in FIRTREE is 
 /// the following (any deviation has either a very good cause or is a bug).
 ///
-/// * References returned from accessor methods are assumed to be valid for
+/// - References returned from accessor methods are assumed to be valid for
 ///   the lifetime of the object.
 ///
-/// * Pointers returned from Create.*() methods are assumed to be 'owned' by
+/// - Pointers returned from Create.*() methods are assumed to be 'owned' by
 ///   the caller and should have Release() called on them when finished with.
 ///
-/// * Pointers returned from Get.*() methods are assumed to only be valid 
+/// - Pointers returned from Get.*() methods are assumed to only be valid 
 ///   for the lifetime of the object. If you wish to keep them valid, call
 ///   Release()/Retain() on them.
 ///
-/// * Pointers passed to object methods are assumed to only be valid within
-///   that mathod. Should the object wish to retain the passed object, it
+/// - Pointers passed to object methods are assumed to only be valid within
+///   that method. Should the object wish to retain the passed object, it
 ///   should either be copied or retained.
 ///
 class ReferenceCounted {
     private:
         static size_t ObjectCount;
 
-    public:
+    protected:
+        /// Protected constructors/destructors. Allocation should be
+        /// done via explicit static Create.*() methods which use
+        /// the 'new' operator.
+        /// @{
         ReferenceCounted();
         virtual ~ReferenceCounted();
+        /// @}
 
+    public:
+        /// Increment the object's reference count.
         void Retain();
+
+        /// Decremement the object's reference count. Should the reference
+        /// count fall below 1, the object will be deleted.
         void Release();
 
+        /// Return a global count of all reference counted objects.
+        /// This should be zero immediately before your app exits
+        /// to guard against memory leaks.
         static size_t GetGlobalObjectCount();
+
     private:
         unsigned int m_RefCount;
 };
 
+/// Convenience macro to release a variable if non-NULL and assign 
+/// NULL to it. The argument has to be an lvalue.
 #define FIRTREE_SAFE_RELEASE(a) do { \
     if((a) != NULL) { (a)->Release(); a = NULL; } } while(0)
 
 // ============================================================================
 // EXCEPTIONS
 
-/// Base class for all exceptions.
+/// Base class for all exceptions which can be thrown by FIRTREE.
 class Exception {
     protected:
-        std::string       m_Message;
-        std::string       m_File;
-        int               m_Line;
-        std::string       m_Function;
+        std::string       m_Message;    ///< Exception message.
+        std::string       m_File;       ///< Exception file.
+        int               m_Line;       ///< Exception line.
+        std::string       m_Function;   ///< Exception function.
     public:
-        Exception(const char* message, const char* file, int line, const char* func);
+        /// Constructor for an exception.
+        ///
+        /// \param message The message associated with this exception.
+        /// \param file The file in which this exception was thrown.
+        /// \param line The line within the file in which this exception was 
+        ///             thrown.
+        /// \param func The name of the function in which this exception was 
+        ///             thrown.
+        Exception(const char* message, const char* file, int line,
+                const char* func);
         ~Exception();
 
+        /// Return the message associated with this exception.
         const std::string& GetMessage() const;
+
+        /// Return the file in which this exception was thrown.
         const std::string& GetFile() const;
+
+        /// Return the line within the file in which this exception was thrown.
         int GetLine() const;
+
+        /// Return the name of the function in which this exception was thrown.
         const std::string& GetFunction() const;
 };
 
-/// Exception describing an internal error
+/// Exception describing an internal FIRTREE error.
 class ErrorException : public Exception {
     public:
+        /// Constructor for an exception. Usually this will be called via
+        /// the FIRTREE_ERROR() macro.
+        /// \see Exception::Exception()
         ErrorException(const char* message, const char* file, int line, 
                 const char* func);
         ~ErrorException();
@@ -108,18 +143,24 @@ class ErrorException : public Exception {
 
 ///     Report a fatal error to the user. The default implementation is to
 ///     throw an ErrorException.
+///@{
 #define FIRTREE_ERROR(...) do {Firtree::Error(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Error(const char* file, int line, const char* func, const char* format, ...);
+///@}
 
 ///     Report a non-fatal warning to the user. The default implementation is
 ///     to print a message to stderr. It takes printf-style arguments.
+///@{
 #define FIRTREE_WARNING(...) do {Firtree::Warning(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Warning(const char* file, int line, const char* func, const char* format, ...);
+///@}
 
 ///     Report a debug message. The default implementation is
 ///     to print a message to stdout. It takes printf-style arguments.
+///@{
 #define FIRTREE_DEBUG(...) do {Firtree::Debug(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Debug(const char* file, int line, const char* func, const char* format, ...);
+///@}
 
 // ============================================================================
 } // namespace Firtree 

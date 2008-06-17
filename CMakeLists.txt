@@ -30,6 +30,9 @@ IF(UNIX AND NOT WIN32)
   ENDIF(CMAKE_UNAME)
 ENDIF(UNIX AND NOT WIN32)
 
+# The doxygen documentation
+ADD_SUBDIRECTORY(doc)
+
 # The kernel language frontend
 ADD_SUBDIRECTORY(glsl-frontend)
 

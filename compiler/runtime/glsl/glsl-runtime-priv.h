@@ -49,6 +49,7 @@ class SamplerParameter : public Firtree::SamplerParameter
     public:
         ///@{
         /// Overloaded methods from Firtree::SamplerParameter.
+        virtual const Rect2D GetDefinition() const;
         virtual const Rect2D GetExtent() const;
         virtual const AffineTransform* GetTransform() const { return m_Transform; }
         ///@}
@@ -92,7 +93,10 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
     public:
         static SamplerParameter* Create(unsigned int texObj);
 
+        /// Overloaded methods from Firtree::SamplerParameter.
+        virtual const Rect2D GetDefinition() const { return m_Definition; }
         virtual const Rect2D GetExtent() const;
+        ///@}
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest);

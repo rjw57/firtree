@@ -38,47 +38,93 @@ class SamplerParameter;
 class Kernel;
 
 //=============================================================================
+/// The base class for all kernel parameters.
 class Parameter : public ReferenceCounted
 {
     public:
+        ///@{
+        /// Protected constructors. Use the static factory methods of 
+        /// derived classes.
         Parameter();
         Parameter(const Parameter& p);
         virtual ~Parameter();
-    private:
+        ///@}
 };
 
 //=============================================================================
+/// A numeric (scalar, vector or colour) parameter for a kernel.
 class NumericParameter : public Parameter
 {
     public:
+        /// An enum specifying the possible base types for elements in 
+        /// a numeric value.
         enum BaseType {
-            TypeInteger, TypeFloat, TypeBool,
+            TypeInteger,    ///< Integer elements.
+            TypeFloat,      ///< Floating point elements.
+            TypeBool,       ///< Boolean elements.
         };
 
     protected:
+        ///@{
+        /// Protected constructors/destructors. Use the Create()
+        /// static method.
         NumericParameter();
         virtual ~NumericParameter();
+        ///@}
 
     public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        /// Create a numeric parameter.
         static Parameter* Create();
 
+        // ====================================================================
+        // CONST METHODS
+
+        ///@{
+        /// Return the value of the 'idx'th element as a float, integer or
+        /// boolean.
         float GetFloatValue(int idx) const { return m_Value[idx].f; }
         int GetIntValue(int idx) const { return m_Value[idx].i; }
         bool GetBoolValue(int idx) const { return m_Value[idx].i != 0; }
+        ///@}
 
+        /// Return the base type of the numeric parameter's elements.
+        BaseType GetBaseType() const { return m_BaseType; }
+
+        /// Return the size of the numeric parameter. A scalar has size 1
+        /// and an n-D vector has size n. The size must be between 1 and
+        /// 4 inclusive.
+        int GetSize() const { return m_Size; }
+
+        /// Return a boolean indicating if the parameter represents a 
+        /// color.
+        bool IsColor() const { return m_IsColor; }
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        ///@{
+        /// Assign the 'idx'th element a floating point, integer or boolean
+        /// value.
         void SetFloatValue(float f, int idx) { m_Value[idx].f = f; }
         void SetIntValue(int i, int idx) { m_Value[idx].i = i; }
         void SetBoolValue(bool b, int idx) { m_Value[idx].i = b ? 1 : 0; }
+        ///@}
 
-        BaseType GetBaseType() const { return m_BaseType; }
+        /// Set the base type of the parameter's elements.
         void SetBaseType(BaseType bt) { m_BaseType = bt; }
 
-        int GetSize() const { return m_Size; }
+        /// Set the size of the numeric parameter.
+        /// \see GetSize().
         void SetSize(int s) { m_Size = s; }
 
-        bool IsColor() { return m_IsColor; }
+        /// Set a flag indicating whether this parameter represents a 
+        /// color.
         void SetIsColor(bool flag) { m_IsColor = flag; }
 
+        /// Copy the value of the numeric parameter passed.
         void AssignFrom(const NumericParameter& param);
 
     private:
@@ -92,6 +138,7 @@ class NumericParameter : public Parameter
 };
 
 //=============================================================================
+/// Abstract base class for a sampler parameter.
 class SamplerParameter : public Parameter
 {
     protected:
@@ -99,7 +146,16 @@ class SamplerParameter : public Parameter
         virtual ~SamplerParameter();
 
     public:
+        /// Return a rectangle in sampler co-ordinates which completely
+        /// encloses the non-transparent pixels of the source.
+        virtual const Rect2D GetDefinition() const = 0;
+
+        /// Return a rectangle in world co-ordinates which completely
+        /// encloses the non-transparent pixels of the source.
         virtual const Rect2D GetExtent() const = 0;
+
+        /// Return a pointer to the affine transform which maps the
+        /// sampler co-ordinate system to the world co-ordinate system.
         virtual const AffineTransform* GetTransform() const = 0;
 };
 

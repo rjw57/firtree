@@ -370,6 +370,12 @@ const Rect2D SamplerParameter::GetExtent() const
 }
 
 //=============================================================================
+const Rect2D SamplerParameter::GetDefinition() const 
+{
+    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
+}
+
+//=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Firtree::Kernel* kernel)
     :   Firtree::GLSL::SamplerParameter()
     ,   m_KernelCompileStatus(false)
@@ -893,7 +899,7 @@ TextureSamplerParameter::~TextureSamplerParameter()
 //=============================================================================
 const Rect2D TextureSamplerParameter::GetExtent() const 
 {
-    return RectTransform(m_Definition, GetTransform());
+    return RectTransform(GetDefinition(), GetTransform());
 }
 
 //=============================================================================

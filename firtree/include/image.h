@@ -81,10 +81,12 @@ class Image : public ReferenceCounted
         // MUTATING METHODS
 
     protected:
-        // The image representation as a binary blob.
+        /// The image representation as a binary blob or NULL if there is 
+        /// none yet.
         Blob*           m_BinaryRep;
 
-        // The image representation as an OpenGL texture.
+        /// The image representation as an OpenGL texture or 0 if there is 
+        /// none yet.
         unsigned int    m_GLTexture;
 };
 

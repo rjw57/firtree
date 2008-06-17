@@ -88,6 +88,21 @@ Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY)
             a.MaxX()-deltaX, a.MaxY()-deltaY);
 }
 
+// ============================================================================
+AffineTransform* RectComputeTransform(const Rect2D& whence, const Rect2D& hence)
+{
+    AffineTransform* trans = AffineTransform::Identity();
+
+    // Firstly move the origins of the rectangle to co-incide.
+    trans->TranslateBy(hence.Origin.X - whence.Origin.X,
+            hence.Origin.Y - whence.Origin.Y);
+
+    // Scale appropriately in X- and Y-
+    trans->ScaleBy(hence.Size.Width / whence.Size.Width, 
+            hence.Size.Height / whence.Size.Height);
+
+    return trans;
+}
 
 static const float deg2rad = M_PI * 2.f / 360.f;
 static const float rad2deg = 360.f / (M_PI * 2.f);

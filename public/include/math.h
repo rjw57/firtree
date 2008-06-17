@@ -134,6 +134,11 @@ Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY);
 Rect2D RectTransform(const Rect2D& a, const AffineTransform* t);
 
 // ============================================================================
+/// Return a AffineTransform which maps all the pixels in the rectangle
+/// 'whence' to completely cover the rectangle 'hence'.
+AffineTransform* RectComputeTransform(const Rect2D& whence, const Rect2D& hence);
+
+// ============================================================================
 /// Structure representing an affine transformation matrix. Usually you wont
 /// use these directly. Instead, you'll use the AffineTransform wrapper class.
 struct AffineTransformStruct

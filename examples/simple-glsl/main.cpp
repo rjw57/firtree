@@ -214,6 +214,7 @@ void initialize_kernels()
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
 
         g_GlobalSampler = g_OverSampler2;
+        //g_GlobalSampler = g_LenaSampler;
         g_GlobalSampler->Retain();
 
         // Don't release these since we want to access them

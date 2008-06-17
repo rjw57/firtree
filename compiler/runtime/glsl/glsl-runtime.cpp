@@ -1180,10 +1180,26 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
 
     GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
 
-    Rect2D renderRect = destRect;
+    AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
-    //Rect2D extent = context->Sampler->GetExtent();
-    //Rect2D renderRect = RectIntersect(destRect, extent);
+    // Firstly clip srcRect by extent
+    Rect2D extent = context->Sampler->GetExtent();
+    Rect2D clipSrcRect = RectIntersect(srcRect, extent);
+
+    // Transform clipped source to destination
+    Rect2D renderRect = RectTransform(clipSrcRect, srcToDestTrans);
+
+    // Clip destination by viewport... TODO
+    
+    // Transform clipped destination rect back to source
+    srcToDestTrans->Invert();
+    clipSrcRect = RectTransform(renderRect, srcToDestTrans);
+
+    srcToDestTrans->Release();
+
+    // Do nothing if we've clipped everything away.
+    if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
+        return;
 
 #if 0
     printf("(%f,%f)->(%f,%f)\n",
@@ -1194,13 +1210,13 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     glActiveTextureARB(GL_TEXTURE0);
 
     glBegin(GL_QUADS);
-    glTexCoord2f(srcRect.MinX(), srcRect.MinY());
+    glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MinY());
-    glTexCoord2f(srcRect.MinX(), srcRect.MaxY());
+    glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MaxY());
     glVertex2f(renderRect.MinX(), renderRect.MaxY());
-    glTexCoord2f(srcRect.MaxX(), srcRect.MaxY());
+    glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MaxY());
     glVertex2f(renderRect.MaxX(), renderRect.MaxY());
-    glTexCoord2f(srcRect.MaxX(), srcRect.MinY());
+    glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
     glVertex2f(renderRect.MaxX(), renderRect.MinY());
     glEnd();
 }

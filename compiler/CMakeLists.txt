@@ -59,11 +59,12 @@ ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
 SET(COMPILER_SOURCES
 	include/compiler.h 	include/main.h
 	include/kernel.h	include/platform.h
-	include/opengl.h
-	include/math.h
+	include/opengl.h	include/blob.h
+	include/math.h		
 
 	compiler.cpp		main.cpp
 	kernel.cpp		math.cpp
+	blob.cpp
 
 	runtime/glsl/glsl-runtime.h
 	runtime/glsl/glsl-runtime.cpp

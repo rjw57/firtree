@@ -53,6 +53,8 @@ struct BitmapImageRep {
 
     /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
     ///
+    /// \param rep A reference to the BitmapImageRep containing the 
+    ///            bitmap image.
     /// \param copyData If true, a deep copy of the bitmap is made.
     BitmapImageRep(const BitmapImageRep& rep, bool copyData = true);
 

@@ -32,6 +32,34 @@
 namespace Firtree {
 
 //=============================================================================
+/// A structure encapsulating a bitmap image representation.
+struct BitmapImageRep {
+    Blob*           ImageBlob;  ///< A Blob containing the image data.
+    unsigned int    Width;      ///< The width of the image in pixels.
+    unsigned int    Height;     ///< The height of the image in pixels.
+    unsigned int    Stride;     ///< The length of one image row in bytes.
+
+    /// Constructor for a BitmapImageRep.
+    ///
+    /// \param blob The Blob object containing the image data.
+    /// \param width The width of the image in pixels.
+    /// \param height The height of the image in pixels.
+    /// \param stride The number of bytes in one row of the image.
+    /// \param copyData If true, a deep copy of the data is made otherwise
+    ///                 the reference count of the blob is merely incremented.
+    BitmapImageRep(Blob* blob,
+                unsigned int width, unsigned int height,
+                unsigned int stride, bool copyData = true);
+
+    /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
+    ///
+    /// \param copyData If true, a deep copy of the bitmap is made.
+    BitmapImageRep(const BitmapImageRep& rep, bool copyData = true);
+
+    ~BitmapImageRep();
+};
+
+//=============================================================================
 /// An image encapsulates all the information FIRTREE needs to render an
 /// image on screen.
 class Image : public ReferenceCounted
@@ -42,9 +70,7 @@ class Image : public ReferenceCounted
         /// factory functions instead.
         Image();
         Image(const Image& im);
-        Image(Blob* blob,
-                unsigned int width, unsigned int height,
-                unsigned int stride, bool copy);
+        Image(const BitmapImageRep& imageRep, bool copy);
         virtual ~Image();
         ///@}
 
@@ -57,15 +83,10 @@ class Image : public ReferenceCounted
 
         /// Construct an image from a 8-bit/channel RGBA image in memory.
         /// 
-        /// \param blob The Blob object containing the image data.
-        /// \param width The width of the image in pixels.
-        /// \param height The height of the image in pixels.
-        /// \param stride The number of bytes in one row of the image.
+        /// \param imageRep The BitmapImageRep encapsulating the image.
         /// \param copyData If true, a deep copy of the data is made otherwise
         ///                 the reference count of the blob is merely incremented.
-        static Image* CreateFromBitmapData(Blob* blob, 
-                unsigned int width, unsigned int height, 
-                unsigned int stride,
+        static Image* CreateFromBitmapData(const BitmapImageRep& imageRep,
                 bool copyData = true);
 
         /// Construct an image encapsulating the contents of a file. Returns
@@ -82,13 +103,6 @@ class Image : public ReferenceCounted
         // MUTATING METHODS
 
     protected:
-        /// The image representation as a binary blob or NULL if there is 
-        /// none yet.
-        Blob*           m_BinaryRep;
-
-        /// The image representation as an OpenGL texture or 0 if there is 
-        /// none yet.
-        unsigned int    m_GLTexture;
 };
 
 }

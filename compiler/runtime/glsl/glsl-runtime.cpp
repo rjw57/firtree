@@ -30,6 +30,8 @@
 #include <firtree/include/main.h>
 #include <firtree/include/kernel.h>
 
+#include <firtree/internal/image-int.h>
+
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
@@ -872,21 +874,24 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 }
 
 //=============================================================================
-TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
+TextureSamplerParameter::TextureSamplerParameter(Image* im)
     :   Firtree::GLSL::SamplerParameter()
     ,   m_TextureUnit(0)
-    ,   m_TexObj(texObj)
 {
-    GLint w, h;
+    Internal::ImageImpl* imImpl = 
+        dynamic_cast<Internal::ImageImpl*>(im);
 
-    glBindTexture(GL_TEXTURE_2D, texObj);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    if(imImpl == NULL) { return; }
+
+    m_Image = imImpl;
+    m_Image->Retain();
+
+    Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
 
     m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
 
     AffineTransform* t = GetTransform()->Copy();
-    t->ScaleBy(w, h);
+    t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
     SetTransform(t);
     t->Release();
 }
@@ -894,6 +899,7 @@ TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
 //=============================================================================
 TextureSamplerParameter::~TextureSamplerParameter()
 {
+    FIRTREE_SAFE_RELEASE(m_Image);
 }
 
 //=============================================================================
@@ -903,9 +909,9 @@ const Rect2D TextureSamplerParameter::GetExtent() const
 }
 
 //=============================================================================
-SamplerParameter* TextureSamplerParameter::Create(unsigned int texObj)
+SamplerParameter* TextureSamplerParameter::Create(Image* im)
 {
-    return new TextureSamplerParameter(texObj);
+    return new TextureSamplerParameter(im);
 }
 
 //=============================================================================
@@ -933,7 +939,7 @@ void TextureSamplerParameter::BuildSampleGLSL(std::string& dest,
 //=============================================================================
 bool TextureSamplerParameter::IsValid() const 
 {
-    return (m_TexObj != 0);
+    return (m_Image != NULL);
 }
 
 //=============================================================================
@@ -974,10 +980,21 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
-        unsigned int texObj, const AffineTransform* transform)
+unsigned int TextureSamplerParameter::GetGLTextureObject() const
 {
-    SamplerParameter* rv = TextureSamplerParameter::Create(texObj);
+    if(m_Image == NULL)
+    {
+        return 0;
+    }
+
+    return m_Image->GetAsOpenGLTexture();
+}
+
+//=============================================================================
+Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+        Image* im, const AffineTransform* transform)
+{
+    SamplerParameter* rv = TextureSamplerParameter::Create(im);
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
@@ -998,9 +1015,9 @@ Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSampler(unsigned int texObj)
+Firtree::SamplerParameter* CreateTextureSampler(Image* im)
 {
-    return TextureSamplerParameter::Create(texObj);
+    return TextureSamplerParameter::Create(im);
 }
 
 //=============================================================================

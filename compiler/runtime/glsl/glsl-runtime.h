@@ -26,6 +26,7 @@
 //=============================================================================
 
 #include <firtree/include/kernel.h>
+#include <firtree/include/image.h>
 
 namespace Firtree { namespace GLSL {
 
@@ -41,11 +42,11 @@ bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int 
 const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSampler(unsigned int texObj);
+Firtree::SamplerParameter* CreateTextureSampler(Image* image);
 
 //=============================================================================
 Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
-        unsigned int texObj, const AffineTransform* transform);
+        Image* image, const AffineTransform* transform);
 
 //=============================================================================
 Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel);

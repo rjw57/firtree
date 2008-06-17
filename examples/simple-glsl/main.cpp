@@ -178,26 +178,10 @@ void initialize_kernels()
         spotTrans->Release();
 
         Image* lenaImage = Image::CreateFromFile("lena.png");
-        printf("Created lena: %p\n", lenaImage);
-        lenaImage->Release();
+        //printf("Created lena: %p\n", lenaImage);
 
-        glGenTextures(1, &g_LenaTexture);
-        bool rv = InitialiseTextureFromFile(g_LenaTexture, "lena.png");
-        if(!rv)
-        {
-            fprintf(stderr, "Could not load texture image.\n");
-            exit(1);
-            return;
-        }
-
-        glGenTextures(1, &g_FogTexture);
-        rv = InitialiseTextureFromFile(g_FogTexture, "fog.png");
-        if(!rv)
-        {
-            fprintf(stderr, "Could not load fog texture image.\n");
-            exit(1);
-            return;
-        }
+        Image* fogImage = Image::CreateFromFile("fog.png");
+        //printf("Created foo: %p\n", fogImage);
 
         AffineTransform* lenaTrans = AffineTransform::Identity();
         lenaTrans->TranslateBy(-256, -256);
@@ -206,11 +190,14 @@ void initialize_kernels()
         lenaTrans->TranslateBy(320.f, 240.f);
 
         g_LenaSampler = 
-            GLSL::CreateTextureSamplerWithTransform(g_LenaTexture, lenaTrans);
+            GLSL::CreateTextureSamplerWithTransform(lenaImage, lenaTrans);
         SamplerParameter* fogSampler = 
-            GLSL::CreateTextureSampler(g_FogTexture);
+            GLSL::CreateTextureSampler(fogImage);
 
         lenaTrans->Release();
+
+        FIRTREE_SAFE_RELEASE(lenaImage);
+        FIRTREE_SAFE_RELEASE(fogImage);
 
         g_OverKernel->SetValueForKey(g_LenaSampler, "a");
         g_OverKernel->SetValueForKey(g_CheckerSampler, "b");

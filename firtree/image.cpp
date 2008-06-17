@@ -20,20 +20,60 @@
 
 #include <firtree/include/main.h>
 #include <firtree/include/image.h>
+#include <firtree/internal/image-int.h>
 
-#ifdef FIRTREE_WIN32
-#   include <wand/MagickWand.h>
-#else
-#   include <wand/magick-wand.h>
-#endif
+#include <wand/magick_wand.h>
 
 namespace Firtree {
+
+using namespace Internal;
+
+//=============================================================================
+BitmapImageRep::BitmapImageRep(Blob* blob,
+    unsigned int width, unsigned int height, unsigned int stride, bool copy)
+    :   Width(width)
+    ,   Height(height)
+    ,   Stride(stride)
+{
+    if(blob == NULL)
+        return;
+    
+    if(copy) 
+    {
+        ImageBlob = blob->Copy();
+    } else {
+        blob->Retain();
+        ImageBlob = blob;
+    }
+}
+
+//=============================================================================
+BitmapImageRep::BitmapImageRep(const BitmapImageRep& rep, bool copy)
+    :   Width(rep.Width)
+    ,   Height(rep.Height)
+    ,   Stride(rep.Stride)
+{
+    if(rep.ImageBlob == NULL)
+        return;
+
+    if(copy) 
+    {
+        ImageBlob = rep.ImageBlob->Copy();
+    } else {
+        rep.ImageBlob->Retain();
+        ImageBlob = rep.ImageBlob;
+    }
+}
+
+//=============================================================================
+BitmapImageRep::~BitmapImageRep()
+{
+    FIRTREE_SAFE_RELEASE(ImageBlob);
+}
 
 //=============================================================================
 Image::Image()
     :   ReferenceCounted()
-    ,   m_BinaryRep(NULL)
-    ,   m_GLTexture(0)
 {
 }
 
@@ -41,73 +81,51 @@ Image::Image()
 Image::Image(const Image& im)
 {
     Image();
-    if(im.m_BinaryRep != NULL)
-    {
-        m_BinaryRep = im.m_BinaryRep->Copy();
-    }
-    m_GLTexture = im.m_GLTexture;
 }
 
 //=============================================================================
-Image::Image(Blob* blob,
-        unsigned int width, unsigned int height, 
-        unsigned int stride, bool copy)
+Image::Image(const BitmapImageRep& imageRep, bool copy)
 {
     Image();
-    if(stride < width) { return; }
-    if(stride*height > blob->GetLength()) { return; }
-
-    if(copy) {
-        m_BinaryRep = blob->Copy();
-    } else {
-        blob->Retain();
-        m_BinaryRep = blob;
-    }
 }
 
 //=============================================================================
 Image::~Image()
 {
-    FIRTREE_SAFE_RELEASE(m_BinaryRep);
 }
 
 //=============================================================================
 Image* Image::CreateFromImage(const Image* im)
 {
     if(im == NULL) { return NULL; }
-    return new Image(*im);
+    return new ImageImpl(*im);
 }
 
 //=============================================================================
-Image* Image::CreateFromBitmapData(Blob* blob, 
-                unsigned int width, unsigned int height, 
-                unsigned int stride, bool copy)
+Image* Image::CreateFromBitmapData(const BitmapImageRep& imageRep,
+                bool copyData)
 {
-    if(blob == NULL) { return NULL; }
-    if(stride < width) { return NULL; }
-    if(stride*height > blob->GetLength()) { return NULL; }
-    return new Image(blob, width, height, stride, copy);
-}
-
-//=============================================================================
-Image* Image::CreateFromFile(const char* pFilename)
-{
-    static bool calledGenesis = false;
-
-    if(pFilename == NULL) { return NULL; }
-    
-    if(!calledGenesis)
+    if(imageRep.ImageBlob == NULL) { return NULL; }
+    if(imageRep.Stride < imageRep.Width) { return NULL; }
+    if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) 
     {
-        // FIXME: How to know when to call Terminus?
-        MagickWandGenesis();
-        calledGenesis = true;
+        return NULL; 
     }
+    return new ImageImpl(imageRep, copyData);
+}
+
+//=============================================================================
+Image* Image::CreateFromFile(const char* pFileName)
+{
+    if(pFileName == NULL) { return NULL; }
 
     MagickWand* wand = NewMagickWand();
-    MagickBooleanType status = MagickReadImage(wand, pFilename);
+    MagickBooleanType status = MagickReadImage(wand, pFileName);
     if(status == MagickFalse)
     {
-        return NULL;
+        FIRTREE_WARNING("Could not read image from %s.", pFileName);
+        wand = DestroyMagickWand(wand);
+        return false;
     }
 
     MagickFlipImage(wand);
@@ -115,58 +133,29 @@ Image* Image::CreateFromFile(const char* pFilename)
     unsigned int w = MagickGetImageWidth(wand);
     unsigned int h = MagickGetImageHeight(wand);
 
-    Blob* image = Blob::CreateWithLength(w*h*4);
+    Blob* imageBlob = Blob::CreateWithLength(w*h*4);
 
-    PixelIterator* pixit = NewPixelIterator(wand);
-    if(pixit == NULL)
+    MagickGetImagePixels(wand, 0, 0, w, h, "RGBA", CharPixel, 
+            const_cast<uint8_t*>(imageBlob->GetBytes()));
+
+    uint8_t* pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
+    for(int i=0; i<w*h; i++)
     {
-        wand = DestroyMagickWand(wand);
-        FIRTREE_SAFE_RELEASE(image);
-        return NULL;
-    }
-
-    uint8_t* curPixel = const_cast<uint8_t*>(image->GetBytes());
-    for(unsigned int y=0; y<h; y++)
-    {
-        long unsigned int rowWidth;
-        PixelWand** pixels = PixelGetNextIteratorRow(pixit, &rowWidth);
-        if(pixels == NULL)
-        {
-            pixit = DestroyPixelIterator(pixit);
-            wand = DestroyMagickWand(wand);
-            FIRTREE_SAFE_RELEASE(image);
-            return NULL;
-        }
-        if(rowWidth != w)
-        {
-            FIRTREE_ERROR("rowWidth != w");
-            pixit = DestroyPixelIterator(pixit);
-            wand = DestroyMagickWand(wand);
-            FIRTREE_SAFE_RELEASE(image);
-            return NULL;
-        }
-
-        for(unsigned int x=0; x<rowWidth; x++)
-        {
-            // Convert the image to pre-multiplied alpha.
-            
-            float alpha = PixelGetAlpha(pixels[x]);
-            curPixel[0] = (unsigned char)(255.0 * alpha * PixelGetRed(pixels[x]));
-            curPixel[1] = (unsigned char)(255.0 * alpha * PixelGetGreen(pixels[x]));
-            curPixel[2] = (unsigned char)(255.0 * alpha * PixelGetBlue(pixels[x]));
-            curPixel[3] = (unsigned char)(255.0 * alpha);
-
-            curPixel += 4;
-        }
+        float alpha = ((float)(pixel[3]) / 255.0f);
+        pixel[0] *= alpha;
+        pixel[1] *= alpha;
+        pixel[2] *= alpha;
+        pixel += 4;
     }
     
-    pixit = DestroyPixelIterator(pixit);
+    wand = DestroyMagickWand(wand);
 
-    Image* retVal = CreateFromBitmapData(image, w, h, w*4, false);
+    Image* rv = Image::CreateFromBitmapData(
+        BitmapImageRep(imageBlob, w, h, w*4, false), false);
 
-    FIRTREE_SAFE_RELEASE(image);
+    imageBlob->Release();
 
-    return retVal;
+    return rv;
 }
 
 //=============================================================================

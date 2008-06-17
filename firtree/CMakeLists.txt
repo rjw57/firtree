@@ -37,12 +37,12 @@ ELSE(GLEW_FOUND)
     MESSAGE(SEND_ERROR "GLEW is required to build FIRTREE.")
 ENDIF(GLEW_FOUND)
 
-IF(MAGICKPP_LIBRARIES)
+IF(MAGICKPP_FOUND)
     SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${MAGICKPP_LIBRARIES})
     SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${MAGICKPP_INCLUDE_DIR})
-ELSE(MAGICKPP_LIBRARIES)
-    MESSAGE(SEND_ERROR "ImageMagick is required to build FIRTREE.")
-ENDIF(MAGICKPP_LIBRARIES)
+ELSE(MAGICKPP_FOUND)
+    MESSAGE(SEND_ERROR "GraphicsMagick is required to build this example.")
+ENDIF(MAGICKPP_FOUND)
 
 INCLUDE_DIRECTORIES(
 	${FIRTREE_TARGET_INCLUDES}
@@ -75,13 +75,17 @@ SET(FIRTREE_SOURCES
 	include/blob.h		include/math.h		include/kernel.h
 	include/image.h
 
+	internal/image-int.h
+
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
+
+	image-int.cpp
 )
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 
 TARGET_LINK_LIBRARIES(firtree
-	compiler glslang frontend irbackend glslbackend 
 	${FIRTREE_TARGET_LIBRARIES}
+	compiler glslang frontend irbackend glslbackend 
 	-lpthread)

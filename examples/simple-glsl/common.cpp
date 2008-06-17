@@ -28,11 +28,7 @@
 #include <firtree/include/platform.h>
 #include <firtree/include/opengl.h>
 
-#ifdef FIRTREE_WIN32
-#   include <wand/MagickWand.h>
-#else
-#   include <wand/magick-wand.h>
-#endif
+#include <wand/magick_wand.h>
 
 /** 
  * This file contains the common routines used by (almost) all of the test
@@ -88,19 +84,13 @@ void init_cb();
 // ============================================================================
 bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
 {
-    static bool calledGenesis = false;
     GLenum err;
-    
-    if(!calledGenesis)
-    {
-        MagickWandGenesis();
-        calledGenesis = true;
-    }
-
     MagickWand* wand = NewMagickWand();
     MagickBooleanType status = MagickReadImage(wand, pFileName);
     if(status == MagickFalse)
     {
+        FIRTREE_WARNING("Could not read image from %s.", pFileName);
+        wand = DestroyMagickWand(wand);
         return false;
     }
 
@@ -109,64 +99,33 @@ bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
     unsigned int w = MagickGetImageWidth(wand);
     unsigned int h = MagickGetImageHeight(wand);
 
-    bool hasMatte = true;
-
     glBindTexture(GL_TEXTURE_2D, texObj);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     err = glGetError();
     if(err != GL_NO_ERROR)
     {
         FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
-        return false;
-    }
-
-    unsigned char* image = new unsigned char[w * h * 4];
-
-    PixelIterator* pixit = NewPixelIterator(wand);
-    if(pixit == NULL)
-    {
         wand = DestroyMagickWand(wand);
-        MagickWandTerminus();
         return false;
     }
 
-    unsigned char* curPixel = image;
-    for(unsigned int y=0; y<h; y++)
+    uint8_t* image = new uint8_t[w * h * 4];
+    MagickGetImagePixels(wand, 0, 0, w, h, "RGBA", CharPixel, image);
+
+    for(int i=0; i<w*h; i++)
     {
-        long unsigned int rowWidth;
-        PixelWand** pixels = PixelGetNextIteratorRow(pixit, &rowWidth);
-        if(pixels == NULL)
-        {
-            pixit = DestroyPixelIterator(pixit);
-            wand = DestroyMagickWand(wand);
-            MagickWandTerminus();
-            return false;
-        }
-        assert(rowWidth == w);
-
-        for(unsigned int x=0; x<rowWidth; x++)
-        {
-            // Convert the image to pre-multiplied alpha.
-            
-            float alpha = hasMatte ? PixelGetAlpha(pixels[x]) : 1.f;
-            curPixel[0] = (unsigned char)(255.0 * alpha * PixelGetRed(pixels[x]));
-            curPixel[1] = (unsigned char)(255.0 * alpha * PixelGetGreen(pixels[x]));
-            curPixel[2] = (unsigned char)(255.0 * alpha * PixelGetBlue(pixels[x]));
-            curPixel[3] = (unsigned char)(255.0 * alpha);
-
-            curPixel += 4;
-        }
+        uint8_t* pixel = image + (i*4);
+        float alpha = ((float)(pixel[3]) / 255.0f);
+        pixel[0] *= alpha;
+        pixel[1] *= alpha;
+        pixel[2] *= alpha;
     }
     
-    pixit = DestroyPixelIterator(pixit);
-
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
     delete [] image;
 
     wand = DestroyMagickWand(wand);
-
-    //MagickWandTerminus();
 
     err = glGetError();
     if(err != GL_NO_ERROR)

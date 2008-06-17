@@ -34,6 +34,10 @@
 
 #include "glsl-runtime.h"
 
+namespace Firtree { namespace Internal {
+    class ImageImpl;
+} }
+
 namespace Firtree { namespace GLSL {
 
 class SamplerParameter;
@@ -87,11 +91,11 @@ class SamplerParameter : public Firtree::SamplerParameter
 class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
 {
     protected:
-        TextureSamplerParameter(unsigned int texObj);
+        TextureSamplerParameter(Image* image);
         virtual ~TextureSamplerParameter();
 
     public:
-        static SamplerParameter* Create(unsigned int texObj);
+        static SamplerParameter* Create(Image* image);
 
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const { return m_Domain; }
@@ -110,15 +114,15 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
         virtual bool IsValid() const;
         virtual void SetGLSLUniforms(unsigned int program);
 
-        unsigned int GetGLTextureObject() const { return m_TexObj; }
+        unsigned int GetGLTextureObject() const;
 
         void SetGLTextureUnit(unsigned int i) { m_TextureUnit = i; }
         unsigned int GetGLTextureUnit() const { return m_TextureUnit; }
 
     private:
-        Rect2D              m_Domain;
-        unsigned int        m_TextureUnit;
-        unsigned int        m_TexObj;
+        Internal::ImageImpl*    m_Image;
+        Rect2D                  m_Domain;
+        unsigned int            m_TextureUnit;
 };
 
 //=============================================================================

@@ -80,7 +80,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../public
+INPUT                  = ../firtree
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cpp *.h *.cc
 RECURSIVE              = YES

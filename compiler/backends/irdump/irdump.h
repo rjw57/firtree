@@ -25,7 +25,7 @@
 #define FIRTREE_IRDUMP_H
 //=============================================================================
 
-#include <public/include/main.h>
+#include <firtree/include/main.h>
 
 #include <stdio.h>
 

@@ -28,7 +28,7 @@
 #define FIRTREE_OPENGL_H
 // ============================================================================
 
-#include <public/include/platform.h>
+#include <firtree/include/platform.h>
 
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
 # if !defined(FIRTREE_NO_GLEW)

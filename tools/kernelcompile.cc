@@ -16,7 +16,7 @@
  * Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <public/include/main.h>
+#include <firtree/include/main.h>
 
 #include <compiler/include/compiler.h>
 #include <compiler/backends/irdump/irdump.h>

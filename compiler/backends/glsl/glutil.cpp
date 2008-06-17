@@ -22,7 +22,7 @@
 
 #include "glutil.h"
 
-#include <public/include/opengl.h>
+#include <firtree/include/opengl.h>
 
 namespace Firtree { namespace GLSLInternal {
     

@@ -18,9 +18,9 @@
 
 #include "common.h"
 
-#include <public/include/opengl.h>
-#include <public/include/main.h>
-#include <public/include/image.h>
+#include <firtree/include/opengl.h>
+#include <firtree/include/main.h>
+#include <firtree/include/image.h>
 
 #include "compiler/runtime/glsl/glsl-runtime.h"
 

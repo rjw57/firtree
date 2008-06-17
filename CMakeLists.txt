@@ -39,8 +39,8 @@ ADD_SUBDIRECTORY(glsl-frontend)
 # The kernel language compiler
 ADD_SUBDIRECTORY(compiler)
 
-# The public API
-ADD_SUBDIRECTORY(public)
+# The FIRTREE library itself.
+ADD_SUBDIRECTORY(firtree)
 
 # Some tools
 ADD_SUBDIRECTORY(tools)

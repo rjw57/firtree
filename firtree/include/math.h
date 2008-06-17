@@ -23,7 +23,7 @@
 #define FIRTREE_MATH_H
 // ============================================================================
 
-#include <public/include/main.h>
+#include <firtree/include/main.h>
 
 // ============================================================================
 namespace Firtree {

@@ -28,8 +28,8 @@
 #include <vector>
 #include <map>
 
-#include <public/include/main.h>
-#include <public/include/math.h>
+#include <firtree/include/main.h>
+#include <firtree/include/math.h>
 
 namespace Firtree {
 

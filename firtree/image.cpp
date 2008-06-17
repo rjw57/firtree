@@ -18,8 +18,8 @@
 /// \file image.cpp The implementation of the abstract FIRTREE image.
 //=============================================================================
 
-#include <public/include/main.h>
-#include <public/include/image.h>
+#include <firtree/include/main.h>
+#include <firtree/include/image.h>
 
 #ifdef FIRTREE_WIN32
 #   include <wand/MagickWand.h>

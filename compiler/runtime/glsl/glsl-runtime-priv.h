@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-#include <public/include/kernel.h>
+#include <firtree/include/kernel.h>
 
 #include "glsl-runtime.h"
 

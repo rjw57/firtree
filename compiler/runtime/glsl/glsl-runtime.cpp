@@ -370,7 +370,7 @@ const Rect2D SamplerParameter::GetExtent() const
 }
 
 //=============================================================================
-const Rect2D SamplerParameter::GetDefinition() const 
+const Rect2D SamplerParameter::GetDomain() const 
 {
     return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
@@ -883,7 +883,7 @@ TextureSamplerParameter::TextureSamplerParameter(unsigned int texObj)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
 
-    m_Definition = Rect2D(0.f, 0.f, 1.f, 1.f);
+    m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
 
     AffineTransform* t = GetTransform()->Copy();
     t->ScaleBy(w, h);
@@ -899,7 +899,7 @@ TextureSamplerParameter::~TextureSamplerParameter()
 //=============================================================================
 const Rect2D TextureSamplerParameter::GetExtent() const 
 {
-    return RectTransform(GetDefinition(), GetTransform());
+    return RectTransform(GetDomain(), GetTransform());
 }
 
 //=============================================================================

@@ -49,7 +49,7 @@ class SamplerParameter : public Firtree::SamplerParameter
     public:
         ///@{
         /// Overloaded methods from Firtree::SamplerParameter.
-        virtual const Rect2D GetDefinition() const;
+        virtual const Rect2D GetDomain() const;
         virtual const Rect2D GetExtent() const;
         virtual const AffineTransform* GetTransform() const { return m_Transform; }
         ///@}
@@ -94,7 +94,7 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
         static SamplerParameter* Create(unsigned int texObj);
 
         /// Overloaded methods from Firtree::SamplerParameter.
-        virtual const Rect2D GetDefinition() const { return m_Definition; }
+        virtual const Rect2D GetDomain() const { return m_Domain; }
         virtual const Rect2D GetExtent() const;
         ///@}
 
@@ -116,7 +116,7 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
         unsigned int GetGLTextureUnit() const { return m_TextureUnit; }
 
     private:
-        Rect2D              m_Definition;
+        Rect2D              m_Domain;
         unsigned int        m_TextureUnit;
         unsigned int        m_TexObj;
 };

@@ -148,7 +148,7 @@ class SamplerParameter : public Parameter
     public:
         /// Return a rectangle in sampler co-ordinates which completely
         /// encloses the non-transparent pixels of the source.
-        virtual const Rect2D GetDefinition() const = 0;
+        virtual const Rect2D GetDomain() const = 0;
 
         /// Return a rectangle in world co-ordinates which completely
         /// encloses the non-transparent pixels of the source.

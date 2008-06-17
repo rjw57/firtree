@@ -57,9 +57,9 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
 ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
 
 SET(COMPILER_SOURCES
-	include/compiler.h 	include/kernel.h
+	include/compiler.h 
 
-	compiler.cpp		kernel.cpp
+	compiler.cpp
 
 	runtime/glsl/glsl-runtime.h
 	runtime/glsl/glsl-runtime.cpp

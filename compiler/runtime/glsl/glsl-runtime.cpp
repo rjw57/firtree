@@ -26,8 +26,8 @@
 #define FIRTREE_NO_GLX
 #include <public/include/opengl.h>
 #include <public/include/main.h>
+#include <public/include/kernel.h>
 
-#include <compiler/include/kernel.h>
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
@@ -226,101 +226,40 @@ void Kernel::UpdateBlockNameReplacedSourceCache()
 }
 
 //=============================================================================
-void Kernel::SetValueForKey(float value, const char* key)
+void Kernel::SetValueForKey(Parameter* param, const char* key)
 {
-    SetValueForKey(&value, 1, key);
-}
+    GLSL::SamplerParameter* sampler = 
+        dynamic_cast<GLSL::SamplerParameter*>(param);
+    NumericParameter* numeric = 
+        dynamic_cast<NumericParameter*>(param);
 
-//=============================================================================
-void Kernel::SetValueForKey(const float* value, int count, const char* key)
-{
-    NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::TypeFloat);
-
-    if(p == NULL) {
-        FIRTREE_ERROR("No parameter: %s.", key);
-    }
-
-    if(p->GetSize() != count)
-    {
-        FIRTREE_ERROR("Parameter %s soes not have size %s as expected.", key, count);
-    }
-
-    for(int i=0; i<count; i++)
-    {
-        p->SetFloatValue(value[i], i);
-    }
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(int value, const char* key)
-{
-    SetValueForKey(&value, 1, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(const int* value, int count, const char* key)
-{
-    NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::TypeInteger);
-
-    if(p == NULL) {
-        FIRTREE_ERROR("No parameter: %s.", key);
-    }
-
-    if(p->GetSize() != count)
-    {
-        FIRTREE_ERROR("Parameter %s soes not have size %s as expected.", key, count);
-    }
-
-    for(int i=0; i<count; i++)
-    {
-        p->SetIntValue(value[i], i);
-    }
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(bool value, const char* key)
-{
-    SetValueForKey(&value, 1, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(const bool* value, int count, const char* key)
-{
-    NumericParameter* p = NumericParameterForKeyAndType(key, 
-            NumericParameter::TypeBool);
-
-    if(p == NULL) {
-        FIRTREE_ERROR("No parameter: %s.", key);
-    }
-
-    if(p->GetSize() != count)
-    {
-        FIRTREE_ERROR("Parameter %s soes not have size %s as expected.", key, count);
-    }
-
-    for(int i=0; i<count; i++)
-    {
-        p->SetBoolValue(value[i], i);
-    }
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(Firtree::SamplerParameter* sampler, const char* key)
-{
-    if(sampler == NULL)
+    if((sampler == NULL) && (numeric == NULL))
         return;
 
-    sampler->Retain();
-
-    if(m_Parameters.count(key) > 0)
+    if(sampler != NULL)
     {
-        Parameter* p = m_Parameters[key];
-        FIRTREE_SAFE_RELEASE(m_Parameters[key]);
-    }
+        sampler->Retain();
 
-    m_Parameters[key] = sampler;
+        if(m_Parameters.count(key) > 0)
+        {
+            Parameter* p = m_Parameters[key];
+            FIRTREE_SAFE_RELEASE(m_Parameters[key]);
+        }
+
+        m_Parameters[key] = sampler;
+    } else if(numeric != NULL)
+    {
+        NumericParameter* p = 
+            NumericParameterForKeyAndType(key, numeric->GetBaseType());
+        if((p == NULL) || (p->GetSize() != numeric->GetSize()))
+        {
+            FIRTREE_WARNING("No such parameter '%s' of correct size and type "
+                    "found in kernel", key);
+            return;
+        }
+
+        p->AssignFrom(*numeric);
+    }
 }
 
 //=============================================================================
@@ -430,14 +369,14 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     static char idxStr[255]; 
     std::string tempStr;
    
-    std::map<std::string, Parameter*>& params = kernel->GetParameters();
+    const std::map<std::string, Parameter*>& params = kernel->GetParameters();
 
     dest += "vec4 __builtin_sample_";
     dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
 
-    for(std::map<std::string, Parameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
     {
         Parameter *pKP = (*i).second;
@@ -467,7 +406,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "  vec3 row1 = vec3(1,0,0);\n";
     dest += "  vec3 row2 = vec3(0,1,0);\n";
 
-    for(std::map<std::string, Parameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
     {
         Parameter *pKP = (*i).second;
@@ -511,7 +450,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "(int sampler) {\n";
     dest += "  vec4 retVal = vec4(0,0,0,0);\n";
 
-    for(std::map<std::string, Parameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
     {
         Parameter *pKP = (*i).second;
@@ -661,10 +600,10 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 
     // Recurse down through kernel's sampler parameters.
 
-    std::map<std::string, Parameter*>& kernelParams = 
+    const std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
 
-    for(std::map<std::string, Parameter*>::iterator i=kernelParams.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
     {
         if((*i).second != NULL)
@@ -704,10 +643,10 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 void KernelSamplerParameter::AddChildSamplersToVector(
         std::vector<GLSL::SamplerParameter*>& sampVec)
 {
-    std::map<std::string, Parameter*>& kernelParams = 
+    const std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
 
-    for(std::map<std::string, Parameter*>::iterator i=kernelParams.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i=kernelParams.begin();
             m_KernelCompileStatus && (i != kernelParams.end()); i++)
     {
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
@@ -749,7 +688,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
     _KernelEnsureAPI();
 
-    std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
+    const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
     std::string uniPrefix = GetBlockPrefix();
     uniPrefix += "_params.";
@@ -765,7 +704,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         child->SetGLSLUniforms(program);
     }
 
-    for(std::map<std::string, Parameter*>::iterator i = params.begin();
+    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
     {
         Parameter* p = (*i).second;

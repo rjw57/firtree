@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-#include <compiler/include/kernel.h>
+#include <public/include/kernel.h>
 
 #include "glsl-runtime.h"
 
@@ -160,15 +160,10 @@ class Kernel : public Firtree::Kernel
         virtual void SetSource(const char* source);
         virtual const char* GetSource() const { return m_Source.c_str(); }
 
-        virtual void SetValueForKey(float value, const char* key);
-        virtual void SetValueForKey(const float* value, int count, const char* key);
-        virtual void SetValueForKey(int value, const char* key);
-        virtual void SetValueForKey(const int* value, int count, const char* key);
-        virtual void SetValueForKey(bool value, const char* key);
-        virtual void SetValueForKey(const bool* value, int count, const char* key);
-        virtual void SetValueForKey(Firtree::SamplerParameter* sampler, const char* key);
+        virtual void SetValueForKey(Parameter* param, const char* key);
 
-        std::map<std::string, Parameter*>& GetParameters() { return m_Parameters; }
+        virtual const std::map<std::string, Parameter*>& GetParameters()
+            { return m_Parameters; }
 
         bool GetIsCompiled() const { return m_IsCompiled; }
 

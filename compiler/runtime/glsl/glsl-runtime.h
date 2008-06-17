@@ -25,7 +25,7 @@
 #define FIRTREE_GLSL_RUNTIME_H
 //=============================================================================
 
-#include <compiler/include/kernel.h>
+#include <public/include/kernel.h>
 
 namespace Firtree { namespace GLSL {
 

@@ -15,7 +15,7 @@
 // Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 // ============================================================================
-/// \file main.h Main FIRTREE utility classes and types.
+/// \file math.h Mathematical classes and functions for FIRTREE.
 // ============================================================================
 
 // ============================================================================

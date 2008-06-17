@@ -15,7 +15,8 @@
 // Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 // ============================================================================
-/// \file opengl.h Platform independent wat to include the OpenGL headers
+/// \file opengl.h 
+/// \brief Platform independent wat to include the OpenGL headers
 ///
 /// Not all platforms supported by FIRTREE have their OpenGL headers under
 /// GL/. This file includes gl.h, glext.h and glut.h for all supported

@@ -53,9 +53,10 @@ ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
 
 SET(FIRTREE_SOURCES
 	include/main.h		include/platform.h	include/opengl.h
-	include/blob.h		include/math.h		
+	include/blob.h		include/math.h		include/kernel.h
 
 	main.cpp		math.cpp		blob.cpp
+	kernel.cpp
 )
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})

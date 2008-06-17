@@ -751,121 +751,138 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                 const char* tmp = AddTemporary();
                 PushTemporary(tmp);
 
-                const char* funcname = "UNTITLED_FUNC";
-                switch(n->getOp())
-                {
-                    case EOpFunctionCall:
-                        funcname = GetFunction(n->getName().c_str());
-                        break;
-                    case EOpCompare:
-                        funcname = "__builtin_compare";
-                        break;
-                    case EOpClamp:
-                        funcname = "clamp";
-                        break;
-                    case EOpMod:
-                        funcname = "mod";
-                        break;
-                    case EOpMin:
-                        funcname = "min";
-                        break;
-                    case EOpMax:
-                        funcname = "max";
-                        break;
-                    case EOpStep:
-                        funcname = "step";
-                        break;
-                    case EOpDot:
-                        funcname = "dot";
-                        break;
-                    case EOpCross:
-                        funcname = "cross";
-                        break;
-                    case EOpMix:
-                        funcname = "mix";
-                        break;
-                    case EOpPow:
-                        funcname = "pow";
-                        break;
-                    case EOpSmoothStep:
-                        funcname = "smoothstep";
-                        break;
-                    case EOpReflect:
-                        funcname = "reflect";
-                        break;
-                    case EOpSample:
-                        funcname = "__builtin_sample";
-                        break;
-                    case EOpSamplerTransform:
-                        funcname = "__builtin_sampler_transform";
-                        break;
-                    case EOpConstructInt:
-                        funcname = "int";
-                        break;
-                    case EOpConstructBool:
-                        funcname = "bool";
-                        break;
-                    case EOpConstructFloat:
-                        funcname = "float";
-                        break;
-                    case EOpConstructVec2:
-                        funcname = "vec2";
-                        break;
-                    case EOpConstructVec3:
-                        funcname = "vec3";
-                        break;
-                    case EOpConstructVec4:
-                        funcname = "vec4";
-                        break;
-                    case EOpConstructBVec2:
-                        funcname = "bvec2";
-                        break;
-                    case EOpConstructBVec3:
-                        funcname = "bvec3";
-                        break;
-                    case EOpConstructBVec4:
-                        funcname = "bvec4";
-                        break;
-                    case EOpConstructIVec2:
-                        funcname = "ivec2";
-                        break;
-                    case EOpConstructIVec3:
-                        funcname = "ivec3";
-                        break;
-                    case EOpConstructIVec4:
-                        funcname = "ivec4";
-                        break;
-                }
+                // Is the first argument a symbol?
+                TIntermSymbol* symbol = 
+                    n->getSequence().front()->getAsSymbolNode();
 
-                switch(n->getOp())
+                // Shortcut the sampler function.
+                if(m_InKernel && (n->getOp() == EOpSample) && (symbol != NULL))
                 {
-                    case EOpSample:
-                    case EOpSamplerTransform:
-                        AppendGLSLType(n->getTypePointer()); 
-                        AppendOutput(" %s = %s_", tmp, funcname);
-                        AppendOutput(m_Prefix.c_str());
-                        AppendOutput("_kernel(");
-                        break;
-                    default:
-                        AppendGLSLType(n->getTypePointer()); 
-                        AppendOutput(" %s = %s(", tmp, funcname);
-                        break;
-                }
-
-                bool first = true;
-                for(std::vector<std::string>::reverse_iterator i=params.rbegin();
-                        i != params.rend(); i++)
-                {
-                    if(!first)
+                    AppendGLSLType(n->getTypePointer()); 
+                    AppendOutput(" %s = %s_%s", tmp, m_Prefix.c_str(), 
+                            symbol->getSymbol().c_str());
+                    AppendOutput("_kernel(");
+                    // [0] because params is in reverse order.
+                    AppendOutput(params[0].c_str());
+                    AppendOutput(");\n");
+                } else {
+                    const char* funcname = "UNTITLED_FUNC";
+                    switch(n->getOp())
                     {
-                        AppendOutput(", ");
+                        case EOpFunctionCall:
+                            funcname = GetFunction(n->getName().c_str());
+                            break;
+                        case EOpCompare:
+                            funcname = "__builtin_compare";
+                            break;
+                        case EOpClamp:
+                            funcname = "clamp";
+                            break;
+                        case EOpMod:
+                            funcname = "mod";
+                        break;
+                        case EOpMin:
+                            funcname = "min";
+                            break;
+                        case EOpMax:
+                            funcname = "max";
+                            break;
+                        case EOpStep:
+                            funcname = "step";
+                            break;
+                        case EOpDot:
+                            funcname = "dot";
+                            break;
+                        case EOpCross:
+                            funcname = "cross";
+                            break;
+                        case EOpMix:
+                            funcname = "mix";
+                            break;
+                        case EOpPow:
+                            funcname = "pow";
+                            break;
+                        case EOpSmoothStep:
+                            funcname = "smoothstep";
+                            break;
+                        case EOpReflect:
+                            funcname = "reflect";
+                            break;
+                        case EOpSample:
+                            funcname = "__builtin_sample";
+                            break;
+                        case EOpSamplerTransform:
+                            funcname = "__builtin_sampler_transform";
+                            break;
+                        case EOpConstructInt:
+                            funcname = "int";
+                            break;
+                        case EOpConstructBool:
+                            funcname = "bool";
+                            break;
+                        case EOpConstructFloat:
+                            funcname = "float";
+                            break;
+                        case EOpConstructVec2:
+                            funcname = "vec2";
+                            break;
+                        case EOpConstructVec3:
+                            funcname = "vec3";
+                            break;
+                        case EOpConstructVec4:
+                            funcname = "vec4";
+                            break;
+                        case EOpConstructBVec2:
+                            funcname = "bvec2";
+                            break;
+                        case EOpConstructBVec3:
+                            funcname = "bvec3";
+                            break;
+                        case EOpConstructBVec4:
+                            funcname = "bvec4";
+                            break;
+                        case EOpConstructIVec2:
+                            funcname = "ivec2";
+                            break;
+                        case EOpConstructIVec3:
+                            funcname = "ivec3";
+                            break;
+                        case EOpConstructIVec4:
+                            funcname = "ivec4";
+                            break;
                     }
 
-                    AppendOutput("%s", (*i).c_str());
-                    first = false;
-                }
+                    switch(n->getOp())
+                    {
+                        case EOpSample:
+                        case EOpSamplerTransform:
+                            AppendGLSLType(n->getTypePointer()); 
+                            AppendOutput(" %s = %s_", tmp, funcname);
+                            AppendOutput(m_Prefix.c_str());
+                            AppendOutput("_kernel(");
+                            break;
+                        default:
+                            AppendGLSLType(n->getTypePointer()); 
+                            AppendOutput(" %s = %s(", tmp, funcname);
+                            break;
+                    }
 
-                AppendOutput(");\n");
+                    bool first = true;
+                    for(std::vector<std::string>::reverse_iterator
+                            i=params.rbegin();
+                            i != params.rend(); i++)
+                    {
+                        if(!first)
+                        {
+                            AppendOutput(", ");
+                        }
+
+                        AppendOutput("%s", (*i).c_str());
+                        first = false;
+                    }
+
+                    AppendOutput(");\n");
+                }
             }
             break;
         default:

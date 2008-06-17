@@ -406,7 +406,9 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
-
+    
+    // Create a vector os sampler parameters.
+    std::vector<SamplerParameter*> samplerParams;
     for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
     {
@@ -417,14 +419,29 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 dynamic_cast<SamplerParameter*>(pKP);
             if(pKSP != NULL)
             {
-                snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
-                dest += "if(sampler == ";
-                dest += idxStr;
-                dest += ") {";
-                pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
-                dest += tempStr;
-                dest += "}\n";
+                samplerParams.push_back(pKSP);
             }
+        }
+    }
+
+    // Special case for kernels with only one sampler.
+    if(samplerParams.size() == 1)
+    {
+        SamplerParameter *pKSP = samplerParams.front();
+        pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+        dest += tempStr;
+    } else {
+        for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
+                i != samplerParams.end(); i++)
+        {
+            SamplerParameter *pKSP = *i;
+            snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+            dest += "if(sampler == ";
+            dest += idxStr;
+            dest += ") {";
+            pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+            dest += tempStr;
+            dest += "}\n";
         }
     }
 
@@ -437,37 +454,50 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "  vec3 row1 = vec3(1,0,0);\n";
     dest += "  vec3 row2 = vec3(0,1,0);\n";
 
-    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
-            i != params.end(); i++)
+    // Special case for kernels with only one sampler.
+    if(samplerParams.size() == 1)
     {
-        Parameter *pKP = (*i).second;
-        if(pKP != NULL)
+        SamplerParameter *pSP = samplerParams.front();
+        AffineTransform* invTrans = pSP->GetTransform()->Copy();
+        invTrans->Invert();
+        const AffineTransformStruct& transform =
+            invTrans->GetTransformStruct();
+        dest += "row1 = vec3(";
+        snprintf(idxStr, 255, "%f,%f,%f",
+                transform.m11, transform.m12, transform.tX);
+        dest += idxStr;
+        dest += ");\n";
+        dest += "row2 = vec3(";
+        snprintf(idxStr, 255, "%f,%f,%f", 
+                transform.m21, transform.m22, transform.tY);
+        dest += idxStr;
+        dest += ");\n";
+        invTrans->Release();
+    } else {
+        for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
+                i != samplerParams.end(); i++)
         {
-            SamplerParameter *pSP = 
-                dynamic_cast<SamplerParameter*>(pKP);
-            if(pSP != NULL)
-            {
-                AffineTransform* invTrans = pSP->GetTransform()->Copy();
-                invTrans->Invert();
-                const AffineTransformStruct& transform =
-                    invTrans->GetTransformStruct();
-                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
-                dest += "if(sampler == ";
-                dest += idxStr;
-                dest += ") {\n";
-                dest += "row1 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f",
-                        transform.m11, transform.m12, transform.tX);
-                dest += idxStr;
-                dest += ");\n";
-                dest += "row2 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f", 
-                        transform.m21, transform.m22, transform.tY);
-                dest += idxStr;
-                dest += ");\n";
-                dest += "}\n";
-                invTrans->Release();
-            }
+            SamplerParameter *pSP = *i;
+            AffineTransform* invTrans = pSP->GetTransform()->Copy();
+            invTrans->Invert();
+            const AffineTransformStruct& transform =
+                invTrans->GetTransformStruct();
+            snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
+            dest += "if(sampler == ";
+            dest += idxStr;
+            dest += ") {\n";
+            dest += "row1 = vec3(";
+            snprintf(idxStr, 255, "%f,%f,%f",
+                    transform.m11, transform.m12, transform.tX);
+            dest += idxStr;
+            dest += ");\n";
+            dest += "row2 = vec3(";
+            snprintf(idxStr, 255, "%f,%f,%f", 
+                    transform.m21, transform.m22, transform.tY);
+            dest += idxStr;
+            dest += ");\n";
+            dest += "}\n";
+            invTrans->Release();
         }
     }
 
@@ -481,29 +511,33 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "(int sampler) {\n";
     dest += "  vec4 retVal = vec4(0,0,0,0);\n";
 
-    for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
-            i != params.end(); i++)
+    if(samplerParams.size() == 1)
     {
-        Parameter *pKP = (*i).second;
-        if(pKP != NULL)
+        SamplerParameter *pSP = samplerParams.front();
+        const Rect2D& extent = pSP->GetExtent();
+        dest += "retVal = vec4(";
+        snprintf(idxStr, 255, "%f,%f,%f,%f",
+                extent.Origin.X, extent.Origin.Y,
+                extent.Size.Width, extent.Size.Height);
+        dest += idxStr;
+        dest += ");\n";
+    } else {
+        for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
+                i != samplerParams.end(); i++)
         {
-            SamplerParameter *pSP = 
-                dynamic_cast<SamplerParameter*>(pKP);
-            if(pSP != NULL)
-            {
-                const Rect2D& extent = pSP->GetExtent();
-                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
-                dest += "if(sampler == ";
-                dest += idxStr;
-                dest += ") {\n";
-                dest += "retVal = vec4(";
-                snprintf(idxStr, 255, "%f,%f,%f,%f",
-                        extent.Origin.X, extent.Origin.Y,
-                        extent.Size.Width, extent.Size.Height);
-                dest += idxStr;
-                dest += ");\n";
-                dest += "}\n";
-            }
+            SamplerParameter *pSP = *i;
+            const Rect2D& extent = pSP->GetExtent();
+            snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
+            dest += "if(sampler == ";
+            dest += idxStr;
+            dest += ") {\n";
+            dest += "retVal = vec4(";
+            snprintf(idxStr, 255, "%f,%f,%f,%f",
+                    extent.Origin.X, extent.Origin.Y,
+                    extent.Size.Width, extent.Size.Height);
+            dest += idxStr;
+            dest += ");\n";
+            dest += "}\n";
         }
     }
 
@@ -527,6 +561,12 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
 
     if(!sampler->IsValid())
         return false;
+
+    // Add builtin functions
+    dest += 
+        "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }"
+        "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }"
+        ;
 
     std::vector<SamplerParameter*> children;
     KernelSamplerParameter* ksp = dynamic_cast<KernelSamplerParameter*>(s);
@@ -921,6 +961,14 @@ bool TextureSamplerParameter::BuildTopLevelGLSL(std::string& dest)
     dest += GetBlockPrefix();
     dest += "_texture;\n";
 
+    dest += "vec4 ";
+    dest += GetBlockPrefix();
+    dest += "_kernel(in vec2 destCoord) {\n";
+    dest += "  return texture2D(";
+    dest += GetBlockPrefix();
+    dest += "_texture, destCoord);\n";
+    dest += "}\n";
+
     return true;
 }
 
@@ -1112,6 +1160,7 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
     }
 
     const char* pSrc = shaderSource.c_str();
+    printf(pSrc);
     CHECK( glShaderSourceARB(retVal->FragShader, 1, &pSrc, NULL) );
     CHECK( glCompileShaderARB(retVal->FragShader) );
 

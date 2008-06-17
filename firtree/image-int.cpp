@@ -86,7 +86,7 @@ ImageImpl::~ImageImpl()
 {
     if(m_GLTexture != 0)
     {
-        CHECK_GL( glDeleteTextures(1, &m_GLTexture) );
+        CHECK_GL( glDeleteTextures(1, (const GLuint*) &m_GLTexture) );
         m_GLTexture = 0;
     }
 
@@ -134,7 +134,7 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     if((m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
             (m_BitmapRep->ImageBlob->GetLength() > 0))
     {
-        CHECK_GL( glGenTextures(1, &m_GLTexture) );
+        CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
         assert(m_BitmapRep->Stride == m_BitmapRep->Width*4);

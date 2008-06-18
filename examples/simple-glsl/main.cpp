@@ -22,7 +22,7 @@
 #include <firtree/main.h>
 #include <firtree/image.h>
 
-#include "compiler/runtime/glsl/glsl-runtime.h"
+#include <firtree/runtime/glsl/glsl-runtime.h>
 
 #include <stdlib.h>
 

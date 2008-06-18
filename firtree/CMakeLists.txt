@@ -89,6 +89,9 @@ SET(FIRTREE_SOURCES
 
 	internal/image-int.h
 
+	runtime/glsl/glsl-runtime.h
+	runtime/glsl/glsl-runtime.cpp
+
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
 

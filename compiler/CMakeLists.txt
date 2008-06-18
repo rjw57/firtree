@@ -33,7 +33,6 @@ INCLUDE_DIRECTORIES(
 
 ADD_SUBDIRECTORY(frontend)
 ADD_SUBDIRECTORY(backends)
-ADD_SUBDIRECTORY(runtime)
 
 # Set platform-specific variables
 IF(APPLE)
@@ -60,9 +59,6 @@ SET(COMPILER_SOURCES
 	include/compiler.h 
 
 	compiler.cpp
-
-	runtime/glsl/glsl-runtime.h
-	runtime/glsl/glsl-runtime.cpp
 )
 
 ADD_LIBRARY(compiler ${COMPILER_SOURCES})

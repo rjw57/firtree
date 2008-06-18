@@ -1,0 +1,9 @@
+prefix=/usr/local
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: firtree
+Description: The FIRTREE image processing library.
+Version: 0.1.1
+Libs: -L${libdir} -lfirtree
+Cflags: -I${includedir} 

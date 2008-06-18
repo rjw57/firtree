@@ -70,10 +70,22 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
         @ONLY)
 ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
 
-SET(FIRTREE_SOURCES
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+    CONFIGURE_FILE(
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc"
+        @ONLY)
+ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+INSTALL(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig)
+
+SET(FIRTREE_HEADERS
 	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
 	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
 	include/firtree/image.h
+)
+
+SET(FIRTREE_SOURCES
+	${FIRTREE_HEADERS}
 
 	internal/image-int.h
 
@@ -103,3 +115,4 @@ INSTALL(TARGETS firtree
   ARCHIVE DESTINATION lib
 )
 
+INSTALL(FILES ${FIRTREE_HEADERS} DESTINATION include/firtree)

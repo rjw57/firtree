@@ -147,7 +147,7 @@ Image* Image::CreateFromFile(const char* pFileName)
         return false;
     }
 
-    MagickFlipImage(wand);
+    // MagickFlipImage(wand);
 
     unsigned int w = MagickGetImageWidth(wand);
     unsigned int h = MagickGetImageHeight(wand);

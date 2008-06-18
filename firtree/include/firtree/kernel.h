@@ -69,10 +69,10 @@ class NumericParameter : public Parameter
         /// Protected constructors/destructors. Use the Create()
         /// static method.
         NumericParameter();
-        virtual ~NumericParameter();
         ///@}
 
     public:
+        virtual ~NumericParameter();
         // ====================================================================
         // CONSTRUCTION METHODS
 
@@ -143,9 +143,9 @@ class SamplerParameter : public Parameter
 {
     protected:
         SamplerParameter();
-        virtual ~SamplerParameter();
 
     public:
+        virtual ~SamplerParameter();
         /// Return a rectangle in sampler co-ordinates which completely
         /// encloses the non-transparent pixels of the source.
         virtual const Rect2D GetDomain() const = 0;
@@ -170,10 +170,10 @@ class Kernel : public ReferenceCounted
         /// factory functions instead.
         Kernel();
         Kernel(const char* source);
-        virtual ~Kernel();
         ///@}
 
     public:
+        virtual ~Kernel();
         // ====================================================================
         // CONST METHODS
 

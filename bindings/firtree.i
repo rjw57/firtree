@@ -28,13 +28,37 @@ using namespace Firtree;
 
 %}
 
-%include <firtree/main.h>
-%include <firtree/math.h>
-%include <firtree/image.h>
-%include <firtree/kernel.h>
-%include <firtree/glsl-runtime.h>
-
 #ifdef SWIGPYTHON
+
+// %feature("ref")   Firtree::ReferenceCounted "printf(\"Ref: %p\\n\", $this);"
+// %feature("unref") Firtree::ReferenceCounted "printf(\"Unref: %p\\n\", $this); $this->Release();"
+
+%feature("ref")   Firtree::ReferenceCounted ""
+%feature("unref") Firtree::ReferenceCounted "$this->Release();"
+
+%newobject Firtree::Blob::Create;
+%newobject Firtree::Blob::CreateWithLength;
+%newobject Firtree::Blob::CreateFromBuffer;
+%newobject Firtree::Blob::CreateFromBlob;
+
+%newobject Firtree::GLSL::CreateSampler;
+%newobject Firtree::GLSL::CreateKernel;
+
+%newobject Firtree::Image::CreateFromImage;
+%newobject Firtree::Image::CreateFromBitmapData;
+%newobject Firtree::Image::CreateFromFile;
+%newobject Firtree::Image::CreateFromImageWithTransform;
+%newobject Firtree::Image::CreateFromKernel;
+%newobject Firtree::Image::CreateFromImageProvider;
+
+%newobject Firtree::Parameter::Create;
+
+%newobject Firtree::AffineTransform::Identity;
+%newobject Firtree::AffineTransform::FromTransformStruct;
+%newobject Firtree::AffineTransform::Scaling;
+%newobject Firtree::AffineTransform::RotationByDegrees;
+%newobject Firtree::AffineTransform::RotationByRadians;
+%newobject Firtree::AffineTransform::Translation;
 
 /* Convert from Python --> C */
 %typemap(in) uint32_t {
@@ -58,6 +82,12 @@ using namespace Firtree;
     }
 }
 #endif
+
+%include <firtree/main.h>
+%include <firtree/math.h>
+%include <firtree/image.h>
+%include <firtree/kernel.h>
+%include <firtree/glsl-runtime.h>
 
 /* So that VIM does the "right thing"
  * vim:cindent:sw=4:ts=4:et

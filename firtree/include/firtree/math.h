@@ -167,10 +167,10 @@ class AffineTransform : public ReferenceCounted
         ///@{
         AffineTransform();
         AffineTransform(const AffineTransform&);
-        virtual ~AffineTransform();
         ///@}
 
     public:
+        virtual ~AffineTransform();
         // ====================================================================
         // CONSTRUCTION METHODS
 

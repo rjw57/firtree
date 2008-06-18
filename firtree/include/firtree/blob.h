@@ -39,10 +39,10 @@ class Blob : public ReferenceCounted {
         Blob(size_t length);
         Blob(const void* buffer, size_t length);
         Blob(const Blob& blob);
-        virtual ~Blob();
         ///@}
 
     public:
+        virtual ~Blob();
         // ====================================================================
         // CONSTRUCTION METHODS
 

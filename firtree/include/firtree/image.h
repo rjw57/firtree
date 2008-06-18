@@ -92,10 +92,11 @@ class Image : public ReferenceCounted
         Image(const BitmapImageRep& imageRep, bool copy);
         Image(Kernel* kernel);
         Image(ImageProvider* imageProvider);
-        virtual ~Image();
         ///@}
 
     public:
+        virtual ~Image();
+
         // ====================================================================
         // CONSTRUCTION METHODS
 

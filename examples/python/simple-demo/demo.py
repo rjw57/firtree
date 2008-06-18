@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+
+'''
+demo.py
+
+This module provides an example of using the Firtree
+Python bindings to rendering via GTK.
+
+Rich Wareham, <richwareham@gmail.com>
+'''
+
+# Import the PyGTK + PyGtkGLArea stuff
+import pygtk
+pygtk.require('2.0')
+from gtk.gtkgl.apputils import *
+
+#==============================================================================
+# Use sys to find the script path and hence construct a path in which to 
+# search for the Firtree bindings.
+
+import sys
+import os
+import gc
+
+# Find the script path.
+scriptDir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+# Walk down three subdirs...
+rootDir = os.path.dirname(os.path.dirname(os.path.dirname(scriptDir)))
+
+# Add path to the python bindings
+importDir = os.path.join(rootDir, 'bindings', 'python')
+
+# Create path to the example images
+imageDir = os.path.join(rootDir, 'examples')
+
+# Append this path to our search path & import the firtree bindings.
+sys.path.append(importDir)
+
+import Firtree
+
+class FirtreeScene (GLScene,
+                    GLSceneKey):
+    ''' Implements the GLScene interface for the demo '''
+
+    def __init__ (self):
+        GLScene.__init__(self)
+
+    def init (self):
+        # Set background colour
+        glClearColor(0, 0, 0, 1)
+        glDisable(GL_DEPTH_TEST)
+
+        lenaImage = Firtree.Image.CreateFromFile(
+            os.path.join(imageDir, 'lena.png'))
+
+        lenaSampler = Firtree.CreateSampler(lenaImage)
+
+        self.renderContext = Firtree.CreateRenderingContext(lenaSampler)
+
+    def display (self, width, height):
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        Firtree.RenderAtPoint(self.renderContext, 
+            Firtree.Point2D(0,0),
+            Firtree.Rect2D(0,0,width,height))
+
+    def clear_up (self):
+        print('Clearing up...')
+
+        Firtree.ReleaseRenderingContext(self.renderContext)
+
+        gc.collect()
+        globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
+        print('Number of objects still allocated (should be zero): %i' % globalObCount)
+
+    def reshape (Self, width, height):
+        # Resize the OpenGL viewport
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0.0, width, 0.0, height, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        
+    def key_press(self, width, height, event):
+        pass
+        
+    def key_release(self, width, height, event):
+        if (event.keyval == gtk.keysyms.q) or (event.keyval == gtk.keysyms.Escape):
+            # Quit
+            gtk.main_quit()
+
+if __name__ == '__main__':
+    glscene = FirtreeScene()
+    glapp = GLApplication(glscene)
+    glapp.set_title('Firtree Demo')
+    glapp.set_size_request(640, 480)
+    glapp.run()
+
+    glscene.clear_up()
+
+# vim:sw=4:ts=4:et:autoindent

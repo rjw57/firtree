@@ -66,10 +66,10 @@ class ReferenceCounted {
         /// done via explicit static Create.*() methods which use
         /// the 'new' operator.
         ReferenceCounted();
-        virtual ~ReferenceCounted();
         /// @}
 
     public:
+        virtual ~ReferenceCounted();
         /// Increment the object's reference count.
         void Retain();
 

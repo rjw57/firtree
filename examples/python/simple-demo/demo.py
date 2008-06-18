@@ -9,10 +9,10 @@ Python bindings to rendering via GTK.
 Rich Wareham, <richwareham@gmail.com>
 '''
 
-# Import the PyGTK + PyGtkGLArea stuff
-import pygtk
-pygtk.require('2.0')
-from gtk.gtkgl.apputils import *
+# Import the Python OpenGL stuff
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
+from OpenGL.GL import *
 
 #==============================================================================
 # Use sys to find the script path and hence construct a path in which to 
@@ -39,12 +39,12 @@ sys.path.append(importDir)
 
 import Firtree
 
-class FirtreeScene (GLScene,
-                    GLSceneKey):
-    ''' Implements the GLScene interface for the demo '''
+frameDelay = 1000/60
+shouldInit = True
+shouldQuit = False
 
-    def __init__ (self):
-        GLScene.__init__(self)
+class FirtreeScene:
+    ''' Implements the GLScene interface for the demo '''
 
     def init (self):
         # Set background colour & disable depth testing
@@ -111,7 +111,7 @@ class FirtreeScene (GLScene,
         globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
         print('Number of objects still allocated (should be zero): %i' % globalObCount)
 
-    def reshape (Self, width, height):
+    def reshape (self, width, height):
         # Resize the OpenGL viewport
         glViewport(0, 0, width, height)
         glMatrixMode(GL_PROJECTION)
@@ -120,21 +120,55 @@ class FirtreeScene (GLScene,
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
-    def key_press(self, width, height, event):
-        pass
-        
-    def key_release(self, width, height, event):
-        if (event.keyval == gtk.keysyms.q) or (event.keyval == gtk.keysyms.Escape):
-            # Quit
-            gtk.main_quit()
+    def keypress(self, key):
+        if(key == 'q'):
+            print('Quitting...')
+            quit()
+
+def reshape(w, h):
+    global winWidth, winHeight
+
+    winWidth = w
+    winHeight = h
+    glscene.reshape(winWidth, winHeight)
+
+def quit():
+    glscene.clear_up()
+    sys.exit()
+
+def display():
+    global shouldInit, shouldQuit
+
+    if(shouldInit):
+        glscene.init()
+        shouldInit = False
+
+    glscene.display(winWidth, winHeight)
+    glutSwapBuffers()
+
+def keypress(k, x, y):
+    glscene.keypress(k)
+
+def timer(val):
+    glutSetWindow(window)
+    glutPostRedisplay()
+    glutTimerFunc(frameDelay, timer, val)
 
 if __name__ == '__main__':
     glscene = FirtreeScene()
-    glapp = GLApplication(glscene)
-    glapp.set_title('Firtree Demo')
-    glapp.set_size_request(800,600)
-    glapp.run()
 
-    glscene.clear_up()
+    winWidth = winHeight = 0
+
+    glutInit(sys.argv)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+    glutInitWindowSize(800, 600)
+    window = glutCreateWindow("Firtree Demo")
+
+    glutDisplayFunc(display)
+    glutReshapeFunc(reshape)
+    glutKeyboardFunc(keypress)
+    glutTimerFunc(frameDelay, timer, 0)
+
+    glutMainLoop()
 
 # vim:sw=4:ts=4:et:autoindent

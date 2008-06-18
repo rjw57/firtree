@@ -44,6 +44,7 @@ ImageImpl::ImageImpl()
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
+    ,   m_Kernel(NULL)
 {
 }
 
@@ -54,6 +55,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
+    ,   m_Kernel(NULL)
 {
     const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
 
@@ -75,6 +77,7 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
+    ,   m_Kernel(NULL)
 {
     if(imageRep.ImageBlob == NULL) { return; }
     if(imageRep.Stride < imageRep.Width) { return; }
@@ -82,6 +85,22 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
 
     m_BitmapRep = new BitmapImageRep(imageRep, copy);
 }
+
+//=============================================================================
+ImageImpl::ImageImpl(Kernel* k)
+    :   Image(k)
+    ,   m_BitmapRep(NULL)
+    ,   m_GLTexture(0)
+    ,   m_BaseImage(NULL)
+    ,   m_BaseTransform(NULL)
+    ,   m_Kernel(k)
+{
+    if(m_Kernel != NULL)
+    {
+        m_Kernel->Retain();
+    }
+}
+
 
 //=============================================================================
 ImageImpl::~ImageImpl()
@@ -100,6 +119,7 @@ ImageImpl::~ImageImpl()
 
     FIRTREE_SAFE_RELEASE(m_BaseImage);
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
+    FIRTREE_SAFE_RELEASE(m_Kernel);
 }
 
 //=============================================================================
@@ -166,6 +186,28 @@ bool ImageImpl::HasBitmapImageRep() const
 
     return (m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
         (m_BitmapRep->ImageBlob->GetLength() > 0);
+}
+
+//=============================================================================
+bool ImageImpl::HasKernel() const
+{
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->HasKernel();
+    }
+
+    return (m_Kernel != NULL);
+}
+
+//=============================================================================
+Kernel* ImageImpl::GetKernel() const
+{
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->GetKernel();
+    }
+
+    return m_Kernel;
 }
 
 //=============================================================================

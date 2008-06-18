@@ -42,18 +42,7 @@ bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int 
 const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSampler(Image* image);
-
-//=============================================================================
-Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
-        Image* image, const AffineTransform* transform);
-
-//=============================================================================
-Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel);
-
-//=============================================================================
-Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
-        Firtree::Kernel* kernel, const AffineTransform* transform);
+Firtree::SamplerParameter* CreateSampler(Image* im);
 
 //=============================================================================
 Firtree::Kernel* CreateKernel(const char* source);

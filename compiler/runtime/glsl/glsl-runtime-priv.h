@@ -44,6 +44,20 @@ class SamplerParameter;
 class Kernel;
 
 //=============================================================================
+Firtree::SamplerParameter* CreateTextureSampler(Image* image);
+
+//=============================================================================
+Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+        Image* image, const AffineTransform* transform);
+
+//=============================================================================
+Firtree::SamplerParameter* CreateKernelSampler(Image* im);
+
+//=============================================================================
+Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
+        Image* im, const AffineTransform* transform);
+
+//=============================================================================
 class SamplerParameter : public Firtree::SamplerParameter
 {
     protected:
@@ -129,11 +143,11 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
 class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 {
     protected:
-        KernelSamplerParameter(Firtree::Kernel* kernel);
+        KernelSamplerParameter(Image* im);
         virtual ~KernelSamplerParameter();
 
     public:
-        static SamplerParameter* Create(Firtree::Kernel* kernel);
+        static SamplerParameter* Create(Image* im);
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest);

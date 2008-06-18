@@ -42,6 +42,7 @@ class ImageImpl : public Image
         ImageImpl();
         ImageImpl(const Image* im, AffineTransform* t);
         ImageImpl(const BitmapImageRep& imageRep, bool copyData);
+        ImageImpl(Kernel* k);
         virtual ~ImageImpl();
         ///@}
 
@@ -61,6 +62,13 @@ class ImageImpl : public Image
 
         /// Return true if there is a cached BitmapImageRep ready to use.
         bool HasBitmapImageRep() const;
+
+        /// Return true if this image directly represents a kernel.
+        bool HasKernel() const;
+
+        /// Returns the kernel represented by this image or NULL if there
+        /// is none.
+        Kernel* GetKernel() const;
 
         /// Return a pointer to an AffineTransform which represents the
         /// transfrom from the underlying pixel representation to this image.
@@ -86,11 +94,11 @@ class ImageImpl : public Image
     protected:
         /// The image representation as a binary blob or NULL if there is 
         /// none yet.
-        BitmapImageRep* m_BitmapRep;
+        BitmapImageRep*     m_BitmapRep;
 
         /// The image representation as an OpenGL texture or 0 if there is 
         /// none yet.
-        unsigned int    m_GLTexture;
+        unsigned int        m_GLTexture;
 
         ///@{
         /// If this image is actually the result of transforming another
@@ -99,6 +107,9 @@ class ImageImpl : public Image
         ImageImpl*          m_BaseImage;
         AffineTransform*    m_BaseTransform;
         ///@}
+        
+        /// The kernel encapsulated by this image.
+        Kernel*             m_Kernel;
 
         friend class Firtree::Image;
 };

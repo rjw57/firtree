@@ -44,7 +44,6 @@ const char* g_CheckerKernelSource =
 ;
 
 Kernel* g_CheckerKernel = GLSL::CreateKernel(g_CheckerKernelSource);
-SamplerParameter* g_CheckerSampler = GLSL::CreateKernelSampler(g_CheckerKernel);
 
 const char* g_SpotKernelSource = 
 "    kernel vec4 spotKernel(float dotPitch, __color backColor,"
@@ -57,7 +56,7 @@ const char* g_SpotKernelSource =
 ;
 
 Kernel* g_SpotKernel = GLSL::CreateKernel(g_SpotKernelSource);
-SamplerParameter* g_SpotSampler = GLSL::CreateKernelSampler(g_SpotKernel);
+
 
 const char* g_OverKernelSource = 
 "    kernel vec4 compositeOver(sampler a, sampler b, float phase)"
@@ -69,7 +68,6 @@ const char* g_OverKernelSource =
 ;
 
 Kernel* g_OverKernel = GLSL::CreateKernel(g_OverKernelSource);
-SamplerParameter* g_OverSampler = GLSL::CreateKernelSampler(g_OverKernel);
 
 const char* g_RippleKernelSource = 
 "    kernel vec4 ripple(sampler a, float phase)"
@@ -95,7 +93,6 @@ const char* g_RippleKernelSource =
 ;
 
 Kernel* g_RippleKernel = GLSL::CreateKernel(g_RippleKernelSource);
-SamplerParameter* g_RippleSampler = GLSL::CreateKernelSampler(g_RippleKernel);
 
 const char* g_GradientKernelSource = 
 "    kernel vec4 gradientKernel()"
@@ -106,14 +103,17 @@ const char* g_GradientKernelSource =
 ;
 
 Kernel* g_GradientKernel = GLSL::CreateKernel(g_GradientKernelSource);
-SamplerParameter* g_GradientSampler = GLSL::CreateKernelSampler(g_GradientKernel);
 
 Kernel* g_OverKernel2 = GLSL::CreateKernel(g_OverKernelSource);
-SamplerParameter* g_OverSampler2 = GLSL::CreateKernelSampler(g_OverKernel2);
 
 SamplerParameter* g_LenaSampler = NULL;
-
 SamplerParameter* g_GlobalSampler = NULL;
+SamplerParameter* g_OverSampler2 = NULL;
+SamplerParameter* g_GradientSampler = NULL;
+SamplerParameter* g_RippleSampler = NULL;
+SamplerParameter* g_OverSampler = NULL;
+SamplerParameter* g_CheckerSampler = NULL;
+SamplerParameter* g_SpotSampler = NULL;
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -164,6 +164,39 @@ void initialize_kernels()
         static float dotColor[] = {0.7, 0.0, 0.0, 0.7};
         static float clearColor[] = {0.0, 0.0, 0.0, 0.0};
 
+        Image* tmpim = NULL;
+
+        g_LenaSampler = NULL;
+        g_GlobalSampler = NULL;
+
+        tmpim = Image::CreateFromKernel(g_OverKernel2);
+        g_OverSampler2 = GLSL::CreateSampler(tmpim);
+        FIRTREE_SAFE_RELEASE(tmpim);
+
+        tmpim = Image::CreateFromKernel(g_GradientKernel);
+        g_GradientSampler = GLSL::CreateSampler(tmpim);
+        FIRTREE_SAFE_RELEASE(tmpim);
+
+        tmpim = Image::CreateFromKernel(g_RippleKernel);
+        g_RippleSampler = GLSL::CreateSampler(tmpim);
+        FIRTREE_SAFE_RELEASE(tmpim);
+
+        tmpim = Image::CreateFromKernel(g_OverKernel);
+        g_OverSampler = GLSL::CreateSampler(tmpim);
+        FIRTREE_SAFE_RELEASE(tmpim);
+
+        tmpim = Image::CreateFromKernel(g_CheckerKernel);
+        AffineTransform* t = AffineTransform::RotationByDegrees(30.f);
+        Image* checkTrans = Image::CreateFromImageWithTransform(tmpim, t);
+        FIRTREE_SAFE_RELEASE(t);
+        g_CheckerSampler = GLSL::CreateSampler(checkTrans);
+        FIRTREE_SAFE_RELEASE(tmpim);
+        FIRTREE_SAFE_RELEASE(checkTrans);
+
+        tmpim = Image::CreateFromKernel(g_SpotKernel);
+        g_SpotSampler = GLSL::CreateSampler(tmpim);
+        FIRTREE_SAFE_RELEASE(tmpim);
+
         g_CheckerKernel->SetValueForKey(10.f, "squareSize");
         g_CheckerKernel->SetValueForKey(backColor, 4, "backColor");
         g_CheckerKernel->SetValueForKey(squareColor, 4, "foreColor");
@@ -191,9 +224,9 @@ void initialize_kernels()
         Image* lenaTransImage = Image::CreateFromImageWithTransform(lenaImage, lenaTrans);
 
         g_LenaSampler = 
-            GLSL::CreateTextureSampler(lenaTransImage);
+            GLSL::CreateSampler(lenaTransImage);
         SamplerParameter* fogSampler = 
-            GLSL::CreateTextureSampler(fogImage);
+            GLSL::CreateSampler(fogImage);
 
         lenaTrans->Release();
 

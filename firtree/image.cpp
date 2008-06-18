@@ -90,6 +90,12 @@ Image::Image(const BitmapImageRep& imageRep, bool copy)
 }
 
 //=============================================================================
+Image::Image(Kernel* k)
+    :   ReferenceCounted()
+{
+}
+
+//=============================================================================
 Image::~Image()
 {
 }
@@ -163,6 +169,13 @@ Image* Image::CreateFromFile(const char* pFileName)
     imageBlob->Release();
 
     return rv;
+}
+
+//=============================================================================
+Image* Image::CreateFromKernel(Kernel* k)
+{
+    if(k == NULL) { return NULL; }
+    return new ImageImpl(k);
 }
 
 //=============================================================================

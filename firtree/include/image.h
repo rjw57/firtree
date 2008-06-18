@@ -28,6 +28,7 @@
 #include <firtree/include/main.h>
 #include <firtree/include/math.h>
 #include <firtree/include/blob.h>
+#include <firtree/include/kernel.h>
 
 namespace Firtree {
 
@@ -73,6 +74,7 @@ class Image : public ReferenceCounted
         Image();
         Image(const Image* im, AffineTransform* t);
         Image(const BitmapImageRep& imageRep, bool copy);
+        Image(Kernel* kernel);
         virtual ~Image();
         ///@}
 
@@ -101,6 +103,9 @@ class Image : public ReferenceCounted
         /// a source image.
         static Image* CreateFromImageWithTransform(const Image* im,
                 AffineTransform* t);
+
+        /// Construct an image from the output of a kernel.
+        static Image* CreateFromKernel(Kernel* k);
 
         // ====================================================================
         // CONST METHODS

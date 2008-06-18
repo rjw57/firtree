@@ -334,9 +334,9 @@ SamplerParameter* Kernel::SamplerParameterForKey(const char* key)
 }
 
 //=============================================================================
-SamplerParameter* KernelSamplerParameter::Create(Firtree::Kernel* kernel)
+SamplerParameter* KernelSamplerParameter::Create(Image* im)
 {
-    return new KernelSamplerParameter(kernel);
+    return new KernelSamplerParameter(im);
 }
 
 //=============================================================================
@@ -378,13 +378,30 @@ const Rect2D SamplerParameter::GetDomain() const
 }
 
 //=============================================================================
-KernelSamplerParameter::KernelSamplerParameter(Firtree::Kernel* kernel)
+KernelSamplerParameter::KernelSamplerParameter(Image* im)
     :   Firtree::GLSL::SamplerParameter()
     ,   m_KernelCompileStatus(false)
 {
-    // HACK: Check this casr
-    m_Kernel = (GLSL::Kernel*)(kernel);
+    Internal::ImageImpl* imImpl = 
+        dynamic_cast<Internal::ImageImpl*>(im);
+    if(imImpl == NULL) { return; }
+    if(!(imImpl->HasKernel())) { return; }
+
+    Firtree::Kernel* k = imImpl->GetKernel();
+    GLSL::Kernel* gk = dynamic_cast<GLSL::Kernel*>(k);
+    if(gk == NULL) { return; }
+    
+    AffineTransform* underlyingTransform = 
+        imImpl->GetTransformFromUnderlyingImage();
+
+    m_Kernel = gk;
     m_Kernel->Retain();
+
+    AffineTransform* t = GetTransform()->Copy();
+    t->AppendTransform(underlyingTransform);
+    SetTransform(t);
+    FIRTREE_SAFE_RELEASE(t);
+    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================
@@ -1043,6 +1060,21 @@ unsigned int TextureSamplerParameter::GetGLTextureObject() const
 }
 
 //=============================================================================
+Firtree::SamplerParameter* CreateSampler(Image* im)
+{
+    Internal::ImageImpl* imImpl = 
+        dynamic_cast<Internal::ImageImpl*>(im);
+    if(imImpl == NULL) { return NULL; }
+
+    if(imImpl->HasKernel())
+    {
+        return CreateKernelSampler(im);
+    }
+
+    return CreateTextureSampler(im);
+}
+
+//=============================================================================
 Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
         Image* im, const AffineTransform* transform)
 {
@@ -1056,9 +1088,9 @@ Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
 
 //=============================================================================
 Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
-        Firtree::Kernel* kernel, const AffineTransform* transform)
+        Image* im, const AffineTransform* transform)
 {
-    SamplerParameter* rv = KernelSamplerParameter::Create(kernel);
+    SamplerParameter* rv = KernelSamplerParameter::Create(im);
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
@@ -1077,9 +1109,9 @@ Firtree::SamplerParameter* CreateTextureSampler(Image* im)
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateKernelSampler(Firtree::Kernel* kernel)
+Firtree::SamplerParameter* CreateKernelSampler(Image* im)
 {
-    return KernelSamplerParameter::Create(kernel);
+    return KernelSamplerParameter::Create(im);
 }
 
 //=============================================================================

@@ -39,10 +39,6 @@ sys.path.append(importDir)
 
 import Firtree
 
-frameDelay = 1000/60
-shouldInit = True
-shouldQuit = False
-
 class FirtreeScene:
     ''' Implements the GLScene interface for the demo '''
 
@@ -157,7 +153,9 @@ def timer(val):
 if __name__ == '__main__':
     glscene = FirtreeScene()
 
+    shouldInit = True
     winWidth = winHeight = 0
+    frameDelay = 1000/60
 
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
@@ -167,7 +165,8 @@ if __name__ == '__main__':
     glutDisplayFunc(display)
     glutReshapeFunc(reshape)
     glutKeyboardFunc(keypress)
-    glutTimerFunc(frameDelay, timer, 0)
+    
+    # glutTimerFunc(frameDelay, timer, 0)
 
     glutMainLoop()
 

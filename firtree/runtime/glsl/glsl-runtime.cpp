@@ -1272,6 +1272,7 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     GLenum err;
     if(context == NULL) { return; }
 
+#if 1
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
     // Firstly clip srcRect by extent
@@ -1292,6 +1293,10 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     // Do nothing if we've clipped everything away.
     if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
         return;
+#else
+    Rect2D clipSrcRect = srcRect;
+    Rect2D renderRect = destRect;
+#endif
 
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      

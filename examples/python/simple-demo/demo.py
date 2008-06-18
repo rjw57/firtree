@@ -47,20 +47,54 @@ class FirtreeScene (GLScene,
         GLScene.__init__(self)
 
     def init (self):
-        # Set background colour
+        # Set background colour & disable depth testing
         glClearColor(0, 0, 0, 1)
         glDisable(GL_DEPTH_TEST)
 
+        # Setup a simple alpha over kernel.
+        overKernel = Firtree.CreateKernel('''
+        kernel vec4 overKernel(sampler over, sampler under)
+        {
+            vec4 overVal = sample(over, samplerCoord(over));
+            vec4 underVal = sample(under, samplerCoord(under));
+            return overVal + underVal * (1.0-overVal.a);
+        }
+        ''')
+        compositeImage = Firtree.Image.CreateFromKernel(overKernel)
+
+        # Load the lena and fog images.
         lenaImage = Firtree.Image.CreateFromFile(
             os.path.join(imageDir, 'lena.png'))
+        fogImage = Firtree.Image.CreateFromFile(
+            os.path.join(imageDir, 'fog.png'))
 
-        lenaSampler = Firtree.CreateSampler(lenaImage)
+        # Form a rotated and translated lena image.
+        lenaTransform = Firtree.AffineTransform.Translation(-256, -256)
+        lenaTransform.RotateByDegrees(20)
+        lenaTransform.TranslateBy(400,300)
+        lenaTransImage = Firtree.Image.CreateFromImageWithTransform(
+            lenaImage, lenaTransform) 
 
-        self.renderContext = Firtree.CreateRenderingContext(lenaSampler)
+        # Form a rotated, translated and scaled fog image.
+        fogTransform = Firtree.AffineTransform.Translation(-160, -120)
+        fogTransform.RotateByDegrees(-30)
+        fogTransform.ScaleBy(1,1.5)
+        fogTransform.TranslateBy(400,300)
+        fogTransImage = Firtree.Image.CreateFromImageWithTransform(
+            fogImage, fogTransform)
+
+        # Wire the lena and fog images into the kernel.
+        overKernel.SetValueForKey(Firtree.CreateSampler(lenaTransImage), 'under')
+        overKernel.SetValueForKey(Firtree.CreateSampler(fogTransImage), 'over')
+
+        # Create a rendering context.
+        sampler = Firtree.CreateSampler(compositeImage)
+        self.renderContext = Firtree.CreateRenderingContext(sampler)
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
 
+        # Render the composited image into the framebuffer.
         Firtree.RenderAtPoint(self.renderContext, 
             Firtree.Point2D(0,0),
             Firtree.Rect2D(0,0,width,height))
@@ -68,8 +102,11 @@ class FirtreeScene (GLScene,
     def clear_up (self):
         print('Clearing up...')
 
+        # Release the rendering context.
         Firtree.ReleaseRenderingContext(self.renderContext)
 
+        # Sanity check to make sure that there are no objects left
+        # dangling.
         gc.collect()
         globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
         print('Number of objects still allocated (should be zero): %i' % globalObCount)
@@ -95,7 +132,7 @@ if __name__ == '__main__':
     glscene = FirtreeScene()
     glapp = GLApplication(glscene)
     glapp.set_title('Firtree Demo')
-    glapp.set_size_request(640, 480)
+    glapp.set_size_request(800,600)
     glapp.run()
 
     glscene.clear_up()

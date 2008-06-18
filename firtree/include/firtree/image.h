@@ -123,7 +123,7 @@ class Image : public ReferenceCounted
                 AffineTransform* t);
 
         /// Construct an image from the output of a kernel.
-        static Image* CreateFromKernel(Kernel* k);
+        static Image* CreateFromKernel(Firtree::Kernel* k);
 
         /// Construct an image from an image provider.
         static Image* CreateFromImageProvider(ImageProvider* improv);

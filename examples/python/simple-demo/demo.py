@@ -105,7 +105,8 @@ class FirtreeScene:
         # dangling.
         gc.collect()
         globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
-        print('Number of objects still allocated (should be zero): %i' % globalObCount)
+        print('Number of objects still allocated (should be zero): %i' 
+            % globalObCount)
 
     def reshape (self, width, height):
         # Resize the OpenGL viewport

@@ -18,11 +18,10 @@
 /// \file image-int.cpp The implementation of the internal FIRTREE image.
 //=============================================================================
 
-#include <firtree/include/main.h>
-#include <firtree/include/image.h>
-#include <firtree/internal/image-int.h>
-
-#include <firtree/include/opengl.h>
+#include <firtree/main.h>
+#include <firtree/image.h>
+#include <firtree/opengl.h>
+#include <internal/image-int.h>
 
 #include <assert.h>
 

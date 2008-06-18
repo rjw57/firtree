@@ -25,10 +25,10 @@
 
 #include <stdlib.h>
 
-#include <firtree/include/main.h>
-#include <firtree/include/math.h>
-#include <firtree/include/blob.h>
-#include <firtree/include/kernel.h>
+#include <firtree/main.h>
+#include <firtree/math.h>
+#include <firtree/blob.h>
+#include <firtree/kernel.h>
 
 namespace Firtree {
 

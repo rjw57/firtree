@@ -25,7 +25,7 @@
 #define FIRTREE_GLSL_H
 //=============================================================================
 
-#include <firtree/include/main.h>
+#include <firtree/main.h>
 
 #include <stdio.h>
 #include <vector>

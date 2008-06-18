@@ -18,7 +18,7 @@
 // This file implements the FIRTREE math functions.
 //=============================================================================
 
-#include "include/math.h"
+#include <firtree/math.h>
 
 #include <stdlib.h>
 #include <string.h>

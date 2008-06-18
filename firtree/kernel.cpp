@@ -19,8 +19,8 @@
 //=============================================================================
 
 #include <float.h>
-#include <firtree/include/main.h>
-#include <firtree/include/kernel.h>
+#include <firtree/main.h>
+#include <firtree/kernel.h>
 
 #include <compiler/include/compiler.h>
 

@@ -20,7 +20,7 @@
 // This file implements the FIRTREE compiler.
 //=============================================================================
 
-#include <firtree/include/main.h>
+#include <firtree/main.h>
 
 #include "glslang/Include/ShHandle.h"
 #include "glslang/Public/ShaderLang.h"

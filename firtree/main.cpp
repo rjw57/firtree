@@ -18,7 +18,7 @@
 // This file implements the FIRTREE ancillary functions.
 //=============================================================================
 
-#include "include/main.h"
+#include <firtree/main.h>
 
 #include <string.h>
 #include <assert.h>

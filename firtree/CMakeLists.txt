@@ -10,7 +10,7 @@ FIND_PACKAGE(GLUT)
 FIND_PACKAGE(Magick++)
 
 SET(FIRTREE_TARGET_LIBRARIES "")
-SET(FIRTREE_TARGET_INCLUDES "")
+SET(FIRTREE_TARGET_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
 
 IF (OPENGL_LIBRARIES)
     SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${OPENGL_LIBRARIES})
@@ -63,17 +63,17 @@ IF(CYGWIN)
         SET(FIRTREE_CYGWIN 1)
 ENDIF(CYGWIN)
 
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
     CONFIGURE_FILE(
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h"
         @ONLY)
-ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/platform.h.in")
+ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
 
 SET(FIRTREE_SOURCES
-	include/main.h		include/platform.h	include/opengl.h
-	include/blob.h		include/math.h		include/kernel.h
-	include/image.h
+	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
+	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
+	include/firtree/image.h
 
 	internal/image-int.h
 
@@ -89,3 +89,17 @@ TARGET_LINK_LIBRARIES(firtree
 	${FIRTREE_TARGET_LIBRARIES}
 	compiler glslang frontend irbackend glslbackend 
 	-lpthread)
+
+# Set the version and soversion properties for Firtree
+# so that library versioning works.
+SET_TARGET_PROPERTIES(firtree PROPERTIES
+	VERSION "${FIRTREE_VERSION}"
+	SOVERSION "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}")
+
+# The magic runes required to install a library.
+INSTALL(TARGETS firtree
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+

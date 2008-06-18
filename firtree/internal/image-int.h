@@ -25,9 +25,9 @@
 
 #include <stdlib.h>
 
-#include <firtree/include/main.h>
-#include <firtree/include/math.h>
-#include <firtree/include/blob.h>
+#include <firtree/main.h>
+#include <firtree/math.h>
+#include <firtree/blob.h>
 
 namespace Firtree { namespace Internal {
 

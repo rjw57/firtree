@@ -26,9 +26,9 @@
 #include <float.h>
 
 #define FIRTREE_NO_GLX
-#include <firtree/include/opengl.h>
-#include <firtree/include/main.h>
-#include <firtree/include/kernel.h>
+#include <firtree/opengl.h>
+#include <firtree/main.h>
+#include <firtree/kernel.h>
 
 #include <firtree/internal/image-int.h>
 

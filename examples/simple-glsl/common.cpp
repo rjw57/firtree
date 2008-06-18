@@ -24,9 +24,9 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include <firtree/include/main.h>
-#include <firtree/include/platform.h>
-#include <firtree/include/opengl.h>
+#include <firtree/main.h>
+#include <firtree/platform.h>
+#include <firtree/opengl.h>
 
 #include <wand/magick_wand.h>
 

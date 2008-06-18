@@ -18,9 +18,9 @@
 
 #include "common.h"
 
-#include <firtree/include/opengl.h>
-#include <firtree/include/main.h>
-#include <firtree/include/image.h>
+#include <firtree/opengl.h>
+#include <firtree/main.h>
+#include <firtree/image.h>
 
 #include "compiler/runtime/glsl/glsl-runtime.h"
 
@@ -165,13 +165,19 @@ void initialize_kernels()
         static float clearColor[] = {0.0, 0.0, 0.0, 0.0};
 
         Image* tmpim = NULL;
+        AffineTransform* t = NULL;
 
         g_LenaSampler = NULL;
         g_GlobalSampler = NULL;
 
         tmpim = Image::CreateFromKernel(g_OverKernel2);
-        g_OverSampler2 = GLSL::CreateSampler(tmpim);
+        t = AffineTransform::RotationByDegrees(-20.f);
+        t->TranslateBy(0,150);
+        Image* o2Trans = Image::CreateFromImageWithTransform(tmpim, t);
+        FIRTREE_SAFE_RELEASE(t);
+        g_OverSampler2 = GLSL::CreateSampler(o2Trans);
         FIRTREE_SAFE_RELEASE(tmpim);
+        FIRTREE_SAFE_RELEASE(o2Trans);
 
         tmpim = Image::CreateFromKernel(g_GradientKernel);
         g_GradientSampler = GLSL::CreateSampler(tmpim);
@@ -186,7 +192,7 @@ void initialize_kernels()
         FIRTREE_SAFE_RELEASE(tmpim);
 
         tmpim = Image::CreateFromKernel(g_CheckerKernel);
-        AffineTransform* t = AffineTransform::RotationByDegrees(30.f);
+        t = AffineTransform::RotationByDegrees(30.f);
         Image* checkTrans = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
         g_CheckerSampler = GLSL::CreateSampler(checkTrans);
@@ -235,7 +241,7 @@ void initialize_kernels()
         FIRTREE_SAFE_RELEASE(fogImage);
 
         g_OverKernel->SetValueForKey(g_LenaSampler, "a");
-        g_OverKernel->SetValueForKey(g_CheckerSampler, "b");
+        g_OverKernel->SetValueForKey(fogSampler, "b");
 
         g_RippleKernel->SetValueForKey(g_OverSampler, "a");
 

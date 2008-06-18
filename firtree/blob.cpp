@@ -20,7 +20,7 @@
 // This file implements the FIRTREE blob encapsulation.
 //=============================================================================
 
-#include "include/blob.h"
+#include <firtree/blob.h>
 
 #include <string.h>
 #include <stdio.h>

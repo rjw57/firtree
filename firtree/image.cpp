@@ -18,9 +18,9 @@
 /// \file image.cpp The implementation of the abstract FIRTREE image.
 //=============================================================================
 
-#include <firtree/include/main.h>
-#include <firtree/include/image.h>
-#include <firtree/internal/image-int.h>
+#include <firtree/main.h>
+#include <firtree/image.h>
+#include <internal/image-int.h>
 
 #include <wand/magick_wand.h>
 

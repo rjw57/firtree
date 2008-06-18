@@ -1167,6 +1167,8 @@ struct RenderingContext {
 //=============================================================================
 RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler)
 {
+    _KernelEnsureAPI();
+
     GLSL::SamplerParameter* sampler = 
         dynamic_cast<GLSL::SamplerParameter*>(topLevelSampler);
 

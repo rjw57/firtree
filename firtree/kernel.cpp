@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include <float.h>
+#include <string.h>
 #include <firtree/main.h>
 #include <firtree/kernel.h>
 

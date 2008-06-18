@@ -38,6 +38,9 @@
     #include <windows.h>
 #endif
 
+// FIRTREE: build fix.
+#include <string.h>
+
 void TInfoSinkBase::append(const char *s)           
 {
     if (outputStream & EString) {

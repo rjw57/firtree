@@ -30,6 +30,9 @@
 
 #include <map>
 #include <stack>
+#include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 namespace Firtree {
 

@@ -40,6 +40,7 @@
 #include "QualifierAlive.h"
 #include "RemoveTree.h"
 #include <float.h>
+#include <limits.h>
 
 bool CompareStructure(const TType& leftNodeType, constUnion* rightUnionArray, constUnion* leftUnionArray);
 

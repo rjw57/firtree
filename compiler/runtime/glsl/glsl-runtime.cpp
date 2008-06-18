@@ -927,13 +927,17 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     m_Image->Retain();
 
     Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
+    AffineTransform* underlyingTransform = 
+        m_Image->GetTransformFromUnderlyingImage();
 
     m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
 
     AffineTransform* t = GetTransform()->Copy();
     t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
+    t->AppendTransform(underlyingTransform);
     SetTransform(t);
-    t->Release();
+    FIRTREE_SAFE_RELEASE(t);
+    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================
@@ -1065,7 +1069,11 @@ Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
 //=============================================================================
 Firtree::SamplerParameter* CreateTextureSampler(Image* im)
 {
-    return TextureSamplerParameter::Create(im);
+    AffineTransform* t = AffineTransform::Identity();
+    Firtree::SamplerParameter* rv =
+        CreateTextureSamplerWithTransform(im, t);
+    FIRTREE_SAFE_RELEASE(t);
+    return rv;
 }
 
 //=============================================================================

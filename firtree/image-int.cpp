@@ -42,30 +42,30 @@ ImageImpl::ImageImpl()
     :   Image()
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_BaseImage(NULL)
+    ,   m_BaseTransform(NULL)
 {
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(const Image& inim)
-    :   Image(inim)
+ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
+    :   Image(inim, t)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_BaseImage(NULL)
+    ,   m_BaseTransform(NULL)
 {
-    const ImageImpl& im = dynamic_cast<const ImageImpl&>(inim);
+    const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
 
-    if((im.m_BitmapRep != NULL) && (im.m_BitmapRep->ImageBlob != NULL))
+    if(im == NULL)
     {
-        BitmapImageRep* oldRep = m_BitmapRep;
-
-        // Shallow copy.
-        m_BitmapRep = new BitmapImageRep(*(im.m_BitmapRep), false);
-
-        if(oldRep != NULL) { delete oldRep; }
-    } else {
-        m_BitmapRep = NULL;
+        return;
     }
 
-    m_GLTexture = im.m_GLTexture;
+    m_BaseImage = const_cast<ImageImpl*>(im);
+    m_BaseImage->Retain();
+
+    m_BaseTransform = t->Copy();
 }
 
 //=============================================================================
@@ -73,6 +73,8 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     :   Image(imageRep, copy)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_BaseImage(NULL)
+    ,   m_BaseTransform(NULL)
 {
     if(imageRep.ImageBlob == NULL) { return; }
     if(imageRep.Stride < imageRep.Width) { return; }
@@ -95,11 +97,19 @@ ImageImpl::~ImageImpl()
         delete m_BitmapRep;
         m_BitmapRep = NULL;
     }
+
+    FIRTREE_SAFE_RELEASE(m_BaseImage);
+    FIRTREE_SAFE_RELEASE(m_BaseTransform);
 }
 
 //=============================================================================
 Size2D ImageImpl::GetUnderlyingPixelSize() const
 {
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->GetUnderlyingPixelSize();
+    }
+
     // Do we have a bitmap representation?
     if(HasBitmapImageRep())
     {
@@ -120,15 +130,40 @@ Size2D ImageImpl::GetUnderlyingPixelSize() const
     return Size2D(0,0);
 }
 
+
+//=============================================================================
+AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
+{
+    if(m_BaseImage != NULL)
+    {
+        AffineTransform* baseTransform = 
+            m_BaseImage->GetTransformFromUnderlyingImage();
+        baseTransform->AppendTransform(m_BaseTransform);
+        return baseTransform;
+    }
+
+    return AffineTransform::Identity();
+}
+
 //=============================================================================
 bool ImageImpl::HasOpenGLTexture() const
 {
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->HasOpenGLTexture();
+    }
+
     return m_GLTexture != 0;
 }
 
 //=============================================================================
 bool ImageImpl::HasBitmapImageRep() const
 {
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->HasBitmapImageRep();
+    }
+
     return (m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
         (m_BitmapRep->ImageBlob->GetLength() > 0);
 }
@@ -136,6 +171,11 @@ bool ImageImpl::HasBitmapImageRep() const
 //=============================================================================
 unsigned int ImageImpl::GetAsOpenGLTexture()
 {
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->GetAsOpenGLTexture();
+    }
+
     // Trivial case: we already have a GL representation.
     if(HasOpenGLTexture())
     {
@@ -165,6 +205,11 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
 //=============================================================================
 BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
 {
+    if(m_BaseImage != NULL)
+    {
+        return m_BaseImage->GetAsBitmapImageRep();
+    }
+
     // Trivial case where a bitmap rep exists
     if(HasBitmapImageRep())
     {

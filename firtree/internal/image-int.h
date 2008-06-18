@@ -40,7 +40,7 @@ class ImageImpl : public Image
         /// Protected constructors/destructors. Use the various Image
         /// factory functions instead.
         ImageImpl();
-        ImageImpl(const Image& im);
+        ImageImpl(const Image* im, AffineTransform* t);
         ImageImpl(const BitmapImageRep& imageRep, bool copyData);
         virtual ~ImageImpl();
         ///@}
@@ -61,6 +61,11 @@ class ImageImpl : public Image
 
         /// Return true if there is a cached BitmapImageRep ready to use.
         bool HasBitmapImageRep() const;
+
+        /// Return a pointer to an AffineTransform which represents the
+        /// transfrom from the underlying pixel representation to this image.
+        /// THIS POINTER MUST HAVE RELEASE CALLED ON IT AFTERWARDS.
+        AffineTransform* GetTransformFromUnderlyingImage() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -86,6 +91,14 @@ class ImageImpl : public Image
         /// The image representation as an OpenGL texture or 0 if there is 
         /// none yet.
         unsigned int    m_GLTexture;
+
+        ///@{
+        /// If this image is actually the result of transforming another
+        /// image, record the original image and the transform which maps
+        /// it's pixels to this image's pixels.
+        ImageImpl*          m_BaseImage;
+        AffineTransform*    m_BaseTransform;
+        ///@}
 
         friend class Firtree::Image;
 };

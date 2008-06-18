@@ -71,7 +71,7 @@ class Image : public ReferenceCounted
         /// Protected constructors/destructors. Use the various Image
         /// factory functions instead.
         Image();
-        Image(const Image& im);
+        Image(const Image* im, AffineTransform* t);
         Image(const BitmapImageRep& imageRep, bool copy);
         virtual ~Image();
         ///@}
@@ -80,7 +80,9 @@ class Image : public ReferenceCounted
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        /// Construct a copy of the image passed.
+        /// Construct an image which is a copy of the image passed.
+        /// It is equivalent to calling CreateFromImageWithTransform()
+        /// with an identify transform.
         static Image* CreateFromImage(const Image* im);
 
         /// Construct an image from a 8-bit/channel RGBA image in memory.
@@ -94,6 +96,11 @@ class Image : public ReferenceCounted
         /// Construct an image encapsulating the contents of a file. Returns
         /// NULL if the file could not be read.
         static Image* CreateFromFile(const char* pFilename);
+
+        /// Construct an image by applying a transformation to each pixel in
+        /// a source image.
+        static Image* CreateFromImageWithTransform(const Image* im,
+                AffineTransform* t);
 
         // ====================================================================
         // CONST METHODS

@@ -78,15 +78,15 @@ Image::Image()
 }
 
 //=============================================================================
-Image::Image(const Image& im)
+Image::Image(const Image* im, AffineTransform* t)
+    :   ReferenceCounted()
 {
-    Image();
 }
 
 //=============================================================================
 Image::Image(const BitmapImageRep& imageRep, bool copy)
+    :   ReferenceCounted()
 {
-    Image();
 }
 
 //=============================================================================
@@ -98,7 +98,14 @@ Image::~Image()
 Image* Image::CreateFromImage(const Image* im)
 {
     if(im == NULL) { return NULL; }
-    return new ImageImpl(*im);
+    return new ImageImpl(im, AffineTransform::Identity());
+}
+
+//=============================================================================
+Image* Image::CreateFromImageWithTransform(const Image* im, AffineTransform* t)
+{
+    if(im == NULL) { return NULL; }
+    return new ImageImpl(im, t);
 }
 
 //=============================================================================

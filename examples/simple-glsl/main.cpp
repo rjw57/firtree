@@ -188,14 +188,16 @@ void initialize_kernels()
         lenaTrans->ScaleBy(0.5f);
         lenaTrans->RotateByDegrees(45.f);
         lenaTrans->TranslateBy(320.f, 240.f);
+        Image* lenaTransImage = Image::CreateFromImageWithTransform(lenaImage, lenaTrans);
 
         g_LenaSampler = 
-            GLSL::CreateTextureSamplerWithTransform(lenaImage, lenaTrans);
+            GLSL::CreateTextureSampler(lenaTransImage);
         SamplerParameter* fogSampler = 
             GLSL::CreateTextureSampler(fogImage);
 
         lenaTrans->Release();
 
+        FIRTREE_SAFE_RELEASE(lenaTransImage);
         FIRTREE_SAFE_RELEASE(lenaImage);
         FIRTREE_SAFE_RELEASE(fogImage);
 

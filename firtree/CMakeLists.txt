@@ -81,7 +81,7 @@ INSTALL(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig
 SET(FIRTREE_HEADERS
 	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
 	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
-	include/firtree/image.h
+	include/firtree/image.h		include/firtree/glsl-runtime.h
 )
 
 SET(FIRTREE_SOURCES
@@ -89,7 +89,6 @@ SET(FIRTREE_SOURCES
 
 	internal/image-int.h
 
-	runtime/glsl/glsl-runtime.h
 	runtime/glsl/glsl-runtime.cpp
 
 	main.cpp		math.cpp		blob.cpp

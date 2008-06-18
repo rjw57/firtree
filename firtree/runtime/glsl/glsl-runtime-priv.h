@@ -31,8 +31,7 @@
 #include <map>
 
 #include <firtree/kernel.h>
-
-#include "glsl-runtime.h"
+#include <firtree/glsl-runtime.h>
 
 namespace Firtree { namespace Internal {
     class ImageImpl;

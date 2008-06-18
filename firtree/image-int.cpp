@@ -44,6 +44,7 @@ ImageImpl::ImageImpl()
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
+    ,   m_ImageProvider(NULL)
 {
 }
 
@@ -55,6 +56,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
+    ,   m_ImageProvider(NULL)
 {
     const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
 
@@ -77,6 +79,7 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
+    ,   m_ImageProvider(NULL)
 {
     if(imageRep.ImageBlob == NULL) { return; }
     if(imageRep.Stride < imageRep.Width) { return; }
@@ -93,10 +96,27 @@ ImageImpl::ImageImpl(Kernel* k)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(k)
+    ,   m_ImageProvider(NULL)
 {
     if(m_Kernel != NULL)
     {
         m_Kernel->Retain();
+    }
+}
+
+//=============================================================================
+ImageImpl::ImageImpl(ImageProvider* improv)
+    :   Image(improv)
+    ,   m_BitmapRep(NULL)
+    ,   m_GLTexture(0)
+    ,   m_BaseImage(NULL)
+    ,   m_BaseTransform(NULL)
+    ,   m_Kernel(NULL)
+    ,   m_ImageProvider(improv)
+{
+    if(m_ImageProvider != NULL)
+    {
+        m_ImageProvider->Retain();
     }
 }
 
@@ -116,6 +136,7 @@ ImageImpl::~ImageImpl()
         m_BitmapRep = NULL;
     }
 
+    FIRTREE_SAFE_RELEASE(m_ImageProvider);
     FIRTREE_SAFE_RELEASE(m_BaseImage);
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
     FIRTREE_SAFE_RELEASE(m_Kernel);
@@ -124,6 +145,11 @@ ImageImpl::~ImageImpl()
 //=============================================================================
 Size2D ImageImpl::GetUnderlyingPixelSize() const
 {
+    if(m_ImageProvider != NULL)
+    {
+        return m_ImageProvider->GetImageSize();
+    }
+
     if(m_BaseImage != NULL)
     {
         return m_BaseImage->GetUnderlyingPixelSize();
@@ -183,6 +209,11 @@ bool ImageImpl::HasBitmapImageRep() const
         return m_BaseImage->HasBitmapImageRep();
     }
 
+    if(m_ImageProvider != NULL)
+    {
+        return true;
+    }
+
     return (m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
         (m_BitmapRep->ImageBlob->GetLength() > 0);
 }
@@ -217,6 +248,22 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
         return m_BaseImage->GetAsOpenGLTexture();
     }
 
+    // If we have already created a texture but are driven by an
+    // image provider, update the texture.
+    if(HasOpenGLTexture() && (m_ImageProvider != NULL))
+    {
+        BitmapImageRep* bir = GetAsBitmapImageRep();
+
+        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
+        assert(bir->Stride == bir->Width*4);
+        CHECK_GL( glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                    bir->Width, bir->Height, 
+                    GL_RGBA, GL_UNSIGNED_BYTE,
+                    bir->ImageBlob->GetBytes()) );
+
+        return m_GLTexture;
+    }
+
     // Trivial case: we already have a GL representation.
     if(HasOpenGLTexture())
     {
@@ -226,14 +273,16 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     // We have to construct one. Try the binary rep first.
     if(HasBitmapImageRep())
     {
+        BitmapImageRep* bir = GetAsBitmapImageRep();
+
         CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
-        assert(m_BitmapRep->Stride == m_BitmapRep->Width*4);
+        assert(bir->Stride == bir->Width*4);
         CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                    m_BitmapRep->Width, m_BitmapRep->Height, 0,
+                    bir->Width, bir->Height, 0,
                     GL_RGBA, GL_UNSIGNED_BYTE,
-                    m_BitmapRep->ImageBlob->GetBytes()) );
+                    bir->ImageBlob->GetBytes()) );
 
         return m_GLTexture;
     }
@@ -246,6 +295,13 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
 //=============================================================================
 BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
 {
+    if(m_ImageProvider != NULL)
+    {
+        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
+        m_BitmapRep = new BitmapImageRep(m_ImageProvider->GetImageRep(), false);
+        return m_BitmapRep;
+    }
+
     if(m_BaseImage != NULL)
     {
         return m_BaseImage->GetAsBitmapImageRep();

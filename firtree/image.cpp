@@ -96,6 +96,12 @@ Image::Image(Kernel* k)
 }
 
 //=============================================================================
+Image::Image(ImageProvider* improv)
+    :   ReferenceCounted()
+{
+}
+
+//=============================================================================
 Image::~Image()
 {
 }
@@ -176,6 +182,13 @@ Image* Image::CreateFromKernel(Kernel* k)
 {
     if(k == NULL) { return NULL; }
     return new ImageImpl(k);
+}
+
+//=============================================================================
+Image* Image::CreateFromImageProvider(ImageProvider* improv)
+{
+    if(improv == NULL) { return NULL; }
+    return new ImageImpl(improv);
 }
 
 //=============================================================================

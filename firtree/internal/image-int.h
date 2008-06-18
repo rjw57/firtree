@@ -43,6 +43,7 @@ class ImageImpl : public Image
         ImageImpl(const Image* im, AffineTransform* t);
         ImageImpl(const BitmapImageRep& imageRep, bool copyData);
         ImageImpl(Kernel* k);
+        ImageImpl(ImageProvider* imageProvider);
         virtual ~ImageImpl();
         ///@}
 
@@ -110,6 +111,9 @@ class ImageImpl : public Image
         
         /// The kernel encapsulated by this image.
         Kernel*             m_Kernel;
+
+        /// The image provider for this image.
+        ImageProvider*      m_ImageProvider;
 
         friend class Firtree::Image;
 };

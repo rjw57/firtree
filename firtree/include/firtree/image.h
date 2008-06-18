@@ -50,16 +50,32 @@ struct BitmapImageRep {
     ///                 the reference count of the blob is merely incremented.
     BitmapImageRep(Blob* blob,
                 unsigned int width, unsigned int height,
-                unsigned int stride, bool copyData = true);
+                unsigned int stride, bool copyData = false);
 
     /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
     ///
     /// \param rep A reference to the BitmapImageRep containing the 
     ///            bitmap image.
     /// \param copyData If true, a deep copy of the bitmap is made.
-    BitmapImageRep(const BitmapImageRep& rep, bool copyData = true);
+    BitmapImageRep(const BitmapImageRep& rep, bool copyData = false);
 
     ~BitmapImageRep();
+};
+
+//=============================================================================
+/// An abstract base class which can provide a bitmap image representation.
+class ImageProvider : public ReferenceCounted
+{
+    public:
+        ImageProvider() : ReferenceCounted() { }
+        virtual ~ImageProvider() { }
+
+        /// Return the size of the image (in pixels) which would be
+        /// returned from GetImageRep().
+        virtual Size2D GetImageSize() const = 0;
+
+        /// Return a BitmapImageRep structure containing the image.
+        virtual const BitmapImageRep GetImageRep() const = 0;
 };
 
 //=============================================================================
@@ -75,6 +91,7 @@ class Image : public ReferenceCounted
         Image(const Image* im, AffineTransform* t);
         Image(const BitmapImageRep& imageRep, bool copy);
         Image(Kernel* kernel);
+        Image(ImageProvider* imageProvider);
         virtual ~Image();
         ///@}
 
@@ -106,6 +123,9 @@ class Image : public ReferenceCounted
 
         /// Construct an image from the output of a kernel.
         static Image* CreateFromKernel(Kernel* k);
+
+        /// Construct an image from an image provider.
+        static Image* CreateFromImageProvider(ImageProvider* improv);
 
         // ====================================================================
         // CONST METHODS

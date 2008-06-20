@@ -323,6 +323,7 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
             case EOpSubAssign:
             case EOpMulAssign:
             case EOpDivAssign:
+            case EOpVectorTimesScalarAssign:
                 /* These do not create temporaries. */
                 break;
 
@@ -381,6 +382,7 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 PushTemporary(left.c_str());
                 break;
             case EOpMulAssign:
+            case EOpVectorTimesScalarAssign:
                 AppendOutput("%s *= %s;\n", left.c_str(), right.c_str());
                 PushTemporary(left.c_str());
                 break;

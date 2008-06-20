@@ -36,11 +36,13 @@
 
 namespace Firtree {
 
+class GLSLTrav;
+
 //=============================================================================
 struct GLSLBackend::Priv
 {
     public:
-        Priv() : temporaryId(0), funccounter(0) { }
+        Priv() : temporaryId(0), funccounter(0), trav(NULL) { }
         ~Priv() { }
 
         std::map<int, std::string>  symbolMap;
@@ -48,6 +50,7 @@ struct GLSLBackend::Priv
         std::stack<std::string>     temporaryStack;
         unsigned int                temporaryId;
         unsigned int                funccounter;
+        GLSLTrav*                   trav;
 };
 
 //=============================================================================
@@ -111,6 +114,10 @@ GLSLBackend::GLSLBackend(const char* prefix)
 //=============================================================================
 GLSLBackend::~GLSLBackend()
 {
+    if(m_Priv->trav)
+    {
+        delete m_Priv->trav;
+    }
     delete m_Priv;
 }
 
@@ -129,8 +136,8 @@ bool GLSLBackend::Generate(TIntermNode* root)
     m_InFunction = false;
     m_InKernel = false;
 
-    GLSLTrav trav(*this);
-    root->traverse(&trav);
+    m_Priv->trav = new GLSLTrav(*this);
+    root->traverse(m_Priv->trav);
 
     return m_SuccessFlag;
 }
@@ -571,6 +578,21 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
                 AppendOutput(m_Prefix.c_str());
                 AppendOutput("_kernel(%s)).zw;\n", operand.c_str());
                 break;
+            case EOpConvIntToFloat:
+            case EOpConvBoolToFloat:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = float(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpConvIntToBool:
+            case EOpConvFloatToBool:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = bool(%s);\n", tmp, operand.c_str());
+                break;
+            case EOpConvFloatToInt:
+            case EOpConvBoolToInt:
+                AppendGLSLType(n->getTypePointer());
+                AppendOutput(" %s = int(%s);\n", tmp, operand.c_str());
+                break;
             default:
                 AppendOutput("/* ");
                 AppendGLSLType(n->getTypePointer());
@@ -907,7 +929,8 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                     AppendOutput(" /* = ?aggregate %s */\n", 
                             OperatorCodeToDescription(n->getOp()));
 
-                    FAIL_RET("Unknown aggregate op: %s", OperatorCodeToDescription(n->getOp()));
+                    FAIL_RET("Unknown aggregate op: %s", 
+                            OperatorCodeToDescription(n->getOp()));
                 }
             }
             break;
@@ -919,7 +942,129 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
 //=============================================================================
 bool GLSLBackend::VisitLoop(bool preVisit, TIntermLoop* n)
 {
-    FAIL_RET("Loops not supported yet.");
+    if(!n->testFirst()) {
+        FAIL_RET("do/while loops not supported yet.");
+    }
+
+    if(preVisit)
+    {
+        AppendOutput("/* Loop: */\n");
+
+        // Try to extract the condition, only support comparison
+        // of symbols with constants.
+        TIntermTyped* condition = n->getTest();
+        TIntermBinary* condBin = condition->getAsBinaryNode();
+        if(condBin == NULL)
+        {
+            FAIL_RET("loop conditions must be a comparison between symbols "
+                    "or constants.");
+        }
+
+        switch(condBin->getOp())
+        {
+            case EOpEqual:
+            case EOpNotEqual:
+            case EOpLessThan:
+            case EOpGreaterThan:
+            case EOpLessThanEqual:
+            case EOpGreaterThanEqual:
+                break;
+            default:
+                FAIL_RET("loop conditions must be one of "
+                        "==, !=, <, >, <= or >=.");
+                break;
+        }
+
+        // Check both sides are either symbols or constants.
+        TIntermConstantUnion* leftCU = condBin->getLeft()->getAsConstantUnion();
+        TIntermSymbol* leftSymb = condBin->getLeft()->getAsSymbolNode();
+        TIntermConstantUnion* rightCU = condBin->getRight()->getAsConstantUnion();
+        TIntermSymbol* rightSymb = condBin->getRight()->getAsSymbolNode();
+
+        if( ((leftCU == NULL) && (leftSymb == NULL)) ||
+                ((rightCU == NULL) && (rightSymb == NULL)) )
+        {
+            FAIL_RET("loop conditions must be a comparison between symbols "
+                    "or constants.");
+        }
+
+        // Check types are single-component
+        if(condBin->getTypePointer()->getNominalSize() != 1)
+        {
+            FAIL_RET("loop conditions can only be single component.");
+        }
+
+        // If we get this far, everything is rosey.
+        AppendOutput("while(");
+
+        if(leftSymb != NULL)
+        {
+            AppendOutput(GetSymbol(leftSymb->getId()));
+        } else {
+            constUnion* u = leftCU->getUnionArrayPointer();
+            switch(u->getType())
+            {
+                case EbtInt:
+                    AppendOutput("%i", u->getIConst()); break;
+                case EbtBool:
+                    AppendOutput("%s", u->getBConst() ? "true" : "false"); break;
+                case EbtFloat:
+                    AppendOutput("%f", u->getFConst()); break;
+                default:
+                    FAIL_RET("Comparisons must be between ints, floats or bools.");
+                    break;
+            }
+        }
+
+        switch(condBin->getOp())
+        {
+            case EOpEqual:
+                AppendOutput(" == "); break;
+            case EOpNotEqual:
+                AppendOutput(" != "); break;
+            case EOpLessThan:
+                AppendOutput(" < "); break;
+            case EOpGreaterThan:
+                AppendOutput(" > "); break;
+            case EOpLessThanEqual:
+                AppendOutput(" <= "); break;
+            case EOpGreaterThanEqual:
+                AppendOutput(" >= "); break;
+        }
+
+        if(rightSymb != NULL)
+        {
+            AppendOutput(GetSymbol(rightSymb->getId()));
+        } else {
+            constUnion* u = rightCU->getUnionArrayPointer();
+            switch(u->getType())
+            {
+                case EbtInt:
+                    AppendOutput("%i", u->getIConst()); break;
+                case EbtBool:
+                    AppendOutput("%s", u->getBConst() ? "true" : "false"); break;
+                case EbtFloat:
+                    AppendOutput("%f", u->getFConst()); break;
+                default:
+                    FAIL_RET("Comparisons must be between ints, floats or bools.");
+                    break;
+            }
+        }
+
+        AppendOutput(") {\n");
+
+        AppendOutput("/* Body */\n");
+        TIntermNode* body = n->getBody();
+        body->traverse(m_Priv->trav);
+
+        AppendOutput("/* Terminal condition */\n");
+        TIntermTyped* terminal = n->getTerminal();
+        terminal->traverse(m_Priv->trav);
+
+        AppendOutput("}\n");
+    }
+
+    return false;
 }
 
 //=============================================================================

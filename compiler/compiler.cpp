@@ -97,8 +97,13 @@ bool Compiler::Compile(const char** sourceLines, unsigned int lineCount)
 
     // Call the GLSL compiler front end
     TBuiltInResource resources;
+#if 0
+    int ret = ShCompile(m_Priv->compiler, lines, 1 /* multiple strings */,
+            EShOptNone, &resources, EDebugOpIntermediate);
+#else
     int ret = ShCompile(m_Priv->compiler, lines, 1 /* multiple strings */,
             EShOptNone, &resources, 0 /* no debug opts */);
+#endif
 
     // Delete line buffer.
     delete[] lines;

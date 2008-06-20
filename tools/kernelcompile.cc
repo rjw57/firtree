@@ -151,6 +151,8 @@ int main(int argc, char *argv[])
          Firtree::Compiler c(*be);
          bool ret = c.Compile((const char**)(&buffer), 1);
 
+         printf("Compilation: %s\n", ret ? "SUCCEEDED" : "FAILED");
+
          printf("Compiler info log:\n%s\n", c.GetInfoLog());
          if(!ret)
          {

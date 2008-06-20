@@ -72,13 +72,8 @@ Parameter* NumericParameter::Create()
 }
 
 //=============================================================================
-Kernel::Kernel()
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
 Kernel::Kernel(const char* source)
+    :   ReferenceCounted()
 {
 }
 

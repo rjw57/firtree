@@ -1,0 +1,16 @@
+kernel vec4 loopTestKernel()
+{
+    vec4 a = vec4(0,0,0,0);
+
+    for(int i=0; i<5; i++)
+    {
+        for(int j=0; j<4; j++)
+        {
+            a.x += float(i);
+        }
+    }
+
+    return a;
+}
+
+// vim:sw=4:ts=4:cindent:filetype=c:et

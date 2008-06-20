@@ -68,14 +68,9 @@ static void _KernelEnsureAPI()
 }
 
 //=============================================================================
-Kernel::Kernel()
-    :   Firtree::Kernel()
-    ,   m_IsCompiled(false)
-{
-}
-
-//=============================================================================
 Kernel::Kernel(const char* source)
+    :   Firtree::Kernel(source)
+    ,   m_IsCompiled(false)
 {
     this->SetSource(source);
 }
@@ -85,9 +80,6 @@ Kernel::~Kernel()
 {
     ClearParameters();
 }
-
-//=============================================================================
-Firtree::Kernel* Kernel::Create() { return new Kernel(); }
 
 //=============================================================================
 Firtree::Kernel* Kernel::Create(const char* source) { return new Kernel(source); }

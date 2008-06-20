@@ -180,7 +180,6 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 class Kernel : public Firtree::Kernel
 {
     protected:
-        Kernel();
         Kernel(const char* source);
         virtual ~Kernel();
 

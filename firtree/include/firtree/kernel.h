@@ -168,7 +168,6 @@ class Kernel : public ReferenceCounted
         ///@{
         /// Protected constructors/destructors. Use the various Kernel
         /// factory functions instead.
-        Kernel();
         Kernel(const char* source);
         ///@}
 
@@ -183,10 +182,6 @@ class Kernel : public ReferenceCounted
 
         // ====================================================================
         // MUTATING METHODS
-
-        /// Set the kernel's function expressed in the FIRTREE
-        /// kernel language. The source should be copied by this method.
-        virtual void SetSource(const char* source) = 0;
 
         /// Return a const reference to a map containing the parameter 
         /// name/value pairs.

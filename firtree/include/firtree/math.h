@@ -204,6 +204,10 @@ class AffineTransform : public ReferenceCounted
 
         // ====================================================================
         // CONST METHODS
+        
+        /// Return true if this affine transform is equivalent to the identity
+        /// transform (to within machine precision).
+        bool IsIdentity() const;
 
         /// Return a deep copy of the transform. Should be Release()-d when
         /// you are finished with it.

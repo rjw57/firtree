@@ -198,6 +198,19 @@ AffineTransform* AffineTransform::Translation(float x, float y)
 }
 
 // ===============================================================================
+bool AffineTransform::IsIdentity() const {
+    bool idFlag = true;
+    const AffineTransformStruct& t = GetTransformStruct();
+    if(t.m11 != 1.0) { idFlag = false; }
+    if(t.m12 != 0.0) { idFlag = false; }
+    if(t.m21 != 0.0) { idFlag = false; }
+    if(t.m22 != 1.0) { idFlag = false; }
+    if(t.tX != 0.0) { idFlag = false; }
+    if(t.tY != 0.0) { idFlag = false; }
+    return idFlag;
+}
+
+// ===============================================================================
 AffineTransform* AffineTransform::Copy() const {
     return new AffineTransform(*this);
 }

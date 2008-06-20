@@ -470,6 +470,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec3 row1 = vec3(1,0,0);\n";
     dest += "  vec3 row2 = vec3(0,1,0);\n";
+    dest += "  vec3 result = vec3(samplerCoord, 1.0);\n";
 
     // Special case for kernels with only one sampler.
     if(samplerParams.size() == 1)
@@ -479,30 +480,8 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         invTrans->Invert();
         const AffineTransformStruct& transform =
             invTrans->GetTransformStruct();
-        dest += "row1 = vec3(";
-        snprintf(idxStr, 255, "%f,%f,%f",
-                transform.m11, transform.m12, transform.tX);
-        dest += idxStr;
-        dest += ");\n";
-        dest += "row2 = vec3(";
-        snprintf(idxStr, 255, "%f,%f,%f", 
-                transform.m21, transform.m22, transform.tY);
-        dest += idxStr;
-        dest += ");\n";
-        invTrans->Release();
-    } else {
-        for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
-                i != samplerParams.end(); i++)
+        if(!invTrans->IsIdentity())
         {
-            SamplerParameter *pSP = *i;
-            AffineTransform* invTrans = pSP->GetTransform()->Copy();
-            invTrans->Invert();
-            const AffineTransformStruct& transform =
-                invTrans->GetTransformStruct();
-            snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
-            dest += "if(sampler == ";
-            dest += idxStr;
-            dest += ") {\n";
             dest += "row1 = vec3(";
             snprintf(idxStr, 255, "%f,%f,%f",
                     transform.m11, transform.m12, transform.tX);
@@ -513,14 +492,42 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                     transform.m21, transform.m22, transform.tY);
             dest += idxStr;
             dest += ");\n";
-            dest += "}\n";
+            dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
+        }
+        invTrans->Release();
+    } else {
+        for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
+                i != samplerParams.end(); i++)
+        {
+            SamplerParameter *pSP = *i;
+            AffineTransform* invTrans = pSP->GetTransform()->Copy();
+            invTrans->Invert();
+            const AffineTransformStruct& transform =
+                invTrans->GetTransformStruct();
+            if(!invTrans->IsIdentity())
+            {
+                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {\n";
+                dest += "row1 = vec3(";
+                snprintf(idxStr, 255, "%f,%f,%f",
+                        transform.m11, transform.m12, transform.tX);
+                dest += idxStr;
+                dest += ");\n";
+                dest += "row2 = vec3(";
+                snprintf(idxStr, 255, "%f,%f,%f", 
+                        transform.m21, transform.m22, transform.tY);
+                dest += idxStr;
+                dest += ");\n";
+                dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
+                dest += "}\n";
+            }
             invTrans->Release();
         }
     }
 
-    dest += "  vec3 inVal = vec3(samplerCoord, 1.0);\n";
-    dest += "  vec2 result = vec2(dot(row1, inVal), dot(row2, inVal));\n";
-    dest += "  return result;\n";
+    dest += "  return result.xy;\n";
     dest += "}\n";
  
     dest += "vec4 __builtin_sampler_extent_";

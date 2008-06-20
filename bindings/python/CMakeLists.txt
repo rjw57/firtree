@@ -6,6 +6,7 @@
 
 # See if we can locate the SWIG tool.
 FIND_PACKAGE(SWIG)
+FIND_PACKAGE(PythonInterp)
 FIND_PACKAGE(PythonLibs)
 IF(SWIG_FOUND)
     INCLUDE(UseSWIG)
@@ -18,7 +19,15 @@ IF(PYTHON_LIBRARIES)
 ENDIF(PYTHON_LIBRARIES)
 
 # Setup SWIG options in general.
-IF(SWIG_FOUND AND PYTHON_FOUND)
+IF(SWIG_FOUND AND PYTHON_FOUND AND PYTHONINTERP_FOUND)
+    EXECUTE_PROCESS(
+      COMMAND
+      ${PYTHON_EXECUTABLE} -c 
+      "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+      OUTPUT_VARIABLE PYTHON_INSTDIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
     SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR})
     MESSAGE(STATUS "=> Generating Python wrappers.")
 
@@ -33,7 +42,7 @@ IF(SWIG_FOUND AND PYTHON_FOUND)
     SWIG_ADD_MODULE(Firtree python firtree-python.i)
     SWIG_LINK_LIBRARIES(Firtree firtree ${FIRTREE_LIBS} ${PYTHON_LIBRARIES})
 
-    # On Windows, the generated DLL has to be named _GLOO.pyd.
+    # On Windows, the generated DLL has to be named _Firtree.pyd.
     IF(WIN32)
         ADD_CUSTOM_COMMAND(TARGET _Firtree
         COMMAND ${CMAKE_COMMAND}
@@ -43,7 +52,8 @@ IF(SWIG_FOUND AND PYTHON_FOUND)
             ARGS -E remove _Firtree.dll)
     ENDIF(WIN32)
 
-    # INSTALL(TARGETS firtree-python-wrapper DESTINATION lib/)
+    INSTALL(TARGETS _Firtree DESTINATION ${PYTHON_INSTDIR})
+    INSTALL(FILES Firtree.py DESTINATION ${PYTHON_INSTDIR})
 ELSE(SWIG_FOUND AND PYTHON_FOUND)
     MESSAGE(STATUS 
     "=> Not generating Python wrappers.")
@@ -55,7 +65,12 @@ ELSE(SWIG_FOUND AND PYTHON_FOUND)
         MESSAGE(STATUS 
         "   `-> The Python development libraries were not found.")
     ENDIF(NOT PYTHON_FOUND)
-ENDIF(SWIG_FOUND AND PYTHON_FOUND)
+    
+    IF(NOT PYTHONINTERP_FOUND)
+        MESSAGE(STATUS 
+        "   `-> The Python interpreter was not found.")
+    ENDIF(NOT PYTHONINTERP_FOUND)
+ENDIF(SWIG_FOUND AND PYTHON_FOUND AND PYTHONINTERP_FOUND)
 
 # Vim modeline
 # vim:ts=4:sw=4:et

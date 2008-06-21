@@ -4,11 +4,13 @@
 #
 # See LICENSE file for distribution rights.
 
-# This project is called FIRTREE and is written in C++
+# This project is called FIRTREE 
 PROJECT(FIRTREE)
 
+# For the moment, force Debug builds.
 SET(CMAKE_BUILD_TYPE "Debug")
 
+# Set some variables indicating the version number of Firtree.
 SET(FIRTREE_VERSION_MAJOR "0")
 SET(FIRTREE_VERSION_MINOR "1")
 SET(FIRTREE_VERSION_PATCH "1")
@@ -45,29 +47,12 @@ ADD_SUBDIRECTORY(compiler)
 # The FIRTREE library itself.
 ADD_SUBDIRECTORY(firtree)
 
+# The various language bindings
+ADD_SUBDIRECTORY(bindings)
+
 # Some tools
 ADD_SUBDIRECTORY(tools)
 
 # Some examplers
 ADD_SUBDIRECTORY(examples)
-
-# The various language bindings
-ADD_SUBDIRECTORY(bindings)
-
-# Ignore some files in svn.
-SET(CPACK_SOURCE_IGNORE_FILES 
-    CMakeCache.txt
-    _CPack_Packages
-    "firtree-.*tar.*"
-    "~$"
-    ".swp$"
-    "\\\\.cvsignore$"
-    "\\\\.o$"
-    "/.svn/"
-    "^${PROJECT_SOURCE_DIR}.*/CVS/"
-    "^${PROJECT_SOURCE_DIR}/debian/"
-    "^${PROJECT_SOURCE_DIR}/old/"
-    "^${PROJECT_SOURCE_DIR}.*/CVSROOT/"
-    "^${PROJECT_SOURCE_DIR}/admin/"
-)
 

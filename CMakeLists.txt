@@ -53,6 +53,8 @@ ADD_SUBDIRECTORY(bindings)
 # Some tools
 ADD_SUBDIRECTORY(tools)
 
-# Some examplers
-ADD_SUBDIRECTORY(examples)
+# Some exampler
+IF(NOT FIRTREE_NO_BUILD_EXAMPLES)
+  ADD_SUBDIRECTORY(examples)
+ENDIF(NOT FIRTREE_NO_BUILD_EXAMPLES)
 

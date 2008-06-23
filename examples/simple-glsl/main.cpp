@@ -120,8 +120,31 @@ GLuint g_ShaderProg;
 
 GLSL::RenderingContext* g_RenderingContext = NULL;
 
+char g_ProgramPath[4096];
+
 void initialise_test(int *argc, char **argv, int window)
 {
+    strncpy(g_ProgramPath, argv[0], 4096);
+
+    int i = strlen(g_ProgramPath) - 1;
+    if(i >= 0)
+    {
+        for(; i>0; i--)
+        {
+            if(g_ProgramPath[i] == '/')
+            {
+                g_ProgramPath[i] = '\0';
+                break;
+            }
+        }
+    }
+
+    if(i < 0) 
+    {
+        g_ProgramPath[0] = '\0';
+    }
+
+    printf("Prog path: %s\n", g_ProgramPath);
 }
 
 void finalise_test()
@@ -216,10 +239,13 @@ void initialize_kernels()
         // g_SpotSampler->SetTransform(spotTrans);
         spotTrans->Release();
 
-        Image* lenaImage = Image::CreateFromFile("lena.png");
+        char fileName[4096];
+        snprintf(fileName, 4096, "%s/%s", g_ProgramPath, "../lena.png");
+        Image* lenaImage = Image::CreateFromFile(fileName);
         //printf("Created lena: %p\n", lenaImage);
 
-        Image* fogImage = Image::CreateFromFile("fog.png");
+        snprintf(fileName, 4096, "%s/%s", g_ProgramPath, "../fog.png");
+        Image* fogImage = Image::CreateFromFile(fileName);
         //printf("Created foo: %p\n", fogImage);
 
         AffineTransform* lenaTrans = AffineTransform::Identity();

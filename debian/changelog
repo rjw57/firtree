@@ -1,3 +1,9 @@
+libfirtree (0.0.1-0ubuntu1~ppa2) hardy; urgency=low
+
+  * Added python-firtree package containing Python bindings.
+
+ -- Rich Wareham <richwareham@gmail.com>  Mon, 23 Jun 2008 11:32:03 +0100
+
 libfirtree (0.0.1-0ubuntu1~ppa1) hardy; urgency=low
 
   * Initial packaging.

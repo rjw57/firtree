@@ -35,3 +35,12 @@ Description: Development files for the Firtree image processing toolkit.
  This package contains all the headers and other related files needed
  to compile Firtree applications, or develop applications which use the
  Firtree libraries.
+
+Package: python-firtree
+Section: universe/python
+Architecture: any
+Depends: libfirtree0 (= ${binary:Version}), ${shlibs:Depends}
+Description: Firtree python bindings
+ PyFirtree are Python language bindings for the Firtree image-processing
+ toolkit.
+

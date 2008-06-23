@@ -9,6 +9,7 @@ from OpenGL.GL import *
 # Use sys to find the script path and hence construct a path in which to 
 # search for the Firtree bindings.
 
+import math
 import sys
 import os
 import gc
@@ -47,7 +48,18 @@ class FirtreeScene:
             return vec4(intensity, intensity, intensity, sourceColour.a);
         }
         ''')
-        compositeImage = Firtree.Image.CreateFromKernel(desaturateKernel)
+        desaturatedImage = Firtree.Image.CreateFromKernel(desaturateKernel)
+
+        # Setup an image mixing kernel
+        mixKernel = Firtree.CreateKernel('''
+        kernel vec4 mixKernel(sampler a, sampler b, float mix)
+        {
+            vec4 aColour = sample(a, samplerCoord(a));
+            vec4 bColour = sample(b, samplerCoord(b));
+            return mix(aColour, bColour, mix);
+        }
+        ''')
+        mixImage = Firtree.Image.CreateFromKernel(mixKernel)
 
         # Load the firtree image.
         firtreeImage = Firtree.Image.CreateFromFile(
@@ -60,16 +72,29 @@ class FirtreeScene:
         firtreeTransImage = Firtree.Image.CreateFromImageWithTransform(
             firtreeImage, firtreeTransform)
 
-        # Wire the lena and firtree images into the kernel.
+        # Wire the firtree image into the kernel.
         desaturateKernel.SetValueForKey(
             Firtree.CreateSampler(firtreeTransImage), 'source')
 
+        # Wire the desaturated image and original image into
+        # the mix kernel.
+        mixKernel.SetValueForKey(
+            Firtree.CreateSampler(desaturatedImage), 'a')
+        mixKernel.SetValueForKey(
+            Firtree.CreateSampler(firtreeTransImage), 'b')
+
+        self.mixKernel = mixKernel    
+
         # Create a rendering context.
-        sampler = Firtree.CreateSampler(compositeImage)
+        sampler = Firtree.CreateSampler(mixImage)
         self.renderContext = Firtree.CreateRenderingContext(sampler)
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
+
+        t = float(glutGet(GLUT_ELAPSED_TIME)) / 1000.0
+        self.mixKernel.SetValueForKey(
+            0.5 * (1.0 + math.sin(2.0 * t)), 'mix')
 
         # Render the composited image into the framebuffer.
         Firtree.RenderAtPoint(self.renderContext, 
@@ -79,6 +104,8 @@ class FirtreeScene:
     def clear_up (self):
         print('Clearing up...')
 
+        self.mixKernel = None
+        
         # Release the rendering context.
         Firtree.ReleaseRenderingContext(self.renderContext)
 
@@ -148,7 +175,7 @@ if __name__ == '__main__':
     glutReshapeFunc(reshape)
     glutKeyboardFunc(keypress)
     
-    # glutTimerFunc(frameDelay, timer, 0)
+    glutTimerFunc(frameDelay, timer, 0)
 
     glutMainLoop()
 

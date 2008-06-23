@@ -1,0 +1,16 @@
+CMakeFiles
+Makefile
+cmake_install.cmake
+./install_manifest.txt
+bindings/python/Firtree.py
+bindings/python/firtree-python.i
+bindings/python/firtree-pythonPYTHON_wrap.cxx
+doc/doxy.config
+firtree/libfirtree.so.*
+firtree/firtree.pc
+firtree/include/firtree/platform.h
+glsl-frontend/StandAlone/StandAlone
+glsl-frontend/glslang/MachineIndependent/bison_glslang.*
+glsl-frontend/glslang/MachineIndependent/flex_glslang.*
+tools/kernelcompile
+examples/simple-glsl/simple-glsl

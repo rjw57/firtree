@@ -4,10 +4,13 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
+# This file builds the glslang library which contains the 3Dlabs Inc.
+# Ltd. GLSL front-end implementation.
 
+# Include support for flex & bison.
 INCLUDE(FlexAndBison)
 
+# Specify the C header files for the target.
 SET(GLSLANG_HEADERS
 	preprocessor/atom.h     preprocessor/parser.h      preprocessor/symbols.h
 	preprocessor/compile.h  preprocessor/preprocess.h  preprocessor/tokens.h
@@ -19,6 +22,7 @@ SET(GLSLANG_HEADERS
 	MMap.h               RemoveTree.h
 )
 
+# Specify the C/C++ source files for the target.
 SET(GLSLANG_SOURCES
 	${GLSLANG_HEADERS}
 
@@ -32,16 +36,11 @@ SET(GLSLANG_SOURCES
 	intermOut.cpp     PoolAlloc.cpp       SymbolTable.cpp
 )
 
+# Add flex and bison sources to generate the parser.
 ADD_FLEX_FILES(GLSLANG_SOURCES glslang.lpp)
-
 ADD_BISON_FILES(GLSLANG_SOURCES glslang.ypp)
 
-SET(LIBGLSLANG_INCLUDE_DIRS CACHE 
-	${GLSLANG_INCLUDE_DIRS}
-	"${CMAKE_CURRENT_SOURCE_DIR}/../Public"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../OSDependent/Linux"
-)
-
+# Add the front-end header directories to the include path.
 INCLUDE_DIRECTORIES(
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/../Include"
@@ -49,5 +48,6 @@ INCLUDE_DIRECTORIES(
 	"${CMAKE_CURRENT_SOURCE_DIR}/../OSDependent/Linux"
 )
 
+# Add the glslang target.
 ADD_LIBRARY(glslang ${GLSLANG_SOURCES})
 TARGET_LINK_LIBRARIES(glslang Ossource InitializeDll)

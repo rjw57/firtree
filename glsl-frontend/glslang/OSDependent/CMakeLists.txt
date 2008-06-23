@@ -4,7 +4,8 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
+# This file builds the OS-dependant parts of the 3Dlabs Inc. Ltd.
+# GLSL frontend.
 
 SET(OSDEP_SOURCES
 	Linux/osinclude.h

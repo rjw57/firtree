@@ -4,5 +4,7 @@
 #
 # See LICENSE file for distribution rights.
 
+# This file will add a target to build the Firtree documentation.
+
 INCLUDE(TargetDoc)
 

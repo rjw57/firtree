@@ -4,8 +4,7 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
-
+# CMake file to build the 3Dlabs Inc. Ltd. GLSL frontend.
 
 SET(GLSLANG_INCLUDE_DIRS 
 	"${GLSLANG_INCLUDE_DIRS}"

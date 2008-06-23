@@ -4,7 +4,8 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
+# This file builds the trivial 'NULL' compiler from the 3Dlabd Inc.  Ltd. GLSL
+# front-end implementation.
 
 SET(CODEGEN_SOURCES
 	CodeGen.cpp

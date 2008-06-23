@@ -4,7 +4,8 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
+# This file builds the DLL intitialisation portion of the 3Dlabs
+# Inc. Ltd. GLSL front-end implementation.
 
 SET(INITDLL_SOURCES
 	InitializeDll.h

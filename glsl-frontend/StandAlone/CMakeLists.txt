@@ -4,8 +4,8 @@
 #
 # See LICENSE file for distribution rights.
 
-# CMake file to build the 3dLabs GLSL frontend.
-
+# This file builds a trivial stand-alone compiler which uses the 
+# 3Dlabs Inc. Ltd. GLSL frontend.
 
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../glslang/Public")
 

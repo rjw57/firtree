@@ -4,6 +4,9 @@
 #
 # See LICENSE file for distribution rights.
 
+# This file builds the main Firtree library.
+
+# Find required libraries.
 FIND_PACKAGE(OpenGL)
 FIND_PACKAGE(GLEW)
 FIND_PACKAGE(GLUT)

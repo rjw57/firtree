@@ -4,7 +4,9 @@
 #
 # See LICENSE file for distribution rights.
 
-# Test compiler
+# This file builds a trivial kernelcompiler capable of dumping
+# the resultant IR or the compiled GLSL.
+
 SET(TEST_COMPILER_HEADERS
 )
 
@@ -13,9 +15,6 @@ SET(TEST_COMPILER_SOURCES
 
     kernelcompile.cc
 )
-
-#ADD_DEFINITIONS(-DFIRTREE)
-#GET_TARGET_PROPERTY(MESA_INCLUDES mesa INCLUDE_DIRS)
 
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../")
 ADD_EXECUTABLE(kernelcompile ${TEST_COMPILER_SOURCES})

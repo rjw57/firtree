@@ -31,15 +31,6 @@ namespace Firtree { namespace GLSL {
 struct RenderingContext;
 
 //=============================================================================
-bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* sampler);
-
-//=============================================================================
-bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int program);
-
-//=============================================================================
-const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
-
-//=============================================================================
 Firtree::SamplerParameter* CreateSampler(Image* im);
 
 //=============================================================================

@@ -38,6 +38,15 @@ static void* _KernelGetOpenGLProcAddress(const char* name);
 namespace Firtree { namespace GLSL {
 
 //=============================================================================
+bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* sampler);
+
+//=============================================================================
+bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int program);
+
+//=============================================================================
+const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
+
+//=============================================================================
 static void _KernelEnsureAPI() 
 {
     static bool initialised = false;

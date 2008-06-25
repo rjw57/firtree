@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include "glsl-runtime-priv.h"
+#include "sha1.h"
 
 #include <float.h>
 
@@ -240,6 +241,13 @@ void CompiledGLSLKernel::UpdateBlockNameReplacedSourceCache()
         if (pos==-1) break;
         m_BlockReplacedKernelName.replace(pos,findWhat.size(),m_BlockName);
     }
+
+    // Update SHA1 digest
+    SHA1_CTX shaCtx;
+    SHA1Init(&shaCtx);
+    SHA1Update(&shaCtx, (unsigned char*)(m_BlockReplacedGLSL.c_str()), 
+            m_BlockReplacedGLSL.length());
+    SHA1Final(m_GLSLDigest, &shaCtx);
 }
 
 //=============================================================================

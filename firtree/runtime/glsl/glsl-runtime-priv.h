@@ -213,6 +213,11 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
 
         const char* GetUniformNameForKey(const char* key);
 
+        const unsigned char* GetCompiledGLSLDigest() const 
+        {
+            return m_GLSLDigest;
+        }
+
     private:
         std::map<std::string, Parameter*>   m_Parameters;
         std::map<std::string, std::string>   m_UniformNameMap;
@@ -226,6 +231,8 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
         std::string                     m_BlockReplacedKernelName;
 
         bool                            m_IsCompiled;
+
+        unsigned char                   m_GLSLDigest[20];
 
         void ClearParameters();
 

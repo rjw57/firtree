@@ -16,3 +16,5 @@ glsl-frontend/glslang/MachineIndependent/bison_glslang.*
 glsl-frontend/glslang/MachineIndependent/flex_glslang.*
 tools/kernelcompile
 examples/simple-glsl/simple-glsl
+./doc/html
+./doc/latex

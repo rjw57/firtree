@@ -36,10 +36,12 @@ namespace Firtree {
 class NumericParameter;
 class SamplerParameter;
 class Kernel;
+class Image;
 
 namespace GLSL { 
     class KernelSamplerParameter; 
     class CompiledGLSLKernel; 
+    class GLSLSamplerParameter; 
 }
 
 //=============================================================================
@@ -143,25 +145,48 @@ class NumericParameter : public Parameter
 };
 
 //=============================================================================
-/// Abstract base class for a sampler parameter.
+/// Class encapsulating a sampler parameter.
 class SamplerParameter : public Parameter
 {
     protected:
-        SamplerParameter();
+        SamplerParameter(Image* srcImage);
 
     public:
         virtual ~SamplerParameter();
+
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        /// Construct a sampler from a Firtree image.
+        static SamplerParameter* CreateFromImage(Image* im);
+
         /// Return a rectangle in sampler co-ordinates which completely
         /// encloses the non-transparent pixels of the source.
-        virtual const Rect2D GetDomain() const = 0;
+        const Rect2D GetDomain() const;
 
         /// Return a rectangle in world co-ordinates which completely
         /// encloses the non-transparent pixels of the source.
-        virtual const Rect2D GetExtent() const = 0;
+        const Rect2D GetExtent() const;
 
         /// Return a pointer to the affine transform which maps the
         /// sampler co-ordinate system to the world co-ordinate system.
-        virtual const AffineTransform* GetTransform() const = 0;
+        const AffineTransform* GetTransform() const;
+
+    protected:
+        /// Internal method to retrieve the wrapped GLSL
+        /// sampler.
+        GLSL::GLSLSamplerParameter* GetWrappedGLSLSampler() const;
+
+        friend class GLSL::GLSLSamplerParameter;
+        friend class GLSL::CompiledGLSLKernel;
+
+    private:
+        /// The GLSL runtime sampler parameter wrapped by this
+        /// instance.
+        GLSL::GLSLSamplerParameter* m_WrappedGLSLSampler;
+
+        /// The source image for the sampler.
+        Image*                  m_SourceImage;
 };
 
 //=============================================================================

@@ -38,13 +38,15 @@ static void* _KernelGetOpenGLProcAddress(const char* name);
 namespace Firtree { namespace GLSL {
 
 //=============================================================================
-bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* sampler);
+bool BuildGLSLShaderForSampler(std::string& dest, 
+        GLSLSamplerParameter* sampler);
 
 //=============================================================================
-bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int program);
+bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler, 
+        unsigned int program);
 
 //=============================================================================
-const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
+const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler);
 
 //=============================================================================
 static void _KernelEnsureAPI() 
@@ -243,8 +245,8 @@ void CompiledGLSLKernel::UpdateBlockNameReplacedSourceCache()
 //=============================================================================
 void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
 {
-    GLSL::SamplerParameter* sampler = 
-        dynamic_cast<GLSL::SamplerParameter*>(param);
+    SamplerParameter* sampler = 
+        dynamic_cast<SamplerParameter*>(param);
     NumericParameter* numeric = 
         dynamic_cast<NumericParameter*>(param);
 
@@ -345,18 +347,20 @@ SamplerParameter* CompiledGLSLKernel::SamplerParameterForKey(const char* key)
     if(kp == NULL) { return NULL; }
 
     SamplerParameter* sp = dynamic_cast<SamplerParameter*>(kp);
+    if(sp == NULL) { return NULL; }
+
     return sp;
 }
 
 //=============================================================================
-SamplerParameter* KernelSamplerParameter::Create(Image* im)
+GLSLSamplerParameter* KernelSamplerParameter::Create(Image* im)
 {
     return new KernelSamplerParameter(im);
 }
 
 //=============================================================================
-SamplerParameter::SamplerParameter()
-    :   Firtree::SamplerParameter()
+GLSLSamplerParameter::GLSLSamplerParameter()
+    :   Firtree::ReferenceCounted()
     ,   m_Transform(AffineTransform::Identity())
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
@@ -364,13 +368,13 @@ SamplerParameter::SamplerParameter()
 }
 
 //=============================================================================
-SamplerParameter::~SamplerParameter()
+GLSLSamplerParameter::~GLSLSamplerParameter()
 {
     m_Transform->Release();
 }
 
 //=============================================================================
-void SamplerParameter::SetTransform(const AffineTransform* f)
+void GLSLSamplerParameter::SetTransform(const AffineTransform* f)
 {
     if(f == NULL)
         return;
@@ -381,20 +385,20 @@ void SamplerParameter::SetTransform(const AffineTransform* f)
 }
 
 //=============================================================================
-const Rect2D SamplerParameter::GetExtent() const 
+const Rect2D GLSLSamplerParameter::GetExtent() const 
 {
     return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
 
 //=============================================================================
-const Rect2D SamplerParameter::GetDomain() const 
+const Rect2D GLSLSamplerParameter::GetDomain() const 
 {
     return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
 }
 
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
-    :   Firtree::GLSL::SamplerParameter()
+    :   GLSLSamplerParameter()
     ,   m_KernelCompileStatus(false)
 {
     Internal::ImageImpl* imImpl = 
@@ -439,7 +443,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
     
-    // Create a vector os sampler parameters.
+    // Create a vector of the kernel sampler parameters.
     std::vector<SamplerParameter*> samplerParams;
     for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
             i != params.end(); i++)
@@ -459,19 +463,23 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     // Special case for kernels with only one sampler.
     if(samplerParams.size() == 1)
     {
-        SamplerParameter *pKSP = samplerParams.front();
-        pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+        SamplerParameter *pSP = samplerParams.front();
+        GLSLSamplerParameter *pGSP = 
+            GLSLSamplerParameter::ExtractFrom(pSP);
+        pGSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
         dest += tempStr;
     } else {
         for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
                 i != samplerParams.end(); i++)
         {
-            SamplerParameter *pKSP = *i;
-            snprintf(idxStr, 255, "%i", pKSP->GetSamplerIndex());
+            SamplerParameter *pSP = *i;
+            GLSLSamplerParameter *pGSP = 
+                GLSLSamplerParameter::ExtractFrom(pSP);
+            snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
             dest += "if(sampler == ";
             dest += idxStr;
             dest += ") {";
-            pKSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+            pGSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
             dest += tempStr;
             dest += "}\n";
         }
@@ -515,13 +523,15 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 i != samplerParams.end(); i++)
         {
             SamplerParameter *pSP = *i;
+            GLSLSamplerParameter *pGSP =
+                GLSLSamplerParameter::ExtractFrom(pSP);
             AffineTransform* invTrans = pSP->GetTransform()->Copy();
             invTrans->Invert();
             const AffineTransformStruct& transform =
                 invTrans->GetTransformStruct();
             if(!invTrans->IsIdentity())
             {
-                snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
+                snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
                 dest += ") {\n";
@@ -565,8 +575,10 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 i != samplerParams.end(); i++)
         {
             SamplerParameter *pSP = *i;
+            GLSLSamplerParameter *pGSP = 
+                GLSLSamplerParameter::ExtractFrom(pSP);
             const Rect2D& extent = pSP->GetExtent();
-            snprintf(idxStr, 255, "%i", pSP->GetSamplerIndex());
+            snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
             dest += "if(sampler == ";
             dest += idxStr;
             dest += ") {\n";
@@ -585,11 +597,9 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 }
 
 //=============================================================================
-bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
+bool BuildGLSLShaderForSampler(std::string& dest,
+        GLSLSamplerParameter* sampler)
 {
-    GLSL::SamplerParameter* sampler = 
-        dynamic_cast<GLSL::SamplerParameter*>(s);
-
     if(sampler == NULL)
         return false;
 
@@ -608,7 +618,8 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
         ;
 
     std::vector<SamplerParameter*> children;
-    KernelSamplerParameter* ksp = dynamic_cast<KernelSamplerParameter*>(s);
+    KernelSamplerParameter* ksp = 
+        dynamic_cast<KernelSamplerParameter*>(sampler);
     if(ksp != NULL)
     {
         ksp->AddChildSamplersToVector(children);
@@ -620,15 +631,12 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
         int textureIdx = 0;
         for(int i=0; i<children.size(); i++)
         {
-            SamplerParameter* child = 
-                dynamic_cast<GLSL::SamplerParameter*>(children[i]);
+            GLSLSamplerParameter* child = 
+                GLSLSamplerParameter::ExtractFrom(children[i]);
             if(child != NULL)
             {
-                if(child != NULL)
-                {
-                    child->SetSamplerIndex(samplerIdx);
-                    samplerIdx++;
-                }
+                child->SetSamplerIndex(samplerIdx);
+                samplerIdx++;
 
                 TextureSamplerParameter* tsp =
                     dynamic_cast<TextureSamplerParameter*>(child);
@@ -647,8 +655,10 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
     {
         for(int i=0; i<children.size(); i++)
         {
+            GLSLSamplerParameter* gsp =
+                GLSLSamplerParameter::ExtractFrom(children[i]);
             KernelSamplerParameter* child = 
-                dynamic_cast<KernelSamplerParameter*>(children[i]);
+                dynamic_cast<KernelSamplerParameter*>(gsp);
 
             if(child != NULL)
             {
@@ -657,8 +667,9 @@ bool BuildGLSLShaderForSampler(std::string& dest, Firtree::SamplerParameter* s)
             }
         }
 
-        WriteSamplerFunctionsForKernel(dest, 
-                ((KernelSamplerParameter*)sampler)->GetKernel());
+        KernelSamplerParameter* ksp =
+            dynamic_cast<KernelSamplerParameter*>(sampler);
+        WriteSamplerFunctionsForKernel(dest, ksp->GetKernel());
     }
 
     dest += "void main() {\n"
@@ -722,18 +733,20 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
                 dynamic_cast<SamplerParameter*>((*i).second);
             if(sp != NULL)
             {
-                // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
+                GLSLSamplerParameter* gsp =
+                    GLSLSamplerParameter::ExtractFrom(sp);
+
                 std::string prefix(GetBlockPrefix());
                 prefix += "_";
                 prefix += (*i).first;
 
-                sp->SetBlockPrefix(prefix.c_str());
+                gsp->SetBlockPrefix(prefix.c_str());
                 std::string samplerGLSL;
-                sp->BuildTopLevelGLSL(samplerGLSL);
+                gsp->BuildTopLevelGLSL(samplerGLSL);
                 dest += samplerGLSL;
 
                 KernelSamplerParameter* ksp = 
-                    dynamic_cast<KernelSamplerParameter*>(sp);
+                    dynamic_cast<KernelSamplerParameter*>(gsp);
                 if((ksp != NULL) && (!ksp->IsValid()))
                 {
                     // HACK!
@@ -753,7 +766,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 
 //=============================================================================
 void KernelSamplerParameter::AddChildSamplersToVector(
-        std::vector<GLSL::SamplerParameter*>& sampVec)
+        std::vector<SamplerParameter*>& sampVec)
 {
     const std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
@@ -764,13 +777,16 @@ void KernelSamplerParameter::AddChildSamplersToVector(
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)
         {
-            GLSL::SamplerParameter* sp = 
-                dynamic_cast<GLSL::SamplerParameter*>((*i).second);
+            SamplerParameter* sp = 
+                dynamic_cast<SamplerParameter*>((*i).second);
             if(sp == NULL)
                 continue;
 
+            GLSLSamplerParameter* glslsp = 
+                GLSLSamplerParameter::ExtractFrom(sp);
+
             KernelSamplerParameter* ksp = 
-                dynamic_cast<KernelSamplerParameter*>(sp);
+                dynamic_cast<KernelSamplerParameter*>(glslsp);
             if(ksp != NULL)
             {
                 ksp->AddChildSamplersToVector(sampVec);
@@ -811,9 +827,11 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
     for(int i=0; i<children.size(); i++)
     {
         SamplerParameter* child = children[i];
+        GLSLSamplerParameter* glslChild =
+            GLSLSamplerParameter::ExtractFrom(child);
 
         // Set all the child's uniforms
-        child->SetGLSLUniforms(program);
+        glslChild->SetGLSLUniforms(program);
     }
 
     for(std::map<std::string, Parameter*>::const_iterator i = params.begin();
@@ -940,7 +958,9 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             }
         } else if(sp != NULL) 
         {
-            glUniform1iARB(uniformLoc, sp->GetSamplerIndex());
+            GLSLSamplerParameter* gsp = 
+                GLSLSamplerParameter::ExtractFrom(sp);
+            glUniform1iARB(uniformLoc, gsp->GetSamplerIndex());
             err = glGetError();
             if(err != GL_NO_ERROR)
             {
@@ -954,7 +974,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
 //=============================================================================
 TextureSamplerParameter::TextureSamplerParameter(Image* im)
-    :   Firtree::GLSL::SamplerParameter()
+    :   GLSLSamplerParameter()
     ,   m_TextureUnit(0)
 {
     Internal::ImageImpl* imImpl = 
@@ -994,7 +1014,7 @@ const Rect2D TextureSamplerParameter::GetExtent() const
 }
 
 //=============================================================================
-SamplerParameter* TextureSamplerParameter::Create(Image* im)
+GLSLSamplerParameter* TextureSamplerParameter::Create(Image* im)
 {
     return new TextureSamplerParameter(im);
 }
@@ -1084,7 +1104,7 @@ unsigned int TextureSamplerParameter::GetGLTextureObject() const
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateSampler(Image* im)
+GLSLSamplerParameter* CreateSampler(Image* im)
 {
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
@@ -1099,10 +1119,10 @@ Firtree::SamplerParameter* CreateSampler(Image* im)
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+GLSLSamplerParameter* CreateTextureSamplerWithTransform(
         Image* im, const AffineTransform* transform)
 {
-    SamplerParameter* rv = TextureSamplerParameter::Create(im);
+    GLSLSamplerParameter* rv = TextureSamplerParameter::Create(im);
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
@@ -1111,10 +1131,10 @@ Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
+GLSLSamplerParameter* CreateKernelSamplerWithTransform(
         Image* im, const AffineTransform* transform)
 {
-    SamplerParameter* rv = KernelSamplerParameter::Create(im);
+    GLSLSamplerParameter* rv = KernelSamplerParameter::Create(im);
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
@@ -1123,38 +1143,37 @@ Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSampler(Image* im)
+GLSLSamplerParameter* CreateTextureSampler(Image* im)
 {
     AffineTransform* t = AffineTransform::Identity();
-    Firtree::SamplerParameter* rv =
+    GLSLSamplerParameter* rv =
         CreateTextureSamplerWithTransform(im, t);
     FIRTREE_SAFE_RELEASE(t);
     return rv;
 }
 
 //=============================================================================
-Firtree::SamplerParameter* CreateKernelSampler(Image* im)
+GLSLSamplerParameter* CreateKernelSampler(Image* im)
 {
     return KernelSamplerParameter::Create(im);
 }
 
 //=============================================================================
-bool SetGLSLUniformsForSampler(Firtree::SamplerParameter* sampler, unsigned int prog)
+bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler,
+        unsigned int prog)
 {
-    GLSL::SamplerParameter* s = 
-        dynamic_cast<GLSL::SamplerParameter*>(sampler);
-    if(s == NULL)
+    if(sampler == NULL)
     {
         return false;
     }
 
-    s->SetGLSLUniforms(prog);
+    sampler->SetGLSLUniforms(prog);
 
     return true;
 }
 
 //=============================================================================
-const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler)
+const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
 {
     GLSL::KernelSamplerParameter* s = 
         dynamic_cast<GLSL::KernelSamplerParameter*>(sampler);
@@ -1170,7 +1189,7 @@ const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler)
 struct RenderingContext {
     GLuint                   Program;
     GLuint                   FragShader;
-    GLSL::SamplerParameter*  Sampler;
+    GLSLSamplerParameter*    Sampler;
 };
 
 //=============================================================================
@@ -1187,8 +1206,8 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
 {
     _KernelEnsureAPI();
 
-    GLSL::SamplerParameter* sampler = 
-        dynamic_cast<GLSL::SamplerParameter*>(topLevelSampler);
+    GLSLSamplerParameter* sampler = 
+        GLSLSamplerParameter::ExtractFrom(topLevelSampler);
 
     if(sampler == NULL)
     {

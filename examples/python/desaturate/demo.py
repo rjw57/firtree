@@ -74,19 +74,19 @@ class FirtreeScene:
 
         # Wire the firtree image into the kernel.
         desaturateKernel.SetValueForKey(
-            Firtree.CreateSampler(firtreeTransImage), 'source')
+            Firtree.SamplerParameter.CreateFromImage(firtreeTransImage), 'source')
 
         # Wire the desaturated image and original image into
         # the mix kernel.
         mixKernel.SetValueForKey(
-            Firtree.CreateSampler(desaturatedImage), 'a')
+            Firtree.SamplerParameter.CreateFromImage(desaturatedImage), 'a')
         mixKernel.SetValueForKey(
-            Firtree.CreateSampler(firtreeTransImage), 'b')
+            Firtree.SamplerParameter.CreateFromImage(firtreeTransImage), 'b')
 
         self.mixKernel = mixKernel    
 
         # Create a rendering context.
-        sampler = Firtree.CreateSampler(mixImage)
+        sampler = Firtree.SamplerParameter.CreateFromImage(mixImage)
         self.renderContext = Firtree.CreateRenderingContext(sampler)
 
     def display (self, width, height):

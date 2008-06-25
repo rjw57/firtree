@@ -199,32 +199,32 @@ void initialize_kernels()
         t->TranslateBy(0,150);
         Image* o2Trans = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
-        g_OverSampler2 = GLSL::CreateSampler(o2Trans);
+        g_OverSampler2 = SamplerParameter::CreateFromImage(o2Trans);
         FIRTREE_SAFE_RELEASE(tmpim);
         FIRTREE_SAFE_RELEASE(o2Trans);
 
         tmpim = Image::CreateFromKernel(g_GradientKernel);
-        g_GradientSampler = GLSL::CreateSampler(tmpim);
+        g_GradientSampler = SamplerParameter::CreateFromImage(tmpim);
         FIRTREE_SAFE_RELEASE(tmpim);
 
         tmpim = Image::CreateFromKernel(g_RippleKernel);
-        g_RippleSampler = GLSL::CreateSampler(tmpim);
+        g_RippleSampler = SamplerParameter::CreateFromImage(tmpim);
         FIRTREE_SAFE_RELEASE(tmpim);
 
         tmpim = Image::CreateFromKernel(g_OverKernel);
-        g_OverSampler = GLSL::CreateSampler(tmpim);
+        g_OverSampler = SamplerParameter::CreateFromImage(tmpim);
         FIRTREE_SAFE_RELEASE(tmpim);
 
         tmpim = Image::CreateFromKernel(g_CheckerKernel);
         t = AffineTransform::RotationByDegrees(30.f);
         Image* checkTrans = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
-        g_CheckerSampler = GLSL::CreateSampler(checkTrans);
+        g_CheckerSampler = SamplerParameter::CreateFromImage(checkTrans);
         FIRTREE_SAFE_RELEASE(tmpim);
         FIRTREE_SAFE_RELEASE(checkTrans);
 
         tmpim = Image::CreateFromKernel(g_SpotKernel);
-        g_SpotSampler = GLSL::CreateSampler(tmpim);
+        g_SpotSampler = SamplerParameter::CreateFromImage(tmpim);
         FIRTREE_SAFE_RELEASE(tmpim);
 
         g_CheckerKernel->SetValueForKey(10.f, "squareSize");
@@ -257,9 +257,9 @@ void initialize_kernels()
         Image* lenaTransImage = Image::CreateFromImageWithTransform(lenaImage, lenaTrans);
 
         g_LenaSampler = 
-            GLSL::CreateSampler(lenaTransImage);
+            SamplerParameter::CreateFromImage(lenaTransImage);
         SamplerParameter* fogSampler = 
-            GLSL::CreateSampler(fogImage);
+            SamplerParameter::CreateFromImage(fogImage);
 
         lenaTrans->Release();
 

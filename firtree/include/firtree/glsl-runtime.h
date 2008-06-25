@@ -31,9 +31,6 @@ namespace Firtree { namespace GLSL {
 struct RenderingContext;
 
 //=============================================================================
-Firtree::SamplerParameter* CreateSampler(Image* im);
-
-//=============================================================================
 RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler);
 
 //=============================================================================

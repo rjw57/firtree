@@ -80,11 +80,11 @@ class FirtreeScene:
             fogImage, fogTransform)
 
         # Wire the lena and fog images into the kernel.
-        overKernel.SetValueForKey(Firtree.CreateSampler(lenaTransImage), 'under')
-        overKernel.SetValueForKey(Firtree.CreateSampler(fogTransImage), 'over')
+        overKernel.SetValueForKey(Firtree.SamplerParameter.CreateFromImage(lenaTransImage), 'under')
+        overKernel.SetValueForKey(Firtree.SamplerParameter.CreateFromImage(fogTransImage), 'over')
 
         # Create a rendering context.
-        sampler = Firtree.CreateSampler(compositeImage)
+        sampler = Firtree.SamplerParameter.CreateFromImage(compositeImage)
         self.renderContext = Firtree.CreateRenderingContext(sampler)
 
     def display (self, width, height):

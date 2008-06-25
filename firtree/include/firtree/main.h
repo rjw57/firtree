@@ -86,6 +86,14 @@ class ReferenceCounted {
         unsigned int m_RefCount;
 };
 
+/// Convenience macro to retain a variable if non-NULL or warn if
+/// it is NULL.
+#define FIRTREE_SAFE_RETAIN(a) do { \
+    Firtree::ReferenceCounted* _tmp = (a); \
+    if(_tmp != NULL) { _tmp->Retain(); } else { \
+        FIRTREE_WARNING("Attempt to retain a NULL pointer."); } \
+} while(0)
+
 /// Convenience macro to release a variable if non-NULL and assign 
 /// NULL to it. The argument has to be an lvalue.
 #define FIRTREE_SAFE_RELEASE(a) do { \

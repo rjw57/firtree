@@ -188,14 +188,50 @@ void Kernel::SetValueForKey(const bool* value, int count, const char* key)
 }
 
 //=============================================================================
-SamplerParameter::SamplerParameter()
+SamplerParameter::SamplerParameter(Image* srcImage)
     :   Parameter()
+    ,   m_SourceImage(srcImage)
 {
+    FIRTREE_SAFE_RETAIN(m_SourceImage);
+    
+    m_WrappedGLSLSampler = GLSL::CreateSampler(m_SourceImage);
 }
 
 //=============================================================================
 SamplerParameter::~SamplerParameter()
 {
+    FIRTREE_SAFE_RELEASE(m_WrappedGLSLSampler);
+    FIRTREE_SAFE_RELEASE(m_SourceImage);
+}
+
+//=============================================================================
+SamplerParameter* SamplerParameter::CreateFromImage(Image* im)
+{
+    return new SamplerParameter(im);
+}
+
+//=============================================================================
+const Rect2D SamplerParameter::GetDomain() const
+{
+    return m_WrappedGLSLSampler->GetDomain();
+}
+
+//=============================================================================
+const Rect2D SamplerParameter::GetExtent() const
+{
+    return m_WrappedGLSLSampler->GetExtent();
+}
+
+//=============================================================================
+const AffineTransform* SamplerParameter::GetTransform() const
+{
+    return m_WrappedGLSLSampler->GetTransform();
+}
+
+//=============================================================================
+GLSL::GLSLSamplerParameter* SamplerParameter::GetWrappedGLSLSampler() const
+{
+    return m_WrappedGLSLSampler;
 }
 
 } // namespace Firtree 

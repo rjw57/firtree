@@ -37,29 +37,32 @@ namespace Firtree { namespace Internal {
 
 namespace Firtree { namespace GLSL {
 
-class SamplerParameter;
+class GLSLSamplerParameter;
 class CompiledGLSLKernel;
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSampler(Image* image);
+GLSLSamplerParameter* CreateSampler(Image* im);
 
 //=============================================================================
-Firtree::SamplerParameter* CreateTextureSamplerWithTransform(
+GLSLSamplerParameter* CreateTextureSampler(Image* image);
+
+//=============================================================================
+GLSLSamplerParameter* CreateTextureSamplerWithTransform(
         Image* image, const AffineTransform* transform);
 
 //=============================================================================
-Firtree::SamplerParameter* CreateKernelSampler(Image* im);
+GLSLSamplerParameter* CreateKernelSampler(Image* im);
 
 //=============================================================================
-Firtree::SamplerParameter* CreateKernelSamplerWithTransform(
+GLSLSamplerParameter* CreateKernelSamplerWithTransform(
         Image* im, const AffineTransform* transform);
 
 //=============================================================================
-class SamplerParameter : public Firtree::SamplerParameter
+class GLSLSamplerParameter : public Firtree::ReferenceCounted
 {
     protected:
-        SamplerParameter();
-        virtual ~SamplerParameter();
+        GLSLSamplerParameter();
+        virtual ~GLSLSamplerParameter();
 
     public:
         ///@{
@@ -68,6 +71,11 @@ class SamplerParameter : public Firtree::SamplerParameter
         virtual const Rect2D GetExtent() const;
         virtual const AffineTransform* GetTransform() const { return m_Transform; }
         ///@}
+        
+        inline static GLSLSamplerParameter* ExtractFrom(
+                Firtree::SamplerParameter* s) {
+            return s->GetWrappedGLSLSampler();
+        }
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest) = 0;
@@ -99,14 +107,14 @@ class SamplerParameter : public Firtree::SamplerParameter
 };
 
 //=============================================================================
-class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
+class TextureSamplerParameter : public GLSLSamplerParameter
 {
     protected:
         TextureSamplerParameter(Image* image);
         virtual ~TextureSamplerParameter();
 
     public:
-        static SamplerParameter* Create(Image* image);
+        static GLSLSamplerParameter* Create(Image* image);
 
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const { return m_Domain; }
@@ -137,14 +145,14 @@ class TextureSamplerParameter : public Firtree::GLSL::SamplerParameter
 };
 
 //=============================================================================
-class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
+class KernelSamplerParameter : public GLSLSamplerParameter
 {
     protected:
         KernelSamplerParameter(Image* im);
         virtual ~KernelSamplerParameter();
 
     public:
-        static SamplerParameter* Create(Image* im);
+        static GLSLSamplerParameter* Create(Image* im);
 
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest);
@@ -169,9 +177,10 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 
     protected:
         virtual void AddChildSamplersToVector(
-                std::vector<GLSL::SamplerParameter*>& sampVec);
+                std::vector<SamplerParameter*>& sampVec);
 
-        friend bool BuildGLSLShaderForSampler(std::string&, Firtree::SamplerParameter*);
+        friend bool BuildGLSLShaderForSampler(std::string&,
+                GLSLSamplerParameter*);
 };
 
 //=============================================================================

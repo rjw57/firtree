@@ -37,6 +37,8 @@ class NumericParameter;
 class SamplerParameter;
 class Kernel;
 
+namespace GLSL { class CompiledGLSLKernel; }
+
 //=============================================================================
 /// The base class for all kernel parameters.
 class Parameter : public ReferenceCounted

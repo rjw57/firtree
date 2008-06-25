@@ -65,7 +65,7 @@ static void _KernelEnsureAPI()
 }
 
 //=============================================================================
-Kernel::Kernel(const char* source)
+CompiledGLSLKernel::CompiledGLSLKernel(const char* source)
     :   Firtree::Kernel(source)
     ,   m_IsCompiled(false)
 {
@@ -73,16 +73,19 @@ Kernel::Kernel(const char* source)
 }
 
 //=============================================================================
-Kernel::~Kernel()
+CompiledGLSLKernel::~CompiledGLSLKernel()
 {
     ClearParameters();
 }
 
 //=============================================================================
-Firtree::Kernel* Kernel::Create(const char* source) { return new Kernel(source); }
+Firtree::Kernel* CompiledGLSLKernel::Create(const char* source)
+{
+    return new CompiledGLSLKernel(source); 
+}
 
 //=============================================================================
-void Kernel::SetSource(const char* source)
+void CompiledGLSLKernel::SetSource(const char* source)
 {
     m_IsCompiled = false;
 
@@ -169,17 +172,17 @@ void Kernel::SetSource(const char* source)
 }
 
 //=============================================================================
-const char* Kernel::GetCompiledGLSL() const {
+const char* CompiledGLSLKernel::GetCompiledGLSL() const {
     return m_BlockReplacedGLSL.c_str();
 }
 
 //=============================================================================
-const char* Kernel::GetCompiledKernelName() const {
+const char* CompiledGLSLKernel::GetCompiledKernelName() const {
     return m_BlockReplacedKernelName.c_str();
 }
 
 //=============================================================================
-void Kernel::SetBlockName(const char* blockName)
+void CompiledGLSLKernel::SetBlockName(const char* blockName)
 {
     // Set the block name.
     m_BlockName = blockName;
@@ -191,7 +194,7 @@ void Kernel::SetBlockName(const char* blockName)
 }
 
 //=============================================================================
-void Kernel::UpdateBlockNameReplacedSourceCache()
+void CompiledGLSLKernel::UpdateBlockNameReplacedSourceCache()
 {
     if(!m_IsCompiled)
         return;
@@ -220,7 +223,7 @@ void Kernel::UpdateBlockNameReplacedSourceCache()
 }
 
 //=============================================================================
-void Kernel::SetValueForKey(Parameter* param, const char* key)
+void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
 {
     GLSL::SamplerParameter* sampler = 
         dynamic_cast<GLSL::SamplerParameter*>(param);
@@ -257,7 +260,7 @@ void Kernel::SetValueForKey(Parameter* param, const char* key)
 }
 
 //=============================================================================
-const char* Kernel::GetUniformNameForKey(const char* key)
+const char* CompiledGLSLKernel::GetUniformNameForKey(const char* key)
 {
     if(m_UniformNameMap.count(key) == 0)
     {
@@ -268,7 +271,7 @@ const char* Kernel::GetUniformNameForKey(const char* key)
 }
 
 //=============================================================================
-void Kernel::ClearParameters()
+void CompiledGLSLKernel::ClearParameters()
 {
     for(std::map<std::string, Parameter*>::iterator i = m_Parameters.begin();
             i != m_Parameters.end(); i++)
@@ -285,7 +288,7 @@ void Kernel::ClearParameters()
 }
 
 //=============================================================================
-Parameter* Kernel::ParameterForKey(const char* key)
+Parameter* CompiledGLSLKernel::ParameterForKey(const char* key)
 {
     if(m_Parameters.count(std::string(key)) > 0)
     {
@@ -296,7 +299,7 @@ Parameter* Kernel::ParameterForKey(const char* key)
 }
 
 //=============================================================================
-NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key, 
+NumericParameter* CompiledGLSLKernel::NumericParameterForKeyAndType(const char* key, 
         NumericParameter::BaseType type)
 {
     Parameter* kp = ParameterForKey(key);
@@ -312,7 +315,7 @@ NumericParameter* Kernel::NumericParameterForKeyAndType(const char* key,
 }
 
 //=============================================================================
-SamplerParameter* Kernel::SamplerParameterForKey(const char* key)
+SamplerParameter* CompiledGLSLKernel::SamplerParameterForKey(const char* key)
 {
     Parameter* kp = ParameterForKey(key);
 
@@ -377,7 +380,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     if(!(imImpl->HasKernel())) { return; }
 
     Firtree::Kernel* k = imImpl->GetKernel();
-    GLSL::Kernel* gk = dynamic_cast<GLSL::Kernel*>(k);
+    CompiledGLSLKernel* gk = dynamic_cast<CompiledGLSLKernel*>(k);
     if(gk == NULL) { return; }
     
     AffineTransform* underlyingTransform = 
@@ -401,7 +404,7 @@ KernelSamplerParameter::~KernelSamplerParameter()
 
 //=============================================================================
 static void WriteSamplerFunctionsForKernel(std::string& dest,
-        Kernel* kernel)
+        CompiledGLSLKernel* kernel)
 {
     static char idxStr[255]; 
     std::string tempStr;
@@ -1115,7 +1118,7 @@ Firtree::SamplerParameter* CreateKernelSampler(Image* im)
 //=============================================================================
 Firtree::Kernel* CreateKernel(const char* source)
 {
-    return GLSL::Kernel::Create(source);
+    return GLSL::CompiledGLSLKernel::Create(source);
 }
 
 //=============================================================================

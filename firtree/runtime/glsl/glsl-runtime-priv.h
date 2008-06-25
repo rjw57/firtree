@@ -38,7 +38,7 @@ namespace Firtree { namespace Internal {
 namespace Firtree { namespace GLSL {
 
 class SamplerParameter;
-class Kernel;
+class CompiledGLSLKernel;
 
 //=============================================================================
 Firtree::SamplerParameter* CreateTextureSampler(Image* image);
@@ -161,10 +161,10 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
         // Build an entire shader for this sampler in GLSL.
         // virtual bool BuildGLSL(std::string& dest);
 
-        Kernel* GetKernel() const { return m_Kernel; }
+        CompiledGLSLKernel* GetKernel() const { return m_Kernel; }
 
     private:
-        Kernel*         m_Kernel;
+        CompiledGLSLKernel*         m_Kernel;
         bool            m_KernelCompileStatus;
 
     protected:
@@ -175,11 +175,11 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 };
 
 //=============================================================================
-class Kernel : public Firtree::Kernel
+class CompiledGLSLKernel : public Firtree::Kernel
 {
     protected:
-        Kernel(const char* source);
-        virtual ~Kernel();
+        CompiledGLSLKernel(const char* source);
+        virtual ~CompiledGLSLKernel();
 
     public:
         static Firtree::Kernel* Create();

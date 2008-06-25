@@ -66,7 +66,7 @@ static void _KernelEnsureAPI()
 
 //=============================================================================
 CompiledGLSLKernel::CompiledGLSLKernel(const char* source)
-    :   Firtree::Kernel(source)
+    :   Firtree::ReferenceCounted()
     ,   m_IsCompiled(false)
 {
     this->SetSource(source);
@@ -79,7 +79,8 @@ CompiledGLSLKernel::~CompiledGLSLKernel()
 }
 
 //=============================================================================
-Firtree::Kernel* CompiledGLSLKernel::Create(const char* source)
+CompiledGLSLKernel* CompiledGLSLKernel::CreateFromSource(
+        const char* source)
 {
     return new CompiledGLSLKernel(source); 
 }
@@ -87,11 +88,16 @@ Firtree::Kernel* CompiledGLSLKernel::Create(const char* source)
 //=============================================================================
 void CompiledGLSLKernel::SetSource(const char* source)
 {
-    m_IsCompiled = false;
-
     // Set the source cache
     m_Source = source;
+    m_IsCompiled = false;
 
+    Compile();
+}
+
+//=============================================================================
+void CompiledGLSLKernel::Compile() 
+{
     // Attempt to compile the kernel.
 
     m_CompiledGLSL.clear();
@@ -108,6 +114,9 @@ void CompiledGLSLKernel::SetSource(const char* source)
 
     GLSLBackend be("$$BLOCK$$");
     Compiler c(be);
+
+    const char* source = m_Source.c_str();
+
     bool rv = c.Compile(&source, 1);
     m_InfoLog = c.GetInfoLog();
     if(!rv)
@@ -244,6 +253,11 @@ void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
         }
 
         m_Parameters[key] = sampler;
+
+        // If the parameter is a sampler parameter, the GLSL kernel
+        // needs recompiling.
+        Compile();
+
     } else if(numeric != NULL)
     {
         NumericParameter* p = 
@@ -380,7 +394,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     if(!(imImpl->HasKernel())) { return; }
 
     Firtree::Kernel* k = imImpl->GetKernel();
-    CompiledGLSLKernel* gk = dynamic_cast<CompiledGLSLKernel*>(k);
+    CompiledGLSLKernel* gk = k->GetWrappedGLSLKernel();
     if(gk == NULL) { return; }
     
     AffineTransform* underlyingTransform = 
@@ -1113,12 +1127,6 @@ Firtree::SamplerParameter* CreateTextureSampler(Image* im)
 Firtree::SamplerParameter* CreateKernelSampler(Image* im)
 {
     return KernelSamplerParameter::Create(im);
-}
-
-//=============================================================================
-Firtree::Kernel* CreateKernel(const char* source)
-{
-    return GLSL::CompiledGLSLKernel::Create(source);
 }
 
 //=============================================================================

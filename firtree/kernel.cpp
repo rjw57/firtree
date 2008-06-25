@@ -23,8 +23,16 @@
 #include <firtree/main.h>
 #include <firtree/kernel.h>
 
+// GLSL runtime.
+#include <firtree/runtime/glsl/glsl-runtime-priv.h>
+
 #include <compiler/include/compiler.h>
 
+/// Kernels are implemented in Firtree by keeping an internal compiled 
+/// representation for all possible runtimes. This has the advantage of
+/// keeping all the kernel housekeeping within the kernel object itself
+/// but is a little mucky as the kernel object needs to 'know' about all
+/// Firtree runtimes.
 
 namespace Firtree {
 
@@ -74,12 +82,46 @@ Parameter* NumericParameter::Create()
 //=============================================================================
 Kernel::Kernel(const char* source)
     :   ReferenceCounted()
+    ,   m_WrappedGLSLKernel(NULL)    
 {
+    // Create a GLSL-based kernel and keep a reference to it.
+    m_WrappedGLSLKernel = GLSL::CompiledGLSLKernel::CreateFromSource(source);
 }
 
 //=============================================================================
 Kernel::~Kernel()
 {
+    FIRTREE_SAFE_RELEASE(m_WrappedGLSLKernel);
+}
+
+//=============================================================================
+Kernel* Kernel::CreateFromSource(const char* source)
+{
+    return new Kernel(source);
+}
+
+//=============================================================================
+GLSL::CompiledGLSLKernel* Kernel::GetWrappedGLSLKernel() const
+{
+    return m_WrappedGLSLKernel;
+}
+
+//=============================================================================
+const char* Kernel::GetSource() const
+{
+    return m_WrappedGLSLKernel->GetSource();
+}
+
+//=============================================================================
+const std::map<std::string, Parameter*>& Kernel::GetParameters()
+{
+    return m_WrappedGLSLKernel->GetParameters();
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(Parameter* param, const char* key)
+{
+    m_WrappedGLSLKernel->SetValueForKey(param, key);
 }
 
 //=============================================================================

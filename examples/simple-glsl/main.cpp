@@ -44,7 +44,7 @@ const char* g_CheckerKernelSource =
 "    }"
 ;
 
-Kernel* g_CheckerKernel = GLSL::CreateKernel(g_CheckerKernelSource);
+Kernel* g_CheckerKernel = Kernel::CreateFromSource(g_CheckerKernelSource);
 
 const char* g_SpotKernelSource = 
 "    kernel vec4 spotKernel(float dotPitch, __color backColor,"
@@ -56,7 +56,7 @@ const char* g_SpotKernelSource =
 "    }"
 ;
 
-Kernel* g_SpotKernel = GLSL::CreateKernel(g_SpotKernelSource);
+Kernel* g_SpotKernel = Kernel::CreateFromSource(g_SpotKernelSource);
 
 
 const char* g_OverKernelSource = 
@@ -68,7 +68,7 @@ const char* g_OverKernelSource =
 "    }"
 ;
 
-Kernel* g_OverKernel = GLSL::CreateKernel(g_OverKernelSource);
+Kernel* g_OverKernel = Kernel::CreateFromSource(g_OverKernelSource);
 
 const char* g_RippleKernelSource = 
 "    kernel vec4 ripple(sampler a, float phase)"
@@ -93,7 +93,7 @@ const char* g_RippleKernelSource =
 "    }"
 ;
 
-Kernel* g_RippleKernel = GLSL::CreateKernel(g_RippleKernelSource);
+Kernel* g_RippleKernel = Kernel::CreateFromSource(g_RippleKernelSource);
 
 const char* g_GradientKernelSource = 
 "    kernel vec4 gradientKernel()"
@@ -103,9 +103,9 @@ const char* g_GradientKernelSource =
 "    }"
 ;
 
-Kernel* g_GradientKernel = GLSL::CreateKernel(g_GradientKernelSource);
+Kernel* g_GradientKernel = Kernel::CreateFromSource(g_GradientKernelSource);
 
-Kernel* g_OverKernel2 = GLSL::CreateKernel(g_OverKernelSource);
+Kernel* g_OverKernel2 = Kernel::CreateFromSource(g_OverKernelSource);
 
 SamplerParameter* g_LenaSampler = NULL;
 SamplerParameter* g_GlobalSampler = NULL;

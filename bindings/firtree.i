@@ -42,7 +42,8 @@ using namespace Firtree;
 %newobject Firtree::Blob::CreateFromBlob;
 
 %newobject Firtree::GLSL::CreateSampler;
-%newobject Firtree::GLSL::CreateKernel;
+
+%newobject Firtree::Kernel::CreateFromSource;
 
 %newobject Firtree::Image::CreateFromImage;
 %newobject Firtree::Image::CreateFromBitmapData;

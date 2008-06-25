@@ -175,24 +175,24 @@ class KernelSamplerParameter : public Firtree::GLSL::SamplerParameter
 };
 
 //=============================================================================
-class CompiledGLSLKernel : public Firtree::Kernel
+class CompiledGLSLKernel : public Firtree::ReferenceCounted
 {
     protected:
         CompiledGLSLKernel(const char* source);
         virtual ~CompiledGLSLKernel();
 
     public:
-        static Firtree::Kernel* Create();
-        static Firtree::Kernel* Create(const char* source);
+        static CompiledGLSLKernel* CreateFromSource(const char* source);
 
-        virtual void SetSource(const char* source);
-        virtual const char* GetSource() const { return m_Source.c_str(); }
+        void SetSource(const char* source);
+        const char* GetSource() const { return m_Source.c_str(); }
 
-        virtual void SetValueForKey(Parameter* param, const char* key);
+        void SetValueForKey(Parameter* param, const char* key);
 
-        virtual const std::map<std::string, Parameter*>& GetParameters()
+        const std::map<std::string, Parameter*>& GetParameters()
             { return m_Parameters; }
 
+        void Compile();
         bool GetIsCompiled() const { return m_IsCompiled; }
 
         void SetBlockName(const char* blockName);

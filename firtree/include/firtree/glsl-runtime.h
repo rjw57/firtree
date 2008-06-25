@@ -43,9 +43,6 @@ const char* GetInfoLogForSampler(Firtree::SamplerParameter* sampler);
 Firtree::SamplerParameter* CreateSampler(Image* im);
 
 //=============================================================================
-Firtree::Kernel* CreateKernel(const char* source);
-
-//=============================================================================
 RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler);
 
 //=============================================================================

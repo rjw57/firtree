@@ -48,7 +48,7 @@ class FirtreeScene:
         glDisable(GL_DEPTH_TEST)
 
         # Setup a simple alpha over kernel.
-        overKernel = Firtree.CreateKernel('''
+        overKernel = Firtree.Kernel.CreateFromSource('''
         kernel vec4 overKernel(sampler over, sampler under)
         {
             vec4 overVal = sample(over, samplerCoord(over));

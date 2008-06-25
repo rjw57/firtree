@@ -39,7 +39,7 @@ class FirtreeScene:
         glDisable(GL_DEPTH_TEST)
 
         # Setup a desaturate kernel.
-        desaturateKernel = Firtree.CreateKernel('''
+        desaturateKernel = Firtree.Kernel.CreateFromSource('''
         kernel vec4 desatKernel(sampler source)
         {
             vec4 sourceColour = sample(source, samplerCoord(source));
@@ -51,7 +51,7 @@ class FirtreeScene:
         desaturatedImage = Firtree.Image.CreateFromKernel(desaturateKernel)
 
         # Setup an image mixing kernel
-        mixKernel = Firtree.CreateKernel('''
+        mixKernel = Firtree.Kernel.CreateFromSource('''
         kernel vec4 mixKernel(sampler a, sampler b, float mix)
         {
             vec4 aColour = sample(a, samplerCoord(a));

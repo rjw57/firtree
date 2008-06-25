@@ -37,7 +37,10 @@ class NumericParameter;
 class SamplerParameter;
 class Kernel;
 
-namespace GLSL { class CompiledGLSLKernel; }
+namespace GLSL { 
+    class KernelSamplerParameter; 
+    class CompiledGLSLKernel; 
+}
 
 //=============================================================================
 /// The base class for all kernel parameters.
@@ -176,22 +179,29 @@ class Kernel : public ReferenceCounted
     public:
         virtual ~Kernel();
         // ====================================================================
+        // CONSTRUCTION METHODS
+
+        /// Construct a new Firtree kernel from the specified kernel
+        /// source.
+        static Kernel* CreateFromSource(const char* source);
+
+        // ====================================================================
         // CONST METHODS
 
         /// Retrieve a pointer to the source for this kernel expressed in
         /// the FIRTREE kernel language.
-        virtual const char* GetSource() const = 0;
+        const char* GetSource() const;
 
         // ====================================================================
         // MUTATING METHODS
 
         /// Return a const reference to a map containing the parameter 
         /// name/value pairs.
-        virtual const std::map<std::string, Parameter*>& GetParameters() = 0;
+        const std::map<std::string, Parameter*>& GetParameters();
 
         /// Accessor for setting a kernel parameter value. The accessors below
         /// are convenience wrappers around this method.
-        virtual void SetValueForKey(Parameter* parameter, const char* key) = 0;
+        void SetValueForKey(Parameter* parameter, const char* key);
 
         ///@{
         /// Accessors for the various scalar, vector and sampler parameters.
@@ -205,7 +215,19 @@ class Kernel : public ReferenceCounted
         void SetValueForKey(const bool* value, int count, 
                 const char* key);
         ///@}
+        
+    protected:
+        /// Internal method to retrieve the wrapped GLSL
+        /// kernel.
+        GLSL::CompiledGLSLKernel* GetWrappedGLSLKernel() const;
+
+        friend class GLSL::KernelSamplerParameter;
+
     private:
+
+        /// A pointer to the compiled GLSL kernel 'wrapped'
+        /// by this kernel.
+        GLSL::CompiledGLSLKernel* m_WrappedGLSLKernel;
 };
 
 }

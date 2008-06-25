@@ -149,6 +149,7 @@ class NumericParameter : public Parameter
 class SamplerParameter : public Parameter
 {
     protected:
+        /// Protected constructor. Use static Create*() members.
         SamplerParameter(Image* srcImage);
 
     public:

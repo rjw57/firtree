@@ -12,13 +12,19 @@ A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
-
-#include <endian.h>
+#include <firtree/platform.h>
 
 /* #define HAVE_LITTLE_ENDIAN * This should be #define'd if true. */
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define HAVE_LITTLE_ENDIAN
+#ifdef FIRTREE_APPLE
+#  ifndef __BIG_ENDIAN__
+#    define HAVE_LITTLE_ENDIAN
+#  endif
+#else
+#  include <endian.h>
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+#    define HAVE_LITTLE_ENDIAN
+#  endif
 #endif
 
 /* Copy data before messing with it. */

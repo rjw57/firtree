@@ -1,3 +1,9 @@
+libfirtree (0.0.2-0ubuntu1~ppa1) hardy; urgency=low
+
+  * Bump for API change.
+
+ -- Rich Wareham <richwareham@gmail.com>  Thu, 26 Jun 2008 18:35:06 +0100
+
 libfirtree (0.0.1-0ubuntu1~ppa2) hardy; urgency=low
 
   * Added python-firtree package containing Python bindings.

@@ -28,19 +28,13 @@
 
 namespace Firtree { namespace GLSL {
 
-struct RenderingContext;
+//=============================================================================
+void RenderInRect(SamplerParameter* sampler, const Rect2D& destRect,
+        const Rect2D& srcRect);
 
 //=============================================================================
-RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler);
-
-//=============================================================================
-void ReleaseRenderingContext(RenderingContext*);
-
-//=============================================================================
-void RenderInRect(RenderingContext* context, const Rect2D& destRect, const Rect2D& srcRect);
-
-//=============================================================================
-void RenderAtPoint(RenderingContext* context, const Point2D& location, const Rect2D& srcRect);
+void RenderAtPoint(SamplerParameter* sampler, const Point2D& location,
+        const Rect2D& srcRect);
 
 } }
 

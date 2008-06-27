@@ -1421,53 +1421,22 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
 }
 
 //=============================================================================
-struct RenderingContext {
-    GLSLSamplerParameter*    Sampler;
-};
-
-//=============================================================================
-RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler)
-{
-    _KernelEnsureAPI();
-
-    GLSLSamplerParameter* sampler = 
-        GLSLSamplerParameter::ExtractFrom(topLevelSampler);
-
-    if(sampler == NULL)
-    {
-        return NULL;
-    }
-
-    RenderingContext* retVal = new RenderingContext();
-
-    retVal->Sampler = sampler;
-    retVal->Sampler->Retain();
-
-    return retVal;
-}
-
-//=============================================================================
-void ReleaseRenderingContext(RenderingContext* c)
-{
-    if(c != NULL) { 
-        FIRTREE_SAFE_RELEASE(c->Sampler);
-        delete c; 
-    }
-}
-
-//=============================================================================
-void RenderAtPoint(RenderingContext* context, const Point2D& location,
+void RenderAtPoint(SamplerParameter* sampler, const Point2D& location,
         const Rect2D& srcRect)
 {
-    RenderInRect(context, Rect2D(location, srcRect.Size), srcRect);
+    RenderInRect(sampler, Rect2D(location, srcRect.Size), srcRect);
 }
 
 //=============================================================================
-void RenderInRect(RenderingContext* context, const Rect2D& destRect, 
+void RenderInRect(SamplerParameter* sampler, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
     GLenum err;
-    if(context == NULL) { return; }
+    if(sampler == NULL) { return; }
+
+    GLSLSamplerParameter* glslSampler =
+        GLSLSamplerParameter::ExtractFrom(sampler);
+    if(glslSampler == NULL) { return; }
 
 #if 0
     uint8_t digest[20];
@@ -1483,7 +1452,7 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
     // Firstly clip srcRect by extent
-    Rect2D extent = context->Sampler->GetExtent();
+    Rect2D extent = sampler->GetExtent();
     Rect2D clipSrcRect = RectIntersect(srcRect, extent);
 
     // Transform clipped source to destination
@@ -1511,7 +1480,7 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     //  `-> glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
 
-    int program = context->Sampler->GetShaderProgramObject();
+    int program = glslSampler->GetShaderProgramObject();
 
     if(program > 0)
     {
@@ -1523,7 +1492,7 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
         }
     }
 
-    context->Sampler->SetGLSLUniforms(program);
+    glslSampler->SetGLSLUniforms(program);
 
 #if 0
     printf("(%f,%f)->(%f,%f)\n",

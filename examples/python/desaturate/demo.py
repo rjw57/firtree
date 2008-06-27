@@ -87,7 +87,7 @@ class FirtreeScene:
 
         # Create a rendering context.
         sampler = Firtree.SamplerParameter.CreateFromImage(mixImage)
-        self.renderContext = Firtree.CreateRenderingContext(sampler)
+        self._renderSampler = sampler
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
@@ -97,7 +97,7 @@ class FirtreeScene:
             0.5 * (1.0 + math.sin(2.0 * t)), 'mix')
 
         # Render the composited image into the framebuffer.
-        Firtree.RenderAtPoint(self.renderContext, 
+        Firtree.RenderAtPoint(self._renderSampler, 
             Firtree.Point2D(0,0),
             Firtree.Rect2D(0,0,width,height))
 
@@ -105,10 +105,8 @@ class FirtreeScene:
         print('Clearing up...')
 
         self.mixKernel = None
+        self._renderSampler = None
         
-        # Release the rendering context.
-        Firtree.ReleaseRenderingContext(self.renderContext)
-
         # Sanity check to make sure that there are no objects left
         # dangling.
         gc.collect()

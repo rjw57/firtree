@@ -119,8 +119,6 @@ SamplerParameter* g_SpotSampler = NULL;
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
 
-GLSL::RenderingContext* g_RenderingContext = NULL;
-
 char g_ProgramPath[4096];
 
 void initialise_test(int *argc, char **argv, int window)
@@ -160,8 +158,8 @@ void finalise_test()
     FIRTREE_SAFE_RELEASE(g_RippleSampler);
     FIRTREE_SAFE_RELEASE(g_SpotSampler);
     FIRTREE_SAFE_RELEASE(g_OverSampler);
-
-    ReleaseRenderingContext(g_RenderingContext);
+        
+    FIRTREE_SAFE_RELEASE(g_GlobalSampler);
 
     printf("Allocated object count at exit (should be zero): %i\n",
             ReferenceCounted::GetGlobalObjectCount());
@@ -215,7 +213,7 @@ void render(float epoch)
         g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
         Rect2D outQuad(0,0,width,height);
-        GLSL::RenderAtPoint(g_RenderingContext, Point2D(0,0), outQuad);
+        GLSL::RenderAtPoint(g_GlobalSampler, Point2D(0,0), outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -367,8 +365,6 @@ void context_created()
 
     try{
         initialize_kernels();
-        g_RenderingContext = GLSL::CreateRenderingContext(g_GlobalSampler);
-        g_GlobalSampler->Release();
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
         exit(1);

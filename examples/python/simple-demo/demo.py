@@ -85,21 +85,20 @@ class FirtreeScene:
 
         # Create a rendering context.
         sampler = Firtree.SamplerParameter.CreateFromImage(compositeImage)
-        self.renderContext = Firtree.CreateRenderingContext(sampler)
+        self.renderSampler = sampler
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Render the composited image into the framebuffer.
-        Firtree.RenderAtPoint(self.renderContext, 
+        Firtree.RenderAtPoint(self.renderSampler, 
             Firtree.Point2D(0,0),
             Firtree.Rect2D(0,0,width,height))
 
     def clear_up (self):
         print('Clearing up...')
 
-        # Release the rendering context.
-        Firtree.ReleaseRenderingContext(self.renderContext)
+        self.renderSampler = None
 
         # Sanity check to make sure that there are no objects left
         # dangling.

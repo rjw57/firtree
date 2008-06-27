@@ -650,6 +650,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     dest += 
         "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }\n"
         "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }\n"
+        // FIXME: Add rest of functions.
         ;
 
     // Get the main GLSL body of the target sampler. 

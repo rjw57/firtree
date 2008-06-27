@@ -154,10 +154,52 @@ void finalise_test()
 
     FIRTREE_SAFE_RELEASE(g_RippleKernel);
     FIRTREE_SAFE_RELEASE(g_SpotKernel);
+    FIRTREE_SAFE_RELEASE(g_GradientSampler);
+    FIRTREE_SAFE_RELEASE(g_CheckerSampler);
+    FIRTREE_SAFE_RELEASE(g_OverKernel2);
+    FIRTREE_SAFE_RELEASE(g_RippleSampler);
+    FIRTREE_SAFE_RELEASE(g_SpotSampler);
+    FIRTREE_SAFE_RELEASE(g_OverSampler);
+
     ReleaseRenderingContext(g_RenderingContext);
 
     printf("Allocated object count at exit (should be zero): %i\n",
             ReferenceCounted::GetGlobalObjectCount());
+}
+
+void key_pressed(unsigned char key, int x, int y)
+{
+    printf("KEYPRESS: %i\n", key);
+
+    if(key == 100 /* 'd' */)
+    {
+        static int flag = 0;
+
+        if(flag)
+        {
+            g_RippleKernel->SetValueForKey(g_OverSampler, "a");
+        } else {
+            g_RippleKernel->SetValueForKey(g_SpotSampler, "a");
+        }
+
+        flag = ~flag;
+    }
+
+    if(key == 115 /* 's' */)
+    {
+        static int flag = 0;
+
+        if(flag)
+        {
+            // Swap checkerborad for gradient
+            g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
+        } else {
+            // Swap gradient for checkerboard
+            g_OverKernel2->SetValueForKey(g_CheckerSampler, "b");
+        }
+
+        flag = ~flag;
+    }
 }
 
 void render(float epoch)
@@ -283,18 +325,18 @@ void initialize_kernels()
         // in the render loop.
         // FIRTREE_SAFE_RELEASE(g_RippleKernel);
         // FIRTREE_SAFE_RELEASE(g_SpotKernel);
+        // FIRTREE_SAFE_RELEASE(g_GradientSampler);
+        // FIRTREE_SAFE_RELEASE(g_CheckerSampler);
+        // FIRTREE_SAFE_RELEASE(g_OverKernel2);
+        // FIRTREE_SAFE_RELEASE(g_RippleSampler);
+        // FIRTREE_SAFE_RELEASE(g_SpotSampler);
+        // FIRTREE_SAFE_RELEASE(g_OverSampler);
 
         FIRTREE_SAFE_RELEASE(fogSampler);
         FIRTREE_SAFE_RELEASE(g_LenaSampler);
         FIRTREE_SAFE_RELEASE(g_OverSampler2);
-        FIRTREE_SAFE_RELEASE(g_OverKernel2);
-        FIRTREE_SAFE_RELEASE(g_GradientSampler);
         FIRTREE_SAFE_RELEASE(g_GradientKernel);
-        FIRTREE_SAFE_RELEASE(g_RippleSampler);
-        FIRTREE_SAFE_RELEASE(g_OverSampler);
         FIRTREE_SAFE_RELEASE(g_OverKernel);
-        FIRTREE_SAFE_RELEASE(g_SpotSampler);
-        FIRTREE_SAFE_RELEASE(g_CheckerSampler);
         FIRTREE_SAFE_RELEASE(g_CheckerKernel);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());

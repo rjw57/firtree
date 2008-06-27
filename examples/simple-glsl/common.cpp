@@ -252,6 +252,9 @@ void keyboard_cb(unsigned char key, int x, int y) {
   if(key == 'z') {
     glutReshapeWindow(640,480);
   }
+
+  // Hand off to main.cpp
+  key_pressed(key, x, y);
 }
 
 void special_cb(int key, int x, int y) {

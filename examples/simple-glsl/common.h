@@ -37,6 +37,8 @@ void finalise_test();
 void render(float epoch);
 /* Called when the OpenGL context has been created */
 void context_created();
+/* Called when a key has been pressed */
+void key_pressed(unsigned char key, int x, int y);
 
 /* UTILITIES */
 bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName);

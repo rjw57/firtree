@@ -1394,20 +1394,6 @@ GLSLSamplerParameter* CreateKernelSampler(Image* im)
 }
 
 //=============================================================================
-bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler,
-        unsigned int prog)
-{
-    if(sampler == NULL)
-    {
-        return false;
-    }
-
-    sampler->SetGLSLUniforms(prog);
-
-    return true;
-}
-
-//=============================================================================
 const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
 {
     GLSL::KernelSamplerParameter* s = 

@@ -271,11 +271,6 @@ void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
         }
 
         m_Parameters[key] = sampler;
-
-        // If the parameter is a sampler parameter, the GLSL kernel
-        // needs recompiling.
-        Compile();
-
     } else if(numeric != NULL)
     {
         NumericParameter* p = 
@@ -738,7 +733,8 @@ void KernelSamplerParameter::ComputeDigest(uint8_t digest[20])
     // Add the 'this' pointer to the SHA. Used as a measure
     // of uniqueness between two shader objects. Also means that
     // digests are unique even if the sampler is not valid.
-    SHA1Update(&shaCtx, (uint8_t*)(this), sizeof(this));
+    void* self = (void*)(this);
+    SHA1Update(&shaCtx, (uint8_t*)(&self), sizeof(void*));
 
     // If the sampler is invalid, stop here
     if(!IsValid())
@@ -768,17 +764,11 @@ void KernelSamplerParameter::ComputeDigest(uint8_t digest[20])
         if(pGLSLSampParam == NULL)
             continue;
 
-        // Is this a kernel?
-        KernelSamplerParameter* pKernSampParam =
-            dynamic_cast<KernelSamplerParameter*>(pGLSLSampParam);
-        if(pKernSampParam != NULL)
-        {
-            uint8_t samplerDigest[20];
+        uint8_t samplerDigest[20];
 
-            // Add in this sampler's digest.
-            pKernSampParam->ComputeDigest(samplerDigest);
-            SHA1Update(&shaCtx, samplerDigest, 20);
-        }
+        // Add in this sampler's digest.
+        pGLSLSampParam->ComputeDigest(samplerDigest);
+        SHA1Update(&shaCtx, samplerDigest, 20);
     }
 
     // Add in the current transform and extent.
@@ -1230,7 +1220,8 @@ void TextureSamplerParameter::ComputeDigest(uint8_t digest[20])
     // Add the 'this' pointer to the SHA. Used as a measure
     // of uniqueness between two shader objects. Also means that
     // digests are unique even if the sampler is not valid.
-    SHA1Update(&shaCtx, (uint8_t*)(this), sizeof(this));
+    void* self = (void*)(this);
+    SHA1Update(&shaCtx, (uint8_t*)(&self), sizeof(void*));
 
     // Add in the current transform and extent.
     Rect2D extent = GetExtent();
@@ -1240,6 +1231,15 @@ void TextureSamplerParameter::ComputeDigest(uint8_t digest[20])
 
     // Finalise the SHA-1 digest.
     SHA1Final(digest, &shaCtx);
+    
+#if 0
+    printf("%p: ", this);
+    for(int i=0; i<20; i++)
+    {
+        printf("%02X", digest[i]);
+    }
+    printf("\n");
+#endif
 }
 
 //=============================================================================
@@ -1426,7 +1426,7 @@ void RenderInRect(SamplerParameter* sampler, const Rect2D& destRect,
 
 #if 0
     uint8_t digest[20];
-    context->Sampler->ComputeDigest(digest);
+    glslSampler->ComputeDigest(digest);
     for(int i=0; i<20; i++)
     {
         printf("%02X", digest[i]);

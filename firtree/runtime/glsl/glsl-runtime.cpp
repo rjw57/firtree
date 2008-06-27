@@ -22,6 +22,7 @@
 #include "sha1.h"
 
 #include <float.h>
+#include <string.h>
 
 #define FIRTREE_NO_GLX
 #include <firtree/opengl.h>

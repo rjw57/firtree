@@ -685,17 +685,23 @@ bool BuildGLSLShaderForSampler(std::string& dest,
 
     AffineTransform* invTrans = sampler->GetTransform()->Copy();
     invTrans->Invert();
-    const AffineTransformStruct& transform =
-        invTrans->GetTransformStruct();
-    snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
-            transform.m11, transform.m12, transform.tX);
-    dest += countStr;
-    snprintf(countStr, 255, "vec3 row2 = vec3(%f,%f,%f);\n", 
-            transform.m21, transform.m22, transform.tY);
-    dest += countStr;
+    if(!invTrans->IsIdentity())
+    {
+        const AffineTransformStruct& transform =
+            invTrans->GetTransformStruct();
+        snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
+                transform.m11, transform.m12, transform.tX);
+        dest += countStr;
+        snprintf(countStr, 255, "vec3 row2 = vec3(%f,%f,%f);\n", 
+                transform.m21, transform.m22, transform.tY);
+        dest += countStr;
+        dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
+    } else {
+        dest += "vec2 destCoord = inCoord;\n";
+    }
+
     invTrans->Release();
 
-    dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
     sampler->BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
     dest += tempStr;
     dest += "\n}\n";

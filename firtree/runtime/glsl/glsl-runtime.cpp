@@ -406,7 +406,6 @@ const Rect2D GLSLSamplerParameter::GetDomain() const
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
     :   GLSLSamplerParameter()
-    ,   m_KernelCompileStatus(false)
 {
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
@@ -613,11 +612,6 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
         return;
     }
 
-    // Get the main GLSL body of the target sampler. We do this here because
-    // AddChildSamplersToVector() doesn't work until this is called.
-    std::string mainBody;
-    sampler->BuildTopLevelGLSL(mainBody);
-
     // Form a vector of all child samplers for the target.
     std::vector<SamplerParameter*> children;
     KernelSamplerParameter* ksp = dynamic_cast<KernelSamplerParameter*>(sampler);
@@ -657,6 +651,10 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
         "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }\n"
         "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }\n"
         ;
+
+    // Get the main GLSL body of the target sampler. 
+    std::string mainBody;
+    sampler->BuildTopLevelGLSL(mainBody);
 
     // Append the shader body it to the output.
     dest += mainBody;
@@ -717,7 +715,6 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
 bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 {
     m_Kernel->SetBlockName(GetBlockPrefix());
-    m_KernelCompileStatus = m_Kernel->GetIsCompiled();
 
     if(!IsValid())
         return false;
@@ -743,7 +740,7 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
         m_Kernel->GetParameters();
 
     for(std::map<std::string, Parameter*>::const_iterator i=kernelParams.begin();
-            m_KernelCompileStatus && (i != kernelParams.end()); i++)
+            i != kernelParams.end(); i++)
     {
         if((*i).second != NULL)
         {
@@ -770,7 +767,6 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
                     // HACK!
                     fprintf(stderr, "Compilation failed: %s\n", 
                             ksp->GetKernel()->GetInfoLog());
-                    m_KernelCompileStatus = false;
                     return false;
                 }
             }
@@ -783,14 +779,23 @@ bool KernelSamplerParameter::BuildTopLevelGLSL(std::string& dest)
 }
 
 //=============================================================================
+bool KernelSamplerParameter::IsValid() const
+{
+    return (m_Kernel != NULL) && (m_Kernel->GetIsCompiled()); 
+}
+
+//=============================================================================
 void KernelSamplerParameter::AddChildSamplersToVector(
         std::vector<SamplerParameter*>& sampVec)
 {
+    if(!IsValid())
+        return;
+
     const std::map<std::string, Parameter*>& kernelParams = 
         m_Kernel->GetParameters();
 
     for(std::map<std::string, Parameter*>::const_iterator i=kernelParams.begin();
-            m_KernelCompileStatus && (i != kernelParams.end()); i++)
+            i != kernelParams.end(); i++)
     {
         // FIRTREE_DEBUG("Parameter: %s = %p", (*i).first.c_str(), (*i).second);
         if((*i).second != NULL)

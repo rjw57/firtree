@@ -248,6 +248,7 @@ class Kernel : public ReferenceCounted
         GLSL::CompiledGLSLKernel* GetWrappedGLSLKernel() const;
 
         friend class GLSL::KernelSamplerParameter;
+        friend class GLSL::CompiledGLSLKernel;
 
     private:
 

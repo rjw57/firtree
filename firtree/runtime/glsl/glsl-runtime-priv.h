@@ -163,7 +163,8 @@ class KernelSamplerParameter : public GLSLSamplerParameter
                 const char* samplerCoordVar,
                 const char* resultVar);
 
-        virtual bool IsValid() const { return m_KernelCompileStatus; }
+        virtual bool IsValid() const;
+
         virtual void SetGLSLUniforms(unsigned int program);
 
         // Build an entire shader for this sampler in GLSL.
@@ -176,7 +177,6 @@ class KernelSamplerParameter : public GLSLSamplerParameter
 
     private:
         CompiledGLSLKernel*         m_Kernel;
-        bool            m_KernelCompileStatus;
 };
 
 //=============================================================================
@@ -188,6 +188,11 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
 
     public:
         static CompiledGLSLKernel* CreateFromSource(const char* source);
+
+        static CompiledGLSLKernel* ExtractFrom(Kernel* k)
+        {
+            return k->GetWrappedGLSLKernel();
+        }
 
         void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }

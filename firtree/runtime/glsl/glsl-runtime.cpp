@@ -39,8 +39,7 @@ static void* _KernelGetOpenGLProcAddress(const char* name);
 namespace Firtree { namespace GLSL {
 
 //=============================================================================
-bool BuildGLSLShaderForSampler(std::string& dest, 
-        GLSLSamplerParameter* sampler);
+void LinkShader(std::string& dest, GLSLSamplerParameter* sampler);
 
 //=============================================================================
 bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler, 
@@ -605,81 +604,86 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 }
 
 //=============================================================================
-bool BuildGLSLShaderForSampler(std::string& dest,
-        GLSLSamplerParameter* sampler)
+void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
 {
+    dest = "";
+
     if(sampler == NULL)
-        return false;
+    {
+        return;
+    }
 
-    std::string body, tempStr;
-    static char countStr[255]; 
+    // Get the main GLSL body of the target sampler. We do this here because
+    // AddChildSamplersToVector() doesn't work until this is called.
+    std::string mainBody;
+    sampler->BuildTopLevelGLSL(mainBody);
 
-    sampler->BuildTopLevelGLSL(body);
-
-    if(!sampler->IsValid())
-        return false;
-
-    // Add builtin functions
-    dest += 
-        "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }"
-        "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }"
-        ;
-
+    // Form a vector of all child samplers for the target.
     std::vector<SamplerParameter*> children;
-    KernelSamplerParameter* ksp = 
-        dynamic_cast<KernelSamplerParameter*>(sampler);
+    KernelSamplerParameter* ksp = dynamic_cast<KernelSamplerParameter*>(sampler);
     if(ksp != NULL)
     {
         ksp->AddChildSamplersToVector(children);
     }
 
-    if(children.size() > 0)
+    // For each child sampler, assign a sampler index and
+    // (if necessary) a GL texture unit.
+    int samplerIdx = 0;
+    int textureIdx = 0;
+    for(int i=0; i<children.size(); i++)
     {
-        int samplerIdx = 0;
-        int textureIdx = 0;
-        for(int i=0; i<children.size(); i++)
+        GLSLSamplerParameter* child = 
+            GLSLSamplerParameter::ExtractFrom(children[i]);
+        if(child != NULL)
         {
-            GLSLSamplerParameter* child = 
-                GLSLSamplerParameter::ExtractFrom(children[i]);
-            if(child != NULL)
-            {
-                child->SetSamplerIndex(samplerIdx);
-                samplerIdx++;
+            child->SetSamplerIndex(samplerIdx);
+            samplerIdx++;
 
-                TextureSamplerParameter* tsp =
-                    dynamic_cast<TextureSamplerParameter*>(child);
-                if(tsp != NULL)
-                {
-                    tsp->SetGLTextureUnit(textureIdx);
-                    textureIdx++;
-                }
+            // Assign a GL texture unit as well, should this
+            // sampler be a texture sampler.
+            TextureSamplerParameter* tsp =
+                dynamic_cast<TextureSamplerParameter*>(child);
+            if(tsp != NULL)
+            {
+                tsp->SetGLTextureUnit(textureIdx);
+                textureIdx++;
             }
         }
     }
 
-    dest += body;
+    // We can now start building the GLSL source.
+    // Firstly, add the top-level builtin functions to the GLSL.
+    dest += 
+        "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }\n"
+        "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }\n"
+        ;
 
-    if(children.size() > 0)
+    // Append the shader body it to the output.
+    dest += mainBody;
+
+    // Write the sampler functions for each child
+    for(int i=0; i<children.size(); i++)
     {
-        for(int i=0; i<children.size(); i++)
+        GLSLSamplerParameter* gsp =
+            GLSLSamplerParameter::ExtractFrom(children[i]);
+        KernelSamplerParameter* child = 
+            dynamic_cast<KernelSamplerParameter*>(gsp);
+
+        if(child != NULL)
         {
-            GLSLSamplerParameter* gsp =
-                GLSLSamplerParameter::ExtractFrom(children[i]);
-            KernelSamplerParameter* child = 
-                dynamic_cast<KernelSamplerParameter*>(gsp);
-
-            if(child != NULL)
-            {
-                // Each child gets it's own sampler function.
-                WriteSamplerFunctionsForKernel(dest, child->GetKernel());
-            }
+            // Each child gets it's own sampler function.
+            WriteSamplerFunctionsForKernel(dest, child->GetKernel());
         }
+    }
 
-        KernelSamplerParameter* ksp =
-            dynamic_cast<KernelSamplerParameter*>(sampler);
+    // Should the target be a sampler, write the sample functions for
+    // it.
+    if(ksp != NULL)
+    {
         WriteSamplerFunctionsForKernel(dest, ksp->GetKernel());
     }
-
+    
+    // Now build the main() function.
     dest += "void main() {\n"
         "vec3 inCoord = vec3(gl_TexCoord[0].xy, 1.0);\n";
 
@@ -687,6 +691,7 @@ bool BuildGLSLShaderForSampler(std::string& dest,
     invTrans->Invert();
     if(!invTrans->IsIdentity())
     {
+        static char countStr[255]; 
         const AffineTransformStruct& transform =
             invTrans->GetTransformStruct();
         snprintf(countStr, 255, "vec3 row1 = vec3(%f,%f,%f);\n", 
@@ -702,11 +707,10 @@ bool BuildGLSLShaderForSampler(std::string& dest,
 
     invTrans->Release();
 
+    std::string tempStr;
     sampler->BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
     dest += tempStr;
     dest += "\n}\n";
-
-    return true;
 }
 
 //=============================================================================
@@ -1234,15 +1238,7 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
     retVal->Sampler->Retain();
 
     std::string shaderSource;
-    bool success = GLSL::BuildGLSLShaderForSampler(shaderSource, retVal->Sampler);
-
-    if(!success)
-    {
-        FIRTREE_ERROR("Error compiling kernel:\n %s",
-                GLSL::GetInfoLogForSampler(sampler));
-        delete retVal;
-        return NULL;
-    }
+    LinkShader(shaderSource, retVal->Sampler);
 
     retVal->FragShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
     if(retVal->FragShader == 0)

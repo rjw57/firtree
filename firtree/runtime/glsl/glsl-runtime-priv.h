@@ -171,16 +171,12 @@ class KernelSamplerParameter : public GLSLSamplerParameter
 
         CompiledGLSLKernel* GetKernel() const { return m_Kernel; }
 
-    private:
-        CompiledGLSLKernel*         m_Kernel;
-        bool            m_KernelCompileStatus;
-
-    protected:
         virtual void AddChildSamplersToVector(
                 std::vector<SamplerParameter*>& sampVec);
 
-        friend bool BuildGLSLShaderForSampler(std::string&,
-                GLSLSamplerParameter*);
+    private:
+        CompiledGLSLKernel*         m_Kernel;
+        bool            m_KernelCompileStatus;
 };
 
 //=============================================================================

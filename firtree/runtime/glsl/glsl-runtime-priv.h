@@ -77,6 +77,10 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
             return s->GetWrappedGLSLSampler();
         }
 
+        /// Return a (possibly cached) ARB shader program object which will
+        /// render from this shader.
+        int GetShaderProgramObject();
+
         /// Write any top-level GLSL for this shader into dest.
         virtual bool BuildTopLevelGLSL(std::string& dest) = 0;
 
@@ -97,6 +101,14 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
 
         virtual void SetTransform(const AffineTransform* f);
 
+        // Compute a digest for this sampler. This digest is 
+        // composed of the child sampler digests (if they are
+        // kernel samplers) and the current sampler state. In effect
+        // this can be viewed as a hash for the results of calling
+        // BuildTopLevelGLSL() and the current transform and
+        // extent.
+        virtual void ComputeDigest(uint8_t digest[20]) = 0;
+
     private:
         /// Affine transformation to map from world co-ordinates
         /// to sampler co-ordinates.
@@ -104,6 +116,10 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
 
         int                 m_SamplerIndex;
         std::string         m_BlockPrefix;
+
+        int                 m_CachedFragmentShaderObject;
+        int                 m_CachedProgramObject;
+        uint8_t             m_CachedShaderDigest[20];
 };
 
 //=============================================================================
@@ -132,6 +148,8 @@ class TextureSamplerParameter : public GLSLSamplerParameter
 
         virtual bool IsValid() const;
         virtual void SetGLSLUniforms(unsigned int program);
+
+        virtual void ComputeDigest(uint8_t digest[20]);
 
         unsigned int GetGLTextureObject() const;
 
@@ -166,6 +184,8 @@ class KernelSamplerParameter : public GLSLSamplerParameter
         virtual bool IsValid() const;
 
         virtual void SetGLSLUniforms(unsigned int program);
+
+        virtual void ComputeDigest(uint8_t digest[20]);
 
         // Build an entire shader for this sampler in GLSL.
         // virtual bool BuildGLSL(std::string& dest);

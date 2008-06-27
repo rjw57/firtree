@@ -371,13 +371,139 @@ GLSLSamplerParameter::GLSLSamplerParameter()
     ,   m_Transform(AffineTransform::Identity())
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
+    ,   m_CachedFragmentShaderObject(-1)
+    ,   m_CachedProgramObject(-1)
 {
 }
 
 //=============================================================================
 GLSLSamplerParameter::~GLSLSamplerParameter()
 {
+    _KernelEnsureAPI();
+
+    // Clear up any cached shader programs
+    if(m_CachedProgramObject > 0)
+    {
+        glDeleteObjectARB(m_CachedProgramObject);
+        m_CachedProgramObject = -1;
+    }
+
+    if(m_CachedFragmentShaderObject > 0)
+    {
+        glDeleteObjectARB(m_CachedFragmentShaderObject);
+        m_CachedFragmentShaderObject = -1;
+    }
+
     m_Transform->Release();
+}
+
+//=============================================================================
+#define CHECK_GL(a) do { \
+    { do { (a); } while(0); } \
+    GLenum _err = glGetError(); \
+    if(_err != GL_NO_ERROR) {  \
+        FIRTREE_ERROR("%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
+                gluErrorString(_err)); return false; \
+    } } while(0) 
+
+//=============================================================================
+int GLSLSamplerParameter::GetShaderProgramObject()
+{
+    _KernelEnsureAPI();
+    
+    // Compute the digest of this shader
+    uint8_t digest[20];
+    ComputeDigest(digest);
+
+    // Discover if we have a cached program object and, if so,
+    // whether it if for a shader which matches our digest.
+    bool cachedProgramValid = true;
+    if(m_CachedProgramObject > 0)
+    {
+        if(memcmp(m_CachedShaderDigest, digest, 20) != 0)
+        {
+            cachedProgramValid = false;
+        }
+    } else {
+        cachedProgramValid = false;
+    }
+
+    // If our cached progrm is valid, return it.
+    if(cachedProgramValid)
+    {
+        return m_CachedProgramObject;
+    }
+
+    // We need to (re-)create the program. Firstly release any cached 
+    // programs we already have.
+    if(m_CachedProgramObject > 0)
+    {
+        glDeleteObjectARB(m_CachedProgramObject);
+        m_CachedProgramObject = -1;
+    }
+
+    if(m_CachedFragmentShaderObject > 0)
+    {
+        glDeleteObjectARB(m_CachedFragmentShaderObject);
+        m_CachedFragmentShaderObject = -1;
+    }
+
+    std::string shaderSource;
+    LinkShader(shaderSource, this);
+
+    m_CachedFragmentShaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+    if(m_CachedFragmentShaderObject == 0)
+    {
+        fprintf(stderr, "Error creating shader object.\n");
+        return 0;
+    }
+
+    const char* pSrc = shaderSource.c_str();
+    // printf("%s", pSrc);
+    CHECK_GL( glShaderSourceARB(m_CachedFragmentShaderObject, 1, &pSrc, NULL) );
+    CHECK_GL( glCompileShaderARB(m_CachedFragmentShaderObject) );
+
+    GLint status = 0;
+    CHECK_GL( glGetObjectParameterivARB(m_CachedFragmentShaderObject,
+                GL_OBJECT_COMPILE_STATUS_ARB, &status) );
+
+    if(status != GL_TRUE)
+    {
+        GLint logLen = 0;
+        CHECK_GL( glGetObjectParameterivARB(m_CachedFragmentShaderObject,
+                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
+        char* log = (char*) malloc(logLen + 1);
+        CHECK_GL( glGetInfoLogARB(m_CachedFragmentShaderObject,
+                    logLen, &logLen, log) );
+        FIRTREE_ERROR("Error compiling shader: %s\nSource: %s\n", 
+                log, pSrc);
+        free(log);
+        return 0;
+    }
+
+    CHECK_GL( m_CachedProgramObject = glCreateProgramObjectARB() );
+    CHECK_GL( glAttachObjectARB(m_CachedProgramObject, 
+                m_CachedFragmentShaderObject) );
+    CHECK_GL( glLinkProgramARB(m_CachedProgramObject) );
+    CHECK_GL( glGetObjectParameterivARB(m_CachedProgramObject,
+                GL_OBJECT_LINK_STATUS_ARB, &status) );
+
+    if(status != GL_TRUE)
+    {
+        GLint logLen = 0;
+        CHECK_GL( glGetObjectParameterivARB(m_CachedProgramObject,
+                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
+        char* log = (char*) malloc(logLen + 1);
+        CHECK_GL( glGetInfoLogARB(m_CachedProgramObject, logLen, &logLen, log) );
+        FIRTREE_ERROR("Error linking shader: %s\n", log);
+        free(log);
+        return 0;
+    }
+
+    // Copy the shader's digest into our cache
+    memcpy(m_CachedShaderDigest, digest, 20);
+
+    return m_CachedProgramObject;
 }
 
 //=============================================================================
@@ -600,6 +726,69 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 
     dest += "  return retVal;\n";
     dest += "}\n";
+}
+
+//=============================================================================
+void KernelSamplerParameter::ComputeDigest(uint8_t digest[20])
+{
+    // Initialise the SHA-1 digest generation.
+    SHA1_CTX shaCtx;
+    SHA1Init(&shaCtx);
+
+    // Add the 'this' pointer to the SHA. Used as a measure
+    // of uniqueness between two shader objects. Also means that
+    // digests are unique even if the sampler is not valid.
+    SHA1Update(&shaCtx, (uint8_t*)(this), sizeof(this));
+
+    // If the sampler is invalid, stop here
+    if(!IsValid())
+    {
+        SHA1Final(digest, &shaCtx);
+        return;
+    }
+
+    // Add in the digest of the kernel. 
+    SHA1Update(&shaCtx, (uint8_t*)(m_Kernel->GetCompiledGLSLDigest()), 20);
+
+    // For each parameter, add in it's digest if it is a sampler.
+    const std::map<std::string, Parameter*>& kParams = m_Kernel->GetParameters();
+    for(std::map<std::string, Parameter*>::const_iterator i = kParams.begin();
+            i != kParams.end(); i++)
+    {
+        Parameter* pParam = (*i).second;
+        SamplerParameter* pSampParam = dynamic_cast<SamplerParameter*>(pParam);
+
+        // Is this a sampler?
+        if(pSampParam == NULL) 
+            continue;
+
+        // Extract the GLSLSamplerParameter.
+        GLSLSamplerParameter* pGLSLSampParam = 
+            GLSLSamplerParameter::ExtractFrom(pSampParam);
+        if(pGLSLSampParam == NULL)
+            continue;
+
+        // Is this a kernel?
+        KernelSamplerParameter* pKernSampParam =
+            dynamic_cast<KernelSamplerParameter*>(pGLSLSampParam);
+        if(pKernSampParam != NULL)
+        {
+            uint8_t samplerDigest[20];
+
+            // Add in this sampler's digest.
+            pKernSampParam->ComputeDigest(samplerDigest);
+            SHA1Update(&shaCtx, samplerDigest, 20);
+        }
+    }
+
+    // Add in the current transform and extent.
+    Rect2D extent = GetExtent();
+    SHA1Update(&shaCtx, (uint8_t*)(&extent), sizeof(Rect2D));
+    const AffineTransformStruct& trans = GetTransform()->GetTransformStruct();
+    SHA1Update(&shaCtx, (uint8_t*)(&trans), sizeof(AffineTransformStruct));
+
+    // Finalise the SHA-1 digest.
+    SHA1Final(digest, &shaCtx);
 }
 
 //=============================================================================
@@ -1032,6 +1221,28 @@ TextureSamplerParameter::~TextureSamplerParameter()
 }
 
 //=============================================================================
+void TextureSamplerParameter::ComputeDigest(uint8_t digest[20])
+{
+    // Initialise the SHA-1 digest generation.
+    SHA1_CTX shaCtx;
+    SHA1Init(&shaCtx);
+
+    // Add the 'this' pointer to the SHA. Used as a measure
+    // of uniqueness between two shader objects. Also means that
+    // digests are unique even if the sampler is not valid.
+    SHA1Update(&shaCtx, (uint8_t*)(this), sizeof(this));
+
+    // Add in the current transform and extent.
+    Rect2D extent = GetExtent();
+    SHA1Update(&shaCtx, (uint8_t*)(&extent), sizeof(Rect2D));
+    const AffineTransformStruct& trans = GetTransform()->GetTransformStruct();
+    SHA1Update(&shaCtx, (uint8_t*)(&trans), sizeof(AffineTransformStruct));
+
+    // Finalise the SHA-1 digest.
+    SHA1Final(digest, &shaCtx);
+}
+
+//=============================================================================
 const Rect2D TextureSamplerParameter::GetExtent() const 
 {
     return RectTransform(GetDomain(), GetTransform());
@@ -1211,19 +1422,8 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
 
 //=============================================================================
 struct RenderingContext {
-    GLuint                   Program;
-    GLuint                   FragShader;
     GLSLSamplerParameter*    Sampler;
 };
-
-//=============================================================================
-#define CHECK(a) do { \
-    { do { (a); } while(0); } \
-    GLenum _err = glGetError(); \
-    if(_err != GL_NO_ERROR) {  \
-        FIRTREE_ERROR("%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
-                gluErrorString(_err)); return false; \
-    } } while(0) 
 
 //=============================================================================
 RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSampler)
@@ -1243,58 +1443,6 @@ RenderingContext* CreateRenderingContext(Firtree::SamplerParameter* topLevelSamp
     retVal->Sampler = sampler;
     retVal->Sampler->Retain();
 
-    std::string shaderSource;
-    LinkShader(shaderSource, retVal->Sampler);
-
-    retVal->FragShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-    if(retVal->FragShader == 0)
-    {
-        fprintf(stderr, "Error creating shader object.\n");
-        delete retVal;
-        return NULL;
-    }
-
-    const char* pSrc = shaderSource.c_str();
-    // printf(pSrc);
-    CHECK( glShaderSourceARB(retVal->FragShader, 1, &pSrc, NULL) );
-    CHECK( glCompileShaderARB(retVal->FragShader) );
-
-    GLint status = 0;
-    CHECK( glGetObjectParameterivARB(retVal->FragShader, 
-                GL_OBJECT_COMPILE_STATUS_ARB, &status) );
-    if(status != GL_TRUE)
-    {
-        GLint logLen = 0;
-        CHECK( glGetObjectParameterivARB(retVal->FragShader,
-                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
-        char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetInfoLogARB(retVal->FragShader, logLen, &logLen, log) );
-        FIRTREE_ERROR("Error compiling shader: %s\nSource: %s\n", 
-                log, pSrc);
-        free(log);
-        delete retVal;
-        return NULL;
-    }
-
-    CHECK( retVal->Program = glCreateProgramObjectARB() );
-    CHECK( glAttachObjectARB(retVal->Program, retVal->FragShader) );
-    CHECK( glLinkProgramARB(retVal->Program) );
-    CHECK( glGetObjectParameterivARB(retVal->Program, 
-                GL_OBJECT_LINK_STATUS_ARB, &status) );
-
-    if(status != GL_TRUE)
-    {
-        GLint logLen = 0;
-        CHECK( glGetObjectParameterivARB(retVal->Program,
-                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
-        char* log = (char*) malloc(logLen + 1);
-        CHECK( glGetInfoLogARB(retVal->Program, logLen, &logLen, log) );
-        FIRTREE_ERROR("Error linking shader: %s\n", log);
-        free(log);
-        delete retVal;
-        return NULL;
-    }
-
     return retVal;
 }
 
@@ -1303,8 +1451,6 @@ void ReleaseRenderingContext(RenderingContext* c)
 {
     if(c != NULL) { 
         FIRTREE_SAFE_RELEASE(c->Sampler);
-        glDeleteObjectARB(c->FragShader);
-        glDeleteObjectARB(c->Program);
         delete c; 
     }
 }
@@ -1322,6 +1468,16 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
 {
     GLenum err;
     if(context == NULL) { return; }
+
+#if 0
+    uint8_t digest[20];
+    context->Sampler->ComputeDigest(digest);
+    for(int i=0; i<20; i++)
+    {
+        printf("%02X", digest[i]);
+    }
+    printf("\n");
+#endif
 
 #if 1
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
@@ -1355,14 +1511,19 @@ void RenderInRect(RenderingContext* context, const Rect2D& destRect,
     //  `-> glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_BLEND);
 
-    glUseProgramObjectARB(context->Program);
-    if((err = glGetError()) != GL_NO_ERROR)
+    int program = context->Sampler->GetShaderProgramObject();
+
+    if(program > 0)
     {
-        FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
-        return;
+        glUseProgramObjectARB(program);
+        if((err = glGetError()) != GL_NO_ERROR)
+        {
+            FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
+            return;
+        }
     }
 
-    GLSL::SetGLSLUniformsForSampler(context->Sampler, context->Program);
+    context->Sampler->SetGLSLUniforms(program);
 
 #if 0
     printf("(%f,%f)->(%f,%f)\n",

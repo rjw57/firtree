@@ -91,6 +91,7 @@ SET(FIRTREE_SOURCES
 	${FIRTREE_HEADERS}
 
 	internal/image-int.h
+	internal/lru-cache.h
 
 	runtime/glsl/sha1.h
 	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c

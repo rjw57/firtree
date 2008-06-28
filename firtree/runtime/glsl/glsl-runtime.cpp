@@ -30,6 +30,7 @@
 #include <firtree/kernel.h>
 
 #include <firtree/internal/image-int.h>
+#include <firtree/internal/lru-cache.h>
 
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
@@ -1407,17 +1408,38 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
     return s->GetKernel()->GetInfoLog();
 }
 
+static Internal::LRUCache<Image*> g_SamplerCache(8, 500);
+
 //=============================================================================
-void RenderAtPoint(SamplerParameter* sampler, const Point2D& location,
-        const Rect2D& srcRect)
+void CollectGarbage()
 {
-    RenderInRect(sampler, Rect2D(location, srcRect.Size), srcRect);
+    g_SamplerCache.Purge();
 }
 
 //=============================================================================
-void RenderInRect(SamplerParameter* sampler, const Rect2D& destRect, 
+void RenderAtPoint(Image* image, const Point2D& location,
         const Rect2D& srcRect)
 {
+    RenderInRect(image, Rect2D(location, srcRect.Size), srcRect);
+}
+
+//=============================================================================
+void RenderInRect(Image* image, const Rect2D& destRect, 
+        const Rect2D& srcRect)
+{
+    SamplerParameter* sampler;
+
+    // Do we have a sampler for this image?
+    if(g_SamplerCache.Contains(image))
+    {
+        sampler = dynamic_cast<SamplerParameter*>
+            (g_SamplerCache.GetEntryForKey(image));
+    } else {
+        sampler = SamplerParameter::CreateFromImage(image);
+        g_SamplerCache.SetEntryForKey(sampler, image);
+        sampler->Release();
+    }
+
     GLenum err;
     if(sampler == NULL) { return; }
 

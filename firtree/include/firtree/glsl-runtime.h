@@ -29,11 +29,14 @@
 namespace Firtree { namespace GLSL {
 
 //=============================================================================
-void RenderInRect(SamplerParameter* sampler, const Rect2D& destRect,
+void CollectGarbage();
+
+//=============================================================================
+void RenderInRect(Image* image, const Rect2D& destRect,
         const Rect2D& srcRect);
 
 //=============================================================================
-void RenderAtPoint(SamplerParameter* sampler, const Point2D& location,
+void RenderAtPoint(Image* image, const Point2D& location,
         const Rect2D& srcRect);
 
 } }

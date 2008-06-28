@@ -119,6 +119,15 @@ const std::map<std::string, Parameter*>& Kernel::GetParameters()
 }
 
 //=============================================================================
+void Kernel::SetValueForKey(Image* image, const char* key)
+{
+    SamplerParameter* sampler = 
+        SamplerParameter::CreateFromImage(image);
+    m_WrappedGLSLKernel->SetValueForKey(sampler, key);
+    FIRTREE_SAFE_RELEASE(sampler);
+}
+
+//=============================================================================
 void Kernel::SetValueForKey(Parameter* param, const char* key)
 {
     m_WrappedGLSLKernel->SetValueForKey(param, key);

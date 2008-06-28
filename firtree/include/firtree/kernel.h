@@ -225,6 +225,10 @@ class Kernel : public ReferenceCounted
         /// name/value pairs.
         const std::map<std::string, Parameter*>& GetParameters();
 
+        /// Convenience accessor for setting a kernel parameter value to
+        /// a sampler which samples from the passed image.
+        void SetValueForKey(Image* image, const char* key);
+
         /// Accessor for setting a kernel parameter value. The accessors below
         /// are convenience wrappers around this method.
         void SetValueForKey(Parameter* parameter, const char* key);

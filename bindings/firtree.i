@@ -61,6 +61,8 @@ using namespace Firtree;
 %newobject Firtree::AffineTransform::RotationByRadians;
 %newobject Firtree::AffineTransform::Translation;
 
+%newobject Firtree::OpenGLRenderingContext::Create;
+
 /* Convert from Python --> C */
 %typemap(in) uint32_t {
     $1 = PyInt_AsLong($input);

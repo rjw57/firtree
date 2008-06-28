@@ -1408,43 +1408,67 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
     return s->GetKernel()->GetInfoLog();
 }
 
-static Internal::LRUCache<Image*> g_SamplerCache(8, 500);
+} } // namespace Firtree::GLSL
 
 //=============================================================================
-void CollectGarbage()
+// Public-facing parts of runtime.
+
+namespace Firtree {
+
+//=============================================================================
+OpenGLRenderingContext::OpenGLRenderingContext()
 {
-    g_SamplerCache.Purge();
+    m_SamplerCache = new Internal::LRUCache<Image*>(8, 500);
 }
 
 //=============================================================================
-void RenderAtPoint(Image* image, const Point2D& location,
+OpenGLRenderingContext::~OpenGLRenderingContext()
+{
+    CollectGarbage();
+    delete m_SamplerCache;
+}
+
+//=============================================================================
+OpenGLRenderingContext* OpenGLRenderingContext::Create()
+{
+    return new OpenGLRenderingContext();
+}
+
+//=============================================================================
+void OpenGLRenderingContext::CollectGarbage()
+{
+    m_SamplerCache->Purge();
+}
+
+//=============================================================================
+void OpenGLRenderingContext::RenderAtPoint(Image* image, const Point2D& location,
         const Rect2D& srcRect)
 {
     RenderInRect(image, Rect2D(location, srcRect.Size), srcRect);
 }
 
 //=============================================================================
-void RenderInRect(Image* image, const Rect2D& destRect, 
+void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
     SamplerParameter* sampler;
 
     // Do we have a sampler for this image?
-    if(g_SamplerCache.Contains(image))
+    if(m_SamplerCache->Contains(image))
     {
         sampler = dynamic_cast<SamplerParameter*>
-            (g_SamplerCache.GetEntryForKey(image));
+            (m_SamplerCache->GetEntryForKey(image));
     } else {
         sampler = SamplerParameter::CreateFromImage(image);
-        g_SamplerCache.SetEntryForKey(sampler, image);
+        m_SamplerCache->SetEntryForKey(sampler, image);
         sampler->Release();
     }
 
     GLenum err;
     if(sampler == NULL) { return; }
 
-    GLSLSamplerParameter* glslSampler =
-        GLSLSamplerParameter::ExtractFrom(sampler);
+    GLSL::GLSLSamplerParameter* glslSampler =
+        GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
     if(glslSampler == NULL) { return; }
 
 #if 0
@@ -1523,7 +1547,7 @@ void RenderInRect(Image* image, const Rect2D& destRect,
     glEnd();
 }
 
-} } // namespace Firtree::GLSL
+} // namespace Firtree
 
 //=============================================================================
 // vim:sw=4:ts=4:cindent:et

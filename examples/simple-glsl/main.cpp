@@ -107,13 +107,13 @@ Kernel* g_GradientKernel = Kernel::CreateFromSource(g_GradientKernelSource);
 
 Kernel* g_OverKernel2 = Kernel::CreateFromSource(g_OverKernelSource);
 
-SamplerParameter* g_LenaSampler = NULL;
-SamplerParameter* g_OverSampler2 = NULL;
-SamplerParameter* g_GradientSampler = NULL;
-SamplerParameter* g_RippleSampler = NULL;
-SamplerParameter* g_OverSampler = NULL;
-SamplerParameter* g_CheckerSampler = NULL;
-SamplerParameter* g_SpotSampler = NULL;
+Image* g_LenaImage = NULL;
+Image* g_OverImage2 = NULL;
+Image* g_GradientImage = NULL;
+Image* g_RippleImage = NULL;
+Image* g_OverImage = NULL;
+Image* g_CheckerImage = NULL;
+Image* g_SpotImage = NULL;
 
 Image* g_GlobalImage = NULL;
 
@@ -153,12 +153,12 @@ void finalise_test()
 
     FIRTREE_SAFE_RELEASE(g_RippleKernel);
     FIRTREE_SAFE_RELEASE(g_SpotKernel);
-    FIRTREE_SAFE_RELEASE(g_GradientSampler);
-    FIRTREE_SAFE_RELEASE(g_CheckerSampler);
+    FIRTREE_SAFE_RELEASE(g_GradientImage);
+    FIRTREE_SAFE_RELEASE(g_CheckerImage);
     FIRTREE_SAFE_RELEASE(g_OverKernel2);
-    FIRTREE_SAFE_RELEASE(g_RippleSampler);
-    FIRTREE_SAFE_RELEASE(g_SpotSampler);
-    FIRTREE_SAFE_RELEASE(g_OverSampler);
+    FIRTREE_SAFE_RELEASE(g_RippleImage);
+    FIRTREE_SAFE_RELEASE(g_SpotImage);
+    FIRTREE_SAFE_RELEASE(g_OverImage);
         
     FIRTREE_SAFE_RELEASE(g_GlobalImage);
 
@@ -178,9 +178,9 @@ void key_pressed(unsigned char key, int x, int y)
 
         if(flag)
         {
-            g_RippleKernel->SetValueForKey(g_OverSampler, "a");
+            g_RippleKernel->SetValueForKey(g_OverImage, "a");
         } else {
-            g_RippleKernel->SetValueForKey(g_SpotSampler, "a");
+            g_RippleKernel->SetValueForKey(g_SpotImage, "a");
         }
 
         flag = ~flag;
@@ -193,10 +193,10 @@ void key_pressed(unsigned char key, int x, int y)
         if(flag)
         {
             // Swap checkerborad for gradient
-            g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
+            g_OverKernel2->SetValueForKey(g_GradientImage, "b");
         } else {
             // Swap gradient for checkerboard
-            g_OverKernel2->SetValueForKey(g_CheckerSampler, "b");
+            g_OverKernel2->SetValueForKey(g_CheckerImage, "b");
         }
 
         flag = ~flag;
@@ -234,45 +234,33 @@ void initialize_kernels()
         Image* tmpim = NULL;
         AffineTransform* t = NULL;
 
-        g_LenaSampler = NULL;
+        g_LenaImage = NULL;
         g_GlobalImage = NULL;
 
         tmpim = Image::CreateFromKernel(g_OverKernel2);
         t = AffineTransform::RotationByDegrees(-20.f);
         t->TranslateBy(0,150);
-        Image* o2Trans = Image::CreateFromImageWithTransform(tmpim, t);
+        g_OverImage2 = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
-        g_OverSampler2 = SamplerParameter::CreateFromImage(o2Trans);
 
-        g_GlobalImage = o2Trans;
+        g_GlobalImage = g_OverImage2;
         g_GlobalImage->Retain();
 
         FIRTREE_SAFE_RELEASE(tmpim);
-        FIRTREE_SAFE_RELEASE(o2Trans);
 
-        tmpim = Image::CreateFromKernel(g_GradientKernel);
-        g_GradientSampler = SamplerParameter::CreateFromImage(tmpim);
-        FIRTREE_SAFE_RELEASE(tmpim);
+        g_GradientImage = Image::CreateFromKernel(g_GradientKernel);
 
-        tmpim = Image::CreateFromKernel(g_RippleKernel);
-        g_RippleSampler = SamplerParameter::CreateFromImage(tmpim);
-        FIRTREE_SAFE_RELEASE(tmpim);
+        g_RippleImage = Image::CreateFromKernel(g_RippleKernel);
 
-        tmpim = Image::CreateFromKernel(g_OverKernel);
-        g_OverSampler = SamplerParameter::CreateFromImage(tmpim);
-        FIRTREE_SAFE_RELEASE(tmpim);
+        g_OverImage = Image::CreateFromKernel(g_OverKernel);
 
         tmpim = Image::CreateFromKernel(g_CheckerKernel);
         t = AffineTransform::RotationByDegrees(30.f);
-        Image* checkTrans = Image::CreateFromImageWithTransform(tmpim, t);
+        g_CheckerImage = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
-        g_CheckerSampler = SamplerParameter::CreateFromImage(checkTrans);
         FIRTREE_SAFE_RELEASE(tmpim);
-        FIRTREE_SAFE_RELEASE(checkTrans);
 
-        tmpim = Image::CreateFromKernel(g_SpotKernel);
-        g_SpotSampler = SamplerParameter::CreateFromImage(tmpim);
-        FIRTREE_SAFE_RELEASE(tmpim);
+        g_SpotImage = Image::CreateFromKernel(g_SpotKernel);
 
         g_CheckerKernel->SetValueForKey(10.f, "squareSize");
         g_CheckerKernel->SetValueForKey(backColor, 4, "backColor");
@@ -280,12 +268,6 @@ void initialize_kernels()
 
         g_SpotKernel->SetValueForKey(dotColor, 4, "dotColor");
         g_SpotKernel->SetValueForKey(clearColor, 4, "backColor");
-
-        AffineTransform* spotTrans = g_SpotSampler->GetTransform()->Copy();
-        spotTrans->RotateByDegrees(12.f);
-        spotTrans->TranslateBy(320.f, 240.f);
-        // g_SpotSampler->SetTransform(spotTrans);
-        spotTrans->Release();
 
         char fileName[4096];
         snprintf(fileName, 4096, "%s/%s", g_ProgramPath, "../lena.png");
@@ -301,41 +283,35 @@ void initialize_kernels()
         lenaTrans->ScaleBy(0.5f);
         lenaTrans->RotateByDegrees(45.f);
         lenaTrans->TranslateBy(320.f, 240.f);
-        Image* lenaTransImage = Image::CreateFromImageWithTransform(lenaImage, lenaTrans);
+        g_LenaImage = Image::CreateFromImageWithTransform(lenaImage, lenaTrans);
 
-        g_LenaSampler = 
-            SamplerParameter::CreateFromImage(lenaTransImage);
-        SamplerParameter* fogSampler = 
-            SamplerParameter::CreateFromImage(fogImage);
-
-        lenaTrans->Release();
-
-        FIRTREE_SAFE_RELEASE(lenaTransImage);
+        FIRTREE_SAFE_RELEASE(lenaTrans);
         FIRTREE_SAFE_RELEASE(lenaImage);
+
+        g_OverKernel->SetValueForKey(g_LenaImage, "a");
+        g_OverKernel->SetValueForKey(fogImage, "b");
+
         FIRTREE_SAFE_RELEASE(fogImage);
 
-        g_OverKernel->SetValueForKey(g_LenaSampler, "a");
-        g_OverKernel->SetValueForKey(fogSampler, "b");
+        g_RippleKernel->SetValueForKey(g_OverImage, "a");
 
-        g_RippleKernel->SetValueForKey(g_OverSampler, "a");
-
-        g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
-        g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
+        g_OverKernel2->SetValueForKey(g_GradientImage, "b");
+        g_OverKernel2->SetValueForKey(g_RippleImage, "a");
 
         // Don't release these since we want to access them
         // in the render loop.
         // FIRTREE_SAFE_RELEASE(g_RippleKernel);
         // FIRTREE_SAFE_RELEASE(g_SpotKernel);
-        // FIRTREE_SAFE_RELEASE(g_GradientSampler);
-        // FIRTREE_SAFE_RELEASE(g_CheckerSampler);
+        // FIRTREE_SAFE_RELEASE(g_GradientImage);
+        // FIRTREE_SAFE_RELEASE(g_CheckerImage);
         // FIRTREE_SAFE_RELEASE(g_OverKernel2);
-        // FIRTREE_SAFE_RELEASE(g_RippleSampler);
-        // FIRTREE_SAFE_RELEASE(g_SpotSampler);
-        // FIRTREE_SAFE_RELEASE(g_OverSampler);
+        // FIRTREE_SAFE_RELEASE(g_RippleImage);
+        // FIRTREE_SAFE_RELEASE(g_SpotImage);
+        // FIRTREE_SAFE_RELEASE(g_OverImage);
 
-        FIRTREE_SAFE_RELEASE(fogSampler);
-        FIRTREE_SAFE_RELEASE(g_LenaSampler);
-        FIRTREE_SAFE_RELEASE(g_OverSampler2);
+        FIRTREE_SAFE_RELEASE(fogImage);
+        FIRTREE_SAFE_RELEASE(g_LenaImage);
+        FIRTREE_SAFE_RELEASE(g_OverImage2);
         FIRTREE_SAFE_RELEASE(g_GradientKernel);
         FIRTREE_SAFE_RELEASE(g_OverKernel);
         FIRTREE_SAFE_RELEASE(g_CheckerKernel);

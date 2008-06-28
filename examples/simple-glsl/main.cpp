@@ -108,13 +108,14 @@ Kernel* g_GradientKernel = Kernel::CreateFromSource(g_GradientKernelSource);
 Kernel* g_OverKernel2 = Kernel::CreateFromSource(g_OverKernelSource);
 
 SamplerParameter* g_LenaSampler = NULL;
-SamplerParameter* g_GlobalSampler = NULL;
 SamplerParameter* g_OverSampler2 = NULL;
 SamplerParameter* g_GradientSampler = NULL;
 SamplerParameter* g_RippleSampler = NULL;
 SamplerParameter* g_OverSampler = NULL;
 SamplerParameter* g_CheckerSampler = NULL;
 SamplerParameter* g_SpotSampler = NULL;
+
+Image* g_GlobalImage = NULL;
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -159,7 +160,9 @@ void finalise_test()
     FIRTREE_SAFE_RELEASE(g_SpotSampler);
     FIRTREE_SAFE_RELEASE(g_OverSampler);
         
-    FIRTREE_SAFE_RELEASE(g_GlobalSampler);
+    FIRTREE_SAFE_RELEASE(g_GlobalImage);
+
+    GLSL::CollectGarbage();
 
     printf("Allocated object count at exit (should be zero): %i\n",
             ReferenceCounted::GetGlobalObjectCount());
@@ -213,7 +216,7 @@ void render(float epoch)
         g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
         Rect2D outQuad(0,0,width,height);
-        GLSL::RenderAtPoint(g_GlobalSampler, Point2D(0,0), outQuad);
+        GLSL::RenderAtPoint(g_GlobalImage, Point2D(0,0), outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -232,7 +235,7 @@ void initialize_kernels()
         AffineTransform* t = NULL;
 
         g_LenaSampler = NULL;
-        g_GlobalSampler = NULL;
+        g_GlobalImage = NULL;
 
         tmpim = Image::CreateFromKernel(g_OverKernel2);
         t = AffineTransform::RotationByDegrees(-20.f);
@@ -240,6 +243,10 @@ void initialize_kernels()
         Image* o2Trans = Image::CreateFromImageWithTransform(tmpim, t);
         FIRTREE_SAFE_RELEASE(t);
         g_OverSampler2 = SamplerParameter::CreateFromImage(o2Trans);
+
+        g_GlobalImage = o2Trans;
+        g_GlobalImage->Retain();
+
         FIRTREE_SAFE_RELEASE(tmpim);
         FIRTREE_SAFE_RELEASE(o2Trans);
 
@@ -314,10 +321,6 @@ void initialize_kernels()
 
         g_OverKernel2->SetValueForKey(g_GradientSampler, "b");
         g_OverKernel2->SetValueForKey(g_RippleSampler, "a");
-
-        g_GlobalSampler = g_OverSampler2;
-        //g_GlobalSampler = g_LenaSampler;
-        g_GlobalSampler->Retain();
 
         // Don't release these since we want to access them
         // in the render loop.

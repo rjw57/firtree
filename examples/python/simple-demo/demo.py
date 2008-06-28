@@ -84,25 +84,25 @@ class FirtreeScene:
         overKernel.SetValueForKey(Firtree.SamplerParameter.CreateFromImage(fogTransImage), 'over')
 
         # Create a rendering context.
-        sampler = Firtree.SamplerParameter.CreateFromImage(compositeImage)
-        self.renderSampler = sampler
+        self.image = compositeImage
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Render the composited image into the framebuffer.
-        Firtree.RenderAtPoint(self.renderSampler, 
+        Firtree.RenderAtPoint(self.image, 
             Firtree.Point2D(0,0),
             Firtree.Rect2D(0,0,width,height))
 
     def clear_up (self):
         print('Clearing up...')
 
-        self.renderSampler = None
+        self.image = None
 
         # Sanity check to make sure that there are no objects left
         # dangling.
         gc.collect()
+        Firtree.CollectGarbage()
         globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
         print('Number of objects still allocated (should be zero): %i' 
             % globalObCount)

@@ -882,7 +882,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
         dest += countStr;
         dest += "vec2 destCoord = vec2(dot(inCoord, row1), dot(inCoord, row2));\n";
     } else {
-        dest += "vec2 destCoord = inCoord;\n";
+        dest += "vec2 destCoord = inCoord.xy;\n";
     }
 
     invTrans->Release();

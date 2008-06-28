@@ -81,9 +81,10 @@ class FirtreeScene:
         mixKernel.SetValueForKey(firtreeTransImage, 'b')
 
         self.mixKernel = mixKernel    
+        self.image = mixImage
 
         # Create a rendering context.
-        self.image = mixImage
+        self.context = Firtree.OpenGLRenderingContext.Create()
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
@@ -93,7 +94,7 @@ class FirtreeScene:
             0.5 * (1.0 + math.sin(2.0 * t)), 'mix')
 
         # Render the composited image into the framebuffer.
-        Firtree.RenderAtPoint(self.image, 
+        self.context.RenderAtPoint(self.image, 
             Firtree.Point2D(0,0),
             Firtree.Rect2D(0,0,width,height))
 
@@ -102,11 +103,11 @@ class FirtreeScene:
 
         self.mixKernel = None
         self.image = None
+        self.context = None
         
         # Sanity check to make sure that there are no objects left
         # dangling.
         gc.collect()
-        Firtree.CollectGarbage()
         globalObCount = Firtree.ReferenceCounted.GetGlobalObjectCount()
         print('Number of objects still allocated (should be zero): %i' 
             % globalObCount)

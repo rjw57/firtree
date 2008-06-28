@@ -117,6 +117,8 @@ Image* g_SpotImage = NULL;
 
 Image* g_GlobalImage = NULL;
 
+OpenGLRenderingContext* g_GLRenderingContext = NULL;
+
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
 
@@ -162,7 +164,7 @@ void finalise_test()
         
     FIRTREE_SAFE_RELEASE(g_GlobalImage);
 
-    GLSL::CollectGarbage();
+    FIRTREE_SAFE_RELEASE(g_GLRenderingContext);
 
     printf("Allocated object count at exit (should be zero): %i\n",
             ReferenceCounted::GetGlobalObjectCount());
@@ -216,7 +218,8 @@ void render(float epoch)
         g_RippleKernel->SetValueForKey(-epoch * 0.1f, "phase");
 
         Rect2D outQuad(0,0,width,height);
-        GLSL::RenderAtPoint(g_GlobalImage, Point2D(0,0), outQuad);
+        g_GLRenderingContext->RenderAtPoint(g_GlobalImage,
+                Point2D(0,0), outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
     }
@@ -348,6 +351,8 @@ void context_created()
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
         exit(1);
     }
+
+    g_GLRenderingContext = OpenGLRenderingContext::Create();
 }
 
 // vim:sw=4:ts=4:cindent:et

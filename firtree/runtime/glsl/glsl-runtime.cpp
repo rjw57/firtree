@@ -376,17 +376,17 @@ GLSLSamplerParameter::GLSLSamplerParameter()
 //=============================================================================
 GLSLSamplerParameter::~GLSLSamplerParameter()
 {
-    _KernelEnsureAPI();
-
     // Clear up any cached shader programs
     if(m_CachedProgramObject > 0)
     {
+        _KernelEnsureAPI();
         glDeleteObjectARB(m_CachedProgramObject);
         m_CachedProgramObject = -1;
     }
 
     if(m_CachedFragmentShaderObject > 0)
     {
+        _KernelEnsureAPI();
         glDeleteObjectARB(m_CachedFragmentShaderObject);
         m_CachedFragmentShaderObject = -1;
     }
@@ -604,13 +604,16 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
             SamplerParameter *pSP = *i;
             GLSLSamplerParameter *pGSP = 
                 GLSLSamplerParameter::ExtractFrom(pSP);
-            snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
-            dest += "if(sampler == ";
-            dest += idxStr;
-            dest += ") {";
-            pGSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
-            dest += tempStr;
-            dest += "}\n";
+            if(pGSP->GetSamplerIndex() != -1)
+            {
+                snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {";
+                pGSP->BuildSampleGLSL(tempStr, "samplerCoord", "result");
+                dest += tempStr;
+                dest += "}\n";
+            }
         }
     }
 
@@ -654,30 +657,33 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
             SamplerParameter *pSP = *i;
             GLSLSamplerParameter *pGSP =
                 GLSLSamplerParameter::ExtractFrom(pSP);
-            AffineTransform* invTrans = pSP->GetTransform()->Copy();
-            invTrans->Invert();
-            const AffineTransformStruct& transform =
-                invTrans->GetTransformStruct();
-            if(!invTrans->IsIdentity())
+            if(pGSP->GetSamplerIndex() != -1)
             {
-                snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
-                dest += "if(sampler == ";
-                dest += idxStr;
-                dest += ") {\n";
-                dest += "row1 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f",
-                        transform.m11, transform.m12, transform.tX);
-                dest += idxStr;
-                dest += ");\n";
-                dest += "row2 = vec3(";
-                snprintf(idxStr, 255, "%f,%f,%f", 
-                        transform.m21, transform.m22, transform.tY);
-                dest += idxStr;
-                dest += ");\n";
-                dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
-                dest += "}\n";
+                AffineTransform* invTrans = pSP->GetTransform()->Copy();
+                invTrans->Invert();
+                const AffineTransformStruct& transform =
+                    invTrans->GetTransformStruct();
+                if(!invTrans->IsIdentity())
+                {
+                    snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
+                    dest += "if(sampler == ";
+                    dest += idxStr;
+                    dest += ") {\n";
+                    dest += "row1 = vec3(";
+                    snprintf(idxStr, 255, "%f,%f,%f",
+                            transform.m11, transform.m12, transform.tX);
+                    dest += idxStr;
+                    dest += ");\n";
+                    dest += "row2 = vec3(";
+                    snprintf(idxStr, 255, "%f,%f,%f", 
+                            transform.m21, transform.m22, transform.tY);
+                    dest += idxStr;
+                    dest += ");\n";
+                    dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
+                    dest += "}\n";
+                }
+                invTrans->Release();
             }
-            invTrans->Release();
         }
     }
 
@@ -706,18 +712,21 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
             SamplerParameter *pSP = *i;
             GLSLSamplerParameter *pGSP = 
                 GLSLSamplerParameter::ExtractFrom(pSP);
-            const Rect2D& extent = pSP->GetExtent();
-            snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
-            dest += "if(sampler == ";
-            dest += idxStr;
-            dest += ") {\n";
-            dest += "retVal = vec4(";
-            snprintf(idxStr, 255, "%f,%f,%f,%f",
-                    extent.Origin.X, extent.Origin.Y,
-                    extent.Size.Width, extent.Size.Height);
-            dest += idxStr;
-            dest += ");\n";
-            dest += "}\n";
+            if(pGSP->GetSamplerIndex() != -1)
+            {
+                const Rect2D& extent = pSP->GetExtent();
+                snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
+                dest += "if(sampler == ";
+                dest += idxStr;
+                dest += ") {\n";
+                dest += "retVal = vec4(";
+                snprintf(idxStr, 255, "%f,%f,%f,%f",
+                        extent.Origin.X, extent.Origin.Y,
+                        extent.Size.Width, extent.Size.Height);
+                dest += idxStr;
+                dest += ");\n";
+                dest += "}\n";
+            }
         }
     }
 

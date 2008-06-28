@@ -140,6 +140,28 @@ void Kernel::SetValueForKey(float value, const char* key)
 }
 
 //=============================================================================
+void Kernel::SetValueForKey(float x, float y, const char* key)
+{
+    float v[] = {x, y};
+    SetValueForKey(v, 2, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(float x, float y, float z, const char* key)
+{
+    float v[] = {x, y, z};
+    SetValueForKey(v, 3, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(float x, float y, float z, float w, 
+        const char* key)
+{
+    float v[] = {x, y, z, w};
+    SetValueForKey(v, 4, key);
+}
+
+//=============================================================================
 void Kernel::SetValueForKey(const float* value, int count, const char* key)
 {
     NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
@@ -161,6 +183,27 @@ void Kernel::SetValueForKey(int value, const char* key)
 }
 
 //=============================================================================
+void Kernel::SetValueForKey(int x, int y, const char* key)
+{
+    int v[] = {x, y};
+    SetValueForKey(v, 2, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(int x, int y, int z, const char* key)
+{
+    int v[] = {x, y, z};
+    SetValueForKey(v, 3, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(int x, int y, int z, int w, const char* key)
+{
+    int v[] = {x, y, z, w};
+    SetValueForKey(v, 4, key);
+}
+
+//=============================================================================
 void Kernel::SetValueForKey(const int* value, int count, const char* key)
 {
     NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
@@ -179,6 +222,28 @@ void Kernel::SetValueForKey(const int* value, int count, const char* key)
 void Kernel::SetValueForKey(bool value, const char* key)
 {
     SetValueForKey(&value, 1, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(bool x, bool y, const char* key)
+{
+    bool v[] = {x, y};
+    SetValueForKey(v, 2, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(bool x, bool y, bool z, const char* key)
+{
+    bool v[] = {x, y, z};
+    SetValueForKey(v, 3, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(bool x, bool y, bool z, bool w, 
+        const char* key)
+{
+    bool v[] = {x, y, z, w};
+    SetValueForKey(v, 4, key);
 }
 
 //=============================================================================

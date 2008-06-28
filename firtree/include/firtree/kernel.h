@@ -236,12 +236,24 @@ class Kernel : public ReferenceCounted
         ///@{
         /// Accessors for the various scalar, vector and sampler parameters.
         void SetValueForKey(float value, const char* key);
+        void SetValueForKey(float x, float y, const char* key);
+        void SetValueForKey(float x, float y, float z, const char* key);
+        void SetValueForKey(float x, float y, float z, float w, 
+                const char* key);
         void SetValueForKey(const float* value, int count, 
                 const char* key);
         void SetValueForKey(int value, const char* key);
+        void SetValueForKey(int x, int y, const char* key);
+        void SetValueForKey(int x, int y, int z, const char* key);
+        void SetValueForKey(int x, int y, int z, int w, 
+                const char* key);
         void SetValueForKey(const int* value, int count, 
                 const char* key);
         void SetValueForKey(bool value, const char* key);
+        void SetValueForKey(bool x, bool y, const char* key);
+        void SetValueForKey(bool x, bool y, bool z, const char* key);
+        void SetValueForKey(bool x, bool y, bool z, bool w, 
+                const char* key);
         void SetValueForKey(const bool* value, int count, 
                 const char* key);
         ///@}

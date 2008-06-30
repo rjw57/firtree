@@ -120,6 +120,8 @@ class LRUCache
             if(!Contains(key)) 
                 return NULL;
 
+            m_CacheMap[key].AccessTime = Now();
+
             return m_CacheMap[key].Object;
         }
 

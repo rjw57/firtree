@@ -63,6 +63,8 @@ using namespace Firtree;
 
 %newobject Firtree::OpenGLRenderingContext::Create;
 
+%newobject RectComputeTransform;
+
 /* Convert from Python --> C */
 %typemap(in) uint32_t {
     $1 = PyInt_AsLong($input);

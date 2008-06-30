@@ -58,7 +58,10 @@ struct Point2D
 };
 
 // ============================================================================
-/// A 2D size
+/// \brief A 2D size
+///
+/// As a special case, if both the width and height have a binary 
+/// representation of 0xffffff, the size is considered to be \f$(+\infty, +\infty)\f$.
 struct Size2D
 {
     public:
@@ -76,7 +79,18 @@ struct Size2D
 };
 
 // ============================================================================
-/// A 2D rectangle
+/// Return a size corresponding to \f$(+\infty, +\infty)\f$.
+Size2D SizeMakeInfinite();
+
+// ============================================================================
+/// Return a boolean which is true if the passed size is infinite.
+bool SizeIsInfinite(const Size2D& size);
+
+// ============================================================================
+/// \brief A 2D rectangle
+///
+/// As a special case, if all fields have a binary representation of 0xffffff, 
+/// the rectangle is considered to be infinite.
 struct Rect2D
 {
     public:
@@ -108,6 +122,14 @@ struct Rect2D
 	/// Return the maximum Y-co-ordinate of the rectangle.
 	float MaxY() const { return Origin.Y + Size.Height; }
 };
+
+// ============================================================================
+/// Return a Rect2D which represents a rectangle of infinite extent.
+Rect2D RectMakeInfinite();
+
+// ============================================================================
+/// Return a boolean which is true if the passed rectangle is infinite.
+bool RectIsInfinite(const Rect2D& rect);
 
 // ============================================================================
 /// Return a Rect2D constructed from the minimum and maximum X and Y

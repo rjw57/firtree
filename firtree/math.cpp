@@ -23,10 +23,41 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 // ===============================================================================
 namespace Firtree {
 // ===============================================================================
+
+// ============================================================================
+Size2D SizeMakeInfinite()
+{
+    Size2D retVal;
+    memset(&retVal, 0xff, sizeof(Size2D));
+    return retVal;
+}
+
+// ============================================================================
+bool SizeIsInfinite(const Size2D& size)
+{
+    Size2D infinity = SizeMakeInfinite();
+    return (memcmp(&infinity, &size, sizeof(Size2D)) == 0);
+}
+
+// ============================================================================
+Rect2D RectMakeInfinite()
+{
+    Rect2D retVal;
+    memset(&retVal, 0xff, sizeof(Rect2D));
+    return retVal;
+}
+
+// ============================================================================
+bool RectIsInfinite(const Rect2D& rect)
+{
+    Rect2D infinity = RectMakeInfinite();
+    return (memcmp(&infinity, &rect, sizeof(Rect2D)) == 0);
+}
 
 // ============================================================================
 Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
@@ -41,6 +72,16 @@ Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
 // ===============================================================================
 Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
 {
+    if(RectIsInfinite(a))
+    {
+        return b;
+    }
+
+    if(RectIsInfinite(b))
+    {
+        return a;
+    }
+
     float minx = Max(a.MinX(), b.MinX());
     float miny = Max(a.MinY(), b.MinY());
     float maxx = Min(a.MaxX(), b.MaxX());
@@ -52,6 +93,11 @@ Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
 // ===============================================================================
 Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
 {
+    if(RectIsInfinite(a) || RectIsInfinite(b))
+    {
+        return RectMakeInfinite();
+    }
+
     float minx = Min(a.MinX(), b.MinX());
     float miny = Min(a.MinY(), b.MinY());
     float maxx = Max(a.MaxX(), b.MaxX());
@@ -63,6 +109,11 @@ Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
 // ===============================================================================
 Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
 {
+    if(RectIsInfinite(inRect))
+    {
+        return RectMakeInfinite();
+    }
+
     Point2D a(inRect.MinX(), inRect.MaxY());
     Point2D b(inRect.MaxX(), inRect.MaxY());
     Point2D c(inRect.MinX(), inRect.MinY());
@@ -84,6 +135,11 @@ Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
 // ============================================================================
 Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY)
 {
+    if(RectIsInfinite(a))
+    {
+        return RectMakeInfinite();
+    }
+
     return RectFromBounds(a.MinX()+deltaX, a.MinY()+deltaY, 
             a.MaxX()-deltaX, a.MaxY()-deltaY);
 }
@@ -91,6 +147,9 @@ Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY)
 // ============================================================================
 AffineTransform* RectComputeTransform(const Rect2D& whence, const Rect2D& hence)
 {
+    // Check neither input is infinite
+    assert(!RectIsInfinite(whence) && !RectIsInfinite(hence));
+
     AffineTransform* trans = AffineTransform::Identity();
 
     // Firstly move the origins of the rectangle to co-incide.

@@ -61,10 +61,11 @@ GLSLSamplerParameter* CreateKernelSamplerWithTransform(
 class GLSLSamplerParameter : public Firtree::ReferenceCounted
 {
     protected:
-        GLSLSamplerParameter();
-        virtual ~GLSLSamplerParameter();
+        GLSLSamplerParameter(Image* im);
 
     public:
+        virtual ~GLSLSamplerParameter();
+
         ///@{
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const;
@@ -120,6 +121,8 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
         int                 m_CachedFragmentShaderObject;
         int                 m_CachedProgramObject;
         uint8_t             m_CachedShaderDigest[20];
+
+        Image*              m_RepresentedImage;
 };
 
 //=============================================================================
@@ -127,14 +130,14 @@ class TextureSamplerParameter : public GLSLSamplerParameter
 {
     protected:
         TextureSamplerParameter(Image* image);
-        virtual ~TextureSamplerParameter();
 
     public:
+        virtual ~TextureSamplerParameter();
+
         static GLSLSamplerParameter* Create(Image* image);
 
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const { return m_Domain; }
-        virtual const Rect2D GetExtent() const;
         ///@}
 
         /// Write any top-level GLSL for this shader into dest.
@@ -167,9 +170,10 @@ class KernelSamplerParameter : public GLSLSamplerParameter
 {
     protected:
         KernelSamplerParameter(Image* im);
-        virtual ~KernelSamplerParameter();
 
     public:
+        virtual ~KernelSamplerParameter();
+
         static GLSLSamplerParameter* Create(Image* im);
 
         /// Write any top-level GLSL for this shader into dest.
@@ -204,9 +208,10 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
 {
     protected:
         CompiledGLSLKernel(const char* source);
-        virtual ~CompiledGLSLKernel();
 
     public:
+        virtual ~CompiledGLSLKernel();
+
         static CompiledGLSLKernel* CreateFromSource(const char* source);
 
         static CompiledGLSLKernel* ExtractFrom(Kernel* k)

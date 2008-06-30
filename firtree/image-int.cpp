@@ -19,6 +19,7 @@
 //=============================================================================
 
 #include <firtree/main.h>
+#include <firtree/math.h>
 #include <firtree/image.h>
 #include <firtree/opengl.h>
 #include <internal/image-int.h>
@@ -46,7 +47,8 @@ ImageImpl::ImageImpl()
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
-{
+{   
+    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -70,6 +72,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     m_BaseImage->Retain();
 
     m_BaseTransform = t->Copy();
+    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -87,6 +90,7 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) { return; }
 
     m_BitmapRep = new BitmapImageRep(imageRep, copy);
+    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -103,6 +107,7 @@ ImageImpl::ImageImpl(Kernel* k)
     {
         m_Kernel->Retain();
     }
+    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -119,6 +124,7 @@ ImageImpl::ImageImpl(ImageProvider* improv)
     {
         m_ImageProvider->Retain();
     }
+    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 
@@ -141,6 +147,7 @@ ImageImpl::~ImageImpl()
     FIRTREE_SAFE_RELEASE(m_BaseImage);
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
     FIRTREE_SAFE_RELEASE(m_Kernel);
+    FIRTREE_SAFE_RELEASE(m_UnderlyingTransform);
 }
 
 //=============================================================================
@@ -189,7 +196,7 @@ AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
         return baseTransform;
     }
 
-    return AffineTransform::Identity();
+    return m_UnderlyingTransform;
 }
 
 //=============================================================================

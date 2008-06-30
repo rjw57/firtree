@@ -363,14 +363,16 @@ GLSLSamplerParameter* KernelSamplerParameter::Create(Image* im)
 }
 
 //=============================================================================
-GLSLSamplerParameter::GLSLSamplerParameter()
+GLSLSamplerParameter::GLSLSamplerParameter(Image* im)
     :   Firtree::ReferenceCounted()
     ,   m_Transform(AffineTransform::Identity())
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
     ,   m_CachedFragmentShaderObject(-1)
     ,   m_CachedProgramObject(-1)
+    ,   m_RepresentedImage(im)
 {
+    FIRTREE_SAFE_RETAIN(m_RepresentedImage);
 }
 
 //=============================================================================
@@ -391,7 +393,8 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
         m_CachedFragmentShaderObject = -1;
     }
 
-    m_Transform->Release();
+    FIRTREE_SAFE_RELEASE(m_RepresentedImage);
+    FIRTREE_SAFE_RELEASE(m_Transform);
 }
 
 //=============================================================================
@@ -517,7 +520,10 @@ void GLSLSamplerParameter::SetTransform(const AffineTransform* f)
 //=============================================================================
 const Rect2D GLSLSamplerParameter::GetExtent() const 
 {
-    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
+    if(m_RepresentedImage == NULL)
+        return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
+
+    return m_RepresentedImage->GetExtent();
 }
 
 //=============================================================================
@@ -528,7 +534,7 @@ const Rect2D GLSLSamplerParameter::GetDomain() const
 
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
-    :   GLSLSamplerParameter()
+    :   GLSLSamplerParameter(im)
 {
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
@@ -549,7 +555,6 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
     FIRTREE_SAFE_RELEASE(t);
-    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================
@@ -1188,7 +1193,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
 //=============================================================================
 TextureSamplerParameter::TextureSamplerParameter(Image* im)
-    :   GLSLSamplerParameter()
+    :   GLSLSamplerParameter(im)
     ,   m_TextureUnit(0)
 {
     Internal::ImageImpl* imImpl = 
@@ -1212,7 +1217,6 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
     FIRTREE_SAFE_RELEASE(t);
-    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================
@@ -1251,12 +1255,6 @@ void TextureSamplerParameter::ComputeDigest(uint8_t digest[20])
     }
     printf("\n");
 #endif
-}
-
-//=============================================================================
-const Rect2D TextureSamplerParameter::GetExtent() const 
-{
-    return RectTransform(GetDomain(), GetTransform());
 }
 
 //=============================================================================

@@ -7,12 +7,17 @@
 # This file builds a trivial stand-alone compiler which uses the 
 # 3Dlabs Inc. Ltd. GLSL frontend.
 
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../glslang/Public")
+# No longer build the StandAlone target as its functionality
+# has been replaced by kernelcompile
 
-SET(STANDALONE_SOURCES
-        StandAlone.cpp
-)
-
-ADD_EXECUTABLE(StandAlone ${STANDALONE_SOURCES})
-TARGET_LINK_LIBRARIES(StandAlone glslang CodeGen -lpthread)
+#FIND_PACKAGE(Threads)
+#
+#INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../glslang/Public")
+#
+#SET(STANDALONE_SOURCES
+#        StandAlone.cpp
+#)
+#
+#ADD_EXECUTABLE(StandAlone ${STANDALONE_SOURCES})
+#TARGET_LINK_LIBRARIES(StandAlone glslang CodeGen ${CMAKE_THREAD_LIBS_INIT})
 

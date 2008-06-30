@@ -106,8 +106,7 @@ ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 
 TARGET_LINK_LIBRARIES(firtree
 	${FIRTREE_TARGET_LIBRARIES}
-	compiler glslang frontend irbackend glslbackend 
-	-lpthread)
+	compiler glslang frontend irbackend glslbackend)
 
 # Set the version and soversion properties for Firtree
 # so that library versioning works.

@@ -134,6 +134,10 @@ class Image : public ReferenceCounted
         /// Return a copy of this image.
         Image* Copy() const;
 
+        /// Return the extent of this image (i.e. a rectangle covering all non
+        /// transparent pixels).
+        virtual Rect2D GetExtent() const = 0;
+
         // ====================================================================
         // MUTATING METHODS
 

@@ -24,6 +24,7 @@
 #include <internal/image-int.h>
 
 #include <assert.h>
+#include <float.h>
 
 namespace Firtree { namespace Internal {
 
@@ -172,7 +173,8 @@ Size2D ImageImpl::GetUnderlyingPixelSize() const
         return Size2D(w,h);
     }
 
-    return Size2D(0,0);
+    // As everyone who has studied computer science knows, -1 == \infty. :)
+    return Size2D(-1,-1);
 }
 
 
@@ -188,6 +190,30 @@ AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
     }
 
     return AffineTransform::Identity();
+}
+
+//=============================================================================
+Rect2D ImageImpl::GetExtent() const
+{
+    // Get the size of the underlying pixel representation.
+    Size2D pixelSize = GetUnderlyingPixelSize();
+
+    // Is this image 'infinite' in extent?
+    if(pixelSize.Width == -1)
+    {
+        // Return an 'infinite' extent
+        return Rect2D(-0.5*FLT_MAX, -0.5*FLT_MAX, FLT_MAX, FLT_MAX);
+    }
+
+    // Form a rectangle which covers the underlying pixel
+    // representation
+    Rect2D pixelRect = Rect2D(Point2D(0,0), pixelSize);
+
+    AffineTransform* transform = GetTransformFromUnderlyingImage();
+
+    Rect2D extentRect = RectTransform(pixelRect, transform);
+
+    return extentRect;
 }
 
 //=============================================================================

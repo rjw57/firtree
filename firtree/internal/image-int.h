@@ -54,6 +54,8 @@ class ImageImpl : public Image
         // ====================================================================
         // CONST METHODS
 
+        virtual Rect2D GetExtent() const;
+
         /// Return the size of image that would be returned by 
         /// GetAsOpenGLTexture() or GetAsBitmapImageRep().
         Size2D GetUnderlyingPixelSize() const;

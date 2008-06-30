@@ -90,7 +90,7 @@ Image::Image(const BitmapImageRep& imageRep, bool copy)
 }
 
 //=============================================================================
-Image::Image(Kernel* k)
+Image::Image(Kernel* k, ExtentProvider* extentProvider)
     :   ReferenceCounted()
 {
 }
@@ -178,10 +178,20 @@ Image* Image::CreateFromFile(const char* pFileName)
 }
 
 //=============================================================================
-Image* Image::CreateFromKernel(Kernel* k)
+Image* Image::CreateFromKernel(Kernel* k, ExtentProvider* extentProvider)
 {
     if(k == NULL) { return NULL; }
-    return new ImageImpl(k);
+
+    if(extentProvider != NULL)
+    {
+        return new ImageImpl(k, extentProvider);
+    }
+
+    extentProvider = CreateStandardExtentProvider();
+    Image* retVal = new ImageImpl(k, extentProvider);
+    FIRTREE_SAFE_RELEASE(extentProvider);
+
+    return retVal;
 }
 
 //=============================================================================

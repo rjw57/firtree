@@ -90,7 +90,7 @@ class Image : public ReferenceCounted
         Image();
         Image(const Image* im, AffineTransform* t);
         Image(const BitmapImageRep& imageRep, bool copy);
-        Image(Kernel* kernel);
+        Image(Kernel* kernel, ExtentProvider* extentProvider);
         Image(ImageProvider* imageProvider);
         ///@}
 
@@ -122,8 +122,12 @@ class Image : public ReferenceCounted
         static Image* CreateFromImageWithTransform(const Image* im,
                 AffineTransform* t);
 
-        /// Construct an image from the output of a kernel.
-        static Image* CreateFromKernel(Firtree::Kernel* k);
+        /// Construct an image from the output of a kernel. If extentProvider
+        /// is non-NULL, the specified ExtentProvider will be used to calculate
+        /// the extent of the kernel. Otherwise, the extent provider
+        /// returned from CreateStandardExtentProvider() is used.
+        static Image* CreateFromKernel(Firtree::Kernel* k,
+                ExtentProvider* extentProvider = NULL);
 
         /// Construct an image from an image provider.
         static Image* CreateFromImageProvider(ImageProvider* improv);

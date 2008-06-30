@@ -109,6 +109,17 @@ void CompiledGLSLKernel::SetSource(const char* source)
 }
 
 //=============================================================================
+Parameter* CompiledGLSLKernel::GetValueForKey(const char* key) const
+{
+    if(m_Parameters.count(key) == 0)
+    {
+        return NULL;
+    }
+
+    return m_Parameters.find(key)->second;
+}
+
+//=============================================================================
 void CompiledGLSLKernel::Compile() 
 {
     // Attempt to compile the kernel.
@@ -140,11 +151,15 @@ void CompiledGLSLKernel::Compile()
     m_CompiledGLSL = be.GetOutput();
     m_CompiledKernelName = be.GetOutputKernelName();
 
+    m_ParameterNames.clear();
+
     GLSLBackend::Parameters& params = be.GetInputParameters();
     for(GLSLBackend::Parameters::iterator i = params.begin();
             i != params.end(); i++)
     {
         GLSLBackend::Parameter& p = *i;
+
+        m_ParameterNames.push_back(p.humanName);
 
         m_UniformNameMap[p.humanName] = p.uniformName;
         if((m_Parameters.count(p.humanName) == 0) ||
@@ -521,7 +536,7 @@ void GLSLSamplerParameter::SetTransform(const AffineTransform* f)
 const Rect2D GLSLSamplerParameter::GetExtent() const 
 {
     if(m_RepresentedImage == NULL)
-        return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
+        return RectMakeInfinite();
 
     return m_RepresentedImage->GetExtent();
 }
@@ -529,7 +544,7 @@ const Rect2D GLSLSamplerParameter::GetExtent() const
 //=============================================================================
 const Rect2D GLSLSamplerParameter::GetDomain() const 
 {
-    return Rect2D(-0.5f*FLT_MAX, -0.5f*FLT_MAX, FLT_MAX, FLT_MAX);
+    return RectMakeInfinite();
 }
 
 //=============================================================================
@@ -703,7 +718,14 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     if(samplerParams.size() == 1)
     {
         SamplerParameter *pSP = samplerParams.front();
-        const Rect2D& extent = pSP->GetExtent();
+        const Rect2D& samplerExtent = pSP->GetExtent();
+
+        Rect2D extent = samplerExtent;
+        if(RectIsInfinite(samplerExtent))
+        {
+            extent = Rect2D(-0.5*FLT_MAX,-0.5*FLT_MAX,FLT_MAX,FLT_MAX);
+        }
+
         dest += "retVal = vec4(";
         snprintf(idxStr, 255, "%f,%f,%f,%f",
                 extent.Origin.X, extent.Origin.Y,
@@ -719,7 +741,14 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 GLSLSamplerParameter::ExtractFrom(pSP);
             if(pGSP->GetSamplerIndex() != -1)
             {
-                const Rect2D& extent = pSP->GetExtent();
+                const Rect2D& samplerExtent = pSP->GetExtent();
+
+                Rect2D extent = samplerExtent;
+                if(RectIsInfinite(samplerExtent))
+                {
+                    extent = Rect2D(-0.5*FLT_MAX,-0.5*FLT_MAX,FLT_MAX,FLT_MAX);
+                }
+
                 snprintf(idxStr, 255, "%i", pGSP->GetSamplerIndex());
                 dest += "if(sampler == ";
                 dest += idxStr;
@@ -1489,26 +1518,35 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
 #endif
 
 #if 1
+    Rect2D clipSrcRect = srcRect;
+    Rect2D renderRect = destRect;
+
     AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
 
     // Firstly clip srcRect by extent
     Rect2D extent = sampler->GetExtent();
-    Rect2D clipSrcRect = RectIntersect(srcRect, extent);
 
-    // Transform clipped source to destination
-    Rect2D renderRect = RectTransform(clipSrcRect, srcToDestTrans);
+    // if extent is non-infinite, clip
+    if(!RectIsInfinite(extent))
+    {
+        clipSrcRect = RectIntersect(srcRect, extent);
 
-    // Clip destination by viewport... TODO
-    
-    // Transform clipped destination rect back to source
-    srcToDestTrans->Invert();
-    clipSrcRect = RectTransform(renderRect, srcToDestTrans);
+        // Transform clipped source to destination
+        renderRect = RectTransform(clipSrcRect, srcToDestTrans);
 
-    srcToDestTrans->Release();
+        // Clip destination by viewport... TODO
 
-    // Do nothing if we've clipped everything away.
-    if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
-        return;
+        // Transform clipped destination rect back to source
+        srcToDestTrans->Invert();
+        clipSrcRect = RectTransform(renderRect, srcToDestTrans);
+
+        srcToDestTrans->Release();
+
+        // Do nothing if we've clipped everything away.
+        if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
+            return;
+    }
+
 #else
     Rect2D clipSrcRect = srcRect;
     Rect2D renderRect = destRect;

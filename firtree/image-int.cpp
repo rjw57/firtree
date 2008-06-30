@@ -47,6 +47,7 @@ ImageImpl::ImageImpl()
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
+    ,   m_ExtentProvider(NULL)
 {   
     m_UnderlyingTransform = AffineTransform::Identity();
 }
@@ -60,6 +61,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
+    ,   m_ExtentProvider(NULL)
 {
     const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
 
@@ -84,6 +86,7 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
+    ,   m_ExtentProvider(NULL)
 {
     if(imageRep.ImageBlob == NULL) { return; }
     if(imageRep.Stride < imageRep.Width) { return; }
@@ -94,20 +97,23 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(Kernel* k)
-    :   Image(k)
+ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
+    :   Image(k, extentProvider)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(k)
     ,   m_ImageProvider(NULL)
+    ,   m_ExtentProvider(extentProvider)
 {
     if(m_Kernel != NULL)
     {
         m_Kernel->Retain();
     }
     m_UnderlyingTransform = AffineTransform::Identity();
+
+    FIRTREE_SAFE_RETAIN(m_ExtentProvider);
 }
 
 //=============================================================================
@@ -119,6 +125,7 @@ ImageImpl::ImageImpl(ImageProvider* improv)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(improv)
+    ,   m_ExtentProvider(NULL)
 {
     if(m_ImageProvider != NULL)
     {
@@ -148,6 +155,7 @@ ImageImpl::~ImageImpl()
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
     FIRTREE_SAFE_RELEASE(m_Kernel);
     FIRTREE_SAFE_RELEASE(m_UnderlyingTransform);
+    FIRTREE_SAFE_RELEASE(m_ExtentProvider);
 }
 
 //=============================================================================
@@ -202,6 +210,24 @@ AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
 //=============================================================================
 Rect2D ImageImpl::GetExtent() const
 {
+    if(m_BaseImage != NULL)
+    {
+        Rect2D baseExtent = m_BaseImage->GetExtent();
+        Rect2D extentRect = RectTransform(baseExtent, m_BaseTransform);
+        return extentRect;
+    }
+
+    // Is this a kernel image?
+    if(HasKernel())
+    {
+        if(m_ExtentProvider == NULL)
+        {
+            return RectMakeInfinite();
+        }
+
+        return m_ExtentProvider->ComputeExtentForKernel(m_Kernel);
+    }
+    
     // Get the size of the underlying pixel representation.
     Size2D pixelSize = GetUnderlyingPixelSize();
 

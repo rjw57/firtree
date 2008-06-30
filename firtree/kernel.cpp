@@ -37,6 +37,99 @@
 namespace Firtree {
 
 //=============================================================================
+/// An implementation of the ExtentProvider interface that provide a 'standard'
+/// algorithm.
+class StandardExtendProvider : public ExtentProvider
+{
+    public:
+        StandardExtendProvider(const char* samplerName, float deltaX, 
+                float deltaY)
+            :   ExtentProvider()
+            ,   m_Delta(deltaX, deltaY)
+        {
+            // If the passed sampler name is non-NULL, initialise
+            // our copy of it.
+            if(samplerName != NULL)
+            {
+                m_SamplerName = samplerName;
+            }
+        }
+
+        virtual ~StandardExtendProvider()
+        {
+        }
+
+        virtual Rect2D ComputeExtentForKernel(Kernel* kernel)
+        {
+            if(kernel == NULL)
+            {
+                FIRTREE_ERROR("Passed a null kernel.");
+                return RectMakeInfinite();
+            }
+
+            const char* parameterName = NULL;
+            if(!m_SamplerName.empty())
+            {
+                parameterName = m_SamplerName.c_str();
+            }
+
+            // If we don't have a parameter name, find each sampler the kernel
+            // uses and form a union.
+            if(parameterName != NULL)
+            {
+                Rect2D extentRect = RectMakeInfinite();
+                bool foundOneSampler = false;
+                const std::vector<std::string>& paramNames = 
+                    kernel->GetParameterNames();
+
+                for(std::vector<std::string>::const_iterator i = paramNames.begin();
+                        (i != paramNames.end()) && (parameterName == NULL); i++)
+                {
+                    SamplerParameter* sp = dynamic_cast<SamplerParameter*>
+                        (kernel->GetValueForKey((*i).c_str()));
+                    if(sp != NULL)
+                    {
+                        if(foundOneSampler) {
+                            extentRect = RectUnion(extentRect, sp->GetExtent());
+                        } else {
+                            extentRect = sp->GetExtent();
+                        }
+                        parameterName = (*i).c_str();
+                        foundOneSampler = true;
+                    }
+                }
+
+                return RectInset(extentRect, m_Delta.Width, m_Delta.Height);
+            }
+
+            if(parameterName == NULL)
+            {
+                // FIRTREE_WARNING("Could not find valid sampler parameter from "
+                //         "which to use extent.");
+                return RectMakeInfinite();
+            }
+
+            SamplerParameter* sp = dynamic_cast<SamplerParameter*>
+                    (kernel->GetValueForKey(parameterName));
+
+            Rect2D samplerExtent = sp->GetExtent();
+
+            return RectInset(samplerExtent, m_Delta.Width, m_Delta.Height);
+        }
+
+    private:
+        std::string     m_SamplerName;
+        Size2D          m_Delta;
+};
+
+//=============================================================================
+ExtentProvider* CreateStandardExtentProvider(const char* samplerName,
+        float deltaX, float deltaY)
+{
+    return new StandardExtendProvider(samplerName, deltaX, deltaY);
+}
+
+//=============================================================================
 Parameter::Parameter()
     :   ReferenceCounted()
 {
@@ -113,9 +206,21 @@ const char* Kernel::GetSource() const
 }
 
 //=============================================================================
-const std::map<std::string, Parameter*>& Kernel::GetParameters()
+const std::vector<std::string>& Kernel::GetParameterNames() const
+{
+    return m_WrappedGLSLKernel->GetParameterNames();
+}
+
+//=============================================================================
+const std::map<std::string, Parameter*>& Kernel::GetParameters() const
 {
     return m_WrappedGLSLKernel->GetParameters();
+}
+
+//=============================================================================
+Parameter* Kernel::GetValueForKey(const char* key) const
+{
+    return m_WrappedGLSLKernel->GetValueForKey(key);
 }
 
 //=============================================================================

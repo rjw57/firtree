@@ -42,7 +42,7 @@ class ImageImpl : public Image
         ImageImpl();
         ImageImpl(const Image* im, AffineTransform* t);
         ImageImpl(const BitmapImageRep& imageRep, bool copyData);
-        ImageImpl(Kernel* k);
+        ImageImpl(Kernel* k, ExtentProvider* extentProvider);
         ImageImpl(ImageProvider* imageProvider);
         virtual ~ImageImpl();
         ///@}
@@ -117,6 +117,8 @@ class ImageImpl : public Image
         ImageProvider*      m_ImageProvider;
 
         AffineTransform*    m_UnderlyingTransform;
+
+        ExtentProvider*     m_ExtentProvider;
 
         friend class Firtree::Image;
 };

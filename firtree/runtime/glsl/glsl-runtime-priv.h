@@ -222,9 +222,14 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
         void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }
 
+        Parameter* GetValueForKey(const char* key) const;
+
         void SetValueForKey(Parameter* param, const char* key);
 
-        const std::map<std::string, Parameter*>& GetParameters()
+        const std::vector<std::string>& GetParameterNames() const
+            { return m_ParameterNames; }
+
+        const std::map<std::string, Parameter*>& GetParameters() const
             { return m_Parameters; }
 
         void Compile();
@@ -246,6 +251,7 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
 
     private:
         std::map<std::string, Parameter*>   m_Parameters;
+        std::vector<std::string>            m_ParameterNames;
         std::map<std::string, std::string>   m_UniformNameMap;
         std::string                     m_CompiledGLSL;
         std::string                     m_InfoLog;

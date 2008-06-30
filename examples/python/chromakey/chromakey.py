@@ -142,11 +142,17 @@ class ChromaKeyApp:
 	def open_image(self, filename):
 		self._orig_image = Firtree.Image.CreateFromFile(filename)
 
+		extent = self._orig_image.GetExtent()
+		print('Extent: %f,%f+%f+%f' % (extent.Origin.X, extent.Origin.Y, extent.Size.Width, extent.Size.Height))
+
 		self._alphaKernel.SetValueForKey(self._orig_image, 'source')
 		self._matteKernel.SetValueForKey(self._orig_image, 'source')
 
 		self.set_display_image(self._orig_image)
 		self._display_original.set_active(True)
+
+		extent = self._alpha_image.GetExtent()
+		print('Alpha extent: %f,%f+%f+%f' % (extent.Origin.X, extent.Origin.Y, extent.Size.Width, extent.Size.Height))
 
 		self._imageRenderer.refresh()
 

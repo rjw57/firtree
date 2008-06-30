@@ -45,6 +45,33 @@ namespace GLSL {
 }
 
 //=============================================================================
+/// \brief Abstract base class for extent providers.
+///
+/// Computing the non-transparent pixel extent for a kernel is non-trivial.
+/// Consequently, kernels rely on an 'extent provider' to examine their
+/// state and return their extent. A custom extent provider should inherit
+/// from this class.
+class ExtentProvider : public ReferenceCounted
+{
+    public:
+        /// Examine the passed kernel and return an extent for it.
+        virtual Rect2D ComputeExtentForKernel(Kernel* kernel) = 0;
+};
+
+//=============================================================================
+/// Construct a convenience ExtentProvider. It will set a kernel's extent
+/// based upon the extent of one of the kernel's samplers. Should the 
+/// sampler be unset or no samplers are used by the kernel, a zero-sized extent
+/// will be returned.
+///
+/// \param samplerName The name of the sampler parameter whose extent
+/// should be copied. If NULL, the union of all sampler extents is used.
+/// \param deltaX Inset the retrieved sampler extent by this many pixels.
+/// \param deltaY Inset the retrieved sampler extent by this many pixels.
+ExtentProvider* CreateStandardExtentProvider(const char* samplerName = NULL,
+        float deltaX = 0.f, float deltaY = 0.f);
+
+//=============================================================================
 /// The base class for all kernel parameters.
 class Parameter : public ReferenceCounted
 {
@@ -217,13 +244,22 @@ class Kernel : public ReferenceCounted
         /// Retrieve a pointer to the source for this kernel expressed in
         /// the FIRTREE kernel language.
         const char* GetSource() const;
-
-        // ====================================================================
-        // MUTATING METHODS
+        
+        /// Return a const reference to a vector containing the parameter
+        /// names matching the order they were specified in within the 
+        /// kernel source.
+        const std::vector<std::string>& GetParameterNames() const;
 
         /// Return a const reference to a map containing the parameter 
         /// name/value pairs.
-        const std::map<std::string, Parameter*>& GetParameters();
+        const std::map<std::string, Parameter*>& GetParameters() const;
+
+        /// Return the parameter object for the named parameter or NULL if
+        /// this parameter is unset or there is no parameter with that name.
+        Parameter* GetValueForKey(const char* key) const;
+
+        // ====================================================================
+        // MUTATING METHODS
 
         /// Convenience accessor for setting a kernel parameter value to
         /// a sampler which samples from the passed image.

@@ -560,6 +560,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     CompiledGLSLKernel* gk = k->GetWrappedGLSLKernel();
     if(gk == NULL) { return; }
     
+    // NB underlyingTransform must be released
     AffineTransform* underlyingTransform = 
         imImpl->GetTransformFromUnderlyingImage();
 
@@ -570,6 +571,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
     FIRTREE_SAFE_RELEASE(t);
+    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================
@@ -1234,6 +1236,8 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     m_Image->Retain();
 
     Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
+
+    // NB underlyingTransform must be released.
     AffineTransform* underlyingTransform = 
         m_Image->GetTransformFromUnderlyingImage();
 
@@ -1246,6 +1250,7 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
     FIRTREE_SAFE_RELEASE(t);
+    FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
 //=============================================================================

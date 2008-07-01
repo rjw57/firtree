@@ -49,7 +49,6 @@ ImageImpl::ImageImpl()
     ,   m_ImageProvider(NULL)
     ,   m_ExtentProvider(NULL)
 {   
-    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -74,7 +73,6 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     m_BaseImage->Retain();
 
     m_BaseTransform = t->Copy();
-    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -93,7 +91,6 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) { return; }
 
     m_BitmapRep = new BitmapImageRep(imageRep, copy);
-    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -111,7 +108,6 @@ ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
     {
         m_Kernel->Retain();
     }
-    m_UnderlyingTransform = AffineTransform::Identity();
 
     FIRTREE_SAFE_RETAIN(m_ExtentProvider);
 }
@@ -131,7 +127,6 @@ ImageImpl::ImageImpl(ImageProvider* improv)
     {
         m_ImageProvider->Retain();
     }
-    m_UnderlyingTransform = AffineTransform::Identity();
 }
 
 
@@ -154,7 +149,6 @@ ImageImpl::~ImageImpl()
     FIRTREE_SAFE_RELEASE(m_BaseImage);
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
     FIRTREE_SAFE_RELEASE(m_Kernel);
-    FIRTREE_SAFE_RELEASE(m_UnderlyingTransform);
     FIRTREE_SAFE_RELEASE(m_ExtentProvider);
 }
 
@@ -204,7 +198,7 @@ AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
         return baseTransform;
     }
 
-    return m_UnderlyingTransform;
+    return AffineTransform::Identity();
 }
 
 //=============================================================================
@@ -245,6 +239,8 @@ Rect2D ImageImpl::GetExtent() const
     AffineTransform* transform = GetTransformFromUnderlyingImage();
 
     Rect2D extentRect = RectTransform(pixelRect, transform);
+
+    FIRTREE_SAFE_RELEASE(transform);
 
     return extentRect;
 }

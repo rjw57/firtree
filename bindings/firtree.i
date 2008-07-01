@@ -63,7 +63,7 @@ using namespace Firtree;
 
 %newobject Firtree::OpenGLRenderingContext::Create;
 
-%newobject CreateStandardExtentProvider
+%newobject CreateStandardExtentProvider;
 %newobject RectComputeTransform;
 
 /* Convert from Python --> C */

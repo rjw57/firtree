@@ -75,6 +75,7 @@ class ImageImpl : public Image
 
         /// Return a pointer to an AffineTransform which represents the
         /// transfrom from the underlying pixel representation to this image.
+        /// \note THIS POINTER MUST HAVE RELEASE CALLED ON IT AFTERWARDS.
         AffineTransform* GetTransformFromUnderlyingImage() const;
 
         // ====================================================================
@@ -115,8 +116,6 @@ class ImageImpl : public Image
 
         /// The image provider for this image.
         ImageProvider*      m_ImageProvider;
-
-        AffineTransform*    m_UnderlyingTransform;
 
         ExtentProvider*     m_ExtentProvider;
 

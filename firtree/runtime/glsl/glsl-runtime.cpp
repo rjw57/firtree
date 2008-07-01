@@ -1526,14 +1526,14 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     Rect2D clipSrcRect = srcRect;
     Rect2D renderRect = destRect;
 
-    AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
-
     // Firstly clip srcRect by extent
     Rect2D extent = sampler->GetExtent();
 
     // if extent is non-infinite, clip
     if(!RectIsInfinite(extent))
     {
+        AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
+
         clipSrcRect = RectIntersect(srcRect, extent);
 
         // Transform clipped source to destination

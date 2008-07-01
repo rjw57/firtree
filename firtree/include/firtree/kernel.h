@@ -31,18 +31,18 @@
 #include <firtree/main.h>
 #include <firtree/math.h>
 
+namespace Firtree { namespace GLSL { 
+    class KernelSamplerParameter; 
+    class CompiledGLSLKernel; 
+    class GLSLSamplerParameter; 
+} }
+
 namespace Firtree {
 
 class NumericParameter;
 class SamplerParameter;
 class Kernel;
 class Image;
-
-namespace GLSL { 
-    class KernelSamplerParameter; 
-    class CompiledGLSLKernel; 
-    class GLSLSamplerParameter; 
-}
 
 //=============================================================================
 /// \brief Abstract base class for extent providers.

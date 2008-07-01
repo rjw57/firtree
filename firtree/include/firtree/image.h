@@ -127,7 +127,7 @@ class Image : public ReferenceCounted
         /// the extent of the kernel. Otherwise, the extent provider
         /// returned from CreateStandardExtentProvider() is used.
         static Image* CreateFromKernel(Firtree::Kernel* k,
-                ExtentProvider* extentProvider = NULL);
+                Firtree::ExtentProvider* extentProvider = NULL);
 
         /// Construct an image from an image provider.
         static Image* CreateFromImageProvider(ImageProvider* improv);

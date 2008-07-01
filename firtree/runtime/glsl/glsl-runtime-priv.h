@@ -110,6 +110,9 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
         // extent.
         virtual void ComputeDigest(uint8_t digest[20]) = 0;
 
+        void SetOpenGLContext(OpenGLContext* glContext);
+        OpenGLContext* GetOpenGLContext() const { return m_GLContext; }
+
     private:
         /// Affine transformation to map from world co-ordinates
         /// to sampler co-ordinates.
@@ -123,6 +126,8 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
         uint8_t             m_CachedShaderDigest[20];
 
         Image*              m_RepresentedImage;
+
+        OpenGLContext*      m_GLContext;
 };
 
 //=============================================================================

@@ -117,7 +117,7 @@ Image* g_SpotImage = NULL;
 
 Image* g_GlobalImage = NULL;
 
-OpenGLRenderingContext* g_GLRenderingContext = NULL;
+GLRenderer* g_GLRenderingContext = NULL;
 
 GLenum g_FragShaderObj;
 GLuint g_ShaderProg;
@@ -352,7 +352,7 @@ void context_created()
         exit(1);
     }
 
-    g_GLRenderingContext = OpenGLRenderingContext::Create();
+    g_GLRenderingContext = GLRenderer::Create();
 }
 
 // vim:sw=4:ts=4:cindent:et

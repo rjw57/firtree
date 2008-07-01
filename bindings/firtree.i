@@ -61,7 +61,9 @@ using namespace Firtree;
 %newobject Firtree::AffineTransform::RotationByRadians;
 %newobject Firtree::AffineTransform::Translation;
 
-%newobject Firtree::OpenGLRenderingContext::Create;
+%newobject Firtree::OpenGLContext::CreateNullContext;
+
+%newobject Firtree::GLRenderer::Create;
 
 %newobject Firtree::ExtentProvider::CreateStandardExtentProvider;
 

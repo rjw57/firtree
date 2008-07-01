@@ -23,6 +23,7 @@
 
 #include <float.h>
 #include <string.h>
+#include <assert.h>
 
 #define FIRTREE_NO_GLX
 #include <firtree/opengl.h>
@@ -35,8 +36,6 @@
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
-
-static void* _KernelGetOpenGLProcAddress(const char* name);
 
 namespace Firtree { namespace GLSL {
 
@@ -51,8 +50,17 @@ bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler,
 const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler);
 
 //=============================================================================
-static void _KernelEnsureAPI() 
+static void _KernelEnsureAPI(OpenGLContext* context) 
 {
+    if(context != NULL)
+    {
+        context->MakeCurrent();
+    } else {
+        FIRTREE_WARNING("Attempt to render from sampler without calling "
+                "SetOpenGLContext() first.");
+        assert(false);
+    }
+
     static bool initialised = false;
     if(!initialised)
     {
@@ -386,6 +394,7 @@ GLSLSamplerParameter::GLSLSamplerParameter(Image* im)
     ,   m_CachedFragmentShaderObject(-1)
     ,   m_CachedProgramObject(-1)
     ,   m_RepresentedImage(im)
+    ,   m_GLContext(NULL)
 {
     FIRTREE_SAFE_RETAIN(m_RepresentedImage);
 }
@@ -396,20 +405,34 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     // Clear up any cached shader programs
     if(m_CachedProgramObject > 0)
     {
-        _KernelEnsureAPI();
+        _KernelEnsureAPI(m_GLContext);
         glDeleteObjectARB(m_CachedProgramObject);
         m_CachedProgramObject = -1;
     }
 
     if(m_CachedFragmentShaderObject > 0)
     {
-        _KernelEnsureAPI();
+        _KernelEnsureAPI(m_GLContext);
         glDeleteObjectARB(m_CachedFragmentShaderObject);
         m_CachedFragmentShaderObject = -1;
     }
 
     FIRTREE_SAFE_RELEASE(m_RepresentedImage);
     FIRTREE_SAFE_RELEASE(m_Transform);
+    FIRTREE_SAFE_RELEASE(m_GLContext);
+}
+
+//=============================================================================
+void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
+{
+    OpenGLContext* oldContext = m_GLContext;
+
+    m_GLContext = glContext;
+    FIRTREE_SAFE_RETAIN(m_GLContext);
+
+    // FIXME: Should we delete the old programs when changing context?
+
+    FIRTREE_SAFE_RELEASE(oldContext);
 }
 
 //=============================================================================
@@ -424,7 +447,7 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
 //=============================================================================
 int GLSLSamplerParameter::GetShaderProgramObject()
 {
-    _KernelEnsureAPI();
+    _KernelEnsureAPI(m_GLContext);
     
     // Compute the digest of this shader
     uint8_t digest[20];
@@ -1064,7 +1087,7 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
 //=============================================================================
 void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
-    _KernelEnsureAPI();
+    _KernelEnsureAPI(GetOpenGLContext());
 
     const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
@@ -1080,7 +1103,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         GLSLSamplerParameter* glslChild =
             GLSLSamplerParameter::ExtractFrom(child);
 
-        // Set all the child's uniforms
+        // Set all the child's uniforms and GL context.
+        glslChild->SetOpenGLContext(GetOpenGLContext());
         glslChild->SetGLSLUniforms(program);
     }
 
@@ -1339,7 +1363,7 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
     if(!IsValid())
         return;
 
-    _KernelEnsureAPI();
+    _KernelEnsureAPI(GetOpenGLContext());
 
     std::string paramName(GetBlockPrefix());
     paramName += "_texture";
@@ -1457,32 +1481,44 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler)
 namespace Firtree {
 
 //=============================================================================
-OpenGLRenderingContext::OpenGLRenderingContext()
+GLRenderer::GLRenderer(OpenGLContext* glContext)
+    :   ReferenceCounted()
+    ,   m_OpenGLContext(glContext)
 {
     m_SamplerCache = new Internal::LRUCache<Image*>(8, 500);
+    FIRTREE_SAFE_RETAIN(m_OpenGLContext);
 }
 
 //=============================================================================
-OpenGLRenderingContext::~OpenGLRenderingContext()
+GLRenderer::~GLRenderer()
 {
     CollectGarbage();
     delete m_SamplerCache;
+    FIRTREE_SAFE_RELEASE(m_OpenGLContext);
 }
 
 //=============================================================================
-OpenGLRenderingContext* OpenGLRenderingContext::Create()
+GLRenderer* GLRenderer::Create(OpenGLContext* glContext)
 {
-    return new OpenGLRenderingContext();
+    if(glContext == NULL)
+    {
+        glContext = OpenGLContext::CreateNullContext();
+        GLRenderer* rv = new GLRenderer(glContext);
+        FIRTREE_SAFE_RELEASE(glContext);
+        return rv;
+    } 
+
+    return new GLRenderer(glContext);
 }
 
 //=============================================================================
-void OpenGLRenderingContext::CollectGarbage()
+void GLRenderer::CollectGarbage()
 {
     m_SamplerCache->Purge();
 }
 
 //=============================================================================
-void OpenGLRenderingContext::RenderWithOrigin(Image* image, 
+void GLRenderer::RenderWithOrigin(Image* image, 
         const Point2D& origin)
 {
     // Firstly, extract the image size and make sure it isn't infinite
@@ -1501,14 +1537,14 @@ void OpenGLRenderingContext::RenderWithOrigin(Image* image,
 }
 
 //=============================================================================
-void OpenGLRenderingContext::RenderAtPoint(Image* image, const Point2D& location,
+void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
         const Rect2D& srcRect)
 {
     RenderInRect(image, Rect2D(location, srcRect.Size), srcRect);
 }
 
 //=============================================================================
-void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect, 
+void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
     SamplerParameter* sampler;
@@ -1530,6 +1566,8 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     GLSL::GLSLSamplerParameter* glslSampler =
         GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
     if(glslSampler == NULL) { return; }
+
+    glslSampler->SetOpenGLContext(m_OpenGLContext);
 
     float vp[4];
     glGetFloatv(GL_VIEWPORT, vp);
@@ -1629,6 +1667,28 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     glEnd();
 #endif
+}
+
+//=============================================================================
+OpenGLContext::OpenGLContext()
+    :   ReferenceCounted()
+{
+}
+
+//=============================================================================
+OpenGLContext::~OpenGLContext()
+{
+}
+
+//=============================================================================
+void OpenGLContext::MakeCurrent()
+{
+}
+
+//=============================================================================
+OpenGLContext* OpenGLContext::CreateNullContext()
+{
+    return new OpenGLContext();
 }
 
 } // namespace Firtree

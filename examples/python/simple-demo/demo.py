@@ -86,7 +86,7 @@ class FirtreeScene:
         self.image = compositeImage
 
         # Create a rendering context.
-        self.context = Firtree.OpenGLRenderingContext.Create()
+        self.context = Firtree.GLRenderer.Create()
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)

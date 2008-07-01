@@ -33,32 +33,62 @@ namespace Internal {
 }
 
 //=============================================================================
+/// An OpenGLContext is an object which knows how to start up, tear down and
+/// make active a particular OpenGL context. The GLRenderer object
+/// makes use of an OpenGLContext to ensure that the current OpenGL context is
+/// the correct one.
+///
+/// The default implementation does nothing moving the entire burden for
+/// OpenGL context management to the controlling app.
+class OpenGLContext : public ReferenceCounted
+{
+    protected:
+        OpenGLContext();
+
+    public:
+        virtual ~OpenGLContext();
+
+        // ====================================================================
+        // CONSTRUCTION METHODS
+        
+        /// Create a simple 'null' context which does nothing when
+        /// MakeCurrent() is called.
+        static OpenGLContext* CreateNullContext();
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        /// Make this context current. Note that this might well be called
+        /// an awful lot so if it is an expensive operation, it might well
+        /// be worth ensuring it only swaps the context when necessary.
+        virtual void MakeCurrent();
+};
+
+//=============================================================================
 /// A GLSL rendering context encapsulates all the information Firtree needs
 /// to render images into OpenGL windows. The programmer must arrange
-/// for the same OpenGL context to be current on context construction,
-/// destruction and rendering.
+/// for a OpenGLContext object which knows how to make a desired OpenGL context
+/// 'current'.
 ///
 /// In addition to knowing how to render images, the rendering context
 /// caches GLSL shader programs to mitigate the overhead of re-compilation
 /// on each draw.
-///
-/// FIXME: A nicer way to acheive this would be with some concept of a
-/// Firtree 'OpenGL context' object.
-class OpenGLRenderingContext : public ReferenceCounted {
+class GLRenderer : public ReferenceCounted {
     protected:
         /// Protected contrution. Use Create*() methods.
         ///@{
-        OpenGLRenderingContext();
+        GLRenderer(OpenGLContext* glContext);
         ///@}
         
     public:
-        virtual ~OpenGLRenderingContext();
+        virtual ~GLRenderer();
 
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        /// Construct a new OpenGL rendering context.
-        static OpenGLRenderingContext* Create();
+        /// Construct a new OpenGL rendering context. If glContext is NULL,
+        /// a 'null' context is created via CreateNullContext().
+        static GLRenderer* Create(OpenGLContext* glContext = NULL);
 
         // ====================================================================
         // CONST METHODS
@@ -87,6 +117,9 @@ class OpenGLRenderingContext : public ReferenceCounted {
 
         /// The internal cache of sampler objects.
         Internal::LRUCache<Image*>*     m_SamplerCache;
+
+        /// The context associated with this renderer.
+        OpenGLContext*                  m_OpenGLContext;
 };
 
 }

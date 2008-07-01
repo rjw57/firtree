@@ -63,8 +63,9 @@ using namespace Firtree;
 
 %newobject Firtree::OpenGLRenderingContext::Create;
 
-%newobject CreateStandardExtentProvider;
-%newobject RectComputeTransform;
+%newobject Firtree::ExtentProvider::CreateStandardExtentProvider;
+
+%newobject Firtree::RectComputeTransform;
 
 /* Some cleverness to allow us to wire up python callables
  * as an extent provider */

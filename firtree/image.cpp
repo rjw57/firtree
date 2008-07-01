@@ -187,7 +187,7 @@ Image* Image::CreateFromKernel(Kernel* k, ExtentProvider* extentProvider)
         return new ImageImpl(k, extentProvider);
     }
 
-    extentProvider = CreateStandardExtentProvider();
+    extentProvider = ExtentProvider::CreateStandardExtentProvider();
     Image* retVal = new ImageImpl(k, extentProvider);
     FIRTREE_SAFE_RELEASE(extentProvider);
 

@@ -136,7 +136,7 @@ class StandardExtendProvider : public ExtentProvider
 };
 
 //=============================================================================
-ExtentProvider* CreateStandardExtentProvider(const char* samplerName,
+ExtentProvider* ExtentProvider::CreateStandardExtentProvider(const char* samplerName,
         float deltaX, float deltaY)
 {
     return new StandardExtendProvider(samplerName, deltaX, deltaY);

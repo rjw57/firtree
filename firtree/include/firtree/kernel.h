@@ -56,20 +56,25 @@ class ExtentProvider : public ReferenceCounted
     public:
         /// Examine the passed kernel and return an extent for it.
         virtual Rect2D ComputeExtentForKernel(Kernel* kernel) = 0;
-};
 
-//=============================================================================
-/// Construct a convenience ExtentProvider. It will set a kernel's extent
-/// based upon the extent of one of the kernel's samplers. Should the 
-/// sampler be unset or no samplers are used by the kernel, a zero-sized extent
-/// will be returned.
-///
-/// \param samplerName The name of the sampler parameter whose extent
-/// should be copied. If NULL, the union of all sampler extents is used.
-/// \param deltaX Inset the retrieved sampler extent by this many pixels.
-/// \param deltaY Inset the retrieved sampler extent by this many pixels.
-ExtentProvider* CreateStandardExtentProvider(const char* samplerName = NULL,
-        float deltaX = 0.f, float deltaY = 0.f);
+        // ====================================================================
+        /// \brief Construct a standard ExtentProvider. 
+        ///
+        /// The extent of many kernels can be computed by a standard algorithm.
+        /// This method returns an instance of an ExtentProvider which 
+        /// implements the following algorithm.
+        ///
+        /// Firstly the extent of the kernel's sampler parameter named
+        /// 'samplerName' is retrieved. If no sampler is specified, the union
+        /// of all the kernel's samplers' extents is found. Should the
+        /// kernel use no samplers, an infinite extent is used.
+        ///
+        /// This extent is then inset by (deltaX, deltaY) and returned.
+        ///
+        static ExtentProvider* CreateStandardExtentProvider(
+                const char* samplerName = NULL,
+                float deltaX = 0.f, float deltaY = 0.f);
+};
 
 //=============================================================================
 /// The base class for all kernel parameters.

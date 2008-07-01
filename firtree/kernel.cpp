@@ -67,6 +67,8 @@ class StandardExtendProvider : public ExtentProvider
                 return RectMakeInfinite();
             }
 
+            //FIRTREE_DEBUG("%p -> compute extent.", kernel);
+
             const char* parameterName = NULL;
             if(!m_SamplerName.empty())
             {
@@ -75,32 +77,43 @@ class StandardExtendProvider : public ExtentProvider
 
             // If we don't have a parameter name, find each sampler the kernel
             // uses and form a union.
-            if(parameterName != NULL)
+            if(parameterName == NULL)
             {
+                //FIRTREE_DEBUG("No specified parameter, searching.");
+
                 Rect2D extentRect = RectMakeInfinite();
                 bool foundOneSampler = false;
                 const std::vector<std::string>& paramNames = 
                     kernel->GetParameterNames();
 
                 for(std::vector<std::string>::const_iterator i = paramNames.begin();
-                        (i != paramNames.end()) && (parameterName == NULL); i++)
+                        i != paramNames.end(); i++)
                 {
+                    //FIRTREE_DEBUG("Looking at: '%s'", (*i).c_str());
                     SamplerParameter* sp = dynamic_cast<SamplerParameter*>
                         (kernel->GetValueForKey((*i).c_str()));
                     if(sp != NULL)
                     {
+                        Rect2D samplerExtent = sp->GetExtent();
+                        /*
+                        FIRTREE_DEBUG("Found: '%s' rect = %f,%f+%f+%f",
+                                (*i).c_str(), 
+                                samplerExtent.Origin.X, samplerExtent.Origin.Y,
+                                samplerExtent.Size.Width, samplerExtent.Size.Height);
+                                */
                         if(foundOneSampler) {
-                            extentRect = RectUnion(extentRect, sp->GetExtent());
+                            extentRect = RectUnion(extentRect, samplerExtent);
                         } else {
-                            extentRect = sp->GetExtent();
+                            extentRect = samplerExtent;
                         }
-                        parameterName = (*i).c_str();
                         foundOneSampler = true;
                     }
                 }
 
                 return RectInset(extentRect, m_Delta.Width, m_Delta.Height);
             }
+
+            //FIRTREE_DEBUG("Using specified parameter: %s", m_SamplerName.c_str());
 
             if(parameterName == NULL)
             {

@@ -1595,6 +1595,19 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
     glVertex2f(renderRect.MaxX(), renderRect.MinY());
     glEnd();
+
+    // HACK: display render rectangle
+#if 0
+    glUseProgramObjectARB(0);
+    glColor3f(1,1,1);
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(renderRect.MinX(), renderRect.MinY());
+    glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    glVertex2f(renderRect.MaxX(), renderRect.MinY());
+    glVertex2f(renderRect.MinX(), renderRect.MinY());
+    glEnd();
+#endif
 }
 
 } // namespace Firtree

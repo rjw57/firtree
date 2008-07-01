@@ -1482,6 +1482,25 @@ void OpenGLRenderingContext::CollectGarbage()
 }
 
 //=============================================================================
+void OpenGLRenderingContext::RenderWithOrigin(Image* image, 
+        const Point2D& origin)
+{
+    // Firstly, extract the image size and make sure it isn't infinite
+    // in extent.
+    Rect2D extent = image->GetExtent();
+
+    if(RectIsInfinite(extent))
+    {
+        FIRTREE_ERROR("An infinite extent image has no origin.");
+        return;
+    }
+
+    Point2D renderPoint = Point2D(origin.X + extent.Origin.X,
+            origin.Y + extent.Origin.Y);
+    RenderAtPoint(image, renderPoint, extent);
+}
+
+//=============================================================================
 void OpenGLRenderingContext::RenderAtPoint(Image* image, const Point2D& location,
         const Rect2D& srcRect)
 {
@@ -1512,6 +1531,11 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
         GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
     if(glslSampler == NULL) { return; }
 
+    float vp[4];
+    glGetFloatv(GL_VIEWPORT, vp);
+
+    Rect2D viewportRect = Rect2D(vp[0], vp[1], vp[2], vp[3]);
+
 #if 0
     uint8_t digest[20];
     glslSampler->ComputeDigest(digest);
@@ -1522,7 +1546,6 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     printf("\n");
 #endif
 
-#if 1
     Rect2D clipSrcRect = srcRect;
     Rect2D renderRect = destRect;
 
@@ -1539,7 +1562,8 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
         // Transform clipped source to destination
         renderRect = RectTransform(clipSrcRect, srcToDestTrans);
 
-        // Clip destination by viewport... TODO
+        // Clip the render rectangle by the viewport
+        renderRect = RectIntersect(renderRect, viewportRect);
 
         // Transform clipped destination rect back to source
         srcToDestTrans->Invert();
@@ -1548,14 +1572,11 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
         srcToDestTrans->Release();
 
         // Do nothing if we've clipped everything away.
-        if((clipSrcRect.Size.Width == 0.f) && (clipSrcRect.Size.Height == 0.f))
+        if(RectIsZero(renderRect))
+        {
             return;
+        }
     }
-
-#else
-    Rect2D clipSrcRect = srcRect;
-    Rect2D renderRect = destRect;
-#endif
 
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      

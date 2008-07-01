@@ -67,7 +67,7 @@ class FirtreeScene:
         # Form a rotated and translated lena image.
         lenaTransform = Firtree.AffineTransform.Translation(-256, -256)
         lenaTransform.RotateByDegrees(20)
-        lenaTransform.TranslateBy(400,300)
+        #lenaTransform.TranslateBy(400,300)
         lenaTransImage = Firtree.Image.CreateFromImageWithTransform(
             lenaImage, lenaTransform) 
 
@@ -75,7 +75,7 @@ class FirtreeScene:
         fogTransform = Firtree.AffineTransform.Translation(-160, -120)
         fogTransform.RotateByDegrees(-30)
         fogTransform.ScaleBy(1,1.5)
-        fogTransform.TranslateBy(400,300)
+        #fogTransform.TranslateBy(400,300)
         fogTransImage = Firtree.Image.CreateFromImageWithTransform(
             fogImage, fogTransform)
 
@@ -92,9 +92,8 @@ class FirtreeScene:
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Render the composited image into the framebuffer.
-        self.context.RenderAtPoint(self.image, 
-            Firtree.Point2D(0,0),
-            Firtree.Rect2D(0,0,width,height))
+        self.context.RenderWithOrigin(self.image, 
+            Firtree.Point2D(0.5*width, 0.5*height))
 
     def clear_up (self):
         print('Clearing up...')

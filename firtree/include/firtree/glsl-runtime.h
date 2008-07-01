@@ -68,14 +68,20 @@ class OpenGLRenderingContext : public ReferenceCounted {
 
         /// Render the passed image into the current OpenGL context
         /// in the rectangle destRect, using the pixels from srcRect in
-        /// the image as a source.
+        /// the image as a source. 
         void RenderInRect(Image* image, const Rect2D& destRect,
                 const Rect2D& srcRect);
 
         /// Convenience wrapper around RenderInRect() which sets the
         /// destination and source rectangles to have identical sizes.
+        /// The result us to render the pixels of the image from srcRect 
+        /// with the lowef-left pixel being at location.
         void RenderAtPoint(Image* image, const Point2D& location,
                 const Rect2D& srcRect);
+
+        /// Render an image at 1:1 size with the logical origin of the
+        /// image at origin.
+        void RenderWithOrigin(Image* image, const Point2D& origin);
 
     private:
 

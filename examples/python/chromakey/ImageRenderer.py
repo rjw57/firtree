@@ -40,13 +40,32 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 		self._isDragging = False
 		self._dragAnchor = (0, 0, 0)
 
-		# Pre zoom offset
-		self._offset = None
+		# Post zoom offset
+		self._offset = (0, 0)
 
 		self._vpSize = (0, 0)
 
 	def refresh(self):
 		self.window.invalidate_rect(self.allocation, False)
+	
+	def zoom_to_rect(self, rect):
+		# Calculate zoom to fit the image horizintally and vertically and
+		# choose largest to ensure image fits.
+
+		horizZoom = rect.Size.Width / self._vpSize[0]
+		vertZoom = rect.Size.Height / self._vpSize[1]
+
+		if(horizZoom > vertZoom):
+			self._zoom = horizZoom
+		else:
+			self._zoom = vertZoom
+
+		self._offset = (
+			rect.Origin.X + 0.5 * rect.Size.Width,
+			rect.Origin.Y + 0.5 * rect.Size.Height
+			)
+
+		self.refresh()
 
 	def set_image(self, image):
 		self._image = image
@@ -92,8 +111,8 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 		if(not self._realized):
 			return
 		
-		if(self._offset == None):
-			self._offset = (0.5 * self._zoom * event.width, 0.5 * self._zoom * event.height)
+		#if(self._offset == None):
+		#	self._offset = (0.5 * self._zoom * event.width, 0.5 * self._zoom * event.height)
 
 		gldrawable = self.get_gl_drawable()
 		glcontext = self.get_gl_context()

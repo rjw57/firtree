@@ -154,7 +154,7 @@ class ChromaKeyApp:
 		extent = self._alpha_image.GetExtent()
 		print('Alpha extent: %f,%f+%f+%f' % (extent.Origin.X, extent.Origin.Y, extent.Size.Width, extent.Size.Height))
 
-		self._imageRenderer.refresh()
+		self._imageRenderer.zoom_to_rect(self._orig_image.GetExtent())
 
 	def on_main_window_delete_event(self, widget, event):
 		gtk.main_quit()
@@ -204,7 +204,7 @@ class ChromaKeyApp:
 		self.sync_kernels_to_controls()
 	
 	def on_open_activate(self, widget):
-		# Create a file chooset
+		# Create a file chooser
 		chooser = gtk.FileChooserDialog(title=None, 
 			action=gtk.FILE_CHOOSER_ACTION_OPEN,
 			buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))

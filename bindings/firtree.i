@@ -66,6 +66,83 @@ using namespace Firtree;
 %newobject CreateStandardExtentProvider;
 %newobject RectComputeTransform;
 
+/* Some cleverness to allow us to wire up python callables
+ * as an extent provider */
+
+%{
+    class PythonExtentProvider : public Firtree::ExtentProvider
+    {
+        public:
+            PythonExtentProvider(PyObject* pyfunc)
+                :   Firtree::ExtentProvider()
+                ,   m_Function(pyfunc)
+            {
+                Py_INCREF(m_Function);
+            }
+
+            virtual ~PythonExtentProvider()
+            {
+                Py_DECREF(m_Function);
+            }
+
+            virtual Rect2D ComputeExtentForKernel(Kernel* kernel)
+            {
+                PyObject *arglist, *pyKernel;
+                PyObject *result;
+
+                pyKernel = 
+                    SWIG_NewPointerObj(SWIG_as_voidptr(kernel), 
+                            SWIGTYPE_p_Firtree__Kernel, 0);
+                arglist = Py_BuildValue("(O)", pyKernel);
+
+                result = PyEval_CallObject(m_Function, arglist);
+
+                Py_XDECREF(arglist);
+
+                Rect2D resultRect = Firtree::Rect2D();
+
+                if(result)
+                {
+                    Rect2D *r;
+                    int ok = SWIG_ConvertPtr(result, (void**)(&r), 
+                            SWIGTYPE_p_Firtree__Rect2D, SWIG_POINTER_EXCEPTION);
+                    if(ok == 0)
+                    {
+                        resultRect = *r;
+                    }
+                }
+
+                Py_XDECREF(result);
+
+                return resultRect;
+            }
+
+        private:
+            PyObject*       m_Function;
+    };
+%}
+
+/* Grab a Python function object as a Python object. */
+%typemap(in) PyObject *pyfunc {
+  if (!PyCallable_Check($input)) {
+      PyErr_SetString(PyExc_TypeError, "Need a callable object!");
+      return NULL;
+  }
+  $1 = $input;
+}
+
+/* Attach a new method to Image to use a Python callable
+ * as an extent provider */
+%extend Firtree::Image {
+    static Image* CreateFromKernel(Firtree::Kernel* k, PyObject* pyfunc)
+    {
+        ExtentProvider* ep = new PythonExtentProvider(pyfunc);
+        Image* retVal = Firtree::Image::CreateFromKernel(k, ep);
+        FIRTREE_SAFE_RELEASE(ep);
+        return retVal;
+    }
+}
+
 /* Convert from Python --> C */
 %typemap(in) uint32_t {
     $1 = PyInt_AsLong($input);

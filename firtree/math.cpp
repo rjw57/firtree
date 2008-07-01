@@ -45,6 +45,12 @@ bool SizeIsInfinite(const Size2D& size)
 }
 
 // ============================================================================
+bool SizeIsZero(const Size2D& size)
+{
+    return (size.Width == 0.f) && (size.Height == 0.f);
+}
+
+// ============================================================================
 Rect2D RectMakeInfinite()
 {
     Rect2D retVal;
@@ -72,6 +78,11 @@ Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
 // ===============================================================================
 Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
 {
+    if(RectIsZero(a) || RectIsZero(b))
+    {
+        return Rect2D(0,0,0,0);
+    }
+
     if(RectIsInfinite(a))
     {
         return b;
@@ -96,6 +107,16 @@ Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
     if(RectIsInfinite(a) || RectIsInfinite(b))
     {
         return RectMakeInfinite();
+    }
+
+    if(RectIsZero(a))
+    {
+        return b;
+    }
+
+    if(RectIsZero(b))
+    {
+        return a;
     }
 
     float minx = Min(a.MinX(), b.MinX());

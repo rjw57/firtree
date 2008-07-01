@@ -87,6 +87,10 @@ Size2D SizeMakeInfinite();
 bool SizeIsInfinite(const Size2D& size);
 
 // ============================================================================
+/// Return a boolean which is true if the passed size is zero in extent.
+bool SizeIsZero(const Size2D& size);
+
+// ============================================================================
 /// \brief A 2D rectangle
 ///
 /// As a special case, if all fields have a binary representation of 0xffffff, 
@@ -130,6 +134,10 @@ Rect2D RectMakeInfinite();
 // ============================================================================
 /// Return a boolean which is true if the passed rectangle is infinite.
 bool RectIsInfinite(const Rect2D& rect);
+
+// ============================================================================
+/// Return a boolean which is true if the passed rectangle has zero extent.
+inline bool RectIsZero(const Rect2D& rect) { return SizeIsZero(rect.Size); }
 
 // ============================================================================
 /// Return a Rect2D constructed from the minimum and maximum X and Y

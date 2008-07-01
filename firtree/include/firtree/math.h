@@ -76,19 +76,19 @@ struct Size2D
 
 	/// Construct a size by copying size 's'.
 	Size2D(const Size2D& s) : Width(s.Width), Height(s.Height) { }
+
+    // ============================================================================
+    /// Return a size corresponding to \f$(+\infty, +\infty)\f$.
+    static Size2D MakeInfinite();
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed size is infinite.
+    static bool IsInfinite(const Size2D& size);
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed size is zero in extent.
+    static bool IsZero(const Size2D& size);
 };
-
-// ============================================================================
-/// Return a size corresponding to \f$(+\infty, +\infty)\f$.
-Size2D SizeMakeInfinite();
-
-// ============================================================================
-/// Return a boolean which is true if the passed size is infinite.
-bool SizeIsInfinite(const Size2D& size);
-
-// ============================================================================
-/// Return a boolean which is true if the passed size is zero in extent.
-bool SizeIsZero(const Size2D& size);
 
 // ============================================================================
 /// \brief A 2D rectangle
@@ -138,7 +138,7 @@ struct Rect2D
     /// Return a boolean which is true if the passed rectangle has zero extent.
     static inline bool IsZero(const Rect2D& rect) 
     {
-        return SizeIsZero(rect.Size); 
+        return Size2D::IsZero(rect.Size); 
     }
 
     // ============================================================================

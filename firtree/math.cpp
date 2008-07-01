@@ -30,7 +30,7 @@ namespace Firtree {
 // ===============================================================================
 
 // ============================================================================
-Size2D SizeMakeInfinite()
+Size2D Size2D::MakeInfinite()
 {
     Size2D retVal;
     memset(&retVal, 0xff, sizeof(Size2D));
@@ -38,14 +38,14 @@ Size2D SizeMakeInfinite()
 }
 
 // ============================================================================
-bool SizeIsInfinite(const Size2D& size)
+bool Size2D::IsInfinite(const Size2D& size)
 {
-    Size2D infinity = SizeMakeInfinite();
+    Size2D infinity = Size2D::MakeInfinite();
     return (memcmp(&infinity, &size, sizeof(Size2D)) == 0);
 }
 
 // ============================================================================
-bool SizeIsZero(const Size2D& size)
+bool Size2D::IsZero(const Size2D& size)
 {
     return (size.Width == 0.f) && (size.Height == 0.f);
 }

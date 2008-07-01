@@ -207,7 +207,7 @@ Rect2D ImageImpl::GetExtent() const
     if(m_BaseImage != NULL)
     {
         Rect2D baseExtent = m_BaseImage->GetExtent();
-        Rect2D extentRect = RectTransform(baseExtent, m_BaseTransform);
+        Rect2D extentRect = Rect2D::Transform(baseExtent, m_BaseTransform);
         return extentRect;
     }
 
@@ -216,7 +216,7 @@ Rect2D ImageImpl::GetExtent() const
     {
         if(m_ExtentProvider == NULL)
         {
-            return RectMakeInfinite();
+            return Rect2D::MakeInfinite();
         }
 
         return m_ExtentProvider->ComputeExtentForKernel(m_Kernel);
@@ -238,7 +238,7 @@ Rect2D ImageImpl::GetExtent() const
 
     AffineTransform* transform = GetTransformFromUnderlyingImage();
 
-    Rect2D extentRect = RectTransform(pixelRect, transform);
+    Rect2D extentRect = Rect2D::Transform(pixelRect, transform);
 
     FIRTREE_SAFE_RELEASE(transform);
 

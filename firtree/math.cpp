@@ -51,7 +51,7 @@ bool SizeIsZero(const Size2D& size)
 }
 
 // ============================================================================
-Rect2D RectMakeInfinite()
+Rect2D Rect2D::MakeInfinite()
 {
     Rect2D retVal;
     memset(&retVal, 0xff, sizeof(Rect2D));
@@ -59,14 +59,14 @@ Rect2D RectMakeInfinite()
 }
 
 // ============================================================================
-bool RectIsInfinite(const Rect2D& rect)
+bool Rect2D::IsInfinite(const Rect2D& rect)
 {
-    Rect2D infinity = RectMakeInfinite();
+    Rect2D infinity = Rect2D::MakeInfinite();
     return (memcmp(&infinity, &rect, sizeof(Rect2D)) == 0);
 }
 
 // ============================================================================
-Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
+Rect2D Rect2D::FromBounds(float minx, float miny, float maxx, float maxy)
 {
     if((minx>maxx) || (miny>maxy))
     {
@@ -76,19 +76,19 @@ Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy)
 }
 
 // ===============================================================================
-Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
+Rect2D Rect2D::Intersect(const Rect2D& a, const Rect2D& b)
 {
-    if(RectIsZero(a) || RectIsZero(b))
+    if(Rect2D::IsZero(a) || Rect2D::IsZero(b))
     {
         return Rect2D(0,0,0,0);
     }
 
-    if(RectIsInfinite(a))
+    if(Rect2D::IsInfinite(a))
     {
         return b;
     }
 
-    if(RectIsInfinite(b))
+    if(Rect2D::IsInfinite(b))
     {
         return a;
     }
@@ -98,23 +98,23 @@ Rect2D RectIntersect(const Rect2D& a, const Rect2D& b)
     float maxx = Min(a.MaxX(), b.MaxX());
     float maxy = Min(a.MaxY(), b.MaxY());
 
-    return RectFromBounds(minx,miny,maxx,maxy);
+    return Rect2D::FromBounds(minx,miny,maxx,maxy);
 }
 
 // ===============================================================================
-Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
+Rect2D Rect2D::Union(const Rect2D& a, const Rect2D& b)
 {
-    if(RectIsInfinite(a) || RectIsInfinite(b))
+    if(Rect2D::IsInfinite(a) || Rect2D::IsInfinite(b))
     {
-        return RectMakeInfinite();
+        return Rect2D::MakeInfinite();
     }
 
-    if(RectIsZero(a))
+    if(Rect2D::IsZero(a))
     {
         return b;
     }
 
-    if(RectIsZero(b))
+    if(Rect2D::IsZero(b))
     {
         return a;
     }
@@ -124,15 +124,15 @@ Rect2D RectUnion(const Rect2D& a, const Rect2D& b)
     float maxx = Max(a.MaxX(), b.MaxX());
     float maxy = Max(a.MaxY(), b.MaxY());
 
-    return RectFromBounds(minx,miny,maxx,maxy);
+    return Rect2D::FromBounds(minx,miny,maxx,maxy);
 }
 
 // ===============================================================================
-Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
+Rect2D Rect2D::Transform(const Rect2D& inRect, const AffineTransform* t)
 {
-    if(RectIsInfinite(inRect))
+    if(Rect2D::IsInfinite(inRect))
     {
-        return RectMakeInfinite();
+        return Rect2D::MakeInfinite();
     }
 
     Point2D a(inRect.MinX(), inRect.MaxY());
@@ -150,26 +150,26 @@ Rect2D RectTransform(const Rect2D& inRect, const AffineTransform* t)
     float maxx = Max(Max(a.X, b.X), Max(c.X, d.X));
     float maxy = Max(Max(a.Y, b.Y), Max(c.Y, d.Y));
 
-    return RectFromBounds(minx,miny,maxx,maxy);
+    return Rect2D::FromBounds(minx,miny,maxx,maxy);
 }
 
 // ============================================================================
-Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY)
+Rect2D Rect2D::Inset(const Rect2D& a, const float deltaX, const float deltaY)
 {
-    if(RectIsInfinite(a))
+    if(Rect2D::IsInfinite(a))
     {
-        return RectMakeInfinite();
+        return Rect2D::MakeInfinite();
     }
 
-    return RectFromBounds(a.MinX()+deltaX, a.MinY()+deltaY, 
+    return Rect2D::FromBounds(a.MinX()+deltaX, a.MinY()+deltaY, 
             a.MaxX()-deltaX, a.MaxY()-deltaY);
 }
 
 // ============================================================================
-AffineTransform* RectComputeTransform(const Rect2D& whence, const Rect2D& hence)
+AffineTransform* Rect2D::ComputeTransform(const Rect2D& whence, const Rect2D& hence)
 {
     // Check neither input is infinite
-    assert(!RectIsInfinite(whence) && !RectIsInfinite(hence));
+    assert(!Rect2D::IsInfinite(whence) && !Rect2D::IsInfinite(hence));
 
     AffineTransform* trans = AffineTransform::Identity();
 

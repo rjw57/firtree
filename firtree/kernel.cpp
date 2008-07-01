@@ -64,7 +64,7 @@ class StandardExtendProvider : public ExtentProvider
             if(kernel == NULL)
             {
                 FIRTREE_ERROR("Passed a null kernel.");
-                return RectMakeInfinite();
+                return Rect2D::MakeInfinite();
             }
 
             //FIRTREE_DEBUG("%p -> compute extent.", kernel);
@@ -81,7 +81,7 @@ class StandardExtendProvider : public ExtentProvider
             {
                 //FIRTREE_DEBUG("No specified parameter, searching.");
 
-                Rect2D extentRect = RectMakeInfinite();
+                Rect2D extentRect = Rect2D::MakeInfinite();
                 bool foundOneSampler = false;
                 const std::vector<std::string>& paramNames = 
                     kernel->GetParameterNames();
@@ -102,7 +102,7 @@ class StandardExtendProvider : public ExtentProvider
                                 samplerExtent.Size.Width, samplerExtent.Size.Height);
                                 */
                         if(foundOneSampler) {
-                            extentRect = RectUnion(extentRect, samplerExtent);
+                            extentRect = Rect2D::Union(extentRect, samplerExtent);
                         } else {
                             extentRect = samplerExtent;
                         }
@@ -110,7 +110,7 @@ class StandardExtendProvider : public ExtentProvider
                     }
                 }
 
-                return RectInset(extentRect, m_Delta.Width, m_Delta.Height);
+                return Rect2D::Inset(extentRect, m_Delta.Width, m_Delta.Height);
             }
 
             //FIRTREE_DEBUG("Using specified parameter: %s", m_SamplerName.c_str());
@@ -119,7 +119,7 @@ class StandardExtendProvider : public ExtentProvider
             {
                 // FIRTREE_WARNING("Could not find valid sampler parameter from "
                 //         "which to use extent.");
-                return RectMakeInfinite();
+                return Rect2D::MakeInfinite();
             }
 
             SamplerParameter* sp = dynamic_cast<SamplerParameter*>
@@ -127,7 +127,7 @@ class StandardExtendProvider : public ExtentProvider
 
             Rect2D samplerExtent = sp->GetExtent();
 
-            return RectInset(samplerExtent, m_Delta.Width, m_Delta.Height);
+            return Rect2D::Inset(samplerExtent, m_Delta.Width, m_Delta.Height);
         }
 
     private:

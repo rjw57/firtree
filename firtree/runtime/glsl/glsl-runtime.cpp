@@ -536,7 +536,7 @@ void GLSLSamplerParameter::SetTransform(const AffineTransform* f)
 const Rect2D GLSLSamplerParameter::GetExtent() const 
 {
     if(m_RepresentedImage == NULL)
-        return RectMakeInfinite();
+        return Rect2D::MakeInfinite();
 
     return m_RepresentedImage->GetExtent();
 }
@@ -544,7 +544,7 @@ const Rect2D GLSLSamplerParameter::GetExtent() const
 //=============================================================================
 const Rect2D GLSLSamplerParameter::GetDomain() const 
 {
-    return RectMakeInfinite();
+    return Rect2D::MakeInfinite();
 }
 
 //=============================================================================
@@ -723,7 +723,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
         const Rect2D& samplerExtent = pSP->GetExtent();
 
         Rect2D extent = samplerExtent;
-        if(RectIsInfinite(samplerExtent))
+        if(Rect2D::IsInfinite(samplerExtent))
         {
             extent = Rect2D(-0.5*FLT_MAX,-0.5*FLT_MAX,FLT_MAX,FLT_MAX);
         }
@@ -746,7 +746,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 const Rect2D& samplerExtent = pSP->GetExtent();
 
                 Rect2D extent = samplerExtent;
-                if(RectIsInfinite(samplerExtent))
+                if(Rect2D::IsInfinite(samplerExtent))
                 {
                     extent = Rect2D(-0.5*FLT_MAX,-0.5*FLT_MAX,FLT_MAX,FLT_MAX);
                 }
@@ -1489,7 +1489,7 @@ void OpenGLRenderingContext::RenderWithOrigin(Image* image,
     // in extent.
     Rect2D extent = image->GetExtent();
 
-    if(RectIsInfinite(extent))
+    if(Rect2D::IsInfinite(extent))
     {
         FIRTREE_ERROR("An infinite extent image has no origin.");
         return;
@@ -1553,26 +1553,26 @@ void OpenGLRenderingContext::RenderInRect(Image* image, const Rect2D& destRect,
     Rect2D extent = sampler->GetExtent();
 
     // if extent is non-infinite, clip
-    if(!RectIsInfinite(extent))
+    if(!Rect2D::IsInfinite(extent))
     {
-        AffineTransform* srcToDestTrans = RectComputeTransform(srcRect, destRect);
+        AffineTransform* srcToDestTrans = Rect2D::ComputeTransform(srcRect, destRect);
 
-        clipSrcRect = RectIntersect(srcRect, extent);
+        clipSrcRect = Rect2D::Intersect(srcRect, extent);
 
         // Transform clipped source to destination
-        renderRect = RectTransform(clipSrcRect, srcToDestTrans);
+        renderRect = Rect2D::Transform(clipSrcRect, srcToDestTrans);
 
         // Clip the render rectangle by the viewport
-        renderRect = RectIntersect(renderRect, viewportRect);
+        renderRect = Rect2D::Intersect(renderRect, viewportRect);
 
         // Transform clipped destination rect back to source
         srcToDestTrans->Invert();
-        clipSrcRect = RectTransform(renderRect, srcToDestTrans);
+        clipSrcRect = Rect2D::Transform(renderRect, srcToDestTrans);
 
         srcToDestTrans->Release();
 
         // Do nothing if we've clipped everything away.
-        if(RectIsZero(renderRect))
+        if(Rect2D::IsZero(renderRect))
         {
             return;
         }

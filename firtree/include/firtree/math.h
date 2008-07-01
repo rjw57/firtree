@@ -125,48 +125,54 @@ struct Rect2D
 
 	/// Return the maximum Y-co-ordinate of the rectangle.
 	float MaxY() const { return Origin.Y + Size.Height; }
+
+    // ============================================================================
+    /// Return a Rect2D which represents a rectangle of infinite extent.
+    static Rect2D MakeInfinite();
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed rectangle is infinite.
+    static bool IsInfinite(const Rect2D& rect);
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed rectangle has zero extent.
+    static inline bool IsZero(const Rect2D& rect) 
+    {
+        return SizeIsZero(rect.Size); 
+    }
+
+    // ============================================================================
+    /// Return a Rect2D constructed from the minimum and maximum X and Y
+    /// co-oridinates. Should maxx<minx or maxy<miny, a zero-size rectangle is
+    /// returned.
+    static Rect2D FromBounds(float minx, float miny, float maxx, float maxy);
+
+    // ============================================================================
+    /// Return the rectangle of intersection of two rectangles.
+    static Rect2D Intersect(const Rect2D& a, const Rect2D& b);
+
+    // ============================================================================
+    /// Return the bounding rectangle of two rectangles.
+    static Rect2D Union(const Rect2D& a, const Rect2D& b);
+
+    // ============================================================================
+    /// Inset a rectangle by deltaX in the X-coordinate and deltaY in the 
+    /// Y-coordinate.
+    static Rect2D Inset(const Rect2D& a, const float deltaX, const float deltaY);
+
+    // ============================================================================
+    /// Return the bounding rectangle from the result of applying the transformation
+    /// t to the rectangle a.
+    static Rect2D Transform(const Rect2D& a, const AffineTransform* t);
+
+    // ============================================================================
+    /// Return a AffineTransform which maps all the pixels in the rectangle
+    /// 'whence' to completely cover the rectangle 'hence'.
+    /// \note The transform returned from this method needs to be released
+    /// when finished with.
+    static AffineTransform* ComputeTransform(const Rect2D& whence, 
+            const Rect2D& hence);
 };
-
-// ============================================================================
-/// Return a Rect2D which represents a rectangle of infinite extent.
-Rect2D RectMakeInfinite();
-
-// ============================================================================
-/// Return a boolean which is true if the passed rectangle is infinite.
-bool RectIsInfinite(const Rect2D& rect);
-
-// ============================================================================
-/// Return a boolean which is true if the passed rectangle has zero extent.
-inline bool RectIsZero(const Rect2D& rect) { return SizeIsZero(rect.Size); }
-
-// ============================================================================
-/// Return a Rect2D constructed from the minimum and maximum X and Y
-/// co-oridinates. Should maxx<minx or maxy<miny, a zero-size rectangle is
-/// returned.
-Rect2D RectFromBounds(float minx, float miny, float maxx, float maxy);
-
-// ============================================================================
-/// Return the rectangle of intersection of two rectangles.
-Rect2D RectIntersect(const Rect2D& a, const Rect2D& b);
-
-// ============================================================================
-/// Return the bounding rectangle of two rectangles.
-Rect2D RectUnion(const Rect2D& a, const Rect2D& b);
-
-// ============================================================================
-/// Inset a rectangle by deltaX in the X-coordinate and deltaY in the 
-/// Y-coordinate.
-Rect2D RectInset(const Rect2D& a, const float deltaX, const float deltaY);
-
-// ============================================================================
-/// Return the bounding rectangle from the result of applying the transformation
-/// t to the rectangle a.
-Rect2D RectTransform(const Rect2D& a, const AffineTransform* t);
-
-// ============================================================================
-/// Return a AffineTransform which maps all the pixels in the rectangle
-/// 'whence' to completely cover the rectangle 'hence'.
-AffineTransform* RectComputeTransform(const Rect2D& whence, const Rect2D& hence);
 
 // ============================================================================
 /// Structure representing an affine transformation matrix. Usually you wont

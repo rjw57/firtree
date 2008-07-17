@@ -81,6 +81,8 @@ class ImageImpl : public Image
         // ====================================================================
         // MUTATING METHODS
 
+        virtual BitmapImageRep WriteToBitmapData();
+
         /// These functions can potentially mutate the class since they will
         /// convert the image to the requested type 'on the fly'.
         ///@{

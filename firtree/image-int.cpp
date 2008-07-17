@@ -153,6 +153,23 @@ ImageImpl::~ImageImpl()
 }
 
 //=============================================================================
+BitmapImageRep ImageImpl::WriteToBitmapData() 
+{
+    BitmapImageRep* imageRep = GetAsBitmapImageRep();
+
+    if(imageRep == NULL)
+    {
+        Blob* imageBlob = Blob::CreateWithLength(0);
+        BitmapImageRep imageRep(imageBlob, 0, 0, 0, 
+                BitmapImageRep::Byte, false);
+        FIRTREE_SAFE_RELEASE(imageBlob);
+        return imageRep;
+    }
+
+    return *(imageRep);
+}
+
+//=============================================================================
 Size2D ImageImpl::GetUnderlyingPixelSize() const
 {
     if(m_ImageProvider != NULL)
@@ -333,11 +350,22 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
         CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
-        assert(bir->Stride == bir->Width*4);
-        CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                    bir->Width, bir->Height, 0,
-                    GL_RGBA, GL_UNSIGNED_BYTE,
-                    bir->ImageBlob->GetBytes()) );
+        if(bir->Format == BitmapImageRep::Float)
+        { 
+            assert(bir->Stride == bir->Width*4*4);
+            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                        bir->Width, bir->Height, 0,
+                        GL_RGBA, GL_FLOAT,
+                        bir->ImageBlob->GetBytes()) );
+        } else if(bir->Format == BitmapImageRep::Byte) {
+            assert(bir->Stride == bir->Width*4);
+            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                        bir->Width, bir->Height, 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE,
+                        bir->ImageBlob->GetBytes()) );
+        } else {
+            FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
+        }
 
         return m_GLTexture;
     }
@@ -377,12 +405,12 @@ BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
 
         Blob* imageBlob = Blob::CreateWithLength(w*h*4);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                const_cast<uint8_t*>(imageBlob->GetBytes()));
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
+                (void*)(imageBlob->GetBytes()));
 
         if(m_BitmapRep != NULL) { delete m_BitmapRep; }
         m_BitmapRep = new BitmapImageRep(imageBlob,
-                w, h, w*4, false);
+                w, h, w*4*sizeof(float), BitmapImageRep::Float, false);
         imageBlob->Release();
         
         return m_BitmapRep;

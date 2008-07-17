@@ -35,10 +35,17 @@ namespace Firtree {
 //=============================================================================
 /// A structure encapsulating a bitmap image representation.
 struct BitmapImageRep {
+    enum PixelFormat { 
+        Byte,
+        Float,
+    };
+
     Blob*           ImageBlob;  ///< A Blob containing the image data.
     unsigned int    Width;      ///< The width of the image in pixels.
     unsigned int    Height;     ///< The height of the image in pixels.
     unsigned int    Stride;     ///< The length of one image row in bytes.
+    PixelFormat     Format;     ///< The image representation uses elements
+                                ///< of this type to encode pixel component values.
 
     /// Constructor for a BitmapImageRep.
     ///
@@ -50,7 +57,9 @@ struct BitmapImageRep {
     ///                 the reference count of the blob is merely incremented.
     BitmapImageRep(Blob* blob,
                 unsigned int width, unsigned int height,
-                unsigned int stride, bool copyData = false);
+                unsigned int stride,
+                PixelFormat format = Byte,
+                bool copyData = false);
 
     /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
     ///
@@ -144,6 +153,19 @@ class Image : public ReferenceCounted
 
         // ====================================================================
         // MUTATING METHODS
+
+        /// Write a copy of this image to a bitmap and return a BitmapImageRep
+        /// structure describing this data. Returns an empty 0x0 image should
+        /// this image be infinite in extent.
+        /// Non-const because implementations may wish to cache the result.
+        virtual BitmapImageRep WriteToBitmapData() = 0;
+
+        /// Write a copy of this image a file. If this image is infinite or
+        /// the file could not be writte, this returns false. Otherwise it
+        /// returns true.
+        /// Non-const because implementations may wish to cache the result.
+        bool WriteToFile(const char* pFileName);
+
 
     protected:
 };

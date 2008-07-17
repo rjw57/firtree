@@ -23,6 +23,7 @@
 #include <internal/image-int.h>
 
 #include <wand/magick_wand.h>
+#include <assert.h>
 
 namespace Firtree {
 
@@ -30,10 +31,12 @@ using namespace Internal;
 
 //=============================================================================
 BitmapImageRep::BitmapImageRep(Blob* blob,
-    unsigned int width, unsigned int height, unsigned int stride, bool copy)
+    unsigned int width, unsigned int height, unsigned int stride,
+    PixelFormat format, bool copy)
     :   Width(width)
     ,   Height(height)
     ,   Stride(stride)
+    ,   Format(format)
 {
     if(blob == NULL)
         return;
@@ -52,6 +55,7 @@ BitmapImageRep::BitmapImageRep(const BitmapImageRep& rep, bool copy)
     :   Width(rep.Width)
     ,   Height(rep.Height)
     ,   Stride(rep.Stride)
+    ,   Format(rep.Format)
 {
     if(rep.ImageBlob == NULL)
         return;
@@ -170,7 +174,7 @@ Image* Image::CreateFromFile(const char* pFileName)
     wand = DestroyMagickWand(wand);
 
     Image* rv = Image::CreateFromBitmapData(
-        BitmapImageRep(imageBlob, w, h, w*4, false), false);
+        BitmapImageRep(imageBlob, w, h, w*4, BitmapImageRep::Byte, false), false);
 
     imageBlob->Release();
 
@@ -199,6 +203,110 @@ Image* Image::CreateFromImageProvider(ImageProvider* improv)
 {
     if(improv == NULL) { return NULL; }
     return new ImageImpl(improv);
+}
+
+//=============================================================================
+bool Image::WriteToFile(const char* pFileName) 
+{
+    if(pFileName == NULL) { return false; }
+
+    Rect2D extent = GetExtent();
+
+    if(Rect2D::IsInfinite(extent)) { return false; }
+
+    MagickWand* wand = NewMagickWand();
+    assert(wand != NULL);
+    
+    PixelWand* bg_pxl_wnd = NewPixelWand();
+    PixelSetColor( bg_pxl_wnd, "black" );
+
+    BitmapImageRep imageRep = WriteToBitmapData();
+
+    if((imageRep.Width == 0) || (imageRep.Height == 0))
+    {
+        wand = DestroyMagickWand(wand);
+        return false;
+    }
+
+    MagickBooleanType status = MagickNewImage(wand, imageRep.Width,
+            imageRep.Height, bg_pxl_wnd);
+    if(status == MagickFalse)
+    {
+        FIRTREE_WARNING("Could not create image for writing.");
+        wand = DestroyMagickWand(wand);
+        return false;
+    }
+
+    bg_pxl_wnd = DestroyPixelWand(bg_pxl_wnd);
+
+    Blob* outputBufferBlob = 
+        Blob::CreateWithLength(imageRep.Width * imageRep.Height * 4);
+
+    uint8_t* outBuf = const_cast<uint8_t*>(outputBufferBlob->GetBytes());
+    uint8_t* inBuf = const_cast<uint8_t*>(imageRep.ImageBlob->GetBytes());
+
+    for(unsigned int row=0; row < imageRep.Height; row++)
+    {
+        uint8_t* outRow = outBuf + (row * imageRep.Width * 4);
+        uint8_t* inRow = inBuf + (row * imageRep.Stride);
+
+        float* inFloatRow = reinterpret_cast<float*>(inRow);
+
+        for(unsigned int col=0; col < imageRep.Width; col++)
+        {
+            float r,g,b,a;
+
+            if(imageRep.Format == BitmapImageRep::Float)
+            {
+                r = inFloatRow[(col<<2)];
+                g = inFloatRow[(col<<2)+1];
+                b = inFloatRow[(col<<2)+2];
+                a = inFloatRow[(col<<2)+3];
+            } else if(imageRep.Format == BitmapImageRep::Byte) {
+                r = (1.f/255.f) * inRow[(col<<2)];
+                g = (1.f/255.f) * inRow[(col<<2)+1];
+                b = (1.f/255.f) * inRow[(col<<2)+2];
+                a = (1.f/255.f) * inRow[(col<<2)+3];
+            } else {
+                FIRTREE_ERROR("Unknown bitmap image rep format: %i", imageRep.Format);
+            }
+
+            // Un pre-multiply
+            if(a > 0.f)
+            {
+                r /= a; g /= a; b /= a;
+            }
+
+            uint8_t rc = static_cast<uint8_t>(255.f * r);
+            uint8_t gc = static_cast<uint8_t>(255.f * g);
+            uint8_t bc = static_cast<uint8_t>(255.f * b);
+            uint8_t ac = static_cast<uint8_t>(255.f * a);
+
+            outRow[(col<<2)] = rc;
+            outRow[(col<<2)+1] = gc;
+            outRow[(col<<2)+2] = bc;
+            outRow[(col<<2)+3] = ac;
+        }
+    }
+
+    MagickSetImagePixels(wand, 0, 0, imageRep.Width,
+            imageRep.Height, "RGBA", CharPixel, 
+            const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
+
+    FIRTREE_SAFE_RELEASE(outputBufferBlob);
+
+    bool retVal = true;
+
+    status = MagickWriteImage(wand, pFileName);
+    if(status == MagickFalse)
+    {
+        FIRTREE_WARNING("Could not write image to '%s'.", pFileName);
+        retVal = false;
+    }
+    
+    wand = DestroyMagickWand(wand);
+
+    return retVal;
 }
 
 //=============================================================================

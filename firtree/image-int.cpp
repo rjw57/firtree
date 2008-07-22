@@ -416,6 +416,13 @@ BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         return m_BitmapRep;
     }
 
+    if(HasKernel())
+    {
+        // We need to render this image to a texture....
+        FIRTREE_ERROR("Kernel image rendering not yet implemented.");
+        return NULL;
+    }
+
     return NULL;
 }
 

@@ -41,6 +41,7 @@ namespace Firtree { namespace Internal {
 //=============================================================================
 ImageImpl::ImageImpl()
     :   Image()
+    ,   m_PreferredRepresentation(NoRepresentation)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
@@ -54,6 +55,7 @@ ImageImpl::ImageImpl()
 //=============================================================================
 ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     :   Image(inim, t)
+    ,   m_PreferredRepresentation(NoRepresentation)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
@@ -72,12 +74,15 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     m_BaseImage = const_cast<ImageImpl*>(im);
     m_BaseImage->Retain();
 
+    m_PreferredRepresentation = m_BaseImage->GetPreferredRepresentation();
+
     m_BaseTransform = t->Copy();
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
+ImageImpl::ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copy)
     :   Image(imageRep, copy)
+    ,   m_PreferredRepresentation(BitmapImageRep)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
@@ -90,12 +95,13 @@ ImageImpl::ImageImpl(const BitmapImageRep& imageRep, bool copy)
     if(imageRep.Stride < imageRep.Width) { return; }
     if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) { return; }
 
-    m_BitmapRep = new BitmapImageRep(imageRep, copy);
+    m_BitmapRep = new Firtree::BitmapImageRep(imageRep, copy);
 }
 
 //=============================================================================
 ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
     :   Image(k, extentProvider)
+    ,   m_PreferredRepresentation(OpenGLTexture)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
@@ -115,6 +121,7 @@ ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
 //=============================================================================
 ImageImpl::ImageImpl(ImageProvider* improv)
     :   Image(improv)
+    ,   m_PreferredRepresentation(BitmapImageRep)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
     ,   m_BaseImage(NULL)
@@ -153,15 +160,21 @@ ImageImpl::~ImageImpl()
 }
 
 //=============================================================================
+ImageImpl::PreferredRepresentation ImageImpl::GetPreferredRepresentation() const
+{
+    return m_PreferredRepresentation;
+}
+
+//=============================================================================
 BitmapImageRep ImageImpl::WriteToBitmapData() 
 {
-    BitmapImageRep* imageRep = GetAsBitmapImageRep();
+    Firtree::BitmapImageRep* imageRep = GetAsBitmapImageRep();
 
     if(imageRep == NULL)
     {
         Blob* imageBlob = Blob::CreateWithLength(0);
-        BitmapImageRep imageRep(imageBlob, 0, 0, 0, 
-                BitmapImageRep::Byte, false);
+        Firtree::BitmapImageRep imageRep(imageBlob, 0, 0, 0, 
+                Firtree::BitmapImageRep::Byte, false);
         FIRTREE_SAFE_RELEASE(imageBlob);
         return imageRep;
     }
@@ -324,7 +337,7 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     // image provider, update the texture.
     if(HasOpenGLTexture() && (m_ImageProvider != NULL))
     {
-        BitmapImageRep* bir = GetAsBitmapImageRep();
+        Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
 
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
         assert(bir->Stride == bir->Width*4);
@@ -345,19 +358,19 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     // We have to construct one. Try the binary rep first.
     if(HasBitmapImageRep())
     {
-        BitmapImageRep* bir = GetAsBitmapImageRep();
+        Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
 
         CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
-        if(bir->Format == BitmapImageRep::Float)
+        if(bir->Format == Firtree::BitmapImageRep::Float)
         { 
             assert(bir->Stride == bir->Width*4*4);
             CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                         bir->Width, bir->Height, 0,
                         GL_RGBA, GL_FLOAT,
                         bir->ImageBlob->GetBytes()) );
-        } else if(bir->Format == BitmapImageRep::Byte) {
+        } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
             assert(bir->Stride == bir->Width*4);
             CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                         bir->Width, bir->Height, 0,
@@ -376,12 +389,12 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
 }
 
 //=============================================================================
-BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
+Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
 {
     if(m_ImageProvider != NULL)
     {
         if(m_BitmapRep != NULL) { delete m_BitmapRep; }
-        m_BitmapRep = new BitmapImageRep(m_ImageProvider->GetImageRep(), false);
+        m_BitmapRep = new Firtree::BitmapImageRep(m_ImageProvider->GetImageRep(), false);
         return m_BitmapRep;
     }
 
@@ -409,8 +422,8 @@ BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
                 (void*)(imageBlob->GetBytes()));
 
         if(m_BitmapRep != NULL) { delete m_BitmapRep; }
-        m_BitmapRep = new BitmapImageRep(imageBlob,
-                w, h, w*4*sizeof(float), BitmapImageRep::Float, false);
+        m_BitmapRep = new Firtree::BitmapImageRep(imageBlob,
+                w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
         imageBlob->Release();
         
         return m_BitmapRep;

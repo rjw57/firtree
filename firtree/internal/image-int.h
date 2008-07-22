@@ -28,6 +28,7 @@
 #include <firtree/main.h>
 #include <firtree/math.h>
 #include <firtree/blob.h>
+#include <firtree/image.h>
 
 namespace Firtree { namespace Internal {
 
@@ -35,13 +36,21 @@ namespace Firtree { namespace Internal {
 /// The internal implementation of the public Image class.
 class ImageImpl : public Image
 {
+    public:
+        /// The possible 'preferred' representations for an image.
+        enum PreferredRepresentation {
+            NoRepresentation,
+            OpenGLTexture,
+            BitmapImageRep,
+        };
+
     protected:
         ///@{
         /// Protected constructors/destructors. Use the various Image
         /// factory functions instead.
         ImageImpl();
         ImageImpl(const Image* im, AffineTransform* t);
-        ImageImpl(const BitmapImageRep& imageRep, bool copyData);
+        ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copyData);
         ImageImpl(Kernel* k, ExtentProvider* extentProvider);
         ImageImpl(ImageProvider* imageProvider);
         virtual ~ImageImpl();
@@ -53,6 +62,9 @@ class ImageImpl : public Image
 
         // ====================================================================
         // CONST METHODS
+        
+        /// Return the 'preferred' representation for an image.
+        PreferredRepresentation GetPreferredRepresentation() const;
 
         virtual Rect2D GetExtent() const;
 
@@ -81,7 +93,7 @@ class ImageImpl : public Image
         // ====================================================================
         // MUTATING METHODS
 
-        virtual BitmapImageRep WriteToBitmapData();
+        virtual Firtree::BitmapImageRep WriteToBitmapData();
 
         /// These functions can potentially mutate the class since they will
         /// convert the image to the requested type 'on the fly'.
@@ -92,14 +104,17 @@ class ImageImpl : public Image
 
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
-        BitmapImageRep* GetAsBitmapImageRep();
+        Firtree::BitmapImageRep* GetAsBitmapImageRep();
         
         ///@}
 
     protected:
+        /// The preferred representation for the image.
+        PreferredRepresentation m_PreferredRepresentation;
+
         /// The image representation as a binary blob or NULL if there is 
         /// none yet.
-        BitmapImageRep*     m_BitmapRep;
+        Firtree::BitmapImageRep*     m_BitmapRep;
 
         /// The image representation as an OpenGL texture or 0 if there is 
         /// none yet.

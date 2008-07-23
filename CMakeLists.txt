@@ -18,6 +18,9 @@ ENDIF(COMMAND cmake_policy)
 # For the moment, force Debug builds.
 SET(CMAKE_BUILD_TYPE "Debug")
 
+# Enable warnings
+ADD_DEFINITIONS( -Wall )
+
 # Set some variables indicating the version number of Firtree.
 SET(FIRTREE_VERSION_MAJOR "0")
 SET(FIRTREE_VERSION_MINOR "0")

@@ -22,10 +22,13 @@
 #include <firtree/math.h>
 #include <firtree/image.h>
 #include <firtree/opengl.h>
+#include <firtree/glsl-runtime.h>
 #include <internal/image-int.h>
+#include <internal/render-to-texture.h>
 
 #include <assert.h>
 #include <float.h>
+#include <cmath>
 
 namespace Firtree { namespace Internal {
 
@@ -49,6 +52,7 @@ ImageImpl::ImageImpl()
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
     ,   m_ExtentProvider(NULL)
+    ,   m_TextureRenderer(NULL)
 {   
 }
 
@@ -63,6 +67,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
     ,   m_ExtentProvider(NULL)
+    ,   m_TextureRenderer(NULL)
 {
     const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
 
@@ -90,6 +95,7 @@ ImageImpl::ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copy)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(NULL)
     ,   m_ExtentProvider(NULL)
+    ,   m_TextureRenderer(NULL)
 {
     if(imageRep.ImageBlob == NULL) { return; }
     if(imageRep.Stride < imageRep.Width) { return; }
@@ -109,6 +115,7 @@ ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
     ,   m_Kernel(k)
     ,   m_ImageProvider(NULL)
     ,   m_ExtentProvider(extentProvider)
+    ,   m_TextureRenderer(NULL)
 {
     if(m_Kernel != NULL)
     {
@@ -129,11 +136,9 @@ ImageImpl::ImageImpl(ImageProvider* improv)
     ,   m_Kernel(NULL)
     ,   m_ImageProvider(improv)
     ,   m_ExtentProvider(NULL)
+    ,   m_TextureRenderer(NULL)
 {
-    if(m_ImageProvider != NULL)
-    {
-        m_ImageProvider->Retain();
-    }
+    FIRTREE_SAFE_RETAIN(m_ImageProvider);
 }
 
 
@@ -157,6 +162,7 @@ ImageImpl::~ImageImpl()
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
     FIRTREE_SAFE_RELEASE(m_Kernel);
     FIRTREE_SAFE_RELEASE(m_ExtentProvider);
+    FIRTREE_SAFE_RELEASE(m_TextureRenderer);
 }
 
 //=============================================================================
@@ -417,7 +423,7 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
 
-        Blob* imageBlob = Blob::CreateWithLength(w*h*4);
+        Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
                 (void*)(imageBlob->GetBytes()));
 
@@ -431,9 +437,54 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
 
     if(HasKernel())
     {
-        // We need to render this image to a texture....
-        FIRTREE_ERROR("Kernel image rendering not yet implemented.");
-        return NULL;
+        Rect2D extent = GetExtent();
+        if(Rect2D::IsInfinite(extent))
+        {
+            FIRTREE_ERROR("Cannot render inifite extent image to texture.");
+            return NULL;
+        }
+
+        Size2DU32 imageSize(ceil(extent.Size.Width), ceil(extent.Size.Height));
+
+        OpenGLContext* c = OpenGLContext::CreateNullContext();
+        if(m_TextureRenderer == NULL)
+        {
+            m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
+                    imageSize.Height, c);
+        } else {
+            Size2DU32 existingRendererSize = m_TextureRenderer->GetSize();
+            if((existingRendererSize.Width != imageSize.Width) ||
+                    (existingRendererSize.Height != imageSize.Height))
+            {
+                FIRTREE_SAFE_RELEASE(m_TextureRenderer);
+                m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
+                        imageSize.Height, c);
+            }
+        }
+        FIRTREE_SAFE_RELEASE(c);
+
+        m_TextureRenderer->Begin();
+        GLRenderer* renderer = GLRenderer::Create(m_TextureRenderer);
+        renderer->Clear(0,0,0,0);
+        renderer->RenderAtPoint(this, Point2D(0,0), extent);
+        FIRTREE_SAFE_RELEASE(renderer);
+        m_TextureRenderer->End();
+
+        GLint w, h;
+        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_TextureRenderer->GetOpenGLTexture()) );
+        CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
+        CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
+
+        Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
+        CHECK_GL( glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
+                (void*)(imageBlob->GetBytes())) );
+
+        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
+        m_BitmapRep = new Firtree::BitmapImageRep(imageBlob,
+                w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
+        imageBlob->Release();
+        
+        return m_BitmapRep;
     }
 
     return NULL;

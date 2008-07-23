@@ -102,6 +102,9 @@ class GLRenderer : public ReferenceCounted {
         /// Purge any caches held by this context.
         void CollectGarbage();
 
+        /// Clear the context with the specified color
+        void Clear(float r, float g, float b, float a);
+
         /// Render the passed image into the current OpenGL context
         /// in the rectangle destRect, using the pixels from srcRect in
         /// the image as a source. 
@@ -111,7 +114,7 @@ class GLRenderer : public ReferenceCounted {
         /// Convenience wrapper around RenderInRect() which sets the
         /// destination and source rectangles to have identical sizes.
         /// The result us to render the pixels of the image from srcRect 
-        /// with the lowef-left pixel being at location.
+        /// with the lower-left pixel being at location.
         void RenderAtPoint(Image* image, const Point2D& location,
                 const Rect2D& srcRect);
 

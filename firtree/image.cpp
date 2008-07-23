@@ -151,7 +151,8 @@ Image* Image::CreateFromFile(const char* pFileName)
         return false;
     }
 
-    // MagickFlipImage(wand);
+    // So that row 0 is the bottom-most row.
+    MagickFlipImage(wand);
 
     unsigned int w = MagickGetImageWidth(wand);
     unsigned int h = MagickGetImageHeight(wand);
@@ -292,6 +293,10 @@ bool Image::WriteToFile(const char* pFileName)
     MagickSetImagePixels(wand, 0, 0, imageRep.Width,
             imageRep.Height, "RGBA", CharPixel, 
             const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
+
+    // A bitmap image rep stores the bottom-most row as row 0. Flip
+    // the image so that row 0 is the top-most row.
+    MagickFlipImage(wand);
 
     FIRTREE_SAFE_RELEASE(outputBufferBlob);
 

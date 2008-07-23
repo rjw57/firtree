@@ -79,6 +79,7 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     :   OpenGLContext()
     ,   m_ParentContext(parentContext)
     ,   m_Size(width, height)
+    ,   m_Begun(false)
     ,   m_OpenGLTextureName(0)
     ,   m_OpenGLFrameBufferName(0)
     ,   m_PreviousOpenGLFrameBufferName(0)
@@ -117,10 +118,12 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
 //=============================================================================
 RenderTextureContext::~RenderTextureContext()
 {
+    End();
+
     if(m_OpenGLFrameBufferName != 0)
     {
         EnsureContext(m_ParentContext);
-        CHECK_GL( glDeleteFramebuffersEXT(1, &m_OpenGLTextureName) );
+        CHECK_GL( glDeleteFramebuffersEXT(1, &m_OpenGLFrameBufferName) );
         m_OpenGLFrameBufferName = 0;
     }
 
@@ -148,7 +151,8 @@ void RenderTextureContext::EnsureCurrent()
     CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
     if(currentFb != m_OpenGLFrameBufferName)
     {
-        CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFb) );
+        CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
+                    m_OpenGLFrameBufferName) );
     }
 }
 
@@ -159,13 +163,22 @@ void RenderTextureContext::Begin()
     CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
     m_PreviousOpenGLFrameBufferName = currentFb;
     EnsureCurrent();
+
+    CHECK_GL( glPushAttrib(GL_VIEWPORT_BIT) );
+    CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
+
+    m_Begun = true;
 }
 
 //=============================================================================
 void RenderTextureContext::End()
 {
+    if(!m_Begun) { return; }
+
+    CHECK_GL( glPopAttrib() );
     CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
                 m_PreviousOpenGLFrameBufferName) );
+    m_Begun = false;
 }
 
 } } // namespace Firtree::Internal

@@ -33,7 +33,12 @@
 namespace Firtree {
 
 //=============================================================================
-/// A structure encapsulating a bitmap image representation.
+/// A structure encapsulating a bitmap image representation. A bitmap is an
+/// array of component values in red, green, blue and alpha order. 
+/// Components are arranged in the array one after another forming a 
+/// four component 'pixel block'. Blocks are packed in the array in 
+/// left-to-right scanlines. The scanlines are packed in bottom-to-top order.
+/// This mirrors the format taken by glTexImage2D() and it's ilk.
 struct BitmapImageRep {
     /// An enumeration for specifying the pixel format of a BitmapImageRep.
     enum PixelFormat { 

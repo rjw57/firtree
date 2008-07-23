@@ -62,7 +62,10 @@ class RenderTextureContext : public Firtree::OpenGLContext
         
         /// Return the size of the context (in pixels)
         Size2DU32 GetSize() const { return m_Size; }
-        
+         
+        /// Return the OpenGL texture this cotnext wraps.
+        unsigned int GetOpenGLTexture() const { return m_OpenGLTextureName; }
+
         // ====================================================================
         // MUTATING METHODS
 
@@ -73,6 +76,7 @@ class RenderTextureContext : public Firtree::OpenGLContext
     protected:
         Firtree::OpenGLContext*     m_ParentContext;
         Size2DU32                   m_Size;
+        bool                        m_Begun;
 
         uint32_t                    m_OpenGLTextureName;
         uint32_t                    m_OpenGLFrameBufferName;

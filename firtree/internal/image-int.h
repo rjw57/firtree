@@ -29,6 +29,7 @@
 #include <firtree/math.h>
 #include <firtree/blob.h>
 #include <firtree/image.h>
+#include <internal/render-to-texture.h>
 
 namespace Firtree { namespace Internal {
 
@@ -135,6 +136,8 @@ class ImageImpl : public Image
         ImageProvider*      m_ImageProvider;
 
         ExtentProvider*     m_ExtentProvider;
+
+        RenderTextureContext*   m_TextureRenderer;
 
         friend class Firtree::Image;
 };

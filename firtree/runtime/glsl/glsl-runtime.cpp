@@ -440,7 +440,7 @@ void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
     GLenum _err = glGetError(); \
     if(_err != GL_NO_ERROR) {  \
         FIRTREE_ERROR("%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
-                gluErrorString(_err)); return false; \
+                gluErrorString(_err)); \
     } } while(0) 
 
 //=============================================================================
@@ -1266,9 +1266,9 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
 
     m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
 
+    // The texture has co-ordinates in the rannge (0,1]. Re-scale
+    // to be pixel-based co-ordinates.
     AffineTransform* t = GetTransform()->Copy();
-    t->ScaleBy(1, -1);
-    t->TranslateBy(0, 1);
     t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
@@ -1543,13 +1543,28 @@ void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
 }
 
 //=============================================================================
+void GLRenderer::Clear(float r, float g, float b, float a)
+{
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->EnsureCurrent();
+    }
+
+    CHECK_GL( glClearColor(r,g,b,a) );
+    CHECK_GL( glClear(GL_COLOR_BUFFER_BIT) );
+}
+
+//=============================================================================
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
     if(m_OpenGLContext != NULL)
     {
-        m_OpenGLContext->Begin();
+        m_OpenGLContext->EnsureCurrent();
     }
+
+    CHECK_GL( glPushAttrib(GL_DEPTH_BUFFER_BIT) );
+    CHECK_GL( glDisable(GL_DEPTH_TEST) );
 
     SamplerParameter* sampler;
 
@@ -1565,11 +1580,17 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     }
 
     GLenum err;
-    if(sampler == NULL) { return; }
+    if(sampler == NULL) { 
+        CHECK_GL( glPopAttrib() );
+        return; 
+    }
 
     GLSL::GLSLSamplerParameter* glslSampler =
         GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
-    if(glslSampler == NULL) { return; }
+    if(glslSampler == NULL) { 
+        CHECK_GL( glPopAttrib() );
+        return; 
+    }
 
     glslSampler->SetOpenGLContext(m_OpenGLContext);
 
@@ -1616,6 +1637,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         // Do nothing if we've clipped everything away.
         if(Rect2D::IsZero(renderRect))
         {
+            CHECK_GL( glPopAttrib() );
             return;
         }
     }
@@ -1633,6 +1655,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         glUseProgramObjectARB(program);
         if((err = glGetError()) != GL_NO_ERROR)
         {
+            CHECK_GL( glPopAttrib() );
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
             return;
         }
@@ -1647,6 +1670,14 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 #endif
   
     glActiveTextureARB(GL_TEXTURE0);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
 
     glBegin(GL_QUADS);
     glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
@@ -1672,10 +1703,12 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glEnd();
 #endif
 
-    if(m_OpenGLContext != NULL)
-    {
-        m_OpenGLContext->End();
-    }
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    CHECK_GL( glPopAttrib() );
 }
 
 //=============================================================================

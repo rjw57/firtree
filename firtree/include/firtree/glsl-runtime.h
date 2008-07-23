@@ -58,10 +58,16 @@ class OpenGLContext : public ReferenceCounted
         // ====================================================================
         // MUTATING METHODS
         
-        /// Make this context current. Note that this might well be called
+        /// Ensure this context is current. Note that this might well be called
         /// an awful lot so if it is an expensive operation, it might well
         /// be worth ensuring it only swaps the context when necessary.
-        virtual void MakeCurrent();
+        virtual void EnsureCurrent();
+
+        /// Begin rendering into this context.
+        virtual void Begin();
+
+        /// Finish rendering into this context.
+        virtual void End();
 };
 
 //=============================================================================

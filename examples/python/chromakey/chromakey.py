@@ -164,7 +164,7 @@ class ChromaKeyApp:
 	
 	def on_save_activate(self, widget):
 		print('SAVE!')
-		self._orig_image.WriteToFile('foo.png')
+		self._alpha_image.WriteToFile('foo.png')
 
 	def sync_kernels_to_controls(self):
 		whiteLevel = self._white_level_scale.get_value()

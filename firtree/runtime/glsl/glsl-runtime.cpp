@@ -54,7 +54,7 @@ static void EnsureContext(OpenGLContext* context)
 {
     if(context != NULL)
     {
-        context->MakeCurrent();
+        context->EnsureCurrent();
     } else {
         FIRTREE_WARNING("Attempt to render from sampler without calling "
                 "SetOpenGLContext() first.");
@@ -1546,6 +1546,11 @@ void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->Begin();
+    }
+
     SamplerParameter* sampler;
 
     // Do we have a sampler for this image?
@@ -1666,6 +1671,11 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     glEnd();
 #endif
+
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->End();
+    }
 }
 
 //=============================================================================
@@ -1680,7 +1690,17 @@ OpenGLContext::~OpenGLContext()
 }
 
 //=============================================================================
-void OpenGLContext::MakeCurrent()
+void OpenGLContext::EnsureCurrent()
+{
+}
+
+//=============================================================================
+void OpenGLContext::Begin()
+{
+}
+
+//=============================================================================
+void OpenGLContext::End()
 {
 }
 

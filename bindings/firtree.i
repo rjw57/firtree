@@ -30,6 +30,9 @@ using namespace Firtree;
 
 #ifdef SWIGPYTHON
 
+%apply unsigned int { uint32_t }
+%apply int { int32_t }
+
 // %feature("ref")   Firtree::ReferenceCounted "printf(\"Ref: %p\\n\", $this);"
 // %feature("unref") Firtree::ReferenceCounted "printf(\"Unref: %p\\n\", $this); $this->Release();"
 

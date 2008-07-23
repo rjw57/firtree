@@ -40,6 +40,24 @@ static const float Min(const float a, const float b) { return (a<b) ? a : b; }
 static const float Max(const float a, const float b) { return (a>b) ? a : b; }
 
 // ============================================================================
+/// \brief A 2D integer size
+struct Size2DU32
+{
+    public:
+        uint32_t Width;     ///< The size's width.
+        uint32_t Height;    ///< The size's height.
+
+        /// Construct the size +0+0.
+        Size2DU32() : Width(0), Height(0) { }
+
+        /// Construct the size +w+h.
+        Size2DU32(uint32_t w, uint32_t h) : Width(w), Height(h) { }
+        
+        /// Construct a copy of the size s.
+        Size2DU32(const Size2DU32& s) : Width(s.Width), Height(s.Height) { }
+};
+
+// ============================================================================
 /// A 2D point.
 struct Point2D
 {

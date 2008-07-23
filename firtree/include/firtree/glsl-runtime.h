@@ -61,13 +61,33 @@ class OpenGLContext : public ReferenceCounted
         /// Ensure this context is current. Note that this might well be called
         /// an awful lot so if it is an expensive operation, it might well
         /// be worth ensuring it only swaps the context when necessary.
+        /// The default implementation throws an error if this is called outside
+        /// of a Begin()/End() pair, i.e. when m_BeginDepth == 0.
+        ///
+        /// Sub classes sould be careful to call this implementation in their
+        /// overridden methods.
         virtual void EnsureCurrent();
 
         /// Begin rendering into this context.
+        ///
+        /// Sub classes sould be careful to call this implementation in their
+        /// overridden methods.
         virtual void Begin();
 
         /// Finish rendering into this context.
+        ///
+        /// Sub classes sould be careful to call this implementation in their
+        /// overridden methods.
         virtual void End();
+
+        /// Return the number of Begin() calls which are waiting for a matching
+        /// End().
+        uint32_t GetBeginDepth() const { return m_BeginDepth; }
+
+    protected:
+        /// This is initially 0 on construction and is incremented once for
+        /// every call to Begin() and decremented once for each call to End().
+        uint32_t    m_BeginDepth;
 };
 
 //=============================================================================

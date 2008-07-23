@@ -39,7 +39,7 @@ namespace Firtree { namespace Internal {
 } while(0)
 
 //=============================================================================
-static void EnsureContext(OpenGLContext* context) 
+static void EnsureContextIsCurrent(OpenGLContext* context) 
 {
     if(context != NULL)
     {
@@ -79,14 +79,18 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     :   OpenGLContext()
     ,   m_ParentContext(parentContext)
     ,   m_Size(width, height)
-    ,   m_Begun(false)
     ,   m_OpenGLTextureName(0)
     ,   m_OpenGLFrameBufferName(0)
     ,   m_PreviousOpenGLFrameBufferName(0)
 {   
     FIRTREE_SAFE_RETAIN(m_ParentContext);
+    if(m_ParentContext == NULL)
+    {
+        FIRTREE_ERROR("NULL value passed as current context.");
+    }
 
-    EnsureContext(m_ParentContext);
+    m_ParentContext->Begin();
+    EnsureContextIsCurrent(m_ParentContext);
     CHECK_GL( glGenTextures(1, &m_OpenGLTextureName) );
 
     CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_OpenGLTextureName) );
@@ -113,26 +117,27 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     }
 
     CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, prevFb) );
+    m_ParentContext->End();
 }
 
 //=============================================================================
 RenderTextureContext::~RenderTextureContext()
 {
-    End();
-
+    m_ParentContext->Begin();
     if(m_OpenGLFrameBufferName != 0)
     {
-        EnsureContext(m_ParentContext);
+        EnsureContextIsCurrent(m_ParentContext);
         CHECK_GL( glDeleteFramebuffersEXT(1, &m_OpenGLFrameBufferName) );
         m_OpenGLFrameBufferName = 0;
     }
 
     if(m_OpenGLTextureName != 0)
     {
-        EnsureContext(m_ParentContext);
+        EnsureContextIsCurrent(m_ParentContext);
         CHECK_GL( glDeleteTextures(1, &m_OpenGLTextureName) );
         m_OpenGLTextureName = 0;
     }
+    m_ParentContext->End();
 
     FIRTREE_SAFE_RELEASE(m_ParentContext);
 }
@@ -147,6 +152,9 @@ RenderTextureContext* RenderTextureContext::Create(uint32_t width,
 //=============================================================================
 void RenderTextureContext::EnsureCurrent()
 {
+    OpenGLContext::EnsureCurrent();
+
+    m_ParentContext->EnsureCurrent();
     GLint currentFb = 0;
     CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
     if(currentFb != m_OpenGLFrameBufferName)
@@ -159,26 +167,33 @@ void RenderTextureContext::EnsureCurrent()
 //=============================================================================
 void RenderTextureContext::Begin()
 {
-    GLint currentFb = 0;
-    CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
-    m_PreviousOpenGLFrameBufferName = currentFb;
-    EnsureCurrent();
+    OpenGLContext::Begin();
 
-    CHECK_GL( glPushAttrib(GL_VIEWPORT_BIT) );
-    CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
+    if(GetBeginDepth() == 1)
+    {
+        m_ParentContext->EnsureCurrent();
+        GLint currentFb = 0;
+        CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
+        m_PreviousOpenGLFrameBufferName = currentFb;
+        EnsureCurrent();
 
-    m_Begun = true;
+        CHECK_GL( glPushAttrib(GL_VIEWPORT_BIT) );
+        CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
+    }
 }
 
 //=============================================================================
 void RenderTextureContext::End()
 {
-    if(!m_Begun) { return; }
+    if(GetBeginDepth() == 1)
+    {
+        m_ParentContext->EnsureCurrent();
+        CHECK_GL( glPopAttrib() );
+        CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
+                    m_PreviousOpenGLFrameBufferName) );
+    }
 
-    CHECK_GL( glPopAttrib() );
-    CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
-                m_PreviousOpenGLFrameBufferName) );
-    m_Begun = false;
+    OpenGLContext::End();
 }
 
 } } // namespace Firtree::Internal

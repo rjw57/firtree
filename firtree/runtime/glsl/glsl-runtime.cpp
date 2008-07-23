@@ -1560,7 +1560,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 {
     if(m_OpenGLContext != NULL)
     {
-        m_OpenGLContext->EnsureCurrent();
+        m_OpenGLContext->Begin();
     }
 
     CHECK_GL( glPushAttrib(GL_DEPTH_BUFFER_BIT) );
@@ -1709,32 +1709,55 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glPopMatrix();
 
     CHECK_GL( glPopAttrib() );
+
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->End();
+    }
 }
 
 //=============================================================================
 OpenGLContext::OpenGLContext()
     :   ReferenceCounted()
+    ,   m_BeginDepth(0)
 {
 }
 
 //=============================================================================
 OpenGLContext::~OpenGLContext()
 {
+    if(m_BeginDepth > 0)
+    {
+        FIRTREE_WARNING("OpenGLContext destroyed with unbalanced calls to "
+                "Begin()/End().");
+    }
 }
 
 //=============================================================================
 void OpenGLContext::EnsureCurrent()
 {
+    if(m_BeginDepth == 0)
+    {
+        FIRTREE_WARNING("OpenGLContext::EnsureCurrent() called outside of "
+                "Begin()/End().");
+    }
 }
 
 //=============================================================================
 void OpenGLContext::Begin()
 {
+    m_BeginDepth++;
 }
 
 //=============================================================================
 void OpenGLContext::End()
 {
+    if(m_BeginDepth == 0)
+    {
+        FIRTREE_WARNING("Too many OpenGLContext::End() calls.");
+    } else {
+        m_BeginDepth--;
+    }
 }
 
 //=============================================================================

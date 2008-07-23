@@ -461,14 +461,17 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
                         imageSize.Height, c);
             }
         }
-        FIRTREE_SAFE_RELEASE(c);
 
+        c->Begin();
         m_TextureRenderer->Begin();
         GLRenderer* renderer = GLRenderer::Create(m_TextureRenderer);
         renderer->Clear(0,0,0,0);
         renderer->RenderAtPoint(this, Point2D(0,0), extent);
         FIRTREE_SAFE_RELEASE(renderer);
         m_TextureRenderer->End();
+        c->End();
+
+        FIRTREE_SAFE_RELEASE(c);
 
         GLint w, h;
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_TextureRenderer->GetOpenGLTexture()) );

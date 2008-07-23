@@ -57,7 +57,7 @@ class OpenGLContext : public ReferenceCounted
 
         // ====================================================================
         // MUTATING METHODS
-
+        
         /// Make this context current. Note that this might well be called
         /// an awful lot so if it is an expensive operation, it might well
         /// be worth ensuring it only swaps the context when necessary.

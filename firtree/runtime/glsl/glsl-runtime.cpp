@@ -50,7 +50,7 @@ bool SetGLSLUniformsForSampler(GLSLSamplerParameter* sampler,
 const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler);
 
 //=============================================================================
-static void _KernelEnsureAPI(OpenGLContext* context) 
+static void EnsureContext(OpenGLContext* context) 
 {
     if(context != NULL)
     {
@@ -405,14 +405,13 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     // Clear up any cached shader programs
     if(m_CachedProgramObject > 0)
     {
-        _KernelEnsureAPI(m_GLContext);
-        glDeleteObjectARB(m_CachedProgramObject);
+        EnsureContext(m_GLContext);
         m_CachedProgramObject = -1;
     }
 
     if(m_CachedFragmentShaderObject > 0)
     {
-        _KernelEnsureAPI(m_GLContext);
+        EnsureContext(m_GLContext);
         glDeleteObjectARB(m_CachedFragmentShaderObject);
         m_CachedFragmentShaderObject = -1;
     }
@@ -447,7 +446,7 @@ void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
 //=============================================================================
 int GLSLSamplerParameter::GetShaderProgramObject()
 {
-    _KernelEnsureAPI(m_GLContext);
+    EnsureContext(m_GLContext);
     
     // Compute the digest of this shader
     uint8_t digest[20];
@@ -1087,7 +1086,7 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
 //=============================================================================
 void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
-    _KernelEnsureAPI(GetOpenGLContext());
+    EnsureContext(GetOpenGLContext());
 
     const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
@@ -1363,7 +1362,7 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
     if(!IsValid())
         return;
 
-    _KernelEnsureAPI(GetOpenGLContext());
+    EnsureContext(GetOpenGLContext());
 
     std::string paramName(GetBlockPrefix());
     paramName += "_texture";

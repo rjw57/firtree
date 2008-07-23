@@ -65,6 +65,7 @@ using namespace Firtree;
 %newobject Firtree::AffineTransform::Translation;
 
 %newobject Firtree::OpenGLContext::CreateNullContext;
+%newobject Firtree::OpenGLContext::CreateOffScreenContext;
 
 %newobject Firtree::GLRenderer::Create;
 

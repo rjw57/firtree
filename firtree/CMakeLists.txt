@@ -93,6 +93,7 @@ SET(FIRTREE_SOURCES
 	internal/image-int.h
 	internal/lru-cache.h
 	internal/render-to-texture.h
+	internal/pbuffer.h
 
 	runtime/glsl/sha1.h
 	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c
@@ -100,7 +101,7 @@ SET(FIRTREE_SOURCES
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
 
-	image-int.cpp		render-to-texture.cpp
+	image-int.cpp		render-to-texture.cpp	pbuffer.cpp
 )
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})

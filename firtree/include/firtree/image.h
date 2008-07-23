@@ -35,6 +35,7 @@ namespace Firtree {
 //=============================================================================
 /// A structure encapsulating a bitmap image representation.
 struct BitmapImageRep {
+    /// An enumeration for specifying the pixel format of a BitmapImageRep.
     enum PixelFormat { 
         Byte,
         Float,
@@ -53,6 +54,7 @@ struct BitmapImageRep {
     /// \param width The width of the image in pixels.
     /// \param height The height of the image in pixels.
     /// \param stride The number of bytes in one row of the image.
+    /// \param format The format of one component of one pixel.
     /// \param copyData If true, a deep copy of the data is made otherwise
     ///                 the reference count of the blob is merely incremented.
     BitmapImageRep(Blob* blob,

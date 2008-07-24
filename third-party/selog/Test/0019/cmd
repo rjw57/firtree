@@ -1,0 +1,5 @@
+date=$(date +"%Y-%m-%d %H:%M:%S")
+nodate="YYYY-YY-YY YY:YY:YY"
+../test-harness -- -log_tz@/WORK/selnotz
+sed "s/^$date/$nodate/" </WORK/selnotz >/WORK/selall
+rm /WORK/selnotz

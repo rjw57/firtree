@@ -1,0 +1,25 @@
+selog usage fatal: unknown level 000
+selog tag abort: message
+selog tag alert: message
+selog usage fatal: unknown level all
+selog tag critical: message
+selog tag critical: message
+selog tag trace: message
+selog tag emergency: message
+selog tag emergency: message
+selog tag error: message
+selog tag error: message
+selog tag fatal: message
+selog tag fatal: message
+selog tag info: message
+selog tag notice: message
+selog usage fatal: unknown level opt_off
+selog usage fatal: unknown level opt_on
+selog usage fatal: unknown level option
+selog usage fatal: unknown level option_off
+selog usage fatal: unknown level option_on
+selog tag trace: message
+selog tag verbose: message
+selog tag warning: message
+selog tag warning: message
+selog usage fatal: unknown level zzz

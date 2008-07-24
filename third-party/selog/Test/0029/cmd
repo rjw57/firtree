@@ -1,0 +1,26 @@
+../selog +trace-log_pid tag 000 message
+../selog +trace-log_pid tag abort message
+../selog +trace-log_pid tag alert message
+../selog +trace-log_pid tag all message
+../selog +trace-log_pid tag crit message
+../selog +trace-log_pid tag critical message
+../selog +trace-log_pid tag trace message
+../selog +trace-log_pid tag emerg message
+../selog +trace-log_pid tag emergency message
+../selog +trace-log_pid tag err message
+../selog +trace-log_pid tag error message
+../selog +trace-log_pid tag exit message
+../selog +trace-log_pid tag fatal message
+../selog +trace-log_pid tag info message
+../selog +trace-log_pid tag notice message
+../selog +trace-log_pid tag opt_off message
+../selog +trace-log_pid tag opt_on message
+../selog +trace-log_pid tag option message
+../selog +trace-log_pid tag option_off message
+../selog +trace-log_pid tag option_on message
+../selog +trace-log_pid tag trace message
+../selog +trace-log_pid tag verbose message
+../selog +trace-log_pid tag warn message
+../selog +trace-log_pid tag warning message
+../selog +trace-log_pid tag zzz message
+rm selog.core

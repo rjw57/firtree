@@ -1,0 +1,3 @@
+test-harness selone emergency: name=0 level=11 optoff=off opton=off
+test-harness seltwo emergency: name=1 level=11 optoff=off opton=off
+test-harness exit fatal: time to die

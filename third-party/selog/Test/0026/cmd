@@ -1,0 +1,5 @@
+../test-harness -s200 -- @stderr@/WORK/selall &
+sleep 1
+ln -sf miss/ing /WORK/selall
+sleep 1
+rm /WORK/selall

@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# Written by Tony Finch <dot@dotat.at> <fanf2@cam.ac.uk>
+# at the University of Cambridge Computing Service.
+# You may do anything with this, at your own risk.
+#
+# $Cambridge: users/fanf2/selog/test-script,v 1.13 2008/04/09 17:57:23 fanf2 Exp $
+#
+
+cd Test
+WORK=$(pwd -P)
+
+FILES="selone seltwo selall stdout stderr status"
+ENOENT="No such file or directory"
+NODATE="XXXX-XX-XX XX:XX:XX *XX:XX"
+
+for test in 0*
+do
+	rm -f [a-z]*
+	ln -s $test test
+	echo Test/$test
+	date=$(date +"%Y-%m-%d %H:%M:%S %z" | sed 's/..$/:&/')
+	sed "s|/WORK|$WORK|g" $test/cmd >cmd
+	sh cmd 1>stdout 2>stderr
+	echo $? >status
+	touch seltmp
+	for file in sel*
+	do
+		sed "s|$date|$NODATE|" <$file >$file-
+		mv $file- $file
+	done
+	rm seltmp
+	for file in std*
+	do
+		sed "s|$WORK|/WORK|" <$file >$file-
+		mv $file- $file
+	done
+	for file in $FILES
+	do
+		if [ -f $test/$file -a -f $file ]
+		then
+			diff -u $test/$file $file
+		fi
+		if [ -f $test/$file -a ! -f $file ]
+		then
+			diff -u $test/$file /dev/null |
+			sed "s|+++ /dev/null.*|+++ $file	$ENOENT|"
+		fi
+		if [ ! -f $test/$file -a -s $file ]
+		then
+			diff -u /dev/null $file |
+			sed "s|--- /dev/null.*|--- $test/$file	$ENOENT|"
+		fi
+		if [ ! -f $test/$file -a ! -s $file -a -f $file ]
+		then
+			printf "%s %s	$ENOENT\n" "---" $test/$file
+			printf "%s %s	empty\n" "+++" $file
+		fi
+	done >diffs
+	if [ -s diffs ]
+	then
+		cat diffs
+		echo FAILED
+		echo Update/Continue/Quit?
+		read input
+		case $input in
+		u*)	rm -f $test/s*
+			cp s* $test
+			exit 1
+			;;
+		c*)	: ok
+			;;
+		*)	exit 1
+			;;
+		esac
+	fi
+done
+
+rm -f [a-z]*
+echo PASSED
+exit

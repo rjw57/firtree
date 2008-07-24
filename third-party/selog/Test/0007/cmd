@@ -1,0 +1,1 @@
+../test-harness -- "-all+=default+selone@file /WORK/selone;-all+=default+seltwo@file /WORK/seltwo;-all+fatal@stderr;"

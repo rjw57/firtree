@@ -1,0 +1,2 @@
+test-harness log_config error: unknown channel type ""
+test-harness fatal: selog_open "@": Invalid argument

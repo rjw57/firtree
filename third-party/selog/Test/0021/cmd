@@ -1,0 +1,3 @@
+../test-harness +=option
+sed 's|test-harness[[][0-9]*[]]|test-harness[]|' <stderr >stderr-
+mv stderr- stderr

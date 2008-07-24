@@ -1,0 +1,8 @@
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo verbose: name=1 level=3 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo info: name=1 level=5 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo notice: name=1 level=6 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo warning: name=1 level=7 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo error: name=1 level=8 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo critical: name=1 level=9 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo alert: name=1 level=10 optoff=off opton=on
+XXXX-XX-XX XX:XX:XX *XX:XX seltwo emergency: name=1 level=11 optoff=off opton=on

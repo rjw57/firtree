@@ -1,0 +1,34 @@
+Selog - selective logging
+-------------------------
+
+Selog is a library of routines that unifies error reporting, activity
+logging, and debug tracing. It allows programmers to give their users
+flexible control over which messages are written and where they are
+written to.
+
+--------------------------------------------------------------------------
+
+Installation notes
+
+To build selog, type "make". At the moment the makefile requires gcc
+and gnu binutils, though with any luck you should be able to get other
+compilers to work by adjusting the CFLAGS, LDFLAGS, and SOFLAG make
+variables.
+
+To install selog under /usr/local, type "make install". To install in
+another place, type "make install PREFIX=/another/place". You can get
+finer control over installation by setting the BINDIR, LIBDIR, and
+MANDIR variables in a similar way.
+
+To build the Lua binding, type "make lua", and to install it, type
+"make lua-install". You can add a -I option to EXTRACFLAGS if your Lua
+headers are not in a standard location. You can set LUADIR to control
+where the Lua extension is installed.
+
+--------------------------------------------------------------------------
+
+Written by Tony Finch <dot@dotat.at> <fanf2@cam.ac.uk>
+at the University of Cambridge Computing Service.
+You may do anything with this, at your own risk.
+
+$Cambridge: users/fanf2/selog/README,v 1.2 2008/04/09 21:18:33 fanf2 Exp $

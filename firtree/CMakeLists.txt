@@ -106,7 +106,8 @@ SET(FIRTREE_SOURCES
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 
-TARGET_LINK_LIBRARIES(firtree
+TARGET_LINK_LIBRARIES(firtree 
+	selog
 	${FIRTREE_TARGET_LIBRARIES}
 	compiler glslang frontend irbackend glslbackend)
 

@@ -1,0 +1,4 @@
+date=$(date | cut -c 5-19)
+../test-harness +log_pid@syslog
+sleep 1
+sed "/^$date [^ ]* test-harness[[][0-9]*[]]/!d;s//test-harness[]/" /var/log/messages

@@ -1,0 +1,7 @@
+date=$(date +"%Y-%m-%d %H:%M:")
+../test-harness -s80 -- -log_tz@/WORK/seltwo &
+sleep 1
+mv seltwo selone
+sleep 1
+sed "s|$date..|YYYY-YY-YY YY:YY:YY|" selone seltwo >selall
+rm selone seltwo

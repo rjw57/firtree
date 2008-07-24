@@ -1,0 +1,8 @@
+test-harness selone verbose: name=0 level=3 optoff=off opton=off
+test-harness selone info: name=0 level=5 optoff=off opton=off
+test-harness selone notice: name=0 level=6 optoff=off opton=off
+test-harness selone warning: name=0 level=7 optoff=off opton=off
+test-harness selone error: name=0 level=8 optoff=off opton=off
+test-harness selone critical: name=0 level=9 optoff=off opton=off
+test-harness selone alert: name=0 level=10 optoff=off opton=off
+test-harness selone emergency: name=0 level=11 optoff=off opton=off

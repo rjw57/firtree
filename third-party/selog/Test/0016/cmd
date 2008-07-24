@@ -1,0 +1,6 @@
+date=$(date +"%Y-%m-%d %H:%M:%S[.]\(...\) %z" | sed 's/..$/:&/')
+nodate="YYYY-YY-YY YY:YY:YY.YYY *YY:YY"
+../test-harness -s1 +log_msec@/WORK/selms
+sed "s/^$date/$nodate/" </WORK/selms >/WORK/selall
+sed "s/^$date .*/\1/" </WORK/selms | uniq | wc -l
+rm /WORK/selms

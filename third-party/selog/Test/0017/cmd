@@ -1,0 +1,4 @@
+zone=$(date +%z | sed 's/..$/:&/')
+../test-harness +log_zulu@/WORK/selzulu
+sed "s/ Z / $zone /" </WORK/selzulu >/WORK/selall
+rm /WORK/selzulu

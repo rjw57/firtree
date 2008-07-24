@@ -1,0 +1,766 @@
+.\" selog programmer's manual
+.\"
+.\" Written by Tony Finch <dot@dotat.at> <fanf2@cam.ac.uk>
+.\" at the University of Cambridge Computing Service.
+.\" You may do anything with this, at your own risk.
+.\"
+.\" $Cambridge: users/fanf2/selog/selog-prog.man,v 1.31 2008/04/09 22:08:42 fanf2 Exp $
+.\"
+.lg 0
+.de TQ
+. br
+. ns
+. TP \\$1
+..
+.de DQ
+\\*(lq\\$1\\*(rq\\$2
+..
+.\"
+.TH selog 3
+.
+.SH NAME
+selog \- selective logging
+.
+.SH LIBRARY
+Selective logging core library (libselog, \-lselog)
+.br
+Replacement err/warn implementation (libselog_err, \-lselog_err)
+.br
+Replacement syslog implementation (libselog_syslog, \-lselog_syslog)
+.
+.SH SYNOPSIS
+.BR "#include " <stdarg.h>
+.br
+.BR "#include " <stdbool.h>
+.br
+.BR "#include " <stddef.h>
+.P
+.BR "#include " <selog.h>
+.P
+.ta 25n 30n
+.BR "typedef struct selog_selector	" selog_selector "[1];"
+.br
+.BR "typedef struct selog_buffer	" selog_buffer "[1];"
+.P
+.ta 10n
+.P
+.I "/* initialization */"
+.br
+.BI "selog_selector " sel
+.RI "= SELINIT(" name ", " level ");"
+.br
+.BR "int " selog_open "(const char"
+.BI "*" config ", const char *const " spelling "[]);"
+.P
+.I "/* simple output */"
+.br
+.BR "void " selog "(selog_selector"
+.IB sel ", const char *" fmt ", ...);"
+.br
+.BR "void " selogerr "(selog_selector"
+.IB sel ", const char *" fmt ", ...);"
+.P
+.I "/* complex messages */"
+.br
+.BR "bool " selog_on "(selog_selector "
+.IB sel ");"
+.br
+.BR "void " selog_bufinit "(selog_buffer "
+.IB buf ", selog_selector " sel ");"
+.br
+.BR "void " selog_prep "(selog_buffer "
+.IB buf ", selog_selector " sel ");"
+.br
+.BR "void " selog_add "(selog_buffer "
+.IB buf ", const char *" fmt ", ...);"
+.br
+.BR "void " selog_addv "(selog_buffer "
+.IB buf ", const char *" fmt ", va_list " ap ");"
+.br
+.BR "void " selog_addopt "(selog_selector, selog_buffer,"
+.BI "const char *" fmt ", ...);"
+.br
+.BR "void " selog_write "(selog_buffer "
+.IB buf ");"
+.P
+.I "/* selector inspection */"
+.br
+.BR "const char *" selog_name "(selog_selector "
+.IB sel ");"
+.br
+.BR "const char *" selog_level "(selog_selector "
+.IB sel ");"
+.br
+.BR "unsigned int " SELOG_LEVEL "(selog_selector "
+.IB sel ");"
+.br
+.BR "unsigned int " SELOG_EXITVAL "(selog_selector "
+.IB sel ");"
+.br
+.BR "unsigned int " selog_parse_level "(const char"
+.BI * str ", size_t " len ");"
+.P
+.I "/* debug macros */"
+.br
+.BR "void " selassert "(selog_selector"
+.IB sel ", bool " pred ", const char *" fmt ", ...);"
+.br
+.BR "void " seltrace "(selog_selector"
+.IB sel ", const char *" fmt ", ...);"
+.DT
+.
+.SH DESCRIPTION
+.\" |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8
+Selog is a library of routines that unifies error reporting,
+activity logging, and debug tracing.
+It allows programmers to give their users flexible control over
+which messages are written and where they are written to.
+.P
+This manual describes the programmer's interface to selog,
+and the auxiliary libraries that can be used to replace the standard
+.BR err (3)
+and
+.BR syslog (3)
+interfacses with implementations based on selog.
+For an overview of selog,
+details of how users can configure it,
+and how the output channels behave,
+see
+.BR selog (7).
+.
+.SH SELECTORS
+Message output using selog is controlled by message selectors, and
+optional parts of messages are controlled by option selectors.
+A message selector classifies the messages it controls according to a
+.DQ category
+and a
+.DQ level
+which are both defined by the programmer.
+Multiple selectors can have the same category or level.
+Option selectors are distinguished from message selectors
+by their level setting.
+.P
+As well as their category and level,
+selectors also contain a word of enable flags that is filled in
+at run-time based on the user's configuration.
+For message selectors this determines which channels messages should
+be written to, if any.
+For option selectors it determines whether the option is on or off.
+Once a selector's enable word has been initialized,
+the run-time test to skip disabled messages is very efficient,
+so it is reasonable to leave debugging messages compiled in to
+production code.
+.P
+Finally, selectors also have a linked list pointer
+which is used to chain all the configured selectors together.
+When selog is reconfigured this chain is used to reset
+all the selectors.
+.
+.SS Categories
+A selector's category is a string that names the
+kind of messages controlled by the selector,
+or that names the optional message part it controls.
+The selog configuration uses category names
+to determine which selectors are enabled,
+so they should be meaningful to users.
+.P
+For example, a server might have a
+.DQ connection
+selector for messages related to
+open and closed connections,
+and an
+.DQ interface
+option to determine if the server's IP address is logged as well as
+the client's on multi-homed machines.
+.P
+A good name for message selectors is often based on the part of the
+program that emits the messages.
+This is especially true for debugging messages.
+.
+.SS Levels
+A selector's level defines whether it is an option selector or a
+message selector, and for message selectors defines whether it is for
+error reporting, activity logging, or debugging.
+The possible values are as follows, in order from lowest to highest.
+.TP
+.B SELOG_TRACE
+For programer-oriented debug messages,
+i.e. for people working on the program's source code.
+The
+.B seltrace()
+function is intended for use with
+.I SELOG_TRACE
+selectors.
+.TP
+.B SELOG_DEBUG
+For user-oriented debug messages,
+i.e. for people dealing with configuration problems.
+.TP
+.BR SELOG_OPTION_OFF " or " SELOG_OPTION
+For option selectors that are off by default.
+.TP
+.B SELOG_VERBOSE
+For activity log messages that are not emitted by default.
+Otherwise equivalent to
+.I SELOG_INFO.
+.TP
+.BR SELOG_OPTION_ON " or " SELOG_DEFAULT
+For option selectors that are on by default.
+.TP
+.B SELOG_INFO
+The normal level for activity log messages.
+.TP
+.B SELOG_NOTICE
+For more important activity log messages.
+Not normally used, unless the user might want different messages in
+the same category to be written to different output channels.
+Consider using different categories instead.
+.TP
+.BR SELOG_WARNING " or " SELOG_WARN
+For errors that should be fixed but which do not harm functionality.
+.TP
+.B SELOG_ERROR
+For errors that cause degraded functionality.
+.TP
+.BR SELOG_CRITICAL " or " SELOG_CRIT
+For serious errors.
+The difference between
+.I SELOG_ERROR
+and
+.I SELOG_CRITICAL
+is similar to the difference between
+.I SELOG_INFO
+and
+.I SELOG_NOTICE.
+.TP
+.B SELOG_ALERT
+For syslog compatibility; not normally used.
+Intended to bring something to the immediate notice of the system
+administrator.
+.TP
+.BR SELOG_EMERGENCY " or " SELOG_EMERG
+For syslog compatibility; not normally used.
+Intended for use when the system is catastrophically broken,
+so should be reserved for fundamental code like the kernel.
+.TP
+.BI SELOG_FATAL( status )
+Similar to
+.I SELOG_CRIT
+except that after the message is written the
+.I status
+code is passed to
+.BR exit (3).
+Selog does not implement its own exit hook: you should use
+.BR atexit (3).
+.TP
+.B SELOG_EXIT
+Equivalent to
+.I SELOG_FATAL(0).
+.TP
+.B SELOG_ABORT
+For failed internal consistency checks.
+Selog calls
+.BR abort (3)
+after writing the message.
+The
+.B selassert()
+function is intended for use with
+.I SELOG_ABORT
+selectors.
+.P
+Selog's levels are a superset of
+.BR syslog (3)'s
+severities.
+The extensions mostly add more flexibility for non-error conditions.
+Syslog is rather over-endowed with error levels.
+Whether an error is severe enough to merit a
+.DQ alert
+or
+.DQ emergency
+level depends more on the purpose of the system
+and the policy preferred by the system administrator
+than on static properties of a program.
+Selog allows the sysadmin to choose how to handle messages based on
+the program and category,
+instead of the facility and severity as with syslog.
+Selog's greater flexibility allows sysadmins to express their
+filtering policy with fewer levels than syslog.
+.
+.SS Defining selectors
+Selectors are typically defined as static variables with file scope.
+(It is possible to define selectors dynamically,
+though you should be careful to re-use selectors and avoid
+creating and initializing new selectors
+if performance matters.)
+The
+.I SELINIT()
+macro is provided to initialize selectors correctly.
+The first parameter is the category
+and the second is the level.
+For example,
+.RS
+.BR "selog_selector " log_conn " = SELINIT("
+.BI \*(lq connection \*(rq,
+.RB SELOG_INFO ");"
+.br
+.BR "selog_selector " opt_iface " = SELINIT("
+.BI \*(lq interface \*(rq,
+.RB SELOG_OPTION ");"
+.br
+.RE
+.P
+The macro initializer hides the detail that
+.I selog_selector
+is an array of one struct.
+This trick allows you to pass it by reference to functions without an
+explicit
+.I &
+address-of operator,
+similar to the standard
+.I jmp_buf
+type.
+.P
+Software that creates selectors dynamically
+(such as selog's Lua interface)
+can turn a string into a numerical level using
+.BR selog_parse_level() .
+The first argument is a pointer to the string
+and the second is its length.
+The string does not have to be nul-terminated.
+The function returns
+.I SELOG_NOLEVEL
+if the string is not a valid level.
+.
+.SS Accessor functions
+The following can be used to inspect a selector at run time.
+.TP
+.BI selog_name( sel )
+Function that returns the selector's category.
+.TP
+.BI selog_level( sel )
+Function that returns the selector's level as a string,
+suitable for use in log message preambles.
+See
+.I selog_bufinit()
+and
+.I selog_prep()
+below.
+.TP
+.BI SELOG_LEVEL( sel )
+Macro that returns the selector's numeric level.
+.TP
+.BI SELOG_EXITVAL( sel )
+Macro that returns the exit status of a
+.I SELOG_FATAL()
+selector.
+.TP
+.BI selog_on( sel )
+Returns true if the selector is enabled.
+Has the side-effect of initializing the selector's flag word if necessary.
+Implemented as both a macro and a function;
+the macro may evaluate
+.I sel
+more than once.
+.
+.SH SIMPLE MESSAGE OUTPUT
+This section describes the functions that allow you to write messages
+that are simple enough to format in one step,
+similar to the
+.BR printf (3)
+and
+.BR syslog (3)
+functions.
+These functions are defined with macro wrappers that perform the
+.I selog_on()
+test in-line for speed,
+therefore they may evaluate the selector more than once.
+.TP
+.BI selog( sel ", " fmt ", ...)"
+The usual message output function.
+Checks that the selector is enabled using
+.I selog_on(sel)
+and if so writes the formatted message to the relevant channel(s).
+The format string is interpreted the same way as by
+.BR printf (3).
+.TP
+.BI selogerr( sel ", " fmt ", ...)"
+Equivalent to
+.I selog()
+with
+.I \*(lq: \*(rq
+and
+.I strerror(errno)
+appended to the message.
+.TP
+.BI seltrace( sel ", " fmt ", ...);"
+The same as
+.I selog(),
+except with an extended preamble of the form
+.RS
+.RS
+.BI \*(lq file : line " " func "() " category " " level ": \*(rq"
+.RE
+This macro is intended for use with
+.I SELOG_TRACE
+selectors.
+It does not have a function equivalent.
+.RE
+.TP
+.BI selassert( sel ", " pred ", " fmt ", ...);"
+If the predicate is false,
+.I selassert()
+writes the message to the relevant channel(s) and calls
+.BR abort (3).
+The message preamble includes trace information and the stringified
+predicate expression.
+This macro is intended for use with
+.I SELOG_ABORT
+selectors.
+It does not have a function equivalent.
+.
+.SH COMPLEX MESSAGES
+This section describes functions that are used to compose messages in
+stages.
+For example, it is often awkward to format a message in one step if it
+contains optional parts.
+These facilities are also useful if formatting a message requires
+extra work that should be skipped if its selector is disabled.
+The pattern to follow is:
+.IP \(bu
+Check that the message's selector is enabled using
+.I selog_on().
+.IP \(bu
+Initialize a
+.I selog_buffer
+variable using
+.I selog_prep()
+or
+.I selog_bufinit().
+.IP \(bu
+Call
+.I selog_add()
+or one of its related functions
+to append each part of the message to the buffer.
+.IP \(bu
+When the message is complete, call
+.I selog_write()
+which writes it to the appropriate channel(s).
+.P
+For example,
+.I selogerr(sel, fmt, ...)
+is equivalent to
+.RS
+.B if
+.RI (selog_on( sel ))
+.B {
+.RS
+.B selog_buffer
+buf;
+.br
+.RI selog_prep( buf ", sel);"
+.br
+.RI "selog_add(buf, " fmt ", ...);"
+.br
+selog_add(buf,
+.BR "\*(lq: %s\*(rq" ,
+strerror(errno));
+.br
+selog_write(buf);
+.RE
+.B }
+.RE
+.P
+Like the
+.I selog_selector
+type, the
+.I selog_buffer
+type is an array of one struct.
+This trick allows you to pass it by reference to functions without an
+explicit
+.I &
+address-of operator.
+.TP
+.BI selog_prep( buf ", " sel );
+The normal buffer initialization function.
+It is equivalent to:
+.RS
+.RS
+.RI selog_bufinit( buf ", " sel );
+.br
+.RI selog_add( buf ,
+.DQ "%s " ,
+.RI selog_name( sel ));
+.br
+.RI selog_add( buf ,
+.DQ "%s: " ,
+.RI selog_level( sel ));
+.RE
+.RE
+.TP
+.BI selog_bufinit( buf ", " sel );
+Initialize the buffer without adding any message text.
+This function does not have a built-in
+.I selog_on()
+guard;
+the selector argument is stored in the buffer for use by
+.I selog_write().
+.IP
+If you use
+.I selog_bufinit(),
+you should add your own message preamble in the style of
+.I selog_prep().
+This might be in order to add extra metadata such as the name of the
+function that emitted the message,
+or less metadata if the selector's category and level are redundant.
+The information should be ordered from less specific to more specific,
+for example, see
+.I seltrace()
+above,
+and the
+.DQ "MESSAGE FORMAT"
+section of
+.BR selog (7).
+The preamble should not include information that is added by channels,
+such as the timestamp, host name, program name, etc.
+.TP
+.BI selog_add( buf ", " fmt ", ...);"
+Append the formatted string to the buffer.
+.TP
+.BI selog_addv( buf ", " fmt ", " ap );
+Append the formatted string to the buffer,
+getting the arguments from a
+.I va_list
+like
+.BR vsnprintf (3).
+.TP
+.BI selog_addopt( sel ", " buf ", " fmt ", ...);"
+Add an optional part of a message to the buffer,
+if the selector is enabled.
+.TP
+.BI selog_write( buf );
+Write the message to the relevant channel(s),
+determined by the selector that was passed to
+.I selog_prep().
+.
+.SH INITIALIZATION
+Selog should be initialized soon after the program starts by calling
+.BI selog_open( config ", " spelling );
+.P
+The configuration string should be obtained from the user
+by a command-line option or a configuration file setting.
+If the user does not provide a configuration then the program
+may wish to provide a default to override the built-in default
+described in
+.BR selog (7).
+If the program calls another selog function before
+.I selog_open(),
+then selog will initialize itself with its built-in default.
+In any case, if the
+.B SELOG_CONFIG
+environment variable is set,
+it overrides any other configuration string.
+Selog keeps a pointer to the configuration for later use by
+.I selog_on()
+to initialize selectors.
+(This implies that the program must not free or overwrite
+the memory pointed to by
+.IR config .)
+.P
+The
+.I selog_open()
+function scans the configuration string
+and opens the channels it specifies.
+It also checks that all the categories mentioned in the string are listed in the
+.I spelling
+array.
+You should ensure that the array contains selog's built-in
+categories as well as all the categories defined by your program.
+You can disable this check by passing a NULL
+.I spelling
+pointer.
+.P
+Selog can be reconfigured by calling
+.I selog_open()
+again.
+The old channels are closed and all selectors are reset
+before the new configuration is installed.
+Therefore reconfiguration is not seamless.
+Note also that any
+.I SELOG_CONFIG
+environment variable setting still takes precedence.
+.P
+The return value of
+.I selog_open()
+is 0 on success.
+If it encounters an error it sets
+.I errno
+and returns -1,
+and it also reports the error using the
+.B log_config
+selector.
+Because selog is not fully initialized at this point,
+the messages it controls can only be written to the standard error stream.
+However selog's filtering features do work.
+.
+.SH STANDARD LIBRARY REPLACEMENTS
+Selog comes with two auxiliary libraries that can be used to add
+selog's channel configuration features to programs that were not
+written to use selog.
+They can be used by re-linking the program with the relevant library,
+or less permanently by running the program with
+.B LD_PRELOAD
+set to the library's file name.
+In either case selog's replacement implementation of the functions
+.DQ interposes
+on the standard C library's implementation.
+Programs manipulated in this way do not call
+.I selog_open()
+so you must specify non-default configuration using the
+.B SELOG_CONFIG
+environment variable.
+.P
+These libraries may also be useful for programs that mostly use selog,
+but which also depend on other code that calls the legacy APIs.
+.
+.SS selog_err
+This is a replacement implementation of the 4.4BSD
+.BR err (3)
+functions.
+It defines two selectors,
+.B "{err, FATAL}"
+used by the
+.I err()
+functions, and
+.B "{warn, ERROR}"
+used by the
+.I warn()
+functions.
+(Somewhat confusingly, the selog levels that have similar names to the
+functions have different meanings from the levels that correspond to
+the functions' actions.)
+If the program calls
+.I err_set_file()
+then the library just emits a diagnostic using the selector
+.BR "{err_set_file, DEBUG}" .
+The library does not call
+.I selog_open()
+so relies on selog's default configuration.
+.
+.SS selog_syslog
+This is a replacement implementation of the traditional
+.BR syslog (3)
+functions.
+It defines eight selectors corresponding to the syslog severity levels,
+.B "{syslog, DEBUG}"
+up to
+.BR "{syslog, EMERG}" .
+The selector is determined by the first
+.I pri
+argument to
+.IR syslog() .
+The library does not do anything with facilities encoded in the
+.I pri
+argument of
+.I syslog()
+or with calls to
+.I setlogmask()
+and if either occurs the library emits a diagnostic using
+its
+.B "{syslog, DEBUG}"
+selector.
+The library implements the
+.I ident
+and
+.I facility
+arguments to
+.B openlog()
+and the
+.BR LOG_PID ", " LOG_PERROR ", and " LOG_CONS
+options
+(though these can be overridden by the
+.B SELOG_CONFIG
+environment variable).
+It behaves as if
+.B LOG_NDELAY
+is always set.
+.
+.SH DIAGNOSTICS
+This section lists the built-in selectors used by selog itself.
+Selectors are written
+.BI "{" category ", " LEVEL "}"
+which is an abbreviated form of the usual selector initializer
+.BI "SELINIT(\*(lq" category "\*(rq, SELOG_" LEVEL ");"
+.P
+When documenting a program that uses selog,
+you should list the slectors it defines in a similar manner,
+and direct users to
+.BR selog (7)
+for documentation of the configuration syntax.
+.TP
+.B "{log_config, ERROR}"
+This is used by
+.B selog_open()
+to report syntax errors.
+Because it is used before selog is fully initialized, the messages it
+controls can only be written to the standard error stream.
+However selog's filtering features do work.
+.TP
+.B "{error, FATAL}"
+.TQ
+.B "{warning, ERROR}"
+.TQ
+.B "{err_set_file, DEBUG}"
+These are used by the
+.BR selog_err
+library
+(see above).
+.TP
+.B "{syslog, DEBUG}"
+.TQ
+.B "{syslog, INFO}"
+.TQ
+.B "{syslog, NOTICE}"
+.TQ
+.B "{syslog, WARNING}"
+.TQ
+.B "{syslog, ERROR}"
+.TQ
+.B "{syslog, CRITICAL}"
+.TQ
+.B "{syslog, ALERT}"
+.TQ
+.B "{syslog, EMERGENCY}"
+These are used by the
+.BR selog_syslog
+library
+(see above).
+.
+.SH ENVIRONMENT
+.TP
+.B SELOG_CONFIG
+Overrides the configuration string provided to
+.I selog_open().
+.
+.SH EXIT STATUS
+When the program uses a selector that is initialized using the
+.BI "SELOG_FATAL(" status ")"
+macro, selog exits the program with the given status code.
+.
+.SH SEE ALSO
+.BR abort (3),
+.BR atexit (3),
+.BR err (3),
+.BR exit (3),
+.BR printf (3),
+.BR selog (7),
+.BR syslog (3),
+.BR vsnprintf (3).
+.
+.SH AUTHOR
+Written by Tony Finch <dot@dotat.at> <fanf2@cam.ac.uk>
+.br
+at the University of Cambridge Computing Service.
+.br
+Source available from <http://dotat.at/prog/selog>
+.
+.\" eof

@@ -1676,7 +1676,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     GLSL::_currentGLRenderer = this;
 
-    CHECK_GL( glPushAttrib(GL_DEPTH_BUFFER_BIT) );
     CHECK_GL( glDisable(GL_DEPTH_TEST) );
 
     SamplerParameter* sampler;
@@ -1694,7 +1693,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     GLenum err;
     if(sampler == NULL) { 
-        CHECK_GL( glPopAttrib() );
         m_OpenGLContext->End();
         GLSL::_currentGLRenderer = oldRenderer;
         return; 
@@ -1703,7 +1701,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     GLSL::GLSLSamplerParameter* glslSampler =
         GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
     if(glslSampler == NULL) { 
-        CHECK_GL( glPopAttrib() );
         m_OpenGLContext->End();
         GLSL::_currentGLRenderer = oldRenderer;
         return; 
@@ -1754,7 +1751,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         // Do nothing if we've clipped everything away.
         if(Rect2D::IsZero(renderRect))
         {
-           // CHECK_GL( glPopAttrib() );
             m_OpenGLContext->End();
             GLSL::_currentGLRenderer = oldRenderer;
             return;
@@ -1774,7 +1770,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         CHECK_GL( glUseProgramObjectARB(program) );
         if((err = glGetError()) != GL_NO_ERROR)
         {
-            CHECK_GL( glPopAttrib() );
             m_OpenGLContext->End();
             GLSL::_currentGLRenderer = oldRenderer;
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1796,6 +1791,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     CHECK_GL( glPushMatrix() );
     CHECK_GL( glLoadIdentity() );
     CHECK_GL( glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
+
     CHECK_GL( glMatrixMode(GL_MODELVIEW) );
     CHECK_GL( glPushMatrix() );
     CHECK_GL( glLoadIdentity() );
@@ -1828,10 +1824,9 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     CHECK_GL( glMatrixMode(GL_MODELVIEW) );
     CHECK_GL( glPopMatrix() );
+
     CHECK_GL( glMatrixMode(GL_PROJECTION) );
     CHECK_GL( glPopMatrix() );
-
-    CHECK_GL( glPopAttrib() );
 
     m_OpenGLContext->End();
     
@@ -1906,13 +1901,13 @@ void OpenGLContext::Begin()
 
     m_BeginDepth++;
 
-    FIRTREE_TRACE("OpenGLContext: 0x%x: Begin()", this);
+    //FIRTREE_TRACE("OpenGLContext: 0x%x: Begin()", this);
 }
 
 //=============================================================================
 void OpenGLContext::End()
 {
-    FIRTREE_TRACE("OpenGLContext: 0x%x: End()", this);
+    //FIRTREE_TRACE("OpenGLContext: 0x%x: End()", this);
 
     if(m_BeginDepth == 0)
     {

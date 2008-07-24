@@ -161,6 +161,7 @@ void RenderTextureContext::Begin()
         {
             FIRTREE_ERROR("Frame buffer status is not complete for rendering. "
                     "Status is 0x%x.", framebufferStatus);
+            assert(false);
         }
 
         if(currentFb != m_OpenGLFrameBufferName)

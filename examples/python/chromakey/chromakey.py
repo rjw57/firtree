@@ -16,8 +16,21 @@ import gc
 import Firtree
 
 class ChromaKeyApp:
-	def __init__(self, mainWindow, glade):
-		self._mainWindow = mainWindow
+	def clearup(self):
+		self._imageRenderer.destroy()
+		del self._imageRenderer 
+
+		self._checker_kernel = None
+		self._composite_image = None
+		self._matteKernel = None
+		self._matte_image = None
+		self._alpha_image = None
+		self._alphaKernel = None
+		self._blank_kernel = None
+		self._compositeKernel = None
+		self._orig_image = None
+
+	def __init__(self, glade):
 		self._imageRenderer = ImageRenderer()
 
 		self._white_level_scale = glade.get_widget('white_level_scale')
@@ -239,14 +252,17 @@ if(__name__ == '__main__'):
 	main_window = chromakey_ui.get_widget('main_window')
 
 	# Create the app
-	chromaKeyApp = ChromaKeyApp(main_window, chromakey_ui)
+	chromaKeyApp = ChromaKeyApp(chromakey_ui)
 	chromakey_ui.signal_autoconnect(chromaKeyApp)
 
 	main_window.show_all()
 	gtk.main()
 
 	print('Exiting and clearing up...')
-	gc.collect()
+	chromaKeyApp.clearup()
+
+	unreachable = gc.collect()
+	print('%i unreachable objects.' % unreachable)
 
 
 # vim:sw=4:ts=4:autoindent

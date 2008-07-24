@@ -125,7 +125,7 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 
 		if(self._context == None):
 			self._context = Firtree.GLRenderer.Create()
-		
+
 		glViewport(0, 0, self._vpSize[0], self._vpSize[1])
 		glClearColor(0,0,0,1)
 

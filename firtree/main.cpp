@@ -31,6 +31,30 @@ namespace Firtree {
 // ===============================================================================
 
 // ===============================================================================
+// The object monitor is a long-lived singleton whose job is to monitor the
+// allocated object count at exit and moan if it is non-zero.
+class ObjectMonitor {
+    public:
+        ObjectMonitor() 
+        {
+            // FIRTREE_DEBUG("Object monitor started.");
+        }
+
+        ~ObjectMonitor()
+        {
+            // FIRTREE_DEBUG("Object monitor shutting down...");
+            if(ReferenceCounted::GetGlobalObjectCount() > 0)
+            {
+                FIRTREE_WARNING("MEMORY LEAK! Allocated object count at exit "
+                        "is non-zero: %i.",
+                        ReferenceCounted::GetGlobalObjectCount());
+            }
+        }
+};
+
+static ObjectMonitor g_ObjectMonitorSingleton;
+
+// ===============================================================================
 size_t ReferenceCounted::ObjectCount(0);
 
 // ===============================================================================

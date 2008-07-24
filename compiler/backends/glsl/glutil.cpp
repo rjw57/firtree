@@ -27,7 +27,7 @@ namespace Firtree { namespace GLSLInternal {
 // ============================================================================
 void* GetProcAddress(const char *procName)
 {
-#if defined(GLOO_UNIX) && !defined(GLOO_APPLE)
+#if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
     return (void*)(glXGetProcAddress((const GLubyte*)procName));
 #else
 #   warning Compiling a stub version of GetProcAddress.

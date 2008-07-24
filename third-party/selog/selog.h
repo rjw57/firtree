@@ -72,11 +72,11 @@ enum {
  * can't be assigned to straight-forwardly.) The array-of-one-struct
  * trick is also used by jmp_buf and gmp mpz_t.
  */
-typedef struct selog_selector {
+typedef struct selog_selector_s {
 	const char  *name;
 	unsigned int level;
 	unsigned int enabled;
-	struct selog_selector *chain;
+	struct selog_selector_s *chain;
 } selog_selector[1];
 
 #define SELINIT(name,level) {{ name, level, 0, NULL }}
@@ -91,8 +91,8 @@ typedef struct selog_selector {
  * The message specified by the user, including any prefix added by
  * selog_prep() or selog_trace() etc., lies between m and p.
  */
-typedef struct selog_buffer {
-	struct selog_selector *sel;
+typedef struct selog_buffer_s {
+	struct selog_selector_s *sel;
 	char *m, *p, b[1000];
 } selog_buffer[1];
 

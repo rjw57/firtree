@@ -50,6 +50,7 @@ ENDIF(MAGICKPP_FOUND)
 INCLUDE_DIRECTORIES(
 	${FIRTREE_TARGET_INCLUDES}
 	"${CMAKE_CURRENT_SOURCE_DIR}/../"
+	"${CMAKE_CURRENT_SOURCE_DIR}/../third-party/"
 )
 
 # Set platform-specific variables

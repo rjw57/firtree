@@ -26,33 +26,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern "C" {
+#include <selog/selog.h>
+}
+
 // ===============================================================================
 namespace Firtree {
 // ===============================================================================
 
+static selog_selector firtree_trace = SELINIT("firtree", SELOG_TRACE);
+static selog_selector firtree_error = SELINIT("firtree", SELOG_ERROR);
+static selog_selector firtree_warning = SELINIT("firtree", SELOG_WARNING);
+static selog_selector firtree_debug = SELINIT("firtree", SELOG_DEBUG);
+
 // ===============================================================================
-// The object monitor is a long-lived singleton whose job is to monitor the
-// allocated object count at exit and moan if it is non-zero.
-class ObjectMonitor {
+// The overseer is a long-lived singleton whose job is to monitor the
+// allocated object count at exit and moan if it is non-zero as well as initialise
+// the logging system, etc.
+class Overseer {
     public:
-        ObjectMonitor() 
+        Overseer() 
         {
-            // FIRTREE_DEBUG("Object monitor started.");
+            char *selog_config = getenv("FIRTREE_LOG_CONFIG");
+            selog_open((selog_config == NULL) ? "" : selog_config, NULL);
+
+            // FIRTREE_DEBUG("Log config: %s\n", selog_config);
+
+            FIRTREE_DEBUG("Object monitor started.");
         }
 
-        ~ObjectMonitor()
+        ~Overseer()
         {
-            // FIRTREE_DEBUG("Object monitor shutting down...");
+            FIRTREE_DEBUG("Object monitor shutting down...");
+
             if(ReferenceCounted::GetGlobalObjectCount() > 0)
             {
                 FIRTREE_WARNING("MEMORY LEAK! Allocated object count at exit "
-                        "is non-zero: %i.",
+                        "is non-zero: %lu.",
                         ReferenceCounted::GetGlobalObjectCount());
             }
         }
 };
 
-static ObjectMonitor g_ObjectMonitorSingleton;
+static Overseer g_OverseerSingleton;
 
 // ===============================================================================
 size_t ReferenceCounted::ObjectCount(0);
@@ -173,29 +189,45 @@ void Error(const char* file, int line, const char* func, const char* format, ...
     vsnprintf(message, size, format, args);
     va_end(args);
 
+    selog(firtree_error, "%s", message);
+
     throw ErrorException(message, file, line, func);
+}
+
+// ============================================================================
+void Trace(const char* file, int line, const char* func, const char* format, ...)
+{
+    va_list args;
+    selog_buffer buf;
+    selog_prep(buf, firtree_trace); 
+    va_start(args, format);
+    selog_addv(buf, format, args); 
+    va_end(args);
+    selog_write(buf);
 }
 
 // ============================================================================
 void Warning(const char* file, int line, const char* func, const char* format, ...)
 {
     va_list args;
-    fprintf(stderr, "%s:%i: [W] ",file,line);
+    selog_buffer buf;
+    selog_prep(buf, firtree_warning); 
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    selog_addv(buf, format, args); 
     va_end(args);
-    fprintf(stderr, "\n");
+    selog_write(buf);
 }
 
 // ============================================================================
 void Debug(const char* file, int line, const char* func, const char* format, ...)
 {
     va_list args;
-    fprintf(stderr, "%s:%i: [I] ",file,line);
+    selog_buffer buf;
+    selog_prep(buf, firtree_debug); 
     va_start(args, format);
-    vfprintf(stdout, format, args);
+    selog_addv(buf, format, args); 
     va_end(args);
-    fprintf(stdout, "\n");
+    selog_write(buf);
 }
 
 // ===============================================================================

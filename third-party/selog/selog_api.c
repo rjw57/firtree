@@ -46,7 +46,7 @@ selog_selector selog_config_error = SELINIT("log_config", SELOG_ERROR);
 /*
  * Chain of selectors that must be decondifured when we are reconfigured.
  */
-static struct selog_selector *sel_chain;
+static struct selog_selector_s *sel_chain;
 
 /*
  * The channel array.

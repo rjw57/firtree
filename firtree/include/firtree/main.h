@@ -171,6 +171,14 @@ void    Warning(const char* file, int line, const char* func, const char* format
 void    Debug(const char* file, int line, const char* func, const char* format, ...);
 ///@}
 
+///@{
+///     Report a trace message. The default implementation is
+///     to print a message to stdout. It takes printf-style arguments.
+#define FIRTREE_TRACE(...) do {Firtree::Trace(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
+void    Trace(const char* file, int line, const char* func, const char* format, ...);
+///@}
+
+
 // ============================================================================
 } // namespace Firtree 
 // ============================================================================

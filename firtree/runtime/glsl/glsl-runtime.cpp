@@ -38,7 +38,13 @@
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
-namespace Firtree { namespace GLSL {
+extern "C" { 
+#include <selog/selog.h>
+}
+
+namespace Firtree { 
+
+namespace GLSL {
 
 static OpenGLContext* _currentGLContext = NULL;
 static GLRenderer* _currentGLRenderer = NULL;
@@ -1866,7 +1872,8 @@ unsigned int OpenGLContext::GenTexture()
     m_ActiveTextures.push_back(texName);
     End();
 
-    // FIRTREE_DEBUG("Context: 0x%x, created texture %i.", this, texName);
+    FIRTREE_TRACE(
+            "OpenGLContext: 0x%x, created texture %i.", this, texName);
 
     return texName;
 }
@@ -1874,7 +1881,8 @@ unsigned int OpenGLContext::GenTexture()
 //=============================================================================
 void OpenGLContext::DeleteTexture(unsigned int texName)
 {
-    // FIRTREE_DEBUG("Context: 0x%x, asked to delete texture %i.", this, texName);
+    FIRTREE_TRACE(
+            "OpenGLContext: 0x%x, asked to delete texture %i.", this, texName);
 
     std::vector<unsigned int>::iterator i =
         find(m_ActiveTextures.begin(), m_ActiveTextures.end(), texName);
@@ -1897,13 +1905,15 @@ void OpenGLContext::Begin()
     GLSL::_currentGLContext = this;
 
     m_BeginDepth++;
-    // FIRTREE_DEBUG("0x%x: Begin()", this);
+
+    FIRTREE_TRACE("OpenGLContext: 0x%x: Begin()", this);
 }
 
 //=============================================================================
 void OpenGLContext::End()
 {
-    // FIRTREE_DEBUG("0x%x: End()", this);
+    FIRTREE_TRACE("OpenGLContext: 0x%x: End()", this);
+
     if(m_BeginDepth == 0)
     {
         FIRTREE_WARNING("Too many OpenGLContext::End() calls.");

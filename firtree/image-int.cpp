@@ -25,6 +25,7 @@
 #include <firtree/glsl-runtime.h>
 #include <internal/image-int.h>
 #include <internal/render-to-texture.h>
+#include <runtime/glsl/glsl-runtime-priv.h>
 
 #include <assert.h>
 #include <float.h>
@@ -47,6 +48,7 @@ ImageImpl::ImageImpl()
     ,   m_PreferredRepresentation(NoRepresentation)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_GLTextureCtx(NULL)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
@@ -62,6 +64,7 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
     ,   m_PreferredRepresentation(NoRepresentation)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_GLTextureCtx(NULL)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
@@ -85,11 +88,12 @@ ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copy)
+ImageImpl::ImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy)
     :   Image(imageRep, copy)
     ,   m_PreferredRepresentation(BitmapImageRep)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_GLTextureCtx(NULL)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
@@ -97,11 +101,13 @@ ImageImpl::ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copy)
     ,   m_ExtentProvider(NULL)
     ,   m_TextureRenderer(NULL)
 {
-    if(imageRep.ImageBlob == NULL) { return; }
-    if(imageRep.Stride < imageRep.Width) { return; }
-    if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) { return; }
+    if(imageRep->ImageBlob == NULL) { return; }
+    if(imageRep->Stride < imageRep->Width) { return; }
+    if(imageRep->Stride*imageRep->Height > imageRep->ImageBlob->GetLength()) {
+        return; 
+    }
 
-    m_BitmapRep = new Firtree::BitmapImageRep(imageRep, copy);
+    m_BitmapRep = BitmapImageRep::CreateFromBitmapImageRep(imageRep, copy);
 }
 
 //=============================================================================
@@ -110,6 +116,7 @@ ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
     ,   m_PreferredRepresentation(OpenGLTexture)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_GLTextureCtx(NULL)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(k)
@@ -131,6 +138,7 @@ ImageImpl::ImageImpl(ImageProvider* improv)
     ,   m_PreferredRepresentation(BitmapImageRep)
     ,   m_BitmapRep(NULL)
     ,   m_GLTexture(0)
+    ,   m_GLTextureCtx(NULL)
     ,   m_BaseImage(NULL)
     ,   m_BaseTransform(NULL)
     ,   m_Kernel(NULL)
@@ -147,16 +155,13 @@ ImageImpl::~ImageImpl()
 {
     if(m_GLTexture != 0)
     {
-        CHECK_GL( glDeleteTextures(1, (const GLuint*) &m_GLTexture) );
+        m_GLTextureCtx->DeleteTexture(m_GLTexture);
         m_GLTexture = 0;
     }
+    
+    FIRTREE_SAFE_RELEASE(m_GLTextureCtx);
 
-    if(m_BitmapRep != NULL)
-    {
-        delete m_BitmapRep;
-        m_BitmapRep = NULL;
-    }
-
+    FIRTREE_SAFE_RELEASE(m_BitmapRep);
     FIRTREE_SAFE_RELEASE(m_ImageProvider);
     FIRTREE_SAFE_RELEASE(m_BaseImage);
     FIRTREE_SAFE_RELEASE(m_BaseTransform);
@@ -169,23 +174,6 @@ ImageImpl::~ImageImpl()
 ImageImpl::PreferredRepresentation ImageImpl::GetPreferredRepresentation() const
 {
     return m_PreferredRepresentation;
-}
-
-//=============================================================================
-BitmapImageRep ImageImpl::WriteToBitmapData() 
-{
-    Firtree::BitmapImageRep* imageRep = GetAsBitmapImageRep();
-
-    if(imageRep == NULL)
-    {
-        Blob* imageBlob = Blob::CreateWithLength(0);
-        Firtree::BitmapImageRep imageRep(imageBlob, 0, 0, 0, 
-                Firtree::BitmapImageRep::Byte, false);
-        FIRTREE_SAFE_RELEASE(imageBlob);
-        return imageRep;
-    }
-
-    return *(imageRep);
 }
 
 //=============================================================================
@@ -218,8 +206,7 @@ Size2D ImageImpl::GetUnderlyingPixelSize() const
         return Size2D(w,h);
     }
 
-    // As everyone who has studied computer science knows, -1 == \infty. :)
-    return Size2D(-1,-1);
+    return Size2D::MakeInfinite();
 }
 
 
@@ -332,11 +319,20 @@ Kernel* ImageImpl::GetKernel() const
 }
 
 //=============================================================================
-unsigned int ImageImpl::GetAsOpenGLTexture()
+unsigned int ImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 {
     if(m_BaseImage != NULL)
     {
-        return m_BaseImage->GetAsOpenGLTexture();
+        return m_BaseImage->GetAsOpenGLTexture(ctx);
+    }
+
+    // If the context we used to create the texture doesn't match
+    // the one asked for, purge our cache.
+    if((m_GLTexture != 0) && (ctx != m_GLTextureCtx))
+    {
+        m_GLTextureCtx->DeleteTexture(m_GLTexture);
+        m_GLTexture = 0;
+        FIRTREE_SAFE_RELEASE(m_GLTextureCtx);
     }
 
     // If we have already created a texture but are driven by an
@@ -366,7 +362,13 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
     {
         Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
 
-        CHECK_GL( glGenTextures(1, (GLuint*) &m_GLTexture) );
+        m_GLTextureCtx = ctx;
+        FIRTREE_SAFE_RETAIN(m_GLTextureCtx);
+
+        m_GLTextureCtx->Begin();
+
+        m_GLTexture = m_GLTextureCtx->GenTexture();
+
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
         if(bir->Format == Firtree::BitmapImageRep::Float)
@@ -386,6 +388,8 @@ unsigned int ImageImpl::GetAsOpenGLTexture()
             FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
         }
 
+        m_GLTextureCtx->End();
+
         return m_GLTexture;
     }
     
@@ -399,8 +403,9 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
 {
     if(m_ImageProvider != NULL)
     {
-        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
-        m_BitmapRep = new Firtree::BitmapImageRep(m_ImageProvider->GetImageRep(), false);
+        FIRTREE_SAFE_RELEASE(m_BitmapRep);
+        m_BitmapRep = BitmapImageRep::CreateFromBitmapImageRep(
+                m_ImageProvider->GetImageRep(), false);
         return m_BitmapRep;
     }
 
@@ -428,9 +433,10 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
                 (void*)(imageBlob->GetBytes()));
 
         if(m_BitmapRep != NULL) { delete m_BitmapRep; }
-        m_BitmapRep = new Firtree::BitmapImageRep(imageBlob,
+        FIRTREE_SAFE_RELEASE(m_BitmapRep);
+        m_BitmapRep = BitmapImageRep::Create(imageBlob,
                 w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
-        imageBlob->Release();
+        FIRTREE_SAFE_RELEASE(imageBlob);
         
         return m_BitmapRep;
     }
@@ -440,13 +446,24 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         Rect2D extent = GetExtent();
         if(Rect2D::IsInfinite(extent))
         {
-            FIRTREE_ERROR("Cannot render inifite extent image to texture.");
+            FIRTREE_ERROR("Cannot render infinite extent image to texture.");
             return NULL;
         }
 
         Size2DU32 imageSize(ceil(extent.Size.Width), ceil(extent.Size.Height));
 
-        OpenGLContext* c = OpenGLContext::CreateNullContext();
+        OpenGLContext* c = GLSL::GetCurrentGLContext();
+
+        if(c == NULL)
+        {
+            FIRTREE_ERROR("Attempt to render image to bitmap outside of an OpenGL "
+                    "context.");
+        }
+
+        FIRTREE_SAFE_RETAIN(c);
+
+        c->Begin();
+
         if(m_TextureRenderer == NULL)
         {
             m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
@@ -462,16 +479,12 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
             }
         }
 
-        c->Begin();
         m_TextureRenderer->Begin();
         GLRenderer* renderer = GLRenderer::Create(m_TextureRenderer);
         renderer->Clear(0,0,0,0);
         renderer->RenderAtPoint(this, Point2D(0,0), extent);
         FIRTREE_SAFE_RELEASE(renderer);
         m_TextureRenderer->End();
-        c->End();
-
-        FIRTREE_SAFE_RELEASE(c);
 
         GLint w, h;
         CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_TextureRenderer->GetOpenGLTexture()) );
@@ -482,10 +495,13 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         CHECK_GL( glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
                 (void*)(imageBlob->GetBytes())) );
 
-        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
-        m_BitmapRep = new Firtree::BitmapImageRep(imageBlob,
+        c->End();
+        FIRTREE_SAFE_RELEASE(c);
+
+        FIRTREE_SAFE_RELEASE(m_BitmapRep);
+        m_BitmapRep = BitmapImageRep::Create(imageBlob,
                 w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
-        imageBlob->Release();
+        FIRTREE_SAFE_RELEASE(imageBlob);
         
         return m_BitmapRep;
     }

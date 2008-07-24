@@ -33,49 +33,69 @@
 namespace Firtree {
 
 //=============================================================================
-/// A structure encapsulating a bitmap image representation. A bitmap is an
+/// A class encapsulating a bitmap image representation. A bitmap is an
 /// array of component values in red, green, blue and alpha order. 
 /// Components are arranged in the array one after another forming a 
 /// four component 'pixel block'. Blocks are packed in the array in 
 /// left-to-right scanlines. The scanlines are packed in bottom-to-top order.
 /// This mirrors the format taken by glTexImage2D() and it's ilk.
-struct BitmapImageRep {
-    /// An enumeration for specifying the pixel format of a BitmapImageRep.
-    enum PixelFormat { 
-        Byte,
-        Float,
-    };
+class BitmapImageRep : public ReferenceCounted {
+    public:
+        /// An enumeration for specifying the pixel format of a BitmapImageRep.
+        enum PixelFormat { 
+            Byte,
+            Float,
+        };
 
-    Blob*           ImageBlob;  ///< A Blob containing the image data.
-    unsigned int    Width;      ///< The width of the image in pixels.
-    unsigned int    Height;     ///< The height of the image in pixels.
-    unsigned int    Stride;     ///< The length of one image row in bytes.
-    PixelFormat     Format;     ///< The image representation uses elements
-                                ///< of this type to encode pixel component values.
+    protected:
+        /// Protected constructors.
+        ///@{
+        BitmapImageRep(Blob* blob,
+                unsigned int width, unsigned int height,
+                unsigned int stride,
+                PixelFormat format,
+                bool copyData);
 
-    /// Constructor for a BitmapImageRep.
-    ///
-    /// \param blob The Blob object containing the image data.
-    /// \param width The width of the image in pixels.
-    /// \param height The height of the image in pixels.
-    /// \param stride The number of bytes in one row of the image.
-    /// \param format The format of one component of one pixel.
-    /// \param copyData If true, a deep copy of the data is made otherwise
-    ///                 the reference count of the blob is merely incremented.
-    BitmapImageRep(Blob* blob,
+        BitmapImageRep(const BitmapImageRep* rep, bool copyData);
+        ///@}
+
+    public:
+        virtual ~BitmapImageRep();
+
+        Blob*           ImageBlob;  ///< A Blob containing the image data.
+        unsigned int    Width;      ///< The width of the image in pixels.
+        unsigned int    Height;     ///< The height of the image in pixels.
+        unsigned int    Stride;     ///< The length of one image row in bytes.
+        PixelFormat     Format;     ///< The image representation uses elements
+        ///< of this type to encode pixel component values.
+
+        /// Constructor for a BitmapImageRep.
+        ///
+        /// \param blob The Blob object containing the image data.
+        /// \param width The width of the image in pixels.
+        /// \param height The height of the image in pixels.
+        /// \param stride The number of bytes in one row of the image.
+        /// \param format The format of one component of one pixel.
+        /// \param copyData If true, a deep copy of the data is made otherwise
+        ///                 the reference count of the blob is merely incremented.
+        static BitmapImageRep* Create(Blob* blob,
                 unsigned int width, unsigned int height,
                 unsigned int stride,
                 PixelFormat format = Byte,
                 bool copyData = false);
 
-    /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
-    ///
-    /// \param rep A reference to the BitmapImageRep containing the 
-    ///            bitmap image.
-    /// \param copyData If true, a deep copy of the bitmap is made.
-    BitmapImageRep(const BitmapImageRep& rep, bool copyData = false);
+        /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
+        ///
+        /// \param rep A reference to the BitmapImageRep containing the 
+        ///            bitmap image.
+        /// \param copyData If true, a deep copy of the bitmap is made.
+        static BitmapImageRep* CreateFromBitmapImageRep(const BitmapImageRep* rep,
+                bool copyData = false);
 
-    ~BitmapImageRep();
+        /// Write a copy of this image a file. If this image is infinite or
+        /// the file could not be written, this returns false. Otherwise it
+        /// returns true.
+        bool WriteToFile(const char* pFileName);
 };
 
 //=============================================================================
@@ -90,8 +110,11 @@ class ImageProvider : public ReferenceCounted
         /// returned from GetImageRep().
         virtual Size2D GetImageSize() const = 0;
 
-        /// Return a BitmapImageRep structure containing the image.
-        virtual const BitmapImageRep GetImageRep() const = 0;
+        /// Return a BitmapImageRep structure containing the image. This
+        /// is 'owned' by the ImageProvider insomuch as it is the 
+        /// ImageProvider's responsibility to call Release() on the 
+        /// BitmapImageRep*
+        virtual const BitmapImageRep* GetImageRep() const = 0;
 };
 
 //=============================================================================
@@ -105,7 +128,7 @@ class Image : public ReferenceCounted
         /// factory functions instead.
         Image();
         Image(const Image* im, AffineTransform* t);
-        Image(const BitmapImageRep& imageRep, bool copy);
+        Image(const BitmapImageRep* imageRep, bool copy);
         Image(Kernel* kernel, ExtentProvider* extentProvider);
         Image(ImageProvider* imageProvider);
         ///@}
@@ -126,7 +149,7 @@ class Image : public ReferenceCounted
         /// \param imageRep The BitmapImageRep encapsulating the image.
         /// \param copyData If true, a deep copy of the data is made otherwise
         ///                 the reference count of the blob is merely incremented.
-        static Image* CreateFromBitmapData(const BitmapImageRep& imageRep,
+        static Image* CreateFromBitmapData(const BitmapImageRep* imageRep,
                 bool copyData = true);
 
         /// Construct an image encapsulating the contents of a file. Returns
@@ -157,22 +180,6 @@ class Image : public ReferenceCounted
         /// Return the extent of this image (i.e. a rectangle covering all non
         /// transparent pixels).
         virtual Rect2D GetExtent() const = 0;
-
-        // ====================================================================
-        // MUTATING METHODS
-
-        /// Write a copy of this image to a bitmap and return a BitmapImageRep
-        /// structure describing this data. Returns an empty 0x0 image should
-        /// this image be infinite in extent.
-        /// Non-const because implementations may wish to cache the result.
-        virtual BitmapImageRep WriteToBitmapData() = 0;
-
-        /// Write a copy of this image a file. If this image is infinite or
-        /// the file could not be writte, this returns false. Otherwise it
-        /// returns true.
-        /// Non-const because implementations may wish to cache the result.
-        bool WriteToFile(const char* pFileName);
-
 
     protected:
 };

@@ -41,6 +41,18 @@ class GLSLSamplerParameter;
 class CompiledGLSLKernel;
 
 //=============================================================================
+/// Returns the current GL context being used for rendering or NULL if there
+/// is non. This only returns non-NULL when at least one context is within it's
+/// Begin()/End() bracket.
+OpenGLContext* GetCurrentGLContext();
+
+//=============================================================================
+/// Returns the current GLRenderer being used for rendering or NULL if there
+/// is non. This only returns non-NULL when an image is being rendered by an
+/// instance of GLRenderer.
+GLRenderer* GetCurrentGLRenderer();
+
+//=============================================================================
 GLSLSamplerParameter* CreateSampler(Image* im);
 
 //=============================================================================

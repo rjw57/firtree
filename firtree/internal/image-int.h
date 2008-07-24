@@ -51,7 +51,7 @@ class ImageImpl : public Image
         /// factory functions instead.
         ImageImpl();
         ImageImpl(const Image* im, AffineTransform* t);
-        ImageImpl(const Firtree::BitmapImageRep& imageRep, bool copyData);
+        ImageImpl(const Firtree::BitmapImageRep* imageRep, bool copyData);
         ImageImpl(Kernel* k, ExtentProvider* extentProvider);
         ImageImpl(ImageProvider* imageProvider);
         virtual ~ImageImpl();
@@ -94,14 +94,13 @@ class ImageImpl : public Image
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep WriteToBitmapData();
-
         /// These functions can potentially mutate the class since they will
         /// convert the image to the requested type 'on the fly'.
         ///@{
         
-        /// Return an OpenGL texture object handle containing this image.
-        unsigned int GetAsOpenGLTexture();
+        /// Return an OpenGL texture object handle containing this image for
+        /// the specified OpenGL context.
+        unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
 
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
@@ -120,6 +119,9 @@ class ImageImpl : public Image
         /// The image representation as an OpenGL texture or 0 if there is 
         /// none yet.
         unsigned int        m_GLTexture;
+
+        /// The OpenGL context we created m_GLTexture in.
+        OpenGLContext*      m_GLTextureCtx;
 
         ///@{
         /// If this image is actually the result of transforming another

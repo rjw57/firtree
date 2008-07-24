@@ -32,12 +32,76 @@
 
 #include <firtree/internal/image-int.h>
 #include <firtree/internal/lru-cache.h>
+#include <firtree/internal/pbuffer.h>
 
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
 namespace Firtree { namespace GLSL {
+
+static OpenGLContext* _currentGLContext = NULL;
+static GLRenderer* _currentGLRenderer = NULL;
+
+//=============================================================================
+/// Pubffer backed context
+class PBufferContext : public OpenGLContext
+{
+    protected:
+        PBufferContext(uint32_t w, uint32_t h) 
+            :   OpenGLContext()
+            ,   m_PBuffer(NULL)
+        {
+            m_PBuffer = new Internal::Pbuffer();
+            bool rv = m_PBuffer->CreateContext(w,h,
+                    Internal::R8G8B8A8);
+            if(!rv)
+            {
+                FIRTREE_ERROR("Error creating off-screen pbuffer.");
+                return;
+            }
+        }
+
+    public:
+        virtual ~PBufferContext()
+        {
+            delete m_PBuffer;
+        }
+
+        virtual void Begin()
+        {
+            OpenGLContext::Begin();
+            if(GetBeginDepth() == 1) { 
+                m_PBuffer->StartRendering(); 
+            }
+        }
+
+        virtual void End()
+        {
+            if(GetBeginDepth() == 1) { 
+                m_PBuffer->SwapBuffers();
+                m_PBuffer->EndRendering(); 
+            }
+            OpenGLContext::End();
+        }
+
+    private:
+        Internal::Pbuffer*  m_PBuffer;
+
+        friend class OpenGLContext;
+};
+
+//=============================================================================
+OpenGLContext* GetCurrentGLContext()
+{
+    return _currentGLContext;
+}
+
+//=============================================================================
+GLRenderer* GetCurrentGLRenderer()
+{
+    return _currentGLRenderer;
+}
 
 //=============================================================================
 void LinkShader(std::string& dest, GLSLSamplerParameter* sampler);
@@ -52,15 +116,6 @@ const char* GetInfoLogForSampler(GLSLSamplerParameter* sampler);
 //=============================================================================
 static void EnsureContext(OpenGLContext* context) 
 {
-    if(context != NULL)
-    {
-        context->EnsureCurrent();
-    } else {
-        FIRTREE_WARNING("Attempt to render from sampler without calling "
-                "SetOpenGLContext() first.");
-        assert(false);
-    }
-
     static bool initialised = false;
     if(!initialised)
     {
@@ -405,15 +460,20 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     // Clear up any cached shader programs
     if(m_CachedProgramObject > 0)
     {
+        m_GLContext->Begin();
         EnsureContext(m_GLContext);
+        glDeleteObjectARB(m_CachedProgramObject);
         m_CachedProgramObject = -1;
+        m_GLContext->End();
     }
 
     if(m_CachedFragmentShaderObject > 0)
     {
+        m_GLContext->Begin();
         EnsureContext(m_GLContext);
         glDeleteObjectARB(m_CachedFragmentShaderObject);
         m_CachedFragmentShaderObject = -1;
+        m_GLContext->End();
     }
 
     FIRTREE_SAFE_RELEASE(m_RepresentedImage);
@@ -446,6 +506,7 @@ void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
 //=============================================================================
 int GLSLSamplerParameter::GetShaderProgramObject()
 {
+    m_GLContext->Begin();
     EnsureContext(m_GLContext);
     
     // Compute the digest of this shader
@@ -468,6 +529,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     // If our cached progrm is valid, return it.
     if(cachedProgramValid)
     {
+        m_GLContext->End();
         return m_CachedProgramObject;
     }
 
@@ -492,6 +554,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     if(m_CachedFragmentShaderObject == 0)
     {
         fprintf(stderr, "Error creating shader object.\n");
+        m_GLContext->End();
         return 0;
     }
 
@@ -515,6 +578,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         FIRTREE_ERROR("Error compiling shader: %s\nSource: %s\n", 
                 log, pSrc);
         free(log);
+        m_GLContext->End();
         return 0;
     }
 
@@ -534,11 +598,14 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         CHECK_GL( glGetInfoLogARB(m_CachedProgramObject, logLen, &logLen, log) );
         FIRTREE_ERROR("Error linking shader: %s\n", log);
         free(log);
+        m_GLContext->End();
         return 0;
     }
 
     // Copy the shader's digest into our cache
     memcpy(m_CachedShaderDigest, digest, 20);
+
+    m_GLContext->End();
 
     return m_CachedProgramObject;
 }
@@ -1086,6 +1153,7 @@ void KernelSamplerParameter::BuildSampleGLSL(std::string& dest,
 //=============================================================================
 void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 {
+    GetOpenGLContext()->Begin();
     EnsureContext(GetOpenGLContext());
 
     const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
@@ -1243,6 +1311,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
             FIRTREE_ERROR("Unknown kernel parameter type.");
         }
     }
+
+    GetOpenGLContext()->End();
 }
 
 //=============================================================================
@@ -1362,6 +1432,7 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
     if(!IsValid())
         return;
 
+    GetOpenGLContext()->Begin();
     EnsureContext(GetOpenGLContext());
 
     std::string paramName(GetBlockPrefix());
@@ -1391,6 +1462,7 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
         }
     }
+    GetOpenGLContext()->End();
 }
 
 //=============================================================================
@@ -1401,7 +1473,7 @@ unsigned int TextureSamplerParameter::GetGLTextureObject() const
         return 0;
     }
 
-    return m_Image->GetAsOpenGLTexture();
+    return m_Image->GetAsOpenGLTexture(GetOpenGLContext());
 }
 
 //=============================================================================
@@ -1543,25 +1615,60 @@ void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
 }
 
 //=============================================================================
+BitmapImageRep* GLRenderer::CreateBitmapImageRepFromImage(Image* image)
+{
+    m_OpenGLContext->Begin();
+    return dynamic_cast<Internal::ImageImpl*>(image)->GetAsBitmapImageRep();
+    m_OpenGLContext->End();
+}
+
+//=============================================================================
+bool GLRenderer::WriteImageToFile(Image* image, const char* pFileName)
+{
+    BitmapImageRep* bir = CreateBitmapImageRepFromImage(image);
+    if(bir == NULL)
+    {
+        return false;
+    }
+
+    bool rv = bir->WriteToFile(pFileName);
+    FIRTREE_SAFE_RELEASE(bir);
+
+    return rv;
+}
+
+//=============================================================================
 void GLRenderer::Clear(float r, float g, float b, float a)
 {
     if(m_OpenGLContext != NULL)
     {
-        m_OpenGLContext->EnsureCurrent();
+        m_OpenGLContext->Begin();
     }
 
     CHECK_GL( glClearColor(r,g,b,a) );
     CHECK_GL( glClear(GL_COLOR_BUFFER_BIT) );
+
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->End();
+    }
 }
 
 //=============================================================================
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
-    if(m_OpenGLContext != NULL)
+    if(m_OpenGLContext == NULL)
     {
-        m_OpenGLContext->Begin();
+        FIRTREE_ERROR("Renderer told to use NULL context.");
+        return;
     }
+
+    m_OpenGLContext->Begin();
+
+    GLRenderer* oldRenderer = GLSL::GetCurrentGLRenderer();
+
+    GLSL::_currentGLRenderer = this;
 
     CHECK_GL( glPushAttrib(GL_DEPTH_BUFFER_BIT) );
     CHECK_GL( glDisable(GL_DEPTH_TEST) );
@@ -1582,6 +1689,8 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     GLenum err;
     if(sampler == NULL) { 
         CHECK_GL( glPopAttrib() );
+        m_OpenGLContext->End();
+        GLSL::_currentGLRenderer = oldRenderer;
         return; 
     }
 
@@ -1589,13 +1698,15 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         GLSL::GLSLSamplerParameter::ExtractFrom(sampler);
     if(glslSampler == NULL) { 
         CHECK_GL( glPopAttrib() );
+        m_OpenGLContext->End();
+        GLSL::_currentGLRenderer = oldRenderer;
         return; 
     }
 
     glslSampler->SetOpenGLContext(m_OpenGLContext);
 
     float vp[4];
-    glGetFloatv(GL_VIEWPORT, vp);
+    CHECK_GL( glGetFloatv(GL_VIEWPORT, vp) );
 
     Rect2D viewportRect = Rect2D(vp[0], vp[1], vp[2], vp[3]);
 
@@ -1637,25 +1748,29 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         // Do nothing if we've clipped everything away.
         if(Rect2D::IsZero(renderRect))
         {
-            CHECK_GL( glPopAttrib() );
+           // CHECK_GL( glPopAttrib() );
+            m_OpenGLContext->End();
+            GLSL::_currentGLRenderer = oldRenderer;
             return;
         }
     }
 
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);      
+    CHECK_GL( glDisable(GL_DEPTH_TEST) );
+    CHECK_GL( glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA) );      
     // This causes a crash on OSX. No idea why :(
-    //  `-> glBlendEquation(GL_FUNC_ADD);
-    glEnable(GL_BLEND);
+    //  `-> CHECK_GL( glBlendEquation(GL_FUNC_ADD) );
+    CHECK_GL( glEnable(GL_BLEND) );
 
     int program = glslSampler->GetShaderProgramObject();
 
     if(program > 0)
     {
-        glUseProgramObjectARB(program);
+        CHECK_GL( glUseProgramObjectARB(program) );
         if((err = glGetError()) != GL_NO_ERROR)
         {
             CHECK_GL( glPopAttrib() );
+            m_OpenGLContext->End();
+            GLSL::_currentGLRenderer = oldRenderer;
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
             return;
         }
@@ -1669,16 +1784,17 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             renderRect.MaxX(), renderRect.MaxY());
 #endif
   
-    glActiveTextureARB(GL_TEXTURE0);
+    CHECK_GL( glActiveTextureARB(GL_TEXTURE0) );
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    CHECK_GL( glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( glPushMatrix() );
+    CHECK_GL( glLoadIdentity() );
+    CHECK_GL( glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
+    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( glPushMatrix() );
+    CHECK_GL( glLoadIdentity() );
 
+#if 1
     glBegin(GL_QUADS);
     glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MinY());
@@ -1687,33 +1803,33 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MaxY());
     glVertex2f(renderRect.MaxX(), renderRect.MaxY());
     glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
-    glVertex2f(renderRect.MaxX(), renderRect.MinY());
-    glEnd();
+    glVertex2f(renderRect.MaxX(), renderRect.MinY()); 
+    CHECK_GL( glEnd() );
+#endif
 
     // HACK: display render rectangle
 #if 0
-    glUseProgramObjectARB(0);
-    glColor3f(1,1,1);
+    CHECK_GL( glUseProgramObjectARB(0) );
+    CHECK_GL( glColor3f(1,1,1) );
     glBegin(GL_LINE_STRIP);
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MaxY());
     glVertex2f(renderRect.MaxX(), renderRect.MaxY());
     glVertex2f(renderRect.MaxX(), renderRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MinY());
-    glEnd();
+    CHECK_GL( glEnd() );
 #endif
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( glPopMatrix() );
+    CHECK_GL( glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( glPopMatrix() );
 
     CHECK_GL( glPopAttrib() );
 
-    if(m_OpenGLContext != NULL)
-    {
-        m_OpenGLContext->End();
-    }
+    m_OpenGLContext->End();
+    
+    GLSL::_currentGLRenderer = oldRenderer;
 }
 
 //=============================================================================
@@ -1731,39 +1847,84 @@ OpenGLContext::~OpenGLContext()
         FIRTREE_WARNING("OpenGLContext destroyed with unbalanced calls to "
                 "Begin()/End().");
     }
+
+    while(m_ActiveTextures.size() > 0)
+    {
+        FIRTREE_WARNING("Deleting orphaned texture: %i.", 
+                m_ActiveTextures.front());
+        DeleteTexture(m_ActiveTextures.front());
+    }
 }
 
 //=============================================================================
-void OpenGLContext::EnsureCurrent()
+unsigned int OpenGLContext::GenTexture()
 {
-    if(m_BeginDepth == 0)
+    unsigned int texName = 0;
+
+    Begin();
+    glGenTextures(1, &texName);
+    m_ActiveTextures.push_back(texName);
+    End();
+
+    // FIRTREE_DEBUG("Context: 0x%x, created texture %i.", this, texName);
+
+    return texName;
+}
+
+//=============================================================================
+void OpenGLContext::DeleteTexture(unsigned int texName)
+{
+    // FIRTREE_DEBUG("Context: 0x%x, asked to delete texture %i.", this, texName);
+
+    std::vector<unsigned int>::iterator i =
+        find(m_ActiveTextures.begin(), m_ActiveTextures.end(), texName);
+    if(i == m_ActiveTextures.end())
     {
-        FIRTREE_WARNING("OpenGLContext::EnsureCurrent() called outside of "
-                "Begin()/End().");
+        FIRTREE_WARNING("Attempt to delete texture not created by this context.");
+    } else {
+        m_ActiveTextures.erase(i);
     }
+
+    Begin();
+    glDeleteTextures(1, &texName);
+    End();
 }
 
 //=============================================================================
 void OpenGLContext::Begin()
 {
+    m_PriorContexts.push(GLSL::_currentGLContext);
+    GLSL::_currentGLContext = this;
+
     m_BeginDepth++;
+    // FIRTREE_DEBUG("0x%x: Begin()", this);
 }
 
 //=============================================================================
 void OpenGLContext::End()
 {
+    // FIRTREE_DEBUG("0x%x: End()", this);
     if(m_BeginDepth == 0)
     {
         FIRTREE_WARNING("Too many OpenGLContext::End() calls.");
     } else {
         m_BeginDepth--;
     }
+
+    GLSL::_currentGLContext = m_PriorContexts.top();
+    m_PriorContexts.pop();
 }
 
 //=============================================================================
 OpenGLContext* OpenGLContext::CreateNullContext()
 {
     return new OpenGLContext();
+}
+
+//=============================================================================
+OpenGLContext* OpenGLContext::CreateOffScreenContext(uint32_t w, uint32_t h)
+{
+    return new GLSL::PBufferContext(w, h);
 }
 
 } // namespace Firtree

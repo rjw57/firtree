@@ -44,6 +44,9 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 		self._offset = (0, 0)
 
 		self._vpSize = (0, 0)
+	
+	def get_context(self):
+		return self._context
 
 	def refresh(self):
 		self.window.invalidate_rect(self.allocation, False)

@@ -69,9 +69,11 @@ class RenderTextureContext : public Firtree::OpenGLContext
         // ====================================================================
         // MUTATING METHODS
 
-        virtual void EnsureCurrent();
+        /// Overridden from OpenGLContext
+        ///@{
         virtual void Begin();
         virtual void End();
+        ///@}
 
     protected:
         Firtree::OpenGLContext*     m_ParentContext;

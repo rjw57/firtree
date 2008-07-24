@@ -30,6 +30,21 @@ namespace Firtree {
 using namespace Internal;
 
 //=============================================================================
+BitmapImageRep* BitmapImageRep::Create(Blob* blob,
+    unsigned int width, unsigned int height, unsigned int stride,
+    PixelFormat format, bool copy)
+{
+    return new BitmapImageRep(blob, width, height, stride, format, copy);
+}
+
+//=============================================================================
+BitmapImageRep* BitmapImageRep::CreateFromBitmapImageRep(
+        const BitmapImageRep* rep, bool copyData)
+{
+    return new BitmapImageRep(rep, copyData);
+}
+
+//=============================================================================
 BitmapImageRep::BitmapImageRep(Blob* blob,
     unsigned int width, unsigned int height, unsigned int stride,
     PixelFormat format, bool copy)
@@ -51,21 +66,21 @@ BitmapImageRep::BitmapImageRep(Blob* blob,
 }
 
 //=============================================================================
-BitmapImageRep::BitmapImageRep(const BitmapImageRep& rep, bool copy)
-    :   Width(rep.Width)
-    ,   Height(rep.Height)
-    ,   Stride(rep.Stride)
-    ,   Format(rep.Format)
+BitmapImageRep::BitmapImageRep(const BitmapImageRep* rep, bool copy)
+    :   Width(rep->Width)
+    ,   Height(rep->Height)
+    ,   Stride(rep->Stride)
+    ,   Format(rep->Format)
 {
-    if(rep.ImageBlob == NULL)
+    if(rep->ImageBlob == NULL)
         return;
 
     if(copy) 
     {
-        ImageBlob = rep.ImageBlob->Copy();
+        ImageBlob = rep->ImageBlob->Copy();
     } else {
-        rep.ImageBlob->Retain();
-        ImageBlob = rep.ImageBlob;
+        rep->ImageBlob->Retain();
+        ImageBlob = rep->ImageBlob;
     }
 }
 
@@ -88,7 +103,7 @@ Image::Image(const Image* im, AffineTransform* t)
 }
 
 //=============================================================================
-Image::Image(const BitmapImageRep& imageRep, bool copy)
+Image::Image(const BitmapImageRep* imageRep, bool copy)
     :   ReferenceCounted()
 {
 }
@@ -125,12 +140,12 @@ Image* Image::CreateFromImageWithTransform(const Image* im, AffineTransform* t)
 }
 
 //=============================================================================
-Image* Image::CreateFromBitmapData(const BitmapImageRep& imageRep,
+Image* Image::CreateFromBitmapData(const BitmapImageRep* imageRep,
                 bool copyData)
 {
-    if(imageRep.ImageBlob == NULL) { return NULL; }
-    if(imageRep.Stride < imageRep.Width) { return NULL; }
-    if(imageRep.Stride*imageRep.Height > imageRep.ImageBlob->GetLength()) 
+    if(imageRep->ImageBlob == NULL) { return NULL; }
+    if(imageRep->Stride < imageRep->Width) { return NULL; }
+    if(imageRep->Stride*imageRep->Height > imageRep->ImageBlob->GetLength()) 
     {
         return NULL; 
     }
@@ -174,8 +189,10 @@ Image* Image::CreateFromFile(const char* pFileName)
     
     wand = DestroyMagickWand(wand);
 
-    Image* rv = Image::CreateFromBitmapData(
-        BitmapImageRep(imageBlob, w, h, w*4, BitmapImageRep::Byte, false), false);
+    BitmapImageRep* bir = BitmapImageRep::Create(imageBlob, w, h, w*4, 
+            BitmapImageRep::Byte, false);
+    Image* rv = Image::CreateFromBitmapData(bir, false);
+    FIRTREE_SAFE_RELEASE(bir);
 
     imageBlob->Release();
 
@@ -207,13 +224,9 @@ Image* Image::CreateFromImageProvider(ImageProvider* improv)
 }
 
 //=============================================================================
-bool Image::WriteToFile(const char* pFileName) 
+bool BitmapImageRep::WriteToFile(const char* pFileName) 
 {
     if(pFileName == NULL) { return false; }
-
-    Rect2D extent = GetExtent();
-
-    if(Rect2D::IsInfinite(extent)) { return false; }
 
     MagickWand* wand = NewMagickWand();
     assert(wand != NULL);
@@ -221,16 +234,14 @@ bool Image::WriteToFile(const char* pFileName)
     PixelWand* bg_pxl_wnd = NewPixelWand();
     PixelSetColor( bg_pxl_wnd, "black" );
 
-    BitmapImageRep imageRep = WriteToBitmapData();
-
-    if((imageRep.Width == 0) || (imageRep.Height == 0))
+    if((Width == 0) || (Height == 0))
     {
         wand = DestroyMagickWand(wand);
         return false;
     }
 
-    MagickBooleanType status = MagickNewImage(wand, imageRep.Width,
-            imageRep.Height, bg_pxl_wnd);
+    MagickBooleanType status = MagickNewImage(wand, Width,
+            Height, bg_pxl_wnd);
     if(status == MagickFalse)
     {
         FIRTREE_WARNING("Could not create image for writing.");
@@ -241,35 +252,35 @@ bool Image::WriteToFile(const char* pFileName)
     bg_pxl_wnd = DestroyPixelWand(bg_pxl_wnd);
 
     Blob* outputBufferBlob = 
-        Blob::CreateWithLength(imageRep.Width * imageRep.Height * 4);
+        Blob::CreateWithLength(Width * Height * 4);
 
     uint8_t* outBuf = const_cast<uint8_t*>(outputBufferBlob->GetBytes());
-    uint8_t* inBuf = const_cast<uint8_t*>(imageRep.ImageBlob->GetBytes());
+    uint8_t* inBuf = const_cast<uint8_t*>(ImageBlob->GetBytes());
 
-    for(unsigned int row=0; row < imageRep.Height; row++)
+    for(unsigned int row=0; row < Height; row++)
     {
-        uint8_t* outRow = outBuf + (row * imageRep.Width * 4);
-        uint8_t* inRow = inBuf + (row * imageRep.Stride);
+        uint8_t* outRow = outBuf + (row * Width * 4);
+        uint8_t* inRow = inBuf + (row * Stride);
 
         float* inFloatRow = reinterpret_cast<float*>(inRow);
 
-        for(unsigned int col=0; col < imageRep.Width; col++)
+        for(unsigned int col=0; col < Width; col++)
         {
             float r,g,b,a;
 
-            if(imageRep.Format == BitmapImageRep::Float)
+            if(Format == BitmapImageRep::Float)
             {
                 r = inFloatRow[(col<<2)];
                 g = inFloatRow[(col<<2)+1];
                 b = inFloatRow[(col<<2)+2];
                 a = inFloatRow[(col<<2)+3];
-            } else if(imageRep.Format == BitmapImageRep::Byte) {
+            } else if(Format == BitmapImageRep::Byte) {
                 r = (1.f/255.f) * inRow[(col<<2)];
                 g = (1.f/255.f) * inRow[(col<<2)+1];
                 b = (1.f/255.f) * inRow[(col<<2)+2];
                 a = (1.f/255.f) * inRow[(col<<2)+3];
             } else {
-                FIRTREE_ERROR("Unknown bitmap image rep format: %i", imageRep.Format);
+                FIRTREE_ERROR("Unknown bitmap image rep format: %i", Format);
             }
 
             // Un pre-multiply
@@ -290,8 +301,8 @@ bool Image::WriteToFile(const char* pFileName)
         }
     }
 
-    MagickSetImagePixels(wand, 0, 0, imageRep.Width,
-            imageRep.Height, "RGBA", CharPixel, 
+    MagickSetImagePixels(wand, 0, 0, Width,
+            Height, "RGBA", CharPixel, 
             const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
 
     // A bitmap image rep stores the bottom-most row as row 0. Flip

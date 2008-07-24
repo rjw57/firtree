@@ -26,6 +26,8 @@
 #include <firtree/kernel.h>
 #include <firtree/image.h>
 
+#include <stack>
+
 namespace Firtree { 
 
 namespace Internal { 
@@ -55,18 +57,20 @@ class OpenGLContext : public ReferenceCounted
         /// MakeCurrent() is called.
         static OpenGLContext* CreateNullContext();
 
+        /// Create an off-screen pbuffer backed 8-bit rendering context which
+        /// is of the specified size.
+        static OpenGLContext* CreateOffScreenContext(uint32_t width,
+                uint32_t height);
+
         // ====================================================================
         // MUTATING METHODS
         
-        /// Ensure this context is current. Note that this might well be called
-        /// an awful lot so if it is an expensive operation, it might well
-        /// be worth ensuring it only swaps the context when necessary.
-        /// The default implementation throws an error if this is called outside
-        /// of a Begin()/End() pair, i.e. when m_BeginDepth == 0.
-        ///
-        /// Sub classes sould be careful to call this implementation in their
-        /// overridden methods.
-        virtual void EnsureCurrent();
+        /// Create a new texture within this context and return it's OpenGL
+        /// name.
+        unsigned int GenTexture();
+        
+        /// Delete a texture previously created via GenTexture();
+        void DeleteTexture(unsigned int texName);
 
         /// Begin rendering into this context.
         ///
@@ -88,6 +92,14 @@ class OpenGLContext : public ReferenceCounted
         /// This is initially 0 on construction and is incremented once for
         /// every call to Begin() and decremented once for each call to End().
         uint32_t    m_BeginDepth;
+
+        /// A vector of textures created within this context which are yet
+        /// to be destroyed.
+        std::vector<unsigned int> m_ActiveTextures;
+
+        /// Each call to Begin() pushes the currently active context to this
+        /// stack, each call to End() pops it.
+        std::stack<OpenGLContext*> m_PriorContexts;
 };
 
 //=============================================================================
@@ -124,6 +136,16 @@ class GLRenderer : public ReferenceCounted {
 
         /// Clear the context with the specified color
         void Clear(float r, float g, float b, float a);
+
+        /// Render the passed image into a BitmapImageRep, returning
+        /// NULL if the image cannot be rendered (e.g. if it has
+        /// infinite extent).
+        /// The BitmapImageRep should be Release()-ed afterwards.
+        BitmapImageRep* CreateBitmapImageRepFromImage(Image* image);
+
+        /// Convenience wrapper which renders an image into a bitmap
+        /// and writes it to a file. Returns false if the operation failed.
+        bool WriteImageToFile(Image* image, const char* pFileName);
 
         /// Render the passed image into the current OpenGL context
         /// in the rectangle destRect, using the pixels from srcRect in

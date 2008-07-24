@@ -55,6 +55,9 @@ using namespace Firtree;
 %newobject Firtree::Image::CreateFromKernel;
 %newobject Firtree::Image::CreateFromImageProvider;
 
+%newobject Firtree::BitmapImageRep::Create;
+%newobject Firtree::BitmapImageRep::CreateFromBitmapImageRep;
+
 %newobject Firtree::Parameter::Create;
 
 %newobject Firtree::AffineTransform::Identity;
@@ -68,6 +71,7 @@ using namespace Firtree;
 %newobject Firtree::OpenGLContext::CreateOffScreenContext;
 
 %newobject Firtree::GLRenderer::Create;
+%newobject Firtree::GLRenderer::CreateBitmapImageRepFromImage;
 
 %newobject Firtree::ExtentProvider::CreateStandardExtentProvider;
 

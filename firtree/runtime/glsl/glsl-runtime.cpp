@@ -1863,7 +1863,7 @@ unsigned int OpenGLContext::GenTexture()
     unsigned int texName = 0;
 
     Begin();
-    glGenTextures(1, &texName);
+    glGenTextures(1, reinterpret_cast<GLuint*>(&texName));
     m_ActiveTextures.push_back(texName);
     End();
 
@@ -1889,7 +1889,7 @@ void OpenGLContext::DeleteTexture(unsigned int texName)
     }
 
     Begin();
-    glDeleteTextures(1, &texName);
+    glDeleteTextures(1, reinterpret_cast<GLuint*>(&texName));
     End();
 }
 

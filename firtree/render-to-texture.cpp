@@ -95,7 +95,8 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     GLint prevFb = 0;
     CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &prevFb) );
 
-    CHECK_GL( glGenFramebuffersEXT(1, &m_OpenGLFrameBufferName) );
+    CHECK_GL( glGenFramebuffersEXT(1, 
+                reinterpret_cast<GLuint*>(&m_OpenGLFrameBufferName)) );
     CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_OpenGLFrameBufferName) );
     CHECK_GL( glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
                 GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 
@@ -120,7 +121,8 @@ RenderTextureContext::~RenderTextureContext()
     if(m_OpenGLFrameBufferName != 0)
     {
         EnsureContextIsCurrent(m_ParentContext);
-        CHECK_GL( glDeleteFramebuffersEXT(1, &m_OpenGLFrameBufferName) );
+        CHECK_GL( glDeleteFramebuffersEXT(1,
+                   reinterpret_cast<GLuint*>(&m_OpenGLFrameBufferName)) );
         m_OpenGLFrameBufferName = 0;
     }
 

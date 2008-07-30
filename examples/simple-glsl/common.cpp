@@ -28,8 +28,6 @@
 #include <firtree/platform.h>
 #include <firtree/opengl.h>
 
-#include <wand/magick_wand.h>
-
 /** 
  * This file contains the common routines used by (almost) all of the test
  * programs. 
@@ -80,62 +78,6 @@ void mouse_cb(int button, int state, int x, int y);
 void motion_cb(int x, int y);
 
 void init_cb(); 
-
-// ============================================================================
-bool InitialiseTextureFromFile(unsigned int texObj, const char* pFileName)
-{
-    GLenum err;
-    MagickWand* wand = NewMagickWand();
-    MagickBooleanType status = MagickReadImage(wand, pFileName);
-    if(status == MagickFalse)
-    {
-        FIRTREE_WARNING("Could not read image from %s.", pFileName);
-        wand = DestroyMagickWand(wand);
-        return false;
-    }
-
-    MagickFlipImage(wand);
-
-    unsigned int w = MagickGetImageWidth(wand);
-    unsigned int h = MagickGetImageHeight(wand);
-
-    glBindTexture(GL_TEXTURE_2D, texObj);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    err = glGetError();
-    if(err != GL_NO_ERROR)
-    {
-        FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
-        wand = DestroyMagickWand(wand);
-        return false;
-    }
-
-    uint8_t* image = new uint8_t[w * h * 4];
-    MagickGetImagePixels(wand, 0, 0, w, h, "RGBA", CharPixel, image);
-
-    for(int i=0; i<w*h; i++)
-    {
-        uint8_t* pixel = image + (i*4);
-        float alpha = ((float)(pixel[3]) / 255.0f);
-        pixel[0] *= alpha;
-        pixel[1] *= alpha;
-        pixel[2] *= alpha;
-    }
-    
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
-    delete [] image;
-
-    wand = DestroyMagickWand(wand);
-
-    err = glGetError();
-    if(err != GL_NO_ERROR)
-    {
-        FIRTREE_DEBUG("GL Error: %s", gluErrorString(err));
-        return false;
-    }
-
-    return true;
-}
 
 void idle_cb() {
   int dt;

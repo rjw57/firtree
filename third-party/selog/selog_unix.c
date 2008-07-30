@@ -512,7 +512,12 @@ open_init(selog_chan *c, struct iovec a) {
 	}
 
 	hostname = iovec(h);
+#ifdef __APPLE__
+	// HACK: OSX doesn't have __progname
+	progname = iovec("selog");
+#else
 	progname = iovec(__progname);
+#endif
 
 	c->write = write_init;
 	c->close = NULL;

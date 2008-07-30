@@ -50,6 +50,7 @@
 #  include <GL/glew.h>
 # endif
 # include <OpenGL/gl.h>
+# include <AGL/agl.h>
 # include <OpenGL/glext.h>
 # include <GLUT/glut.h>
 #elif defined(FIRTREE_WIN32)

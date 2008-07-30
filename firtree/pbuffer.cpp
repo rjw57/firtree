@@ -200,6 +200,147 @@ class PbufferGLXImpl : public PbufferPlatformImpl
 };
 #endif
 
+#if defined(FIRTREE_APPLE)
+// ============================================================================
+//  PBUFFER AGL IMPLEMENTATION
+// ============================================================================
+class PbufferAGLImpl : public PbufferPlatformImpl
+{
+    public:
+//      =======================================================================
+        PbufferAGLImpl()
+            : m_IsCurrent(false)
+            , m_AGLContext(NULL)  
+            , m_AGLPbuffer(NULL)  
+        { }
+
+//      =======================================================================
+        virtual ~PbufferAGLImpl() 
+        {
+            aglDestroyPBuffer(m_AGLPbuffer);
+            aglDestroyContext(m_AGLContext);
+        }
+
+//      =======================================================================
+        OSStatus AGLReportError(void)
+
+        {
+            GLenum err = aglGetError();
+
+            if (AGL_NO_ERROR != err) {
+                FIRTREE_ERROR("AGL: %s",(char *) aglErrorString(err));
+            }
+
+            if (err == AGL_NO_ERROR)
+                return noErr;
+            else
+                return (OSStatus) err;
+        }
+        
+
+//      =======================================================================
+        virtual bool CreateContext(unsigned int width, unsigned int height,
+                PixelFormat format, Pbuffer::Flags flags)
+        {
+            // AGL only supports RGBA visuals and, for the moment, we only
+            // support 8-bit ones.
+            if((format != R8G8B8A8) && (format != R8G8B8))
+                return false;
+
+            GLint layout = 0;
+            switch(format)
+            {
+                case R8G8B8A8:
+                    layout = AGL_RGBA;
+                    break;
+                case R8G8B8:
+                    layout = AGL_RGBA;
+                    break;
+                default:
+                    FIRTREE_ERROR("Format not supported.");
+                    break;
+            };
+
+            OSStatus err = noErr;
+            GLint attributes[] =  { 
+                layout,
+                AGL_DOUBLEBUFFER,
+                AGL_DEPTH_SIZE, 24,
+                AGL_NONE 
+            };
+
+            AGLPixelFormat myAGLPixelFormat;
+
+            myAGLPixelFormat = aglChoosePixelFormat (NULL, 0, attributes);
+
+            err = AGLReportError ();
+
+            if (myAGLPixelFormat) {
+                m_AGLContext = aglCreateContext (myAGLPixelFormat, NULL);
+
+                err = AGLReportError ();
+            }
+
+            if(!aglCreatePBuffer(width, height, GL_TEXTURE_RECTANGLE_EXT,
+                        GL_RGBA, 0, &m_AGLPbuffer))
+            {
+                err = AGLReportError();
+                return false;
+            }
+
+            if(!aglSetPBuffer(m_AGLContext, m_AGLPbuffer,
+                        0, 0, 0))
+            {
+                err = AGLReportError();
+                return false;
+            }
+
+            return true;
+        }
+
+//      =======================================================================
+        virtual void SwapBuffers()
+        {
+            aglSwapBuffers(m_AGLContext);
+        }
+
+//      =======================================================================
+        virtual bool StartRendering()
+        {
+            if(m_IsCurrent)
+                return true;
+            m_IsCurrent = true;
+
+            m_OldContext = aglGetCurrentContext();
+            if(!aglSetCurrentContext(m_AGLContext))
+            {
+                AGLReportError();
+                return false;
+            }
+
+            return true;
+        }
+
+//      =======================================================================
+        virtual void EndRendering()
+        {
+            if(!m_IsCurrent)
+                return;
+            m_IsCurrent = false;
+
+            aglSetCurrentContext(m_OldContext);
+        }
+    
+    private:
+        bool        m_IsCurrent;
+
+        AGLContext  m_AGLContext;
+        AGLPbuffer  m_AGLPbuffer;
+
+        AGLContext  m_OldContext;
+};
+#endif
+
 #ifdef FIRTREE_WIN32
 // wGL extensions.
 #include "../../third-party/include/wglext.h"
@@ -466,6 +607,8 @@ Pbuffer::Pbuffer()
 {
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
     m_pPlatformImpl = new PbufferGLXImpl();
+#elif defined(FIRTREE_APPLE)
+    m_pPlatformImpl = new PbufferAGLImpl();
 #elif defined(FIRTREE_WIN32)
     m_pPlatformImpl = new PbufferWGLImpl();
 #else

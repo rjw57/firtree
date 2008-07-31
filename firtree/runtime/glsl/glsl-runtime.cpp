@@ -1626,8 +1626,12 @@ void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
 BitmapImageRep* GLRenderer::CreateBitmapImageRepFromImage(Image* image)
 {
     m_OpenGLContext->Begin();
-    return dynamic_cast<Internal::ImageImpl*>(image)->GetAsBitmapImageRep();
+    BitmapImageRep* rv = 
+        dynamic_cast<Internal::ImageImpl*>(image)->GetAsBitmapImageRep();
     m_OpenGLContext->End();
+
+    FIRTREE_SAFE_RETAIN(rv);
+    return rv;
 }
 
 //=============================================================================

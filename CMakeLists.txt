@@ -49,6 +49,9 @@ INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/firtree/include")
 # The doxygen documentation
 ADD_SUBDIRECTORY(doc)
 
+# The testing systen
+ADD_SUBDIRECTORY(testing)
+
 # The third partuy frameworks
 ADD_SUBDIRECTORY(third-party)
 

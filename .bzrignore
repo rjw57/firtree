@@ -18,3 +18,5 @@ tools/kernelcompile
 examples/simple-glsl/simple-glsl
 ./doc/html
 ./doc/latex
+testing/output/*
+testing/results.html

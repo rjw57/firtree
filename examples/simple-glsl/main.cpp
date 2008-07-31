@@ -166,7 +166,7 @@ void finalise_test()
 
     FIRTREE_SAFE_RELEASE(g_GLRenderingContext);
 
-    printf("Allocated object count at exit (should be zero): %i\n",
+    printf("Allocated object count at exit (should be zero): %lu\n",
             ReferenceCounted::GetGlobalObjectCount());
 }
 

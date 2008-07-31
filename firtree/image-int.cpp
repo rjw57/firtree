@@ -432,7 +432,6 @@ Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
                 (void*)(imageBlob->GetBytes()));
 
-        if(m_BitmapRep != NULL) { delete m_BitmapRep; }
         FIRTREE_SAFE_RELEASE(m_BitmapRep);
         m_BitmapRep = BitmapImageRep::Create(imageBlob,
                 w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);

@@ -180,10 +180,13 @@ class PbufferGLXImpl : public PbufferPlatformImpl
                 return;
             m_IsCurrent = false;
 
-            Bool rv = glXMakeCurrent(m_OldXDisplay, m_OldDrawable, m_OldContext);
-            if(rv != True)
+            if(m_OldXDisplay != NULL)
             {
-                FIRTREE_WARNING("Could not set glx state to be old context!");
+                Bool rv = glXMakeCurrent(m_OldXDisplay, m_OldDrawable, m_OldContext);
+                if(rv != True)
+                {
+                    FIRTREE_WARNING("Could not set glx state to be old context!");
+                }
             }
         }
     

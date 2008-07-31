@@ -257,6 +257,9 @@ void CompiledGLSLKernel::Compile()
                             case GLSLBackend::Parameter::Bool:
                                 kp->SetBaseType(NumericParameter::TypeBool);
                                 break;
+                            default:
+                                FIRTREE_ERROR("Internal error. Unexpected parameter type.");
+                                break;
                         }
 
                         m_Parameters[p.humanName] = kp;
@@ -352,7 +355,6 @@ void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
 
         if(m_Parameters.count(key) > 0)
         {
-            Parameter* p = m_Parameters[key];
             FIRTREE_SAFE_RELEASE(m_Parameters[key]);
         }
 
@@ -945,7 +947,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     // (if necessary) a GL texture unit.
     int samplerIdx = 0;
     int textureIdx = 0;
-    for(int i=0; i<children.size(); i++)
+    for(unsigned int i=0; i<children.size(); i++)
     {
         GLSLSamplerParameter* child = 
             GLSLSamplerParameter::ExtractFrom(children[i]);
@@ -982,7 +984,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     dest += mainBody;
 
     // Write the sampler functions for each child
-    for(int i=0; i<children.size(); i++)
+    for(unsigned int i=0; i<children.size(); i++)
     {
         GLSLSamplerParameter* gsp =
             GLSLSamplerParameter::ExtractFrom(children[i]);
@@ -1170,7 +1172,7 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
     // Setup any sampler parameters.
     std::vector<SamplerParameter*> children;
     AddChildSamplersToVector(children);
-    for(int i=0; i<children.size(); i++)
+    for(unsigned int i=0; i<children.size(); i++)
     {
         SamplerParameter* child = children[i];
         GLSLSamplerParameter* glslChild =

@@ -178,7 +178,7 @@ Image* Image::CreateFromFile(const char* pFileName)
             const_cast<uint8_t*>(imageBlob->GetBytes()));
 
     uint8_t* pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
-    for(int i=0; i<w*h; i++)
+    for(unsigned int i=0; i<w*h; i++)
     {
         float alpha = ((float)(pixel[3]) / 255.0f);
         pixel[0] *= alpha;

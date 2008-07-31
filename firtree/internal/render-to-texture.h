@@ -79,10 +79,10 @@ class RenderTextureContext : public Firtree::OpenGLContext
         Firtree::OpenGLContext*     m_ParentContext;
         Size2DU32                   m_Size;
 
-        uint32_t                    m_OpenGLTextureName;
-        uint32_t                    m_OpenGLFrameBufferName;
+        int32_t                    m_OpenGLTextureName;
+        int32_t                    m_OpenGLFrameBufferName;
 
-        uint32_t                    m_PreviousOpenGLFrameBufferName;
+        int32_t                    m_PreviousOpenGLFrameBufferName;
 };
 
 } }

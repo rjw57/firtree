@@ -33,11 +33,11 @@ class AffineTransform;
 
 // ============================================================================
 /// Return the minimum of its arguments.
-static const float Min(const float a, const float b) { return (a<b) ? a : b; }
+inline const float Min(const float a, const float b) { return (a<b) ? a : b; }
 
 // ============================================================================
 /// Return the maximum of its arguments.
-static const float Max(const float a, const float b) { return (a>b) ? a : b; }
+inline const float Max(const float a, const float b) { return (a>b) ? a : b; }
 
 // ============================================================================
 /// \brief A 2D integer size

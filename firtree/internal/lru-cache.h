@@ -168,7 +168,7 @@ class LRUCache
                     ageComp());
 
             int numToRemove = GetCacheSize() - m_IdealSize;
-            if(numToRemove > removableEntries.size())
+            if(numToRemove > (int)(removableEntries.size()))
             {
                 numToRemove = removableEntries.size();
             }

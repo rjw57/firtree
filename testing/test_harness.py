@@ -121,6 +121,9 @@ if(__name__ == '__main__'):
     context = OpenGLContext.CreateOffScreenContext(16, 16)
     renderer = GLRenderer.Create(context)
 
+    if(len(sys.argv) > 1):
+        tests = sys.argv[1:]
+
     for testname in tests:
         testid = os.path.splitext(os.path.basename(testname))[0]
         run_test(testid, context, renderer, outputFile)

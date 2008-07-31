@@ -89,7 +89,6 @@ class StandardExtendProvider : public ExtentProvider
                 for(std::vector<std::string>::const_iterator i = paramNames.begin();
                         i != paramNames.end(); i++)
                 {
-                    //FIRTREE_DEBUG("Looking at: '%s'", (*i).c_str());
                     SamplerParameter* sp = dynamic_cast<SamplerParameter*>
                         (kernel->GetValueForKey((*i).c_str()));
                     if(sp != NULL)
@@ -117,8 +116,8 @@ class StandardExtendProvider : public ExtentProvider
 
             if(parameterName == NULL)
             {
-                // FIRTREE_WARNING("Could not find valid sampler parameter from "
-                //         "which to use extent.");
+                FIRTREE_WARNING("Could not find valid sampler parameter in kernel from "
+                         "which to use extent.");
                 return Rect2D::MakeInfinite();
             }
 

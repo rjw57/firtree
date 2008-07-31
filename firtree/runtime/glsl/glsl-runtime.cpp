@@ -555,6 +555,8 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         m_CachedFragmentShaderObject = -1;
     }
 
+    FIRTREE_DEBUG("Performance hint: (re-)compiling a GLSL shader.");
+
     std::string shaderSource;
     LinkShader(shaderSource, this);
 

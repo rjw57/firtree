@@ -97,30 +97,6 @@ Image::Image()
 }
 
 //=============================================================================
-Image::Image(const Image* im, AffineTransform* t)
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
-Image::Image(const BitmapImageRep* imageRep, bool copy)
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
-Image::Image(Kernel* k, ExtentProvider* extentProvider)
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
-Image::Image(ImageProvider* improv)
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
 Image::~Image()
 {
 }
@@ -129,14 +105,14 @@ Image::~Image()
 Image* Image::CreateFromImage(const Image* im)
 {
     if(im == NULL) { return NULL; }
-    return new ImageImpl(im, AffineTransform::Identity());
+    return new TransformedImageImpl(im, AffineTransform::Identity());
 }
 
 //=============================================================================
 Image* Image::CreateFromImageWithTransform(const Image* im, AffineTransform* t)
 {
     if(im == NULL) { return NULL; }
-    return new ImageImpl(im, t);
+    return new TransformedImageImpl(im, t);
 }
 
 //=============================================================================
@@ -149,7 +125,7 @@ Image* Image::CreateFromBitmapData(const BitmapImageRep* imageRep,
     {
         return NULL; 
     }
-    return new ImageImpl(imageRep, copyData);
+    return new BitmapImageImpl(imageRep, copyData);
 }
 
 //=============================================================================
@@ -206,11 +182,11 @@ Image* Image::CreateFromKernel(Kernel* k, ExtentProvider* extentProvider)
 
     if(extentProvider != NULL)
     {
-        return new ImageImpl(k, extentProvider);
+        return new KernelImageImpl(k, extentProvider);
     }
 
     extentProvider = ExtentProvider::CreateStandardExtentProvider();
-    Image* retVal = new ImageImpl(k, extentProvider);
+    Image* retVal = new KernelImageImpl(k, extentProvider);
     FIRTREE_SAFE_RELEASE(extentProvider);
 
     return retVal;
@@ -220,7 +196,7 @@ Image* Image::CreateFromKernel(Kernel* k, ExtentProvider* extentProvider)
 Image* Image::CreateFromImageProvider(ImageProvider* improv)
 {
     if(improv == NULL) { return NULL; }
-    return new ImageImpl(improv);
+    return new ImageProviderImageImpl(improv);
 }
 
 //=============================================================================

@@ -34,7 +34,7 @@
 namespace Firtree { namespace Internal {
 
 //=============================================================================
-/// The internal implementation of the public Image class.
+/// The internal implementation of the public Image class. Abstract base class.
 class ImageImpl : public Image
 {
     public:
@@ -46,50 +46,31 @@ class ImageImpl : public Image
         };
 
     protected:
-        ///@{
-        /// Protected constructors/destructors. Use the various Image
-        /// factory functions instead.
         ImageImpl();
-        ImageImpl(const Image* im, AffineTransform* t);
-        ImageImpl(const Firtree::BitmapImageRep* imageRep, bool copyData);
-        ImageImpl(Kernel* k, ExtentProvider* extentProvider);
-        ImageImpl(ImageProvider* imageProvider);
-        virtual ~ImageImpl();
-        ///@}
 
     public:
         // ====================================================================
         // CONSTRUCTION METHODS
 
+        virtual ~ImageImpl();
+
         // ====================================================================
         // CONST METHODS
         
         /// Return the 'preferred' representation for an image.
-        PreferredRepresentation GetPreferredRepresentation() const;
+        virtual PreferredRepresentation GetPreferredRepresentation() const = 0;
 
-        virtual Rect2D GetExtent() const;
+        /// Return the extent of the image.
+        virtual Rect2D GetExtent() const = 0;
 
         /// Return the size of image that would be returned by 
         /// GetAsOpenGLTexture() or GetAsBitmapImageRep().
-        Size2D GetUnderlyingPixelSize() const;
-
-        /// Return true if there is a cached OpenGL texture ready to use.
-        bool HasOpenGLTexture() const;
-
-        /// Return true if there is a cached BitmapImageRep ready to use.
-        bool HasBitmapImageRep() const;
-
-        /// Return true if this image directly represents a kernel.
-        bool HasKernel() const;
-
-        /// Returns the kernel represented by this image or NULL if there
-        /// is none.
-        Kernel* GetKernel() const;
+        virtual Size2D GetUnderlyingPixelSize() const = 0;
 
         /// Return a pointer to an AffineTransform which represents the
         /// transfrom from the underlying pixel representation to this image.
         /// \note THIS POINTER MUST HAVE RELEASE CALLED ON IT AFTERWARDS.
-        AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const = 0;
 
         // ====================================================================
         // MUTATING METHODS
@@ -100,48 +81,184 @@ class ImageImpl : public Image
         
         /// Return an OpenGL texture object handle containing this image for
         /// the specified OpenGL context.
-        unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
+        virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx) = 0;
 
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
-        Firtree::BitmapImageRep* GetAsBitmapImageRep();
+        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep() = 0;
         
         ///@}
 
-    protected:
-        /// The preferred representation for the image.
-        PreferredRepresentation m_PreferredRepresentation;
+        friend class Firtree::Image;
+};
 
-        /// The image representation as a binary blob or NULL if there is 
-        /// none yet.
+//=============================================================================
+/// The an image which is simply a transformed version of another image.
+class TransformedImageImpl : public ImageImpl
+{
+    public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        TransformedImageImpl(const Image* baseImage, AffineTransform* transform);
+        virtual ~TransformedImageImpl();
+
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual ImageImpl::PreferredRepresentation GetPreferredRepresentation() const;
+        virtual Rect2D GetExtent() const;
+        virtual Size2D GetUnderlyingPixelSize() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
+        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+
+    private:
+        AffineTransform*        m_Transform;
+        ImageImpl*              m_BaseImage;
+};
+
+//=============================================================================
+/// The an image which is backed by a texture.
+class TextureBackedImageImpl : public ImageImpl
+{
+     public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        TextureBackedImageImpl();
+        virtual ~TextureBackedImageImpl();
+
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual ImageImpl::PreferredRepresentation GetPreferredRepresentation() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+
+    private:
         Firtree::BitmapImageRep*     m_BitmapRep;
+};
 
-        /// The image representation as an OpenGL texture or 0 if there is 
-        /// none yet.
-        unsigned int        m_GLTexture;
+//=============================================================================
+/// The an image which is backed by a bitmap image rep.
+class BitmapBackedImageImpl : public ImageImpl
+{
+     public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
 
-        /// The OpenGL context we created m_GLTexture in.
-        OpenGLContext*      m_GLTextureCtx;
+        BitmapBackedImageImpl();
+        virtual ~BitmapBackedImageImpl();
 
-        ///@{
-        /// If this image is actually the result of transforming another
-        /// image, record the original image and the transform which maps
-        /// it's pixels to this image's pixels.
-        ImageImpl*          m_BaseImage;
-        AffineTransform*    m_BaseTransform;
-        ///@}
+        // ====================================================================
+        // CONST METHODS
         
-        /// The kernel encapsulated by this image.
+        virtual ImageImpl::PreferredRepresentation GetPreferredRepresentation() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
+
+    private:
+        unsigned int        m_GLTexture;
+        OpenGLContext*      m_GLContext;
+        Size2DU32           m_TexSize;
+};
+
+//=============================================================================
+/// The an image which is specified by a kernel.
+class KernelImageImpl : public TextureBackedImageImpl
+{
+    public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        KernelImageImpl(Kernel* k, ExtentProvider* extentProvider);
+        virtual ~KernelImageImpl();
+
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual Rect2D GetExtent() const;
+        virtual Size2D GetUnderlyingPixelSize() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+
+        Kernel* GetKernel() const { return m_Kernel; }
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
+
+    private:
         Kernel*             m_Kernel;
-
-        /// The image provider for this image.
-        ImageProvider*      m_ImageProvider;
-
         ExtentProvider*     m_ExtentProvider;
 
         RenderTextureContext*   m_TextureRenderer;
+        GLRenderer*             m_GLRenderer;
+};
 
-        friend class Firtree::Image;
+//=============================================================================
+/// The an image which is specified by a bitmap image.
+class BitmapImageImpl : public BitmapBackedImageImpl
+{
+    public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        BitmapImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy);
+        virtual ~BitmapImageImpl();
+
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual Rect2D GetExtent() const;
+        virtual Size2D GetUnderlyingPixelSize() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+
+    private:
+        Firtree::BitmapImageRep*     m_BitmapRep;
+};
+
+//=============================================================================
+/// The an image which is specified by a bitmap image provider
+class ImageProviderImageImpl : public BitmapBackedImageImpl
+{
+    public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        ImageProviderImageImpl(ImageProvider* improv);
+        virtual ~ImageProviderImageImpl();
+
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual Rect2D GetExtent() const;
+        virtual Size2D GetUnderlyingPixelSize() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+
+    private:
+        ImageProvider*     m_ImageProvider;
 };
 
 } }

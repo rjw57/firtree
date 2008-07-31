@@ -127,10 +127,6 @@ class Image : public ReferenceCounted
         /// Protected constructors/destructors. Use the various Image
         /// factory functions instead.
         Image();
-        Image(const Image* im, AffineTransform* t);
-        Image(const BitmapImageRep* imageRep, bool copy);
-        Image(Kernel* kernel, ExtentProvider* extentProvider);
-        Image(ImageProvider* imageProvider);
         ///@}
 
     public:

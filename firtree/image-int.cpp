@@ -45,61 +45,320 @@ namespace Firtree { namespace Internal {
 //=============================================================================
 ImageImpl::ImageImpl()
     :   Image()
-    ,   m_PreferredRepresentation(NoRepresentation)
-    ,   m_BitmapRep(NULL)
-    ,   m_GLTexture(0)
-    ,   m_GLTextureCtx(NULL)
-    ,   m_BaseImage(NULL)
-    ,   m_BaseTransform(NULL)
-    ,   m_Kernel(NULL)
-    ,   m_ImageProvider(NULL)
-    ,   m_ExtentProvider(NULL)
-    ,   m_TextureRenderer(NULL)
-{   
+{
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(const Image* inim, AffineTransform* t)
-    :   Image(inim, t)
-    ,   m_PreferredRepresentation(NoRepresentation)
-    ,   m_BitmapRep(NULL)
-    ,   m_GLTexture(0)
-    ,   m_GLTextureCtx(NULL)
-    ,   m_BaseImage(NULL)
-    ,   m_BaseTransform(NULL)
-    ,   m_Kernel(NULL)
-    ,   m_ImageProvider(NULL)
-    ,   m_ExtentProvider(NULL)
-    ,   m_TextureRenderer(NULL)
+ImageImpl::~ImageImpl()
 {
-    const ImageImpl* im = dynamic_cast<const ImageImpl*>(inim);
+}
 
-    if(im == NULL)
+//=============================================================================
+TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t)
+    :   ImageImpl()
+{
+    m_Transform = t->Copy();
+    m_BaseImage = dynamic_cast<ImageImpl*>(const_cast<Image*>(inim));
+    FIRTREE_SAFE_RETAIN(m_BaseImage);
+}
+
+//=============================================================================
+TransformedImageImpl::~TransformedImageImpl()
+{
+    FIRTREE_SAFE_RELEASE(m_Transform);
+    FIRTREE_SAFE_RELEASE(m_BaseImage);
+}
+//=============================================================================
+ImageImpl::PreferredRepresentation 
+TransformedImageImpl::GetPreferredRepresentation() const
+{
+    return m_BaseImage->GetPreferredRepresentation();
+}
+
+//=============================================================================
+Rect2D TransformedImageImpl::GetExtent() const
+{
+    return Rect2D::Transform(m_BaseImage->GetExtent(), m_Transform);
+}
+
+//=============================================================================
+Size2D TransformedImageImpl::GetUnderlyingPixelSize() const
+{
+    return m_BaseImage->GetUnderlyingPixelSize();
+}
+
+//=============================================================================
+AffineTransform* TransformedImageImpl::GetTransformFromUnderlyingImage() const
+{
+    AffineTransform* t = m_BaseImage->GetTransformFromUnderlyingImage();
+    t->AppendTransform(m_Transform);
+    return t;
+}
+
+//=============================================================================
+unsigned int TransformedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
+{
+    return m_BaseImage->GetAsOpenGLTexture(ctx);
+}
+
+//=============================================================================
+Firtree::BitmapImageRep* TransformedImageImpl::GetAsBitmapImageRep()
+{
+    return m_BaseImage->GetAsBitmapImageRep();
+}
+
+//=============================================================================
+// TEXTURE BACKED IMAGE
+//=============================================================================
+
+//=============================================================================
+TextureBackedImageImpl::TextureBackedImageImpl()
+    :   ImageImpl()
+    ,   m_BitmapRep(NULL)
+{
+}
+
+//=============================================================================
+TextureBackedImageImpl::~TextureBackedImageImpl()
+{
+    FIRTREE_SAFE_RELEASE(m_BitmapRep);
+}
+
+//=============================================================================
+ImageImpl::PreferredRepresentation 
+TextureBackedImageImpl::GetPreferredRepresentation() const
+{
+    return ImageImpl::OpenGLTexture;
+}
+
+//=============================================================================
+Firtree::BitmapImageRep* TextureBackedImageImpl::GetAsBitmapImageRep()
+{
+    OpenGLContext* c = GLSL::GetCurrentGLContext();
+
+    if(c == NULL)
     {
-        return;
+        FIRTREE_ERROR("Attempt to render image to bitmap outside of an OpenGL "
+                "context.");
     }
 
-    m_BaseImage = const_cast<ImageImpl*>(im);
-    m_BaseImage->Retain();
+    unsigned int tex = GetAsOpenGLTexture(c);
 
-    m_PreferredRepresentation = m_BaseImage->GetPreferredRepresentation();
+    c->Begin();
+    GLint w, h;
+    CHECK_GL( glBindTexture(GL_TEXTURE_2D, tex) );
+    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
+    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
 
-    m_BaseTransform = t->Copy();
+    Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
+    CHECK_GL( glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
+                (void*)(imageBlob->GetBytes())) );
+    c->End();
+
+    FIRTREE_SAFE_RELEASE(m_BitmapRep);
+    m_BitmapRep = BitmapImageRep::Create(imageBlob,
+            w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
+    FIRTREE_SAFE_RELEASE(imageBlob);
+
+    return m_BitmapRep;
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy)
-    :   Image(imageRep, copy)
-    ,   m_PreferredRepresentation(BitmapImageRep)
-    ,   m_BitmapRep(NULL)
+// BITMAP BACKED IMAGE
+//=============================================================================
+
+//=============================================================================
+BitmapBackedImageImpl::BitmapBackedImageImpl()
+    :   ImageImpl()
     ,   m_GLTexture(0)
-    ,   m_GLTextureCtx(NULL)
-    ,   m_BaseImage(NULL)
-    ,   m_BaseTransform(NULL)
-    ,   m_Kernel(NULL)
-    ,   m_ImageProvider(NULL)
-    ,   m_ExtentProvider(NULL)
+    ,   m_GLContext(NULL)
+{
+}
+
+//=============================================================================
+BitmapBackedImageImpl::~BitmapBackedImageImpl()
+{
+    if(m_GLTexture != 0)
+    {
+        m_GLContext->DeleteTexture(m_GLTexture);
+        m_GLTexture = 0;
+    }
+    FIRTREE_SAFE_RELEASE(m_GLContext);
+}
+
+//=============================================================================
+ImageImpl::PreferredRepresentation 
+BitmapBackedImageImpl::GetPreferredRepresentation() const
+{
+    return ImageImpl::BitmapImageRep;
+}
+
+//=============================================================================
+unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
+{
+    // If the context we used to create the texture doesn't match
+    // the one asked for, purge our cache.
+    if((m_GLTexture != 0) && (ctx != m_GLContext))
+    {
+        m_GLContext->DeleteTexture(m_GLTexture);
+        m_GLTexture = 0;
+        FIRTREE_SAFE_RELEASE(m_GLContext);
+    }
+
+    Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
+
+    ctx->Begin();
+
+    if(m_GLTexture == 0)
+    {
+        FIRTREE_SAFE_RETAIN(ctx);
+        FIRTREE_SAFE_RELEASE(m_GLContext);
+        m_GLContext = ctx;
+
+        m_GLTexture = m_GLContext->GenTexture();
+    }
+
+    m_TexSize = Size2DU32(bir->Width, bir->Height);
+    CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
+
+    if(bir->Format == Firtree::BitmapImageRep::Float)
+    { 
+        assert(bir->Stride == bir->Width*4*4);
+        CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                    bir->Width, bir->Height, 0,
+                    GL_RGBA, GL_FLOAT,
+                    bir->ImageBlob->GetBytes()) );
+    } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
+        assert(bir->Stride == bir->Width*4);
+        CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                    bir->Width, bir->Height, 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE,
+                    bir->ImageBlob->GetBytes()) );
+    } else {
+        FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
+    }
+
+    ctx->End();
+
+    return m_GLTexture;
+}
+
+//=============================================================================
+// KERNEL IMAGE
+//=============================================================================
+
+//=============================================================================
+KernelImageImpl::KernelImageImpl(Kernel* k, ExtentProvider* extentProvider)
+    :   TextureBackedImageImpl()
+    ,   m_Kernel(k)
+    ,   m_ExtentProvider(extentProvider)
     ,   m_TextureRenderer(NULL)
+    ,   m_GLRenderer(NULL)
+{
+    FIRTREE_SAFE_RETAIN(m_Kernel);
+    FIRTREE_SAFE_RETAIN(m_ExtentProvider);
+}
+
+//=============================================================================
+KernelImageImpl::~KernelImageImpl()
+{
+    FIRTREE_SAFE_RELEASE(m_GLRenderer);
+    FIRTREE_SAFE_RELEASE(m_TextureRenderer);
+
+    FIRTREE_SAFE_RELEASE(m_Kernel);
+    FIRTREE_SAFE_RELEASE(m_ExtentProvider);
+}
+
+//=============================================================================
+Rect2D KernelImageImpl::GetExtent() const
+{
+    if(m_ExtentProvider == NULL)
+    {
+        FIRTREE_WARNING("Kernel backed image lacks an extent provider.");
+        return Rect2D::MakeInfinite();
+    }
+
+    return m_ExtentProvider->ComputeExtentForKernel(m_Kernel);
+}
+
+//=============================================================================
+Size2D KernelImageImpl::GetUnderlyingPixelSize() const
+{
+    // Use the extent provider.
+    return GetExtent().Size;
+}
+
+//=============================================================================
+AffineTransform* KernelImageImpl::GetTransformFromUnderlyingImage() const
+{
+    return AffineTransform::Identity();
+}
+
+//=============================================================================
+unsigned int KernelImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
+{
+    Rect2D extent = GetExtent();
+    if(Rect2D::IsInfinite(extent))
+    {
+        FIRTREE_ERROR("Cannot render infinite extent image to texture.");
+        return 0;
+    }
+
+    /*
+    FIRTREE_DEBUG("Extent: %f,%f+%f+%f.",
+            extent.Origin.X, extent.Origin.Y,
+            extent.Size.Width, extent.Size.Height);
+    */
+
+    Size2DU32 imageSize(ceil(extent.Size.Width), ceil(extent.Size.Height));
+
+    if(m_TextureRenderer != NULL)
+    {
+        Size2DU32 cacheSize = m_TextureRenderer->GetSize();
+        if((cacheSize.Width != imageSize.Width) || 
+                (cacheSize.Height != imageSize.Height))
+        {
+            FIRTREE_SAFE_RELEASE(m_TextureRenderer);
+            m_TextureRenderer = NULL;
+            FIRTREE_SAFE_RELEASE(m_GLRenderer);
+            m_GLRenderer = NULL;
+        } else if(m_TextureRenderer->GetParentContext() != ctx) {
+            FIRTREE_SAFE_RELEASE(m_TextureRenderer);
+            m_TextureRenderer = NULL;
+            FIRTREE_SAFE_RELEASE(m_GLRenderer);
+            m_GLRenderer = NULL;
+        }
+    }
+
+    ctx->Begin();
+
+    if(m_TextureRenderer == NULL)
+    {
+        FIRTREE_SAFE_RELEASE(m_GLRenderer);
+        m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
+                imageSize.Height, ctx);
+    }
+
+    m_GLRenderer = GLRenderer::Create(m_TextureRenderer);
+    m_TextureRenderer->Begin();
+    m_GLRenderer->Clear(0,0,0,0);
+    m_GLRenderer->RenderAtPoint(this, Point2D(0,0), extent);
+    m_TextureRenderer->End();
+
+    ctx->End();
+
+    FIRTREE_SAFE_RELEASE(m_GLRenderer);
+
+    return m_TextureRenderer->GetOpenGLTexture();
+}
+
+//=============================================================================
+// BITMAP IMAGE
+//=============================================================================
+
+//=============================================================================
+BitmapImageImpl::BitmapImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy)
+    :   BitmapBackedImageImpl()
 {
     if(imageRep->ImageBlob == NULL) { return; }
     if(imageRep->Stride < imageRep->Width) { return; }
@@ -111,146 +370,19 @@ ImageImpl::ImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy)
 }
 
 //=============================================================================
-ImageImpl::ImageImpl(Kernel* k, ExtentProvider* extentProvider)
-    :   Image(k, extentProvider)
-    ,   m_PreferredRepresentation(OpenGLTexture)
-    ,   m_BitmapRep(NULL)
-    ,   m_GLTexture(0)
-    ,   m_GLTextureCtx(NULL)
-    ,   m_BaseImage(NULL)
-    ,   m_BaseTransform(NULL)
-    ,   m_Kernel(k)
-    ,   m_ImageProvider(NULL)
-    ,   m_ExtentProvider(extentProvider)
-    ,   m_TextureRenderer(NULL)
+BitmapImageImpl::~BitmapImageImpl()
 {
-    if(m_Kernel != NULL)
-    {
-        m_Kernel->Retain();
-    }
-
-    FIRTREE_SAFE_RETAIN(m_ExtentProvider);
-}
-
-//=============================================================================
-ImageImpl::ImageImpl(ImageProvider* improv)
-    :   Image(improv)
-    ,   m_PreferredRepresentation(BitmapImageRep)
-    ,   m_BitmapRep(NULL)
-    ,   m_GLTexture(0)
-    ,   m_GLTextureCtx(NULL)
-    ,   m_BaseImage(NULL)
-    ,   m_BaseTransform(NULL)
-    ,   m_Kernel(NULL)
-    ,   m_ImageProvider(improv)
-    ,   m_ExtentProvider(NULL)
-    ,   m_TextureRenderer(NULL)
-{
-    FIRTREE_SAFE_RETAIN(m_ImageProvider);
-}
-
-
-//=============================================================================
-ImageImpl::~ImageImpl()
-{
-    if(m_GLTexture != 0)
-    {
-        m_GLTextureCtx->DeleteTexture(m_GLTexture);
-        m_GLTexture = 0;
-    }
-    
-    FIRTREE_SAFE_RELEASE(m_GLTextureCtx);
-
     FIRTREE_SAFE_RELEASE(m_BitmapRep);
-    FIRTREE_SAFE_RELEASE(m_ImageProvider);
-    FIRTREE_SAFE_RELEASE(m_BaseImage);
-    FIRTREE_SAFE_RELEASE(m_BaseTransform);
-    FIRTREE_SAFE_RELEASE(m_Kernel);
-    FIRTREE_SAFE_RELEASE(m_ExtentProvider);
-    FIRTREE_SAFE_RELEASE(m_TextureRenderer);
 }
 
 //=============================================================================
-ImageImpl::PreferredRepresentation ImageImpl::GetPreferredRepresentation() const
+Rect2D BitmapImageImpl::GetExtent() const
 {
-    return m_PreferredRepresentation;
-}
-
-//=============================================================================
-Size2D ImageImpl::GetUnderlyingPixelSize() const
-{
-    if(m_ImageProvider != NULL)
-    {
-        return m_ImageProvider->GetImageSize();
-    }
-
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->GetUnderlyingPixelSize();
-    }
-
-    // Do we have a bitmap representation?
-    if(HasBitmapImageRep())
-    {
-        return Size2D(m_BitmapRep->Width, m_BitmapRep->Height);
-    }
-
-    // Do we have an OpenGL texture representation?
-    if(HasOpenGLTexture())
-    {
-        GLint w, h;
-        glBindTexture(GL_TEXTURE_2D, m_GLTexture);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-
-        return Size2D(w,h);
-    }
-
-    return Size2D::MakeInfinite();
-}
-
-
-//=============================================================================
-AffineTransform* ImageImpl::GetTransformFromUnderlyingImage() const
-{
-    if(m_BaseImage != NULL)
-    {
-        AffineTransform* baseTransform = 
-            m_BaseImage->GetTransformFromUnderlyingImage();
-        baseTransform->AppendTransform(m_BaseTransform);
-        return baseTransform;
-    }
-
-    return AffineTransform::Identity();
-}
-
-//=============================================================================
-Rect2D ImageImpl::GetExtent() const
-{
-    if(m_BaseImage != NULL)
-    {
-        Rect2D baseExtent = m_BaseImage->GetExtent();
-        Rect2D extentRect = Rect2D::Transform(baseExtent, m_BaseTransform);
-        return extentRect;
-    }
-
-    // Is this a kernel image?
-    if(HasKernel())
-    {
-        if(m_ExtentProvider == NULL)
-        {
-            FIRTREE_WARNING("Kernel backed image lacks an extent provider.");
-            return Rect2D::MakeInfinite();
-        }
-
-        return m_ExtentProvider->ComputeExtentForKernel(m_Kernel);
-    }
-    
     // Get the size of the underlying pixel representation.
     Size2D pixelSize = GetUnderlyingPixelSize();
 
     // Is this image 'infinite' in extent?
-    if(pixelSize.Width == -1)
+    if(Size2D::IsInfinite(pixelSize))
     {
         // Return an 'infinite' extent
         return Rect2D::MakeInfinite();
@@ -270,243 +402,83 @@ Rect2D ImageImpl::GetExtent() const
 }
 
 //=============================================================================
-bool ImageImpl::HasOpenGLTexture() const
+Size2D BitmapImageImpl::GetUnderlyingPixelSize() const
 {
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->HasOpenGLTexture();
-    }
-
-    return m_GLTexture != 0;
+    return Size2D(m_BitmapRep->Width, m_BitmapRep->Height);
 }
 
 //=============================================================================
-bool ImageImpl::HasBitmapImageRep() const
+AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 {
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->HasBitmapImageRep();
-    }
-
-    if(m_ImageProvider != NULL)
-    {
-        return true;
-    }
-
-    return (m_BitmapRep != NULL) && (m_BitmapRep->ImageBlob != NULL) &&
-        (m_BitmapRep->ImageBlob->GetLength() > 0);
+    return AffineTransform::Identity();
 }
 
 //=============================================================================
-bool ImageImpl::HasKernel() const
+Firtree::BitmapImageRep* BitmapImageImpl::GetAsBitmapImageRep()
 {
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->HasKernel();
-    }
-
-    return (m_Kernel != NULL);
+    return m_BitmapRep;
 }
 
 //=============================================================================
-Kernel* ImageImpl::GetKernel() const
-{
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->GetKernel();
-    }
+// IMAGE PROVIDER IMAGE
+//=============================================================================
 
-    return m_Kernel;
+//=============================================================================
+ImageProviderImageImpl::ImageProviderImageImpl(ImageProvider* improv)
+    :   BitmapBackedImageImpl()
+    ,   m_ImageProvider(improv)
+{
+    FIRTREE_SAFE_RETAIN(m_ImageProvider);
 }
 
 //=============================================================================
-unsigned int ImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
+ImageProviderImageImpl::~ImageProviderImageImpl()
 {
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->GetAsOpenGLTexture(ctx);
-    }
-
-    // If the context we used to create the texture doesn't match
-    // the one asked for, purge our cache.
-    if((m_GLTexture != 0) && (ctx != m_GLTextureCtx))
-    {
-        m_GLTextureCtx->DeleteTexture(m_GLTexture);
-        m_GLTexture = 0;
-        FIRTREE_SAFE_RELEASE(m_GLTextureCtx);
-    }
-
-    // If we have already created a texture but are driven by an
-    // image provider, update the texture.
-    if(HasOpenGLTexture() && (m_ImageProvider != NULL))
-    {
-        Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
-
-        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
-        assert(bir->Stride == bir->Width*4);
-        CHECK_GL( glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                    bir->Width, bir->Height, 
-                    GL_RGBA, GL_UNSIGNED_BYTE,
-                    bir->ImageBlob->GetBytes()) );
-
-        return m_GLTexture;
-    }
-
-    // Trivial case: we already have a GL representation.
-    if(HasOpenGLTexture())
-    {
-        return m_GLTexture;
-    }
-
-    // We have to construct one. Try the binary rep first.
-    if(HasBitmapImageRep())
-    {
-        Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
-
-        m_GLTextureCtx = ctx;
-        FIRTREE_SAFE_RETAIN(m_GLTextureCtx);
-
-        m_GLTextureCtx->Begin();
-
-        m_GLTexture = m_GLTextureCtx->GenTexture();
-
-        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
-
-        if(bir->Format == Firtree::BitmapImageRep::Float)
-        { 
-            assert(bir->Stride == bir->Width*4*4);
-            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                        bir->Width, bir->Height, 0,
-                        GL_RGBA, GL_FLOAT,
-                        bir->ImageBlob->GetBytes()) );
-        } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
-            assert(bir->Stride == bir->Width*4);
-            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                        bir->Width, bir->Height, 0,
-                        GL_RGBA, GL_UNSIGNED_BYTE,
-                        bir->ImageBlob->GetBytes()) );
-        } else {
-            FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
-        }
-
-        m_GLTextureCtx->End();
-
-        return m_GLTexture;
-    }
-    
-    // If we get here, we have no way of constructing the texture.
-    // Return 0 to signal this.
-    return 0;
+    FIRTREE_SAFE_RELEASE(m_ImageProvider);
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* ImageImpl::GetAsBitmapImageRep()
+Rect2D ImageProviderImageImpl::GetExtent() const
 {
-    if(m_ImageProvider != NULL)
+    // Get the size of the underlying pixel representation.
+    Size2D pixelSize = GetUnderlyingPixelSize();
+
+    // Is this image 'infinite' in extent?
+    if(Size2D::IsInfinite(pixelSize))
     {
-        FIRTREE_SAFE_RELEASE(m_BitmapRep);
-        m_BitmapRep = BitmapImageRep::CreateFromBitmapImageRep(
-                m_ImageProvider->GetImageRep(), false);
-        return m_BitmapRep;
+        // Return an 'infinite' extent
+        return Rect2D::MakeInfinite();
     }
 
-    if(m_BaseImage != NULL)
-    {
-        return m_BaseImage->GetAsBitmapImageRep();
-    }
+    // Form a rectangle which covers the underlying pixel
+    // representation
+    Rect2D pixelRect = Rect2D(Point2D(0,0), pixelSize);
 
-    // Trivial case where a bitmap rep exists
-    if(HasBitmapImageRep())
-    {
-        return m_BitmapRep;
-    }
+    AffineTransform* transform = GetTransformFromUnderlyingImage();
 
-    // If we have an OpenGL texture, use that.
-    if(HasOpenGLTexture())
-    {
-        GLint w, h;
-        glBindTexture(GL_TEXTURE_2D, m_GLTexture);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    Rect2D extentRect = Rect2D::Transform(pixelRect, transform);
 
-        Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
-                (void*)(imageBlob->GetBytes()));
+    FIRTREE_SAFE_RELEASE(transform);
 
-        FIRTREE_SAFE_RELEASE(m_BitmapRep);
-        m_BitmapRep = BitmapImageRep::Create(imageBlob,
-                w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
-        FIRTREE_SAFE_RELEASE(imageBlob);
-        
-        return m_BitmapRep;
-    }
+    return extentRect;
+}
 
-    if(HasKernel())
-    {
-        Rect2D extent = GetExtent();
-        if(Rect2D::IsInfinite(extent))
-        {
-            FIRTREE_ERROR("Cannot render infinite extent image to texture.");
-            return NULL;
-        }
+//=============================================================================
+Size2D ImageProviderImageImpl::GetUnderlyingPixelSize() const
+{
+    return m_ImageProvider->GetImageSize();
+}
 
-        Size2DU32 imageSize(ceil(extent.Size.Width), ceil(extent.Size.Height));
+//=============================================================================
+AffineTransform* ImageProviderImageImpl::GetTransformFromUnderlyingImage() const
+{
+    return AffineTransform::Identity();
+}
 
-        OpenGLContext* c = GLSL::GetCurrentGLContext();
-
-        if(c == NULL)
-        {
-            FIRTREE_ERROR("Attempt to render image to bitmap outside of an OpenGL "
-                    "context.");
-        }
-
-        FIRTREE_SAFE_RETAIN(c);
-
-        c->Begin();
-
-        if(m_TextureRenderer == NULL)
-        {
-            m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
-                    imageSize.Height, c);
-        } else {
-            Size2DU32 existingRendererSize = m_TextureRenderer->GetSize();
-            if((existingRendererSize.Width != imageSize.Width) ||
-                    (existingRendererSize.Height != imageSize.Height))
-            {
-                FIRTREE_SAFE_RELEASE(m_TextureRenderer);
-                m_TextureRenderer = RenderTextureContext::Create(imageSize.Width,
-                        imageSize.Height, c);
-            }
-        }
-
-        m_TextureRenderer->Begin();
-        GLRenderer* renderer = GLRenderer::Create(m_TextureRenderer);
-        renderer->Clear(0,0,0,0);
-        renderer->RenderAtPoint(this, Point2D(0,0), extent);
-        FIRTREE_SAFE_RELEASE(renderer);
-        m_TextureRenderer->End();
-
-        GLint w, h;
-        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_TextureRenderer->GetOpenGLTexture()) );
-        CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
-        CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
-
-        Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
-        CHECK_GL( glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
-                (void*)(imageBlob->GetBytes())) );
-
-        c->End();
-        FIRTREE_SAFE_RELEASE(c);
-
-        FIRTREE_SAFE_RELEASE(m_BitmapRep);
-        m_BitmapRep = BitmapImageRep::Create(imageBlob,
-                w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
-        FIRTREE_SAFE_RELEASE(imageBlob);
-        
-        return m_BitmapRep;
-    }
-
-    return NULL;
+//=============================================================================
+Firtree::BitmapImageRep* ImageProviderImageImpl::GetAsBitmapImageRep()
+{
+    return const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->GetImageRep());
 }
 
 } } // namespace Firtree::Internal

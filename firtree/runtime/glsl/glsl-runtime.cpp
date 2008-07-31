@@ -648,10 +648,9 @@ const Rect2D GLSLSamplerParameter::GetDomain() const
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
     :   GLSLSamplerParameter(im)
 {
-    Internal::ImageImpl* imImpl = 
-        dynamic_cast<Internal::ImageImpl*>(im);
+    Internal::KernelImageImpl* imImpl = 
+        dynamic_cast<Internal::KernelImageImpl*>(im);
     if(imImpl == NULL) { return; }
-    if(!(imImpl->HasKernel())) { return; }
 
     Firtree::Kernel* k = imImpl->GetKernel();
     CompiledGLSLKernel* gk = k->GetWrappedGLSLKernel();
@@ -1487,13 +1486,15 @@ unsigned int TextureSamplerParameter::GetGLTextureObject() const
 //=============================================================================
 GLSLSamplerParameter* CreateSampler(Image* im)
 {
+    Internal::KernelImageImpl* imKernelImpl = 
+        dynamic_cast<Internal::KernelImageImpl*>(im);
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
     if(imImpl == NULL) { return NULL; }
 
-    if(imImpl->HasKernel())
+    if(imKernelImpl != NULL)
     {
-        return CreateKernelSampler(im);
+        return CreateKernelSampler(imKernelImpl);
     }
 
     return CreateTextureSampler(im);

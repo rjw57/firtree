@@ -167,6 +167,8 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
             case EvqInOut:
                 AppendOutput("inout ");
                 break;
+            default:
+                FIRTREE_ERROR("Unknwon op: %i", n->getQualifier()); break;
         }
 
         AddSymbol(n->getId(), "param_");
@@ -768,7 +770,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
             {
                 // Pop the arguments.
                 std::vector<std::string> params;
-                for(int i=0; i<n->getSequence().size(); i++)
+                for(unsigned int i=0; i<n->getSequence().size(); i++)
                 {
                     params.push_back(std::string(PopTemporary()));
                 }
@@ -875,6 +877,8 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                         case EOpConstructIVec4:
                             funcname = "ivec4";
                             break;
+                        default:
+                            FIRTREE_ERROR("Unknwon op: %i", n->getOp()); break;
                     }
 
                     switch(n->getOp())
@@ -916,7 +920,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                 {
                     // Pop the arguments.
                     std::vector<std::string> params;
-                    for(int i=0; i<n->getSequence().size(); i++)
+                    for(unsigned int i=0; i<n->getSequence().size(); i++)
                     {
                         params.push_back(std::string(PopTemporary()));
                     }
@@ -1028,6 +1032,8 @@ bool GLSLBackend::VisitLoop(bool preVisit, TIntermLoop* n)
                 AppendOutput(" <= "); break;
             case EOpGreaterThanEqual:
                 AppendOutput(" >= "); break;
+            default:
+                FIRTREE_ERROR("Unknwon op: %i", condBin->getOp()); break;
         }
 
         if(rightSymb != NULL)
@@ -1166,7 +1172,7 @@ void GLSLBackend::AppendOutput(const char* format, ...)
 void GLSLBackend::AddSymbol(int id, const char* typePrefix)
 {
     static char valstr[255];
-    snprintf(valstr, 255, "%s%i", typePrefix, m_Priv->symbolMap.size());
+    snprintf(valstr, 255, "%s%lu", typePrefix, m_Priv->symbolMap.size());
     m_Priv->symbolMap[id] = std::string(valstr);
 }
 

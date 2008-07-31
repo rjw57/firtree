@@ -239,6 +239,7 @@ Rect2D ImageImpl::GetExtent() const
     {
         if(m_ExtentProvider == NULL)
         {
+            FIRTREE_WARNING("Kernel backed image lacks an extent provider.");
             return Rect2D::MakeInfinite();
         }
 
@@ -252,7 +253,7 @@ Rect2D ImageImpl::GetExtent() const
     if(pixelSize.Width == -1)
     {
         // Return an 'infinite' extent
-        return Rect2D(-0.5*FLT_MAX, -0.5*FLT_MAX, FLT_MAX, FLT_MAX);
+        return Rect2D::MakeInfinite();
     }
 
     // Form a rectangle which covers the underlying pixel

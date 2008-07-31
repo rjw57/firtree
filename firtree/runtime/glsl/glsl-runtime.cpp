@@ -1671,6 +1671,14 @@ void GLRenderer::Clear(float r, float g, float b, float a)
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
+#if 0
+    FIRTREE_DEBUG("RenderInRect:");
+    FIRTREE_DEBUG(" dst: %f,%f+%f+%f.", destRect.Origin.X, destRect.Origin.Y,
+            destRect.Size.Width, destRect.Size.Height);
+    FIRTREE_DEBUG(" src: %f,%f+%f+%f.", srcRect.Origin.X, srcRect.Origin.Y,
+            srcRect.Size.Width, srcRect.Size.Height);
+#endif
+
     if(m_OpenGLContext == NULL)
     {
         FIRTREE_ERROR("Renderer told to use NULL context.");
@@ -1763,6 +1771,13 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             return;
         }
     }
+
+#if 0
+    FIRTREE_DEBUG(" clip dst: %f,%f+%f+%f.", renderRect.Origin.X, renderRect.Origin.Y,
+            renderRect.Size.Width, renderRect.Size.Height);
+    FIRTREE_DEBUG(" clip src: %f,%f+%f+%f.", clipSrcRect.Origin.X, clipSrcRect.Origin.Y,
+            clipSrcRect.Size.Width, clipSrcRect.Size.Height);
+#endif
 
     CHECK_GL( glDisable(GL_DEPTH_TEST) );
     CHECK_GL( glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA) );      

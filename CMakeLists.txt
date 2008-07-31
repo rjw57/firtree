@@ -24,7 +24,7 @@ ADD_DEFINITIONS( -Wall )
 # Set some variables indicating the version number of Firtree.
 SET(FIRTREE_VERSION_MAJOR "0")
 SET(FIRTREE_VERSION_MINOR "0")
-SET(FIRTREE_VERSION_PATCH "3")
+SET(FIRTREE_VERSION_PATCH "4")
 SET(FIRTREE_VERSION "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}")
 
 # Update the module path to include any extra CMAKE modiles we might ship.

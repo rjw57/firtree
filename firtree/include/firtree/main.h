@@ -24,6 +24,7 @@
 // ============================================================================
 
 #include <string>
+#include <set>
 
 // ============================================================================
 /// The Firtree namespace.
@@ -60,6 +61,7 @@ namespace Firtree {
 class ReferenceCounted {
     private:
         static size_t ObjectCount;
+        static std::set<ReferenceCounted*> ActiveObjects;
 
     protected:
         /// @{
@@ -82,6 +84,10 @@ class ReferenceCounted {
         /// This should be zero immediately before your app exits
         /// to guard against memory leaks.
         static size_t GetGlobalObjectCount();
+
+        /// Return a set containing all the active (i.e. not yet deallocated)
+        /// objects.
+        static const std::set<ReferenceCounted*>& GetActiveObjects();
 
     private:
         unsigned int m_RefCount;

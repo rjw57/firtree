@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <typeinfo>
 
 extern "C" {
 #include <selog/selog.h>
@@ -64,6 +65,14 @@ class Overseer {
                 FIRTREE_WARNING("MEMORY LEAK! Allocated object count at exit "
                         "is non-zero: %lu.",
                         ReferenceCounted::GetGlobalObjectCount());
+                FIRTREE_WARNING("Allocated object list:");
+                const std::set<ReferenceCounted*>& objectSet =
+                    ReferenceCounted::GetActiveObjects();
+                for(std::set<ReferenceCounted*>::const_iterator i = objectSet.begin();
+                        i != objectSet.end(); i++)
+                {
+                    FIRTREE_WARNING("  '%s' at 0x%p.", typeid(**i).name(), *i);
+                }
             }
         }
 };
@@ -74,9 +83,18 @@ static Overseer g_OverseerSingleton;
 size_t ReferenceCounted::ObjectCount(0);
 
 // ===============================================================================
+std::set<ReferenceCounted*> ReferenceCounted::ActiveObjects;
+
+// ===============================================================================
 size_t ReferenceCounted::GetGlobalObjectCount()
 { 
     return ReferenceCounted::ObjectCount; 
+}
+
+// ===============================================================================
+const std::set<ReferenceCounted*>& ReferenceCounted::GetActiveObjects()
+{ 
+    return ReferenceCounted::ActiveObjects; 
 }
 
 // ===============================================================================
@@ -87,6 +105,7 @@ ReferenceCounted::ReferenceCounted()
 #ifdef FIRTREE_DEBUG_MEM
     printf("Object: %p %i objects created.\n", this, ObjectCount);
 #endif
+    ActiveObjects.insert(this);
 }
 
 // ===============================================================================
@@ -96,6 +115,7 @@ ReferenceCounted::~ReferenceCounted()
 #ifdef FIRTREE_DEBUG_MEM
     printf("Destructor of %p, %i left.\n", this, ObjectCount);
 #endif
+    ActiveObjects.erase(this);
 }
 
 // ===============================================================================

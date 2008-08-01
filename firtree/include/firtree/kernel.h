@@ -205,6 +205,12 @@ class SamplerParameter : public Parameter
         /// sampler co-ordinate system to the world co-ordinate system.
         const AffineTransform* GetTransform() const;
 
+        // ====================================================================
+        // CONST METHODS
+
+        /// Get the image this sampler represents.
+        const Image* GetRepresentedImage() const { return m_SourceImage; }
+
     protected:
         /// Internal method to retrieve the wrapped GLSL
         /// sampler.

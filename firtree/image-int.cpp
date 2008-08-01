@@ -192,6 +192,7 @@ BitmapBackedImageImpl::BitmapBackedImageImpl()
     :   ImageImpl()
     ,   m_GLTexture(0)
     ,   m_GLContext(NULL)
+    ,   m_CacheValid(false)
 {
 }
 
@@ -214,6 +215,12 @@ BitmapBackedImageImpl::GetPreferredRepresentation() const
 }
 
 //=============================================================================
+void BitmapBackedImageImpl::InvalidateCache()
+{
+    m_CacheValid = false;
+}
+
+//=============================================================================
 unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 {
     // If the context we used to create the texture doesn't match
@@ -223,6 +230,8 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         m_GLContext->DeleteTexture(m_GLTexture);
         m_GLTexture = 0;
         FIRTREE_SAFE_RELEASE(m_GLContext);
+
+        InvalidateCache();
     }
 
     Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
@@ -236,26 +245,40 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         m_GLContext = ctx;
 
         m_GLTexture = m_GLContext->GenTexture();
+
+        InvalidateCache();
     }
 
     m_TexSize = Size2DU32(bir->Width, bir->Height);
-    CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
+    if((m_TexSize.Width != bir->Width) || (m_TexSize.Height != bir->Height))
+    {
+        InvalidateCache();
+    }
 
-    if(bir->Format == Firtree::BitmapImageRep::Float)
-    { 
-        assert(bir->Stride == bir->Width*4*4);
-        CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                    bir->Width, bir->Height, 0,
-                    GL_RGBA, GL_FLOAT,
-                    bir->ImageBlob->GetBytes()) );
-    } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
-        assert(bir->Stride == bir->Width*4);
-        CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                    bir->Width, bir->Height, 0,
-                    GL_RGBA, GL_UNSIGNED_BYTE,
-                    bir->ImageBlob->GetBytes()) );
-    } else {
-        FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
+    if(!m_CacheValid)
+    {
+        FIRTREE_DEBUG("Performance hint: copying CPU -> GPU.");
+
+        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
+
+        if(bir->Format == Firtree::BitmapImageRep::Float)
+        { 
+            assert(bir->Stride == bir->Width*4*4);
+            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                        bir->Width, bir->Height, 0,
+                        GL_RGBA, GL_FLOAT,
+                        bir->ImageBlob->GetBytes()) );
+        } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
+            assert(bir->Stride == bir->Width*4);
+            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                        bir->Width, bir->Height, 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE,
+                        bir->ImageBlob->GetBytes()) );
+        } else {
+            FIRTREE_ERROR("Unknown bitmap image rep format: %i", bir->Format);
+        }
+
+        m_CacheValid = true;
     }
 
     ctx->End();

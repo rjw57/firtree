@@ -176,10 +176,15 @@ class BitmapBackedImageImpl : public ImageImpl
 
         virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
 
+        /// Call when the cache of derrived images from the 
+        /// BitmapImageRep is invalid.
+        void InvalidateCache();
+
     private:
         unsigned int        m_GLTexture;
         OpenGLContext*      m_GLContext;
         Size2DU32           m_TexSize;
+        bool                m_CacheValid;
 };
 
 //=============================================================================

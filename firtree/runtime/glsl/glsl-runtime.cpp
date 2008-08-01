@@ -1895,6 +1895,8 @@ unsigned int OpenGLContext::GenTexture()
     m_ActiveTextures.push_back(texName);
     End();
 
+    FIRTREE_DEBUG("Performance hint: creating OpenGL texture.");
+
     FIRTREE_TRACE(
             "OpenGLContext: 0x%x, created texture %i.", this, texName);
 

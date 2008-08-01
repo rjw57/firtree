@@ -43,6 +43,7 @@ class ImageImpl : public Image
             NoRepresentation,
             OpenGLTexture,
             BitmapImageRep,
+            Kernel,
         };
 
     protected:
@@ -71,6 +72,10 @@ class ImageImpl : public Image
         /// transfrom from the underlying pixel representation to this image.
         /// \note THIS POINTER MUST HAVE RELEASE CALLED ON IT AFTERWARDS.
         virtual AffineTransform* GetTransformFromUnderlyingImage() const = 0;
+        
+        /// Return a pointer to the kernel which generates this image or
+        /// NULL if theres is none.
+        virtual Firtree::Kernel* GetKernel() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -86,7 +91,7 @@ class ImageImpl : public Image
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
         virtual Firtree::BitmapImageRep* GetAsBitmapImageRep() = 0;
-        
+
         ///@}
 
         friend class Firtree::Image;
@@ -110,6 +115,9 @@ class TransformedImageImpl : public ImageImpl
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+
+        /// Get the underlying non-transformed image.
+        Image*  GetBaseImage() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -182,17 +190,18 @@ class KernelImageImpl : public TextureBackedImageImpl
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        KernelImageImpl(Kernel* k, ExtentProvider* extentProvider);
+        KernelImageImpl(Firtree::Kernel* k, ExtentProvider* extentProvider);
         virtual ~KernelImageImpl();
 
         // ====================================================================
         // CONST METHODS
         
+        virtual ImageImpl::PreferredRepresentation GetPreferredRepresentation() const;
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
 
-        Kernel* GetKernel() const { return m_Kernel; }
+        virtual Firtree::Kernel* GetKernel() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -200,7 +209,7 @@ class KernelImageImpl : public TextureBackedImageImpl
         virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
 
     private:
-        Kernel*             m_Kernel;
+        Firtree::Kernel*    m_Kernel;
         ExtentProvider*     m_ExtentProvider;
 
         RenderTextureContext*   m_TextureRenderer;

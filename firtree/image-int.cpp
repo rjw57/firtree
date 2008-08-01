@@ -54,6 +54,12 @@ ImageImpl::~ImageImpl()
 }
 
 //=============================================================================
+Kernel* ImageImpl::GetKernel() const
+{
+    return NULL;
+}
+
+//=============================================================================
 TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t)
     :   ImageImpl()
 {
@@ -68,11 +74,25 @@ TransformedImageImpl::~TransformedImageImpl()
     FIRTREE_SAFE_RELEASE(m_Transform);
     FIRTREE_SAFE_RELEASE(m_BaseImage);
 }
+
 //=============================================================================
 ImageImpl::PreferredRepresentation 
 TransformedImageImpl::GetPreferredRepresentation() const
 {
     return m_BaseImage->GetPreferredRepresentation();
+}
+
+//=============================================================================
+Image* TransformedImageImpl::GetBaseImage() const
+{
+    TransformedImageImpl* transImage = 
+        dynamic_cast<TransformedImageImpl*>(m_BaseImage);
+    if(transImage != NULL)
+    {
+        return transImage->GetBaseImage();
+    }
+
+    return m_BaseImage;
 }
 
 //=============================================================================
@@ -248,7 +268,7 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 //=============================================================================
 
 //=============================================================================
-KernelImageImpl::KernelImageImpl(Kernel* k, ExtentProvider* extentProvider)
+KernelImageImpl::KernelImageImpl(Firtree::Kernel* k, ExtentProvider* extentProvider)
     :   TextureBackedImageImpl()
     ,   m_Kernel(k)
     ,   m_ExtentProvider(extentProvider)
@@ -267,6 +287,12 @@ KernelImageImpl::~KernelImageImpl()
 
     FIRTREE_SAFE_RELEASE(m_Kernel);
     FIRTREE_SAFE_RELEASE(m_ExtentProvider);
+}
+
+//=============================================================================
+ImageImpl::PreferredRepresentation KernelImageImpl::GetPreferredRepresentation() const
+{
+    return ImageImpl::Kernel;
 }
 
 //=============================================================================
@@ -292,6 +318,12 @@ Size2D KernelImageImpl::GetUnderlyingPixelSize() const
 AffineTransform* KernelImageImpl::GetTransformFromUnderlyingImage() const
 {
     return AffineTransform::Identity();
+}
+
+//=============================================================================
+Firtree::Kernel* KernelImageImpl::GetKernel() const
+{
+    return m_Kernel;
 }
 
 //=============================================================================

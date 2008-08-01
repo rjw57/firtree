@@ -563,7 +563,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     m_CachedFragmentShaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
     if(m_CachedFragmentShaderObject == 0)
     {
-        fprintf(stderr, "Error creating shader object.\n");
+        FIRTREE_ERROR("Error creating shader object.");
         m_GLContext->End();
         return 0;
     }
@@ -650,11 +650,13 @@ const Rect2D GLSLSamplerParameter::GetDomain() const
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
     :   GLSLSamplerParameter(im)
 {
-    Internal::KernelImageImpl* imImpl = 
-        dynamic_cast<Internal::KernelImageImpl*>(im);
+    Internal::ImageImpl* imImpl = 
+        dynamic_cast<Internal::ImageImpl*>(im);
     if(imImpl == NULL) { return; }
 
     Firtree::Kernel* k = imImpl->GetKernel();
+    if(k == NULL) { return; }
+
     CompiledGLSLKernel* gk = k->GetWrappedGLSLKernel();
     if(gk == NULL) { return; }
     
@@ -913,6 +915,7 @@ void KernelSamplerParameter::ComputeDigest(uint8_t digest[20])
 
         // Add in this sampler's digest.
         pGLSLSampParam->ComputeDigest(samplerDigest);
+
         SHA1Update(&shaCtx, samplerDigest, 20);
     }
 
@@ -1488,18 +1491,19 @@ unsigned int TextureSamplerParameter::GetGLTextureObject() const
 //=============================================================================
 GLSLSamplerParameter* CreateSampler(Image* im)
 {
-    Internal::KernelImageImpl* imKernelImpl = 
-        dynamic_cast<Internal::KernelImageImpl*>(im);
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
     if(imImpl == NULL) { return NULL; }
 
-    if(imKernelImpl != NULL)
+    switch(imImpl->GetPreferredRepresentation())
     {
-        return CreateKernelSampler(imKernelImpl);
+        case Internal::ImageImpl::Kernel:
+            return CreateKernelSampler(im);
+            break;
+        default:
+            return CreateTextureSampler(im);
+            break;
     }
-
-    return CreateTextureSampler(im);
 }
 
 //=============================================================================

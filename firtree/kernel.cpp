@@ -238,6 +238,18 @@ Parameter* Kernel::GetValueForKey(const char* key) const
 //=============================================================================
 void Kernel::SetValueForKey(Image* image, const char* key)
 {
+    // Firstly see if the value for this key is alreay this image.
+    // If so, don't bother creating a new sampler.
+    SamplerParameter* oldValue = 
+        dynamic_cast<SamplerParameter*>(GetValueForKey(key));
+    if(oldValue != NULL)
+    {
+        if(oldValue->GetRepresentedImage() == image)
+            return;
+
+        FIRTREE_DEBUG("Performance hint: re-wiring pipeline is expensive.");
+    }
+
     SamplerParameter* sampler = 
         SamplerParameter::CreateFromImage(image);
     m_WrappedGLSLKernel->SetValueForKey(sampler, key);

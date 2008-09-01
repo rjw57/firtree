@@ -63,6 +63,7 @@ Kernel* ImageImpl::GetKernel() const
 TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t)
     :   ImageImpl()
 {
+    FIRTREE_DEBUG("Created TransformedImageImpl @ %p", this);
     m_Transform = t->Copy();
     m_BaseImage = dynamic_cast<ImageImpl*>(const_cast<Image*>(inim));
     FIRTREE_SAFE_RETAIN(m_BaseImage);
@@ -116,6 +117,12 @@ AffineTransform* TransformedImageImpl::GetTransformFromUnderlyingImage() const
 }
 
 //=============================================================================
+Kernel* TransformedImageImpl::GetKernel() const
+{
+    return m_BaseImage->GetKernel();
+}
+
+//=============================================================================
 unsigned int TransformedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 {
     return m_BaseImage->GetAsOpenGLTexture(ctx);
@@ -136,6 +143,7 @@ TextureBackedImageImpl::TextureBackedImageImpl()
     :   ImageImpl()
     ,   m_BitmapRep(NULL)
 {
+    FIRTREE_DEBUG("Created TextureBackedImageImpl @ %p", this);
 }
 
 //=============================================================================
@@ -194,6 +202,7 @@ BitmapBackedImageImpl::BitmapBackedImageImpl()
     ,   m_GLContext(NULL)
     ,   m_CacheValid(false)
 {
+    FIRTREE_DEBUG("Created BitmapBackedImageImpl @ %p", this);
 }
 
 //=============================================================================
@@ -298,6 +307,7 @@ KernelImageImpl::KernelImageImpl(Firtree::Kernel* k, ExtentProvider* extentProvi
     ,   m_TextureRenderer(NULL)
     ,   m_GLRenderer(NULL)
 {
+    FIRTREE_DEBUG("Created KernelImageImpl @ %p", this);
     FIRTREE_SAFE_RETAIN(m_Kernel);
     FIRTREE_SAFE_RETAIN(m_ExtentProvider);
 }
@@ -346,6 +356,7 @@ AffineTransform* KernelImageImpl::GetTransformFromUnderlyingImage() const
 //=============================================================================
 Firtree::Kernel* KernelImageImpl::GetKernel() const
 {
+    assert(m_Kernel != NULL);
     return m_Kernel;
 }
 
@@ -415,6 +426,7 @@ unsigned int KernelImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 BitmapImageImpl::BitmapImageImpl(const Firtree::BitmapImageRep* imageRep, bool copy)
     :   BitmapBackedImageImpl()
 {
+    FIRTREE_DEBUG("Created BitmapImageImpl @ %p", this);
     if(imageRep->ImageBlob == NULL) { return; }
     if(imageRep->Stride < imageRep->Width) { return; }
     if(imageRep->Stride*imageRep->Height > imageRep->ImageBlob->GetLength()) {
@@ -483,6 +495,7 @@ ImageProviderImageImpl::ImageProviderImageImpl(ImageProvider* improv)
     :   BitmapBackedImageImpl()
     ,   m_ImageProvider(improv)
 {
+    FIRTREE_DEBUG("Created ImageProviderImageImpl @ %p", this);
     FIRTREE_SAFE_RETAIN(m_ImageProvider);
 }
 

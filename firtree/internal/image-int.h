@@ -59,7 +59,7 @@ class ImageImpl : public Image
         // CONST METHODS
         
         /// Return the 'preferred' representation for an image.
-        virtual PreferredRepresentation GetPreferredRepresentation() const = 0;
+        virtual ImageImpl::PreferredRepresentation GetPreferredRepresentation() const = 0;
 
         /// Return the extent of the image.
         virtual Rect2D GetExtent() const = 0;
@@ -115,6 +115,7 @@ class TransformedImageImpl : public ImageImpl
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual Firtree::Kernel* GetKernel() const;
 
         /// Get the underlying non-transformed image.
         Image*  GetBaseImage() const;

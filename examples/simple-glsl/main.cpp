@@ -222,6 +222,7 @@ void render(float epoch)
                 Point2D(0,0), outQuad);
     } catch(Firtree::Exception e) {
         fprintf(stderr, "Error: %s\n", e.GetMessage().c_str());
+        throw e;
     }
 }
 

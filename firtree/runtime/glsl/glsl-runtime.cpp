@@ -649,16 +649,28 @@ const Rect2D GLSLSamplerParameter::GetDomain() const
 //=============================================================================
 KernelSamplerParameter::KernelSamplerParameter(Image* im)
     :   GLSLSamplerParameter(im)
+    ,   m_Kernel(NULL)
 {
     Internal::ImageImpl* imImpl = 
         dynamic_cast<Internal::ImageImpl*>(im);
-    if(imImpl == NULL) { return; }
+    if(imImpl == NULL) { 
+        FIRTREE_ERROR("Internal Error: Passed image is invalid (%p)", im);
+        return; 
+    }
 
     Firtree::Kernel* k = imImpl->GetKernel();
-    if(k == NULL) { return; }
+    if(k == NULL) { 
+        FIRTREE_ERROR("Internal Error: Attempt to create kernel sampler from "
+                "image (%p) with no kernel.", im);
+        return; 
+    }
 
     CompiledGLSLKernel* gk = k->GetWrappedGLSLKernel();
-    if(gk == NULL) { return; }
+    if(gk == NULL) { 
+        FIRTREE_ERROR("Internal Error: Attempt to create GLSL kernel sampler "
+                "from kernel (%p) with no GLSL implementation.", k);
+        return;
+    }
     
     // NB underlyingTransform must be released
     AffineTransform* underlyingTransform = 
@@ -686,13 +698,13 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
 {
     static char idxStr[255]; 
     std::string tempStr;
-   
-    const std::map<std::string, Parameter*>& params = kernel->GetParameters();
 
     dest += "vec4 __builtin_sample_";
     dest += kernel->GetCompiledKernelName();
     dest += "(int sampler, vec2 samplerCoord) {\n";
     dest += "  vec4 result = vec4(0,0,0,0);\n";
+   
+    const std::map<std::string, Parameter*>& params = kernel->GetParameters();
     
     // Create a vector of the kernel sampler parameters.
     std::vector<SamplerParameter*> samplerParams;

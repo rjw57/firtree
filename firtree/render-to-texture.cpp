@@ -58,10 +58,14 @@ static void EnsureContextIsCurrent(OpenGLContext* context)
             FIRTREE_ERROR("OpenGL EXT_framebuffer_object support required.");
         }
 
-        if(!GLEW_ARB_texture_float)
-        {
-            FIRTREE_ERROR("OpenGL ARB_texture_float support required.");
-        }
+        // OSX does not claim to support this but everything works
+        // anyway.
+        // TOOD: Check if this is formally required or if we're actually
+        //       using some other extension without realising.
+        //if(!GLEW_ARB_texture_float)
+        //{
+        //    FIRTREE_ERROR("OpenGL ARB_texture_float support required.");
+        //}
     }
 }
 

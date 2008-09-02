@@ -32,6 +32,9 @@
 
 namespace Firtree {
 
+class GLRenderer;    
+class OpenGLContext;    
+
 //=============================================================================
 /// A class encapsulating a bitmap image representation. A bitmap is an
 /// array of component values in red, green, blue and alpha order. 
@@ -183,6 +186,38 @@ class Image : public ReferenceCounted
         virtual Rect2D GetExtent() const = 0;
 
     protected:
+};
+
+//=============================================================================
+/// An accumulation image is a special class of image which provides a
+/// FIRTREE renderer which can be used to draw on it.
+class AccumulationImage : public Image
+{
+    protected:
+        ///@{
+        /// Protected constructors/destructors. Use the
+        /// factory method instead.
+        AccumulationImage();
+        ///@}
+
+    public:
+        virtual ~AccumulationImage();
+        
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        /// Construct an accumulation image with the specified width and height
+        /// in pixels. The image must be created with a parent firtree context.
+        static AccumulationImage* Create(unsigned int width, 
+                unsigned int height, 
+                OpenGLContext* parentContext);
+        
+        // ====================================================================
+        // CONST METHODS
+
+        /// Return a pointer to the renderer which can be used to draw on this
+        /// image.
+        virtual GLRenderer* GetRenderer() const = 0;
 };
 
 }

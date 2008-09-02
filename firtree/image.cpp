@@ -315,6 +315,27 @@ Image* Image::Copy() const
     return Image::CreateFromImage(this);
 }
 
+// ACCUMULATION IMAGE /////////////////////////////////////////////////////////
+
+//=============================================================================
+AccumulationImage::AccumulationImage()
+    : Image()
+{
+}
+
+//=============================================================================
+AccumulationImage::~AccumulationImage()
+{
+}
+
+//=============================================================================
+AccumulationImage* AccumulationImage::Create(unsigned int width, 
+                unsigned int height, OpenGLContext* parent)
+{
+    return new AccumulationImageImpl(width, height, parent);
+}
+
+
 } // namespace Firtree 
 
 //=============================================================================

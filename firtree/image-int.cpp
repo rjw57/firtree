@@ -598,6 +598,72 @@ Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep()
     return rv;
 }
 
+//=============================================================================
+// ACCUMULATION IMAGE
+//=============================================================================
+
+//=============================================================================
+AccumulationImageImpl::AccumulationImageImpl(unsigned int w, unsigned int h,
+        OpenGLContext* parentContext)
+    :   TextureBackedImageImpl()
+    ,   m_Renderer(NULL)
+    ,   m_ParentCtx(parentContext)
+{
+    FIRTREE_DEBUG("Created AccumulationImageImpl @ %p", this);
+
+    m_Extent = Rect2D(0, 0, w, h);
+    m_TexCtx = RenderTextureContext::Create(w, h, m_ParentCtx);
+
+    FIRTREE_SAFE_RETAIN(m_ParentCtx);
+
+    m_Renderer = GLRenderer::Create(m_TexCtx);
+    m_Renderer->Clear(0, 0, 0, 0);
+}
+
+//=============================================================================
+AccumulationImageImpl::~AccumulationImageImpl()
+{
+    FIRTREE_SAFE_RELEASE(m_Renderer);
+    FIRTREE_SAFE_RELEASE(m_ParentCtx);
+    FIRTREE_SAFE_RELEASE(m_TexCtx);
+}
+
+//=============================================================================
+Rect2D AccumulationImageImpl::GetExtent() const
+{
+    return m_Extent;
+}
+
+//=============================================================================
+AffineTransform* AccumulationImageImpl::GetTransformFromUnderlyingImage() const
+{
+    return AffineTransform::Identity();
+}
+
+//=============================================================================
+Size2D AccumulationImageImpl::GetUnderlyingPixelSize() const
+{
+    return m_Extent.Size;
+}
+
+//=============================================================================
+GLRenderer* AccumulationImageImpl::GetRenderer() const
+{
+    return m_Renderer;
+}
+
+//=============================================================================
+unsigned int AccumulationImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
+{
+    if(ctx != m_ParentCtx)
+    {
+        FIRTREE_WARNING("Returning accumulation image texture for wrong "
+                "context.");
+    }
+
+    return m_TexCtx->GetOpenGLTexture();
+}
+
 } } // namespace Firtree::Internal
 
 //=============================================================================

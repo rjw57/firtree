@@ -30,6 +30,7 @@
 #include <firtree/blob.h>
 #include <firtree/image.h>
 #include <firtree/kernel.h>
+#include <firtree/glsl-runtime.h>
 #include <internal/render-to-texture.h>
 
 namespace Firtree { namespace Internal {
@@ -157,6 +158,39 @@ class TextureBackedImageImpl : public ImageImpl
 
     private:
         Firtree::BitmapImageRep*     m_BitmapRep;
+};
+
+//=============================================================================
+/// The an image which is backed by a texture.
+class AccumulationImageImpl : public TextureBackedImageImpl, public AccumulationImage
+{
+    public:
+        // ====================================================================
+        // CONSTRUCTION METHODS
+
+        AccumulationImageImpl(unsigned int w, unsigned int h,
+                OpenGLContext* parentContext);
+        virtual ~AccumulationImageImpl();
+        
+        // ====================================================================
+        // CONST METHODS
+        
+        virtual Rect2D GetExtent() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual Size2D GetUnderlyingPixelSize() const;
+        virtual GLRenderer* GetRenderer() const;
+
+        // ====================================================================
+        // MUTATING METHODS
+
+        virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
+
+    private:
+        Rect2D          m_Extent;
+        GLRenderer*     m_Renderer;
+        OpenGLContext*  m_ParentCtx;
+
+        RenderTextureContext*   m_TexCtx;
 };
 
 //=============================================================================

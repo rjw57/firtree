@@ -52,6 +52,7 @@ using namespace Firtree;
 %newobject Firtree::Image::CreateFromBitmapData;
 %newobject Firtree::Image::CreateFromFile;
 %newobject Firtree::Image::CreateFromImageWithTransform;
+%newobject Firtree::Image::CreateFromImageCroppedTo;
 %newobject Firtree::Image::CreateFromKernel;
 %newobject Firtree::Image::CreateFromImageProvider;
 

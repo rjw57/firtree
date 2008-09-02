@@ -29,6 +29,7 @@
 #include <firtree/math.h>
 #include <firtree/blob.h>
 #include <firtree/image.h>
+#include <firtree/kernel.h>
 #include <internal/render-to-texture.h>
 
 namespace Firtree { namespace Internal {
@@ -65,7 +66,7 @@ class ImageImpl : public Image
         virtual Rect2D GetExtent() const = 0;
 
         /// Return the size of image that would be returned by 
-        /// GetAsOpenGLTexture() or GetAsBitmapImageRep().
+        /// GetAsOpenGLTexture() or CreateBitmapImageRep().
         virtual Size2D GetUnderlyingPixelSize() const = 0;
 
         /// Return a pointer to an AffineTransform which represents the
@@ -90,7 +91,7 @@ class ImageImpl : public Image
 
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
-        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep() = 0;
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep() = 0;
 
         ///@}
 
@@ -105,7 +106,8 @@ class TransformedImageImpl : public ImageImpl
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        TransformedImageImpl(const Image* baseImage, AffineTransform* transform);
+        TransformedImageImpl(const Image* baseImage, AffineTransform* transform,
+                Rect2D crop);
         virtual ~TransformedImageImpl();
 
         // ====================================================================
@@ -124,11 +126,12 @@ class TransformedImageImpl : public ImageImpl
         // MUTATING METHODS
 
         virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
-        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
 
     private:
         AffineTransform*        m_Transform;
         ImageImpl*              m_BaseImage;
+        Rect2D                  m_CropRect;
 };
 
 //=============================================================================
@@ -150,7 +153,7 @@ class TextureBackedImageImpl : public ImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
 
     private:
         Firtree::BitmapImageRep*     m_BitmapRep;
@@ -243,7 +246,7 @@ class BitmapImageImpl : public BitmapBackedImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
 
     private:
         Firtree::BitmapImageRep*     m_BitmapRep;
@@ -270,7 +273,7 @@ class ImageProviderImageImpl : public BitmapBackedImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* GetAsBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
 
     private:
         ImageProvider*     m_ImageProvider;

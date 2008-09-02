@@ -157,6 +157,11 @@ class Image : public ReferenceCounted
         static Image* CreateFromImageWithTransform(const Image* im,
                 AffineTransform* t);
 
+        /// Construct an image by cropping another image to the intersection
+        /// of it's exent and a specified crop rectangle.
+        static Image* CreateFromImageCroppedTo(const Image* im,
+                Rect2D cropRect);
+
         /// Construct an image from the output of a kernel. If extentProvider
         /// is non-NULL, the specified ExtentProvider will be used to calculate
         /// the extent of the kernel. Otherwise, the extent provider

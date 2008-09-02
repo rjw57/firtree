@@ -346,21 +346,21 @@ void CompiledGLSLKernel::SetValueForKey(Parameter* param, const char* key)
     NumericParameter* numeric = 
         dynamic_cast<NumericParameter*>(param);
 
-    if((sampler == NULL) && (numeric == NULL))
-        return;
+    if(sampler != NULL)
+    {
+        FIRTREE_SAFE_RETAIN(sampler);
+    }
+
+    if((numeric == NULL) && (m_Parameters.count(key) > 0))
+    {
+        FIRTREE_SAFE_RELEASE(m_Parameters[key]);
+        m_Parameters[key] = NULL;
+    }
 
     if(sampler != NULL)
     {
-        sampler->Retain();
-
-        if(m_Parameters.count(key) > 0)
-        {
-            FIRTREE_SAFE_RELEASE(m_Parameters[key]);
-        }
-
         m_Parameters[key] = sampler;
-    } else if(numeric != NULL)
-    {
+    } else if(numeric != NULL) {
         NumericParameter* p = 
             NumericParameterForKeyAndType(key, numeric->GetBaseType());
         if((p == NULL) || (p->GetSize() != numeric->GetSize()))
@@ -1646,10 +1646,9 @@ BitmapImageRep* GLRenderer::CreateBitmapImageRepFromImage(Image* image)
 {
     m_OpenGLContext->Begin();
     BitmapImageRep* rv = 
-        dynamic_cast<Internal::ImageImpl*>(image)->GetAsBitmapImageRep();
+        dynamic_cast<Internal::ImageImpl*>(image)->CreateBitmapImageRep();
     m_OpenGLContext->End();
 
-    FIRTREE_SAFE_RETAIN(rv);
     return rv;
 }
 
@@ -1659,6 +1658,7 @@ bool GLRenderer::WriteImageToFile(Image* image, const char* pFileName)
     BitmapImageRep* bir = CreateBitmapImageRepFromImage(image);
     if(bir == NULL)
     {
+        FIRTREE_WARNING("Failed to create bitmap of image %p.", image);
         return false;
     }
 
@@ -1689,11 +1689,11 @@ void GLRenderer::Clear(float r, float g, float b, float a)
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
-#if 0
-    FIRTREE_DEBUG("RenderInRect:");
-    FIRTREE_DEBUG(" dst: %f,%f+%f+%f.", destRect.Origin.X, destRect.Origin.Y,
+#if 1
+    FIRTREE_DEBUG("RenderInRect image %p:", image);
+    FIRTREE_DEBUG(" dst rect: %f,%f+%f+%f.", destRect.Origin.X, destRect.Origin.Y,
             destRect.Size.Width, destRect.Size.Height);
-    FIRTREE_DEBUG(" src: %f,%f+%f+%f.", srcRect.Origin.X, srcRect.Origin.Y,
+    FIRTREE_DEBUG(" src image: %f,%f+%f+%f.", srcRect.Origin.X, srcRect.Origin.Y,
             srcRect.Size.Width, srcRect.Size.Height);
 #endif
 

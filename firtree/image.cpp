@@ -105,14 +105,22 @@ Image::~Image()
 Image* Image::CreateFromImage(const Image* im)
 {
     if(im == NULL) { return NULL; }
-    return new TransformedImageImpl(im, AffineTransform::Identity());
+    return new TransformedImageImpl(im, AffineTransform::Identity(),
+                Rect2D::MakeInfinite());
 }
 
 //=============================================================================
 Image* Image::CreateFromImageWithTransform(const Image* im, AffineTransform* t)
 {
     if(im == NULL) { return NULL; }
-    return new TransformedImageImpl(im, t);
+    return new TransformedImageImpl(im, t, Rect2D::MakeInfinite());
+}
+
+//=============================================================================
+Image* Image::CreateFromImageCroppedTo(const Image* im, Rect2D cropRect)
+{
+    if(im == NULL) { return NULL; }
+    return new TransformedImageImpl(im, NULL, cropRect);
 }
 
 //=============================================================================

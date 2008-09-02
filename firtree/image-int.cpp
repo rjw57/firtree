@@ -60,11 +60,20 @@ Kernel* ImageImpl::GetKernel() const
 }
 
 //=============================================================================
-TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t)
+TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t,
+        Rect2D crop)
     :   ImageImpl()
+    ,   m_CropRect(crop)
 {
     FIRTREE_DEBUG("Created TransformedImageImpl @ %p", this);
-    m_Transform = t->Copy();
+
+    if(t != NULL)
+    {
+        m_Transform = t->Copy();
+    } else {
+        m_Transform = AffineTransform::Identity();
+    }
+
     m_BaseImage = dynamic_cast<ImageImpl*>(const_cast<Image*>(inim));
     FIRTREE_SAFE_RETAIN(m_BaseImage);
 }
@@ -99,7 +108,8 @@ Image* TransformedImageImpl::GetBaseImage() const
 //=============================================================================
 Rect2D TransformedImageImpl::GetExtent() const
 {
-    return Rect2D::Transform(m_BaseImage->GetExtent(), m_Transform);
+    return Rect2D::Intersect(m_CropRect,
+            Rect2D::Transform(m_BaseImage->GetExtent(), m_Transform));
 }
 
 //=============================================================================
@@ -129,9 +139,41 @@ unsigned int TransformedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* TransformedImageImpl::GetAsBitmapImageRep()
+Firtree::BitmapImageRep* TransformedImageImpl::CreateBitmapImageRep()
 {
-    return m_BaseImage->GetAsBitmapImageRep();
+    // There are two cases here, a fast path where there is no addition
+    // transform or cropping and we can simply return the base image's 
+    // representation or one in which we need to use a kernel to render
+    // ourselves.
+
+    if(m_Transform->IsIdentity() && Rect2D::IsInfinite(m_CropRect))
+    {
+        return m_BaseImage->CreateBitmapImageRep();
+    }
+
+    Firtree::Kernel* renderingKernel = Kernel::CreateFromSource(
+            "kernel vec4 passthroughKernel(sampler src) {"
+            "  return sample(src, samplerCoord(src));"
+            "}");
+    renderingKernel->SetValueForKey(this, "src");
+    
+    Image* im = Image::CreateFromKernel(renderingKernel);
+    KernelImageImpl* ki = dynamic_cast<KernelImageImpl*>(im);
+    if(ki == NULL)
+    {
+        FIRTREE_ERROR("Error creating rendering kernel for transformed image.");
+    }
+
+    Firtree::BitmapImageRep* kir = ki->CreateBitmapImageRep();
+    Firtree::BitmapImageRep* retVal = 
+        Firtree::BitmapImageRep::CreateFromBitmapImageRep(kir, false);
+    FIRTREE_SAFE_RELEASE(kir);
+
+    FIRTREE_SAFE_RELEASE(im);
+
+    FIRTREE_SAFE_RELEASE(renderingKernel);
+
+    return retVal;
 }
 
 //=============================================================================
@@ -160,9 +202,11 @@ TextureBackedImageImpl::GetPreferredRepresentation() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* TextureBackedImageImpl::GetAsBitmapImageRep()
+Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
 {
     OpenGLContext* c = GLSL::GetCurrentGLContext();
+
+    FIRTREE_DEBUG("Performance hint: copying GPU -> CPU.");
 
     if(c == NULL)
     {
@@ -188,6 +232,7 @@ Firtree::BitmapImageRep* TextureBackedImageImpl::GetAsBitmapImageRep()
             w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
     FIRTREE_SAFE_RELEASE(imageBlob);
 
+    FIRTREE_SAFE_RETAIN(m_BitmapRep);
     return m_BitmapRep;
 }
 
@@ -243,7 +288,7 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         InvalidateCache();
     }
 
-    Firtree::BitmapImageRep* bir = GetAsBitmapImageRep();
+    Firtree::BitmapImageRep* bir = CreateBitmapImageRep();
 
     ctx->Begin();
 
@@ -291,6 +336,8 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
     }
 
     ctx->End();
+
+    FIRTREE_SAFE_RELEASE(bir);
 
     return m_GLTexture;
 }
@@ -370,11 +417,9 @@ unsigned int KernelImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         return 0;
     }
 
-    /*
-    FIRTREE_DEBUG("Extent: %f,%f+%f+%f.",
+    FIRTREE_DEBUG("Rendering kernel-based image to texture with extent: %f,%f+%f+%f.",
             extent.Origin.X, extent.Origin.Y,
             extent.Size.Width, extent.Size.Height);
-    */
 
     Size2DU32 imageSize(ceil(extent.Size.Width), ceil(extent.Size.Height));
 
@@ -481,8 +526,9 @@ AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* BitmapImageImpl::GetAsBitmapImageRep()
+Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep()
 {
+    FIRTREE_SAFE_RETAIN(m_BitmapRep);
     return m_BitmapRep;
 }
 
@@ -544,9 +590,12 @@ AffineTransform* ImageProviderImageImpl::GetTransformFromUnderlyingImage() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* ImageProviderImageImpl::GetAsBitmapImageRep()
+Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep()
 {
-    return const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->GetImageRep());
+    Firtree::BitmapImageRep* rv = 
+        const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->GetImageRep());
+    FIRTREE_SAFE_RETAIN(rv);
+    return rv;
 }
 
 } } // namespace Firtree::Internal

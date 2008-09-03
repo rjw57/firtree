@@ -75,8 +75,8 @@ class TestHelper:
         return os.path.exists(self._outputFileName) and os.path.isfile(self._outputFileName)
 
     def load_image(self, filename):
-        #if(filename in self._image_cache):
-        #    return self._image_cache[filename]
+        if(filename in self._image_cache):
+            return self._image_cache[filename]
 
         retVal = None
 

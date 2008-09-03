@@ -86,6 +86,8 @@ class RenderTextureContext : public Firtree::OpenGLContext
         int32_t                    m_OpenGLFrameBufferName;
 
         int32_t                    m_PreviousOpenGLFrameBufferName;
+
+        float                       m_PreviousViewport[4];
 };
 
 } }

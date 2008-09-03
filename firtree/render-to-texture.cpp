@@ -156,6 +156,9 @@ void RenderTextureContext::Begin()
     if(GetBeginDepth() == 1)
     {
         m_ParentContext->Begin();
+
+        CHECK_GL( glGetFloatv(GL_VIEWPORT, m_PreviousViewport) );
+
         GLint currentFb = 0;
         CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
         m_PreviousOpenGLFrameBufferName = currentFb;
@@ -175,6 +178,8 @@ void RenderTextureContext::Begin()
             CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
                         m_OpenGLFrameBufferName) );
             CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
+            FIRTREE_DEBUG("Changing viewport to 0,0+%i+%i.",
+                    m_Size.Width,m_Size.Height);
         }
     }
 }
@@ -186,6 +191,14 @@ void RenderTextureContext::End()
     {
         CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
                     m_PreviousOpenGLFrameBufferName) );
+
+        CHECK_GL( glViewport(
+                m_PreviousViewport[0], m_PreviousViewport[1],
+                m_PreviousViewport[2], m_PreviousViewport[3]) );
+        FIRTREE_DEBUG("Restoring viewport to %f,%f+%f+%f.",
+                m_PreviousViewport[0], m_PreviousViewport[1],
+                m_PreviousViewport[2], m_PreviousViewport[3]);
+
         m_ParentContext->End();
     }
 

@@ -554,6 +554,7 @@ bool GLSLBackend::VisitUnary(bool preVisit, TIntermUnary* n)
             case EOpUnPremultiply:
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = __builtin_unpremultiply(%s);\n", tmp, operand.c_str());
+                break;
             case EOpSamplerCoord:
                 AppendGLSLType(n->getTypePointer());
                 AppendOutput(" %s = __builtin_sampler_transform_", tmp);

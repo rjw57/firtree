@@ -628,7 +628,7 @@ void GLSLSamplerParameter::SetTransform(const AffineTransform* f)
 
     AffineTransform* oldTrans = m_Transform;
     m_Transform = f->Copy();
-    if(oldTrans != NULL) { oldTrans->Release(); }
+    FIRTREE_SAFE_RELEASE(oldTrans);
 }
 
 //=============================================================================
@@ -677,7 +677,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
         imImpl->GetTransformFromUnderlyingImage();
 
     m_Kernel = gk;
-    m_Kernel->Retain();
+    FIRTREE_SAFE_RETAIN(m_Kernel);
 
     AffineTransform* t = GetTransform()->Copy();
     t->AppendTransform(underlyingTransform);
@@ -689,7 +689,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
 //=============================================================================
 KernelSamplerParameter::~KernelSamplerParameter()
 {
-    m_Kernel->Release();
+    FIRTREE_SAFE_RELEASE(m_Kernel);
 }
 
 //=============================================================================
@@ -783,7 +783,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
             dest += ");\n";
             dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
         }
-        invTrans->Release();
+        FIRTREE_SAFE_RELEASE(invTrans);
     } else {
         for(std::vector<SamplerParameter*>::const_iterator i = samplerParams.begin();
                 i != samplerParams.end(); i++)
@@ -816,7 +816,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                     dest += "result.xy = vec2(dot(row1, result), dot(row2, result));\n";
                     dest += "}\n";
                 }
-                invTrans->Release();
+                FIRTREE_SAFE_RELEASE(invTrans);
             }
         }
     }
@@ -1043,7 +1043,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
         dest += "vec2 destCoord = inCoord.xy;\n";
     }
 
-    invTrans->Release();
+    FIRTREE_SAFE_RELEASE(invTrans);
 
     std::string tempStr;
     sampler->BuildSampleGLSL(tempStr, "destCoord", "gl_FragColor");
@@ -1350,7 +1350,7 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     if(imImpl == NULL) { return; }
 
     m_Image = imImpl;
-    m_Image->Retain();
+    FIRTREE_SAFE_RETAIN(m_Image);
 
     Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
 
@@ -1526,7 +1526,7 @@ GLSLSamplerParameter* CreateTextureSamplerWithTransform(
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
-    tc->Release();
+    FIRTREE_SAFE_RELEASE(tc);
     return rv;
 }
 
@@ -1538,7 +1538,7 @@ GLSLSamplerParameter* CreateKernelSamplerWithTransform(
     AffineTransform* tc = rv->GetTransform()->Copy();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
-    tc->Release();
+    FIRTREE_SAFE_RELEASE(tc);
     return rv;
 }
 
@@ -1714,15 +1714,15 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     SamplerParameter* sampler;
 
     // Do we have a sampler for this image?
-    if(m_SamplerCache->Contains(image))
+    if(!m_SamplerCache->Contains(image))
     {
-        sampler = dynamic_cast<SamplerParameter*>
-            (m_SamplerCache->GetEntryForKey(image));
-    } else {
         sampler = SamplerParameter::CreateFromImage(image);
         m_SamplerCache->SetEntryForKey(sampler, image);
-        sampler->Release();
+        FIRTREE_SAFE_RELEASE(sampler);
     }
+
+    sampler = dynamic_cast<SamplerParameter*>
+        (m_SamplerCache->GetEntryForKey(image));
 
     GLenum err;
     if(sampler == NULL) { 
@@ -1779,7 +1779,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
         srcToDestTrans->Invert();
         clipSrcRect = Rect2D::Transform(renderRect, srcToDestTrans);
 
-        srcToDestTrans->Release();
+        FIRTREE_SAFE_RELEASE(srcToDestTrans);
 
         // Do nothing if we've clipped everything away.
         if(Rect2D::IsZero(renderRect))

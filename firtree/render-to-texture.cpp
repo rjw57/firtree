@@ -91,7 +91,10 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     m_OpenGLTextureName = m_ParentContext->GenTexture();
 
     CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_OpenGLTextureName) );
-    CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, width,
+
+    // HACK: This should really be GL_RGBA32F_ARB but on older cards,
+    // only the 16-bit version is supported.
+    CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width,
                 height, 0, GL_RGBA, GL_FLOAT, NULL) );
 
     CHECK_GL( glGenerateMipmapEXT(GL_TEXTURE_2D) );

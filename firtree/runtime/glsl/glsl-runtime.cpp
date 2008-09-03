@@ -1038,6 +1038,12 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     dest += 
         "vec2 __builtin_sincos(float a) { return vec2(sin(a),cos(a)); }\n"
         "vec2 __builtin_cossin(float a) { return vec2(cos(a),sin(a)); }\n"
+        "vec4 __builtin_premultiply(vec4 a) { return vec4(a.rgb*a.a, a.a); }\n"
+        "vec4 __builtin_unpremultiply(vec4 a) { "
+        "     vec4 rv = a;"
+        "     if(a.a != 0.0) { rv = vec4(a.rgb/a.a, a.a); } else { return vec4(0,0,0,0); } "
+        "     return rv;"
+        "}\n"
         // FIXME: Add rest of functions.
         ;
 

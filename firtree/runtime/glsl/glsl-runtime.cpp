@@ -455,6 +455,7 @@ GLSLSamplerParameter::GLSLSamplerParameter(Image* im)
     ,   m_SamplerIndex(-1)
     ,   m_BlockPrefix("toplevel")
     ,   m_CachedFragmentShaderObject(-1)
+    ,   m_CachedVertexShaderObject(-1)
     ,   m_CachedProgramObject(-1)
     ,   m_RepresentedImage(im)
     ,   m_GLContext(NULL)
@@ -480,6 +481,15 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
         m_GLContext->Begin();
         EnsureContext(m_GLContext);
         glDeleteObjectARB(m_CachedFragmentShaderObject);
+        m_CachedFragmentShaderObject = -1;
+        m_GLContext->End();
+    }
+
+    if(m_CachedVertexShaderObject > 0)
+    {
+        m_GLContext->Begin();
+        EnsureContext(m_GLContext);
+        glDeleteObjectARB(m_CachedVertexShaderObject);
         m_CachedFragmentShaderObject = -1;
         m_GLContext->End();
     }
@@ -555,6 +565,12 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         m_CachedFragmentShaderObject = -1;
     }
 
+    if(m_CachedVertexShaderObject > 0)
+    {
+        glDeleteObjectARB(m_CachedVertexShaderObject);
+        m_CachedVertexShaderObject = -1;
+    }
+
     FIRTREE_DEBUG("Performance hint: (re-)compiling a GLSL shader.");
 
     std::string shaderSource;
@@ -563,7 +579,15 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     m_CachedFragmentShaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
     if(m_CachedFragmentShaderObject == 0)
     {
-        FIRTREE_ERROR("Error creating shader object.");
+        FIRTREE_ERROR("Error creating fragment shader object.");
+        m_GLContext->End();
+        return 0;
+    }
+
+    m_CachedVertexShaderObject = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
+    if(m_CachedVertexShaderObject == 0)
+    {
+        FIRTREE_ERROR("Error creating vertex shader object.");
         m_GLContext->End();
         return 0;
     }
@@ -585,7 +609,30 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         char* log = (char*) malloc(logLen + 1);
         CHECK_GL( glGetInfoLogARB(m_CachedFragmentShaderObject,
                     logLen, &logLen, log) );
-        FIRTREE_ERROR("Error compiling shader: %s\nSource: %s\n", 
+        FIRTREE_ERROR("Error compiling fragment shader: %s\nSource: %s\n", 
+                log, pSrc);
+        free(log);
+        m_GLContext->End();
+        return 0;
+    }
+
+    const char* vertexSrc = 
+                "void main(void) { gl_Position = gl_Vertex; gl_TexCoord[0] = gl_MultiTexCoord0; }";
+    CHECK_GL( glShaderSourceARB(m_CachedVertexShaderObject, 1, &vertexSrc, NULL) );
+    CHECK_GL( glCompileShaderARB(m_CachedVertexShaderObject) );
+
+    CHECK_GL( glGetObjectParameterivARB(m_CachedVertexShaderObject,
+                GL_OBJECT_COMPILE_STATUS_ARB, &status) );
+
+    if(status != GL_TRUE)
+    {
+        GLint logLen = 0;
+        CHECK_GL( glGetObjectParameterivARB(m_CachedVertexShaderObject,
+                    GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
+        char* log = (char*) malloc(logLen + 1);
+        CHECK_GL( glGetInfoLogARB(m_CachedVertexShaderObject,
+                    logLen, &logLen, log) );
+        FIRTREE_ERROR("Error compiling vertex shader: %s\nSource: %s\n", 
                 log, pSrc);
         free(log);
         m_GLContext->End();
@@ -595,6 +642,8 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     CHECK_GL( m_CachedProgramObject = glCreateProgramObjectARB() );
     CHECK_GL( glAttachObjectARB(m_CachedProgramObject, 
                 m_CachedFragmentShaderObject) );
+    CHECK_GL( glAttachObjectARB(m_CachedProgramObject, 
+                m_CachedVertexShaderObject) );
     CHECK_GL( glLinkProgramARB(m_CachedProgramObject) );
     CHECK_GL( glGetObjectParameterivARB(m_CachedProgramObject,
                 GL_OBJECT_LINK_STATUS_ARB, &status) );
@@ -1693,7 +1742,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     FIRTREE_DEBUG("RenderInRect image %p:", image);
     FIRTREE_DEBUG(" dst rect: %f,%f+%f+%f.", destRect.Origin.X, destRect.Origin.Y,
             destRect.Size.Width, destRect.Size.Height);
-    FIRTREE_DEBUG(" src image: %f,%f+%f+%f.", srcRect.Origin.X, srcRect.Origin.Y,
+    FIRTREE_DEBUG(" src rect: %f,%f+%f+%f.", srcRect.Origin.X, srcRect.Origin.Y,
             srcRect.Size.Width, srcRect.Size.Height);
 #endif
 
@@ -1704,6 +1753,28 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     }
 
     m_OpenGLContext->Begin();
+
+    float vp[4];
+    CHECK_GL( glGetFloatv(GL_VIEWPORT, vp) );
+
+    Rect2D viewportRect = Rect2D(vp[0], vp[1], vp[2], vp[3]);
+
+    FIRTREE_DEBUG("  vp rect: %f,%f+%f+%f.", 
+            viewportRect.Origin.X, viewportRect.Origin.Y,
+            viewportRect.Size.Width, viewportRect.Size.Height);
+
+    CHECK_GL( glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( glPushMatrix() );
+    CHECK_GL( glLoadIdentity() );
+    CHECK_GL( glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
+
+    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( glPushMatrix() );
+    CHECK_GL( glLoadIdentity() );
+
+    CHECK_GL( glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( glPushMatrix() );
+    CHECK_GL( glLoadIdentity() );
 
     GLRenderer* oldRenderer = GLSL::GetCurrentGLRenderer();
 
@@ -1740,11 +1811,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     }
 
     glslSampler->SetOpenGLContext(m_OpenGLContext);
-
-    float vp[4];
-    CHECK_GL( glGetFloatv(GL_VIEWPORT, vp) );
-
-    Rect2D viewportRect = Rect2D(vp[0], vp[1], vp[2], vp[3]);
 
 #if 0
     uint8_t digest[20];
@@ -1827,32 +1893,27 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
   
     CHECK_GL( glActiveTextureARB(GL_TEXTURE0) );
 
-    CHECK_GL( glMatrixMode(GL_PROJECTION) );
-    CHECK_GL( glPushMatrix() );
-    CHECK_GL( glLoadIdentity() );
-    CHECK_GL( glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
-
-    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
-    CHECK_GL( glPushMatrix() );
-    CHECK_GL( glLoadIdentity() );
+    FIRTREE_DEBUG(" rdr rect: %f,%f+%f+%f.", 
+            renderRect.Origin.X, renderRect.Origin.Y,
+            renderRect.Size.Width, renderRect.Size.Height);
 
 #if 1
     glBegin(GL_QUADS);
     glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
-    glVertex2f(renderRect.MinX(), renderRect.MinY());
+    glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2], -1.0 + 2.0*renderRect.MinY()/vp[3]);
     glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MaxY());
-    glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2], -1.0 + 2.0*renderRect.MaxY()/vp[3]);
     glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MaxY());
-    glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2], -1.0 + 2.0*renderRect.MaxY()/vp[3]);
     glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
-    glVertex2f(renderRect.MaxX(), renderRect.MinY()); 
+    glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2], -1.0 + 2.0*renderRect.MinY()/vp[3]); 
     CHECK_GL( glEnd() );
 #endif
 
     // HACK: display render rectangle
 #if 0
     CHECK_GL( glUseProgramObjectARB(0) );
-    CHECK_GL( glColor3f(1,1,1) );
+    CHECK_GL( glColor3f(1,1,0) );
     glBegin(GL_LINE_STRIP);
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     glVertex2f(renderRect.MinX(), renderRect.MaxY());
@@ -1861,6 +1922,9 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     CHECK_GL( glEnd() );
 #endif
+
+    CHECK_GL( glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( glPopMatrix() );
 
     CHECK_GL( glMatrixMode(GL_MODELVIEW) );
     CHECK_GL( glPopMatrix() );

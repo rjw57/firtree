@@ -134,6 +134,7 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
         std::string         m_BlockPrefix;
 
         int                 m_CachedFragmentShaderObject;
+        int                 m_CachedVertexShaderObject;
         int                 m_CachedProgramObject;
         uint8_t             m_CachedShaderDigest[20];
 

@@ -79,7 +79,7 @@ BitmapImageRep::BitmapImageRep(const BitmapImageRep* rep, bool copy)
     {
         ImageBlob = rep->ImageBlob->Copy();
     } else {
-        rep->ImageBlob->Retain();
+        FIRTREE_SAFE_RETAIN(rep->ImageBlob);
         ImageBlob = rep->ImageBlob;
     }
 }

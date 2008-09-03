@@ -119,6 +119,7 @@ def run_test(test_name, context, renderer, output):
 
     except:
         exceptionStr = traceback.format_exc()
+        print("Raised exception:\n%s" % exceptionStr)
 
     if(testPassed):
         output.write('''

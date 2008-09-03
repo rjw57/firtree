@@ -85,10 +85,13 @@ class FirtreeScene:
         self.xk = xBlurKernel
         self.yk = yBlurKernel
 
-        self.image = Image.CreateFromKernel(yBlurKernel)
+        blurImage = Image.CreateFromKernel(yBlurKernel)
+        self.image = Image.CreateFromImageWithTransform(blurImage,
+            AffineTransform.Scaling(2.0, 2.0))
 
 
     def display (self, width, height):
+        glClearColor(0,0,0,1)
         glClear(GL_COLOR_BUFFER_BIT)
 
         t = float(glutGet(GLUT_ELAPSED_TIME)) / 1000.0
@@ -97,13 +100,13 @@ class FirtreeScene:
         self.yk.SetValueForKey(
             5.0 * (1.1 + math.sin(2.0 * t)), 'sigma')
 
+        self.accumImage.GetRenderer().Clear(0,0,0,0)
         self.accumImage.GetRenderer().RenderWithOrigin(self.ximage,
             Point2D(10.0, 10.0))
 
         # Render the composited image into the framebuffer.
-        self.context.RenderAtPoint(self.image, 
-            Point2D(0,0),
-            Rect2D(0,0,width,height))
+        self.context.RenderWithOrigin(self.image, 
+            Point2D(100,100))
 
     def clear_up (self):
         print('Clearing up...')

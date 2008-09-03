@@ -5,6 +5,9 @@ class Test (TestModule):
     def name(self):
         return 'accumulation image + further processing'
 
+    def expected_hash(self):
+        return 'b1fd578f0c741a7d25e195c4dd088168'
+
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')
         lena = helper.load_image('lena.png')

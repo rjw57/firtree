@@ -5,6 +5,9 @@ class Test (TestModule):
     def name(self):
         return 'image compositing + transformation'
 
+    def expected_hash(self):
+        return '99130032f3f17e40d05d1242dd0308f5'
+
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')
         lena = helper.load_image('lena.png')

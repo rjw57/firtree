@@ -5,6 +5,9 @@ class Test (TestModule):
     def name(self):
         return 'complex cropping'
 
+    def expected_hash(self):
+        return '5533a07a7ef91bec5585a91879caeb33'
+
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')
         lena = helper.load_image('lena.png')

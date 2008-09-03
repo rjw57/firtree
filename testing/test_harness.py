@@ -2,6 +2,9 @@ import sys
 import os
 import glob
 import traceback
+import md5
+import sys
+import cgi
 
 # Find the script path.
 scriptDir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -30,10 +33,45 @@ outputDir = os.path.join(testingDir, 'output')
 
 from Firtree import *
 
+def sumfile(fobj):
+    '''Returns an md5 hash for an object with read() method.'''
+    m = md5.new()
+    while True:
+        d = fobj.read(8096)
+        if not d:
+            break
+        m.update(d)
+    return m.hexdigest()
+
+
+def md5sum(fname):
+    '''Returns an md5 hash for file fname, or stdin if fname is "-".'''
+    if fname == '-':
+        ret = sumfile(sys.stdin)
+    else:
+        try:
+            f = file(fname, 'rb')
+        except:
+            return 'Failed to open file'
+        ret = sumfile(f)
+        f.close()
+    return ret
+
 class TestHelper:
     def __init__(self, renderer, test_name):
         self._renderer = renderer
         self._test_name = test_name
+        self._checksum = None
+
+        outfilename = '%s.png' % self._test_name
+        self._outputFileName = os.path.join(outputDir, outfilename)
+
+        if(self.output_exists()):
+            # Remove the output if it already exists
+            os.remove(self._outputFileName)
+
+    def output_exists(self):
+        return os.path.exists(self._outputFileName) and os.path.isfile(self._outputFileName)
 
     def load_image(self, filename):
         if(os.path.isfile(os.path.join(imageDir, filename))):
@@ -43,10 +81,14 @@ class TestHelper:
             return Image.CreateFromFile(filename)
 
         return None
+    
+    def checksum(self):
+        return self._checksum
 
     def write_test_output(self, image):
-        outfilename = '%s.png' % self._test_name
-        self._renderer.WriteImageToFile(image, os.path.join(outputDir, outfilename))
+        self._renderer.WriteImageToFile(image, self._outputFileName)
+        if(self.output_exists()):
+            self._checksum = md5sum(self._outputFileName )
 
 def run_test(test_name, context, renderer, output):
     # Attempt to import the test module
@@ -60,27 +102,50 @@ def run_test(test_name, context, renderer, output):
 
     context.Begin()
     helper = TestHelper(renderer, test_name)
+    testPassed = False
+    exceptionStr = ''
+
     try:
         test.run_test(context, renderer, helper)
+
+        print('  - output hash:   %32s' % helper.checksum())
+        print('  - expected hash: %32s' % test.expected_hash())
+
+        if(helper.checksum() == test.expected_hash()):
+            testPassed = True
+            print('    - PASSED')
+        else:
+            print('    - FAILED')
+
+    except:
+        exceptionStr = traceback.format_exc()
+
+    if(testPassed):
         output.write('''
         <div class="testPassed">
         <div class="testTitle">%s - %s</div>
-        <div class="testExemplar"><img src="exemplar/%s.png" alt="Exemplar" /></div>
         <div class="testOutput"><img src="output/%s.png" alt="Output" /></div>
         </div>
-        ''' % (testid, test.name(), testid, testid))
-    except:
-        print('Exception in test:')
-        traceback.print_exc()
+        ''' % (testid, test.name(), testid))
+    else:
+        outputStr = ''
+        if(helper.output_exists()):
+            outputStr = ('<div class="testOutput"><img src="output/%s.png" ' +
+                'alt="Output" /></div>') % testid
         output.write('''
         <div class="testFailed">
         <div class="testTitle">%s - %s</div>
+        %s
+        <div class="testFailString">%s</div>
         </div>
-        ''' % (testid, test.name()))
+        ''' % (testid, test.name(), outputStr, cgi.escape(exceptionStr)))
+
     helper = None
     context.End()
 
     test.finalise_test()
+
+    return testPassed
 
 if(__name__ == '__main__'):
     tests = glob.glob(os.path.join(testDir, 'test*.py'))
@@ -124,11 +189,19 @@ if(__name__ == '__main__'):
     if(len(sys.argv) > 1):
         tests = sys.argv[1:]
 
+    testCount = 0
+    passedCount = 0
+
     for testname in tests:
         testid = os.path.splitext(os.path.basename(testname))[0]
-        run_test(testid, context, renderer, outputFile)
+        status = run_test(testid, context, renderer, outputFile)
+        testCount += 1
+        if(status):
+            passedCount += 1
 
     outputFile.write('</body></html>')
     outputFile.close()
+
+    print('%i/%i tests passed' % (passedCount, testCount))
 
 # vim:sw=4:ts=4:et

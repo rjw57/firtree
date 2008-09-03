@@ -5,6 +5,9 @@ class Test (TestModule):
     def name(self):
         return 'complex image compositing'
 
+    def expected_hash(self):
+        return 'c778aed79c06077e52979687b0edba3c'
+
     def run_test(self, context, renderer, helper):
         fog_orig = helper.load_image('fog.png')
         lena_orig = helper.load_image('lena.png')

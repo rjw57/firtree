@@ -42,8 +42,10 @@ Blob::Blob()
 
 // ===============================================================================
 Blob::Blob(size_t length)
+    :   ReferenceCounted()
+    ,   m_Length(0)
+    ,   m_Buffer(NULL)
 {
-    Blob();
     m_Buffer = (uint8_t*)(malloc(length));
     if(m_Buffer != NULL)
     {
@@ -53,15 +55,19 @@ Blob::Blob(size_t length)
 
 // ===============================================================================
 Blob::Blob(const void* buffer, size_t length)
+    :   ReferenceCounted()
+    ,   m_Length(0)
+    ,   m_Buffer(NULL)
 {
-    Blob();
     AssignFromBuffer(buffer, length);
 }
 
 // ===============================================================================
 Blob::Blob(const Blob& blob)
+    :   ReferenceCounted()
+    ,   m_Length(0)
+    ,   m_Buffer(NULL)
 {
-    Blob();
     AssignFromBlob(blob);
 }
 

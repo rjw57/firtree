@@ -58,10 +58,11 @@ def md5sum(fname):
     return ret
 
 class TestHelper:
-    def __init__(self, renderer, test_name):
+    def __init__(self, renderer, test_name, cache):
         self._renderer = renderer
         self._test_name = test_name
         self._checksum = None
+        self._image_cache = cache
 
         outfilename = '%s.png' % self._test_name
         self._outputFileName = os.path.join(outputDir, outfilename)
@@ -74,13 +75,20 @@ class TestHelper:
         return os.path.exists(self._outputFileName) and os.path.isfile(self._outputFileName)
 
     def load_image(self, filename):
+        #if(filename in self._image_cache):
+        #    return self._image_cache[filename]
+
+        retVal = None
+
         if(os.path.isfile(os.path.join(imageDir, filename))):
-            return Image.CreateFromFile(os.path.join(imageDir, filename))
+            retVal = Image.CreateFromFile(os.path.join(imageDir, filename))
+        elif(os.path.isfile(filename)):
+            retVal = Image.CreateFromFile(filename)
 
-        if(os.path.isfile(filename)):
-            return Image.CreateFromFile(filename)
+        if(retVal != None):
+            self._image_cache[filename] = retVal
 
-        return None
+        return retVal
     
     def checksum(self):
         return self._checksum
@@ -90,7 +98,7 @@ class TestHelper:
         if(self.output_exists()):
             self._checksum = md5sum(self._outputFileName )
 
-def run_test(test_name, context, renderer, output):
+def run_test(test_name, context, renderer, output, imageCache):
     # Attempt to import the test module
     testmod = __import__(test_name, globals(),  locals(), [], -1)
 
@@ -101,7 +109,7 @@ def run_test(test_name, context, renderer, output):
     test.init_test()
 
     context.Begin()
-    helper = TestHelper(renderer, test_name)
+    helper = TestHelper(renderer, test_name, imageCache)
     testPassed = False
     exceptionStr = ''
 
@@ -192,10 +200,11 @@ if(__name__ == '__main__'):
 
     testCount = 0
     passedCount = 0
+    imageCache = { }
 
     for testname in tests:
         testid = os.path.splitext(os.path.basename(testname))[0]
-        status = run_test(testid, context, renderer, outputFile)
+        status = run_test(testid, context, renderer, outputFile, imageCache)
         testCount += 1
         if(status):
             passedCount += 1

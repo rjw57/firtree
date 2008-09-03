@@ -528,8 +528,7 @@ AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 //=============================================================================
 Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep()
 {
-    FIRTREE_SAFE_RETAIN(m_BitmapRep);
-    return m_BitmapRep;
+    return BitmapImageRep::CreateFromBitmapImageRep(m_BitmapRep, false);
 }
 
 //=============================================================================

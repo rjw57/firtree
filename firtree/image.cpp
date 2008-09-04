@@ -340,7 +340,12 @@ ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
             m_Extent.Size.Height, m_Context);
     m_Renderer = GLRenderer::Create(m_TextureContext);
 
-    m_Image = Image::CreateFromOpenGLTexture(m_TextureContext->GetOpenGLTexture());
+    Image* untransImage = 
+        Image::CreateFromOpenGLTexture(m_TextureContext->GetOpenGLTexture());
+    AffineTransform* t = AffineTransform::Translation(m_Extent.Origin.X, m_Extent.Origin.Y);
+    m_Image = Image::CreateFromImageWithTransform(untransImage, t);
+    FIRTREE_SAFE_RELEASE(t);
+    FIRTREE_SAFE_RELEASE(untransImage);
 
     Clear();
 }

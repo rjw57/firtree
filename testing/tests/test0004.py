@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'simple image transform'
 
     def expected_hash(self):
-        return 'd61f85abc36794466d0dd4d785ef56c0'
+        return '34c857a11488f6243a9651e5ae3610b7'
 
     def run_test(self, context, renderer, helper):
         lena = helper.load_image('lena.png')

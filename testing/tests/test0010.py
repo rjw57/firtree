@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'accumulation image + further processing'
 
     def expected_hash(self):
-        return 'b1fd578f0c741a7d25e195c4dd088168'
+        return '7779c215c6c3442470044dc8b1f0d775'
 
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')

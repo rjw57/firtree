@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'accumulation image'
 
     def expected_hash(self):
-        return '38ba23cffeb197b8e70d8c84b18efd49'
+        return 'a0b6e9d812298b9f0c46681af5338257'
 
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')
@@ -19,8 +19,8 @@ class Test (TestModule):
             AffineTransform.Scaling(0.25, 0.25))
 
         outRenderer = outputImage.GetRenderer()
-        outRenderer.RenderWithOrigin(smallLena, Point2D(0,0))
         outRenderer.RenderWithOrigin(smallLena, Point2D(320-128,240-128))
+        outRenderer.RenderWithOrigin(smallLena, Point2D(0,0))
 
         kernel = Kernel.CreateFromSource('''
         kernel vec4 invkernel(sampler src)

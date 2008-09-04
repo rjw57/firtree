@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'simple image colour inverter'
 
     def expected_hash(self):
-        return 'b6c0f5e14396879c823ca128d9677298'
+        return '78f835913ab6328ceb5b67ee5fce7878'
 
     def run_test(self, context, renderer, helper):
         lena = helper.load_image('lena.png')

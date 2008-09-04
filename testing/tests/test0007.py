@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'simple image crop'
 
     def expected_hash(self):
-        return '4b3204f92e05bcc8a3e34fabc331ccea'
+        return 'bbd0e9ebc804297d8161e3a8a2e09b67'
 
     def run_test(self, context, renderer, helper):
         lena = helper.load_image('lena.png')

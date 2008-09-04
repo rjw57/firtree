@@ -41,7 +41,9 @@ class FirtreeScene:
 
         # Load the firtree image.
         firtreeImage = Image.CreateFromFile(
-            os.path.join(imageDir, 'firtree-192x192.png'))
+            os.path.join(imageDir, 'statues.jpg'))
+        backImage = Image.CreateFromFile(
+            os.path.join(imageDir, 'tariffa.jpg'))
         firtreeExtent = firtreeImage.GetExtent()
         firtreeExtent = Rect2D.Inset(firtreeExtent, -2.0*sigma, -2.0*sigma)
         
@@ -85,16 +87,17 @@ class FirtreeScene:
         self.yk = yBlurKernel
 
         blurImage = Image.CreateFromKernel(yBlurKernel)
-        scaleBlurImage = Image.CreateFromImageWithTransform(blurImage,
-            AffineTransform.Scaling(2.0, 2.0))
 
         self.fadeKernel = Kernel.CreateFromSource('''
-            kernel vec4 fadeKernel(sampler src, float a)
+            kernel vec4 fadeKernel(sampler front, sampler back, float a)
             {
-                return sample(src, samplerCoord(src)) * a;
+                vec4 frontCol = sample(front, samplerCoord(front));
+                vec4 backCol = sample(back, samplerCoord(back));
+                return frontCol * a + backCol * (1.0 - a);
             }
         ''')
-        self.fadeKernel.SetValueForKey(scaleBlurImage, 'src')
+        self.fadeKernel.SetValueForKey(blurImage, 'front')
+        self.fadeKernel.SetValueForKey(backImage, 'back')
         self.fadeKernel.SetValueForKey(1.0, 'a')
 
         self.image = Image.CreateFromKernel(self.fadeKernel)

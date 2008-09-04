@@ -6,21 +6,21 @@ class Test (TestModule):
         return 'accumulation image + further processing'
 
     def expected_hash(self):
-        return '7779c215c6c3442470044dc8b1f0d775'
+        return '8a250aa237122ec5ec603b3d83f28892'
 
     def run_test(self, context, renderer, helper):
         fog = helper.load_image('fog.png')
         lena = helper.load_image('lena.png')
 
-        outputImage = AccumulationImage.Create(320, 240, context)
+        outputImageAccum = ImageAccumulator.Create(Rect2D(0,0,320,240))
 
         smallLena = Image.CreateFromImageWithTransform(
             lena,
             AffineTransform.Scaling(0.25, 0.25))
 
-        outRenderer = outputImage.GetRenderer()
-        outRenderer.RenderWithOrigin(smallLena, Point2D(0,0))
-        outRenderer.RenderWithOrigin(smallLena, Point2D(320-128,240-128))
+        outputImageAccum.RenderImage(smallLena)
+        outputImageAccum.RenderImage(Image.CreateFromImageWithTransform(smallLena,
+            AffineTransform.Translation(320-128,240-128)))
 
         kernel = Kernel.CreateFromSource('''
         kernel vec4 invkernel(sampler src)
@@ -35,7 +35,8 @@ class Test (TestModule):
         smallInv = Image.CreateFromImageWithTransform(
             invImage, AffineTransform.Scaling(0.25, 0.25))
 
-        outRenderer.RenderWithOrigin(smallInv, Point2D(160-64,120-64))
+        outputImageAccum.RenderImage(Image.CreateFromImageWithTransform(smallInv,
+            AffineTransform.Translation(160-64,120-64)))
 
         kernel = Kernel.CreateFromSource('''
         kernel vec4 radialkernel(float radius, __color blendCol)
@@ -48,16 +49,20 @@ class Test (TestModule):
         radius = 50.0
         kernel.SetValueForKey(radius, 'radius')
         gradImage = Image.CreateFromKernel(kernel)
-        gradImageCrop = Image.CreateFromImageCroppedTo(gradImage, Rect2D(-radius,-radius,2*radius,2*radius))
+        gradImageCrop = Image.CreateFromImageCroppedTo(gradImage,
+            Rect2D(-radius,-radius,2*radius,2*radius))
 
         kernel.SetValueForKey(0.0,1.0,0.0,1.0, 'blendCol')
-        outRenderer.RenderWithOrigin(gradImageCrop, Point2D(160,120))
+        outputImageAccum.RenderImage(Image.CreateFromImageWithTransform(gradImageCrop,
+            AffineTransform.Translation(160,120)))
 
         kernel.SetValueForKey(0.0,0.0,1.0,1.0, 'blendCol')
-        outRenderer.RenderWithOrigin(gradImageCrop, Point2D(320,120))
+        outputImageAccum.RenderImage(Image.CreateFromImageWithTransform(gradImageCrop,
+            AffineTransform.Translation(320,120)))
 
         kernel.SetValueForKey(1.0,0.0,0.0,1.0, 'blendCol')
-        outRenderer.RenderWithOrigin(gradImageCrop, Point2D(0,120))
+        outputImageAccum.RenderImage(Image.CreateFromImageWithTransform(gradImageCrop,
+            AffineTransform.Translation(0,120)))
         
         desatkernel = Kernel.CreateFromSource('''
         kernel vec4 desat(sampler src)
@@ -68,7 +73,7 @@ class Test (TestModule):
             return vec4(intensity, intensity, intensity, a.a);
         }
         ''')
-        desatkernel.SetValueForKey(outputImage, 'src')
+        desatkernel.SetValueForKey(outputImageAccum.GetImage(), 'src')
         outputImage2 = Image.CreateFromKernel(desatkernel)
 
         helper.write_test_output(outputImage2)

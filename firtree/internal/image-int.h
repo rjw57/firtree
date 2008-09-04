@@ -161,24 +161,22 @@ class TextureBackedImageImpl : public ImageImpl
 };
 
 //=============================================================================
-/// The an image which is backed by a texture.
-class AccumulationImageImpl : public TextureBackedImageImpl, public AccumulationImage
+/// The an image which is entirely represented by any OpenGL texture.
+class TextureImageImpl : public TextureBackedImageImpl
 {
-    public:
+     public:
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        AccumulationImageImpl(unsigned int w, unsigned int h,
-                OpenGLContext* parentContext);
-        virtual ~AccumulationImageImpl();
-        
+        TextureImageImpl(unsigned int texObj);
+        virtual ~TextureImageImpl();
+
         // ====================================================================
         // CONST METHODS
         
         virtual Rect2D GetExtent() const;
-        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
         virtual Size2D GetUnderlyingPixelSize() const;
-        virtual GLRenderer* GetRenderer() const;
+        virtual AffineTransform* GetTransformFromUnderlyingImage() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -186,11 +184,7 @@ class AccumulationImageImpl : public TextureBackedImageImpl, public Accumulation
         virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
 
     private:
-        Rect2D          m_Extent;
-        GLRenderer*     m_Renderer;
-        OpenGLContext*  m_ParentCtx;
-
-        RenderTextureContext*   m_TexCtx;
+        unsigned int    m_TexObj;
 };
 
 //=============================================================================

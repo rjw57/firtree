@@ -35,6 +35,10 @@ namespace Firtree {
 class GLRenderer;    
 class OpenGLContext;    
 
+namespace Internal {
+class RenderTextureContext;
+}
+
 //=============================================================================
 /// A class encapsulating a bitmap image representation. A bitmap is an
 /// array of component values in red, green, blue and alpha order. 
@@ -175,6 +179,9 @@ class Image : public ReferenceCounted
         /// Construct an image from an image provider.
         static Image* CreateFromImageProvider(ImageProvider* improv);
 
+        /// Construct an image from an existing OpenGL texture.
+        static Image* CreateFromOpenGLTexture(unsigned int texObj);
+
         // ====================================================================
         // CONST METHODS
 
@@ -189,35 +196,51 @@ class Image : public ReferenceCounted
 };
 
 //=============================================================================
-/// An accumulation image is a special class of image which provides a
-/// FIRTREE renderer which can be used to draw on it.
-class AccumulationImage : public Image
+// An image accumulator can be used to allow for feedback and iterative update
+// of images.
+class ImageAccumulator : public ReferenceCounted
 {
     protected:
         ///@{
         /// Protected constructors/destructors. Use the
         /// factory method instead.
-        AccumulationImage();
+        ImageAccumulator(Rect2D extent, OpenGLContext* context);
         ///@}
 
     public:
-        virtual ~AccumulationImage();
+        virtual ~ImageAccumulator();
         
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        /// Construct an accumulation image with the specified width and height
-        /// in pixels. The image must be created with a parent firtree context.
-        static AccumulationImage* Create(unsigned int width, 
-                unsigned int height, 
-                OpenGLContext* parentContext);
+        /// Construct a new ImageAccumulator with the specified extent.
+        /// The accumulator will use the context specified or a 
+        /// null context created via OpenGLContextt::CreateNullContext()
+        /// should context be NULL.
+        static ImageAccumulator* Create(Rect2D extent,
+                OpenGLContext* context = NULL);
         
         // ====================================================================
         // CONST METHODS
+        
+        /// Return the Firtree Image object which represents this accumulator.
+        Image* GetImage() const;
 
-        /// Return a pointer to the renderer which can be used to draw on this
-        /// image.
-        virtual GLRenderer* GetRenderer() const = 0;
+        // ====================================================================
+        // MUTATING METHODS
+
+        /// Clear the contents of the ImageAccumulator.
+        void Clear();
+
+        /// Write the contents of the passed image into the accumulator.
+        void RenderImage(Image* image);
+
+    private:
+        Rect2D                  m_Extent;
+        OpenGLContext*          m_Context;
+        GLRenderer*             m_Renderer;
+        Internal::RenderTextureContext*   m_TextureContext;
+        Image*                  m_Image;
 };
 
 }

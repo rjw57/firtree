@@ -19,10 +19,6 @@ class Test (TestModule):
         lenaExtent = smallLena.GetExtent()
         lenaExtent = Rect2D.Inset(lenaExtent, -2.0*sigma, -2.0*sigma)
 
-        lenaSize = lenaExtent.Size
-        accumImage = AccumulationImage.Create(int(lenaSize.Width), 
-            int(lenaSize.Height), context)
-
         blurKernel = Kernel.CreateFromSource('''
             kernel vec4 blurKernel(sampler src, vec2 direction, float sigma)
             {
@@ -48,11 +44,11 @@ class Test (TestModule):
         blurKernel.SetValueForKey(1.0, 0.0, 'direction')
         blurKernel.SetValueForKey(sigma, 'sigma')
 
-        accumRenderer = accumImage.GetRenderer()
-        accumRenderer.RenderWithOrigin(xBlur, Point2D(2.0*sigma, 2.0*sigma))
+        imageAccum = ImageAccumulator.Create(lenaExtent)
+        imageAccum.RenderImage(xBlur)
 
         yBlur = Image.CreateFromKernel(blurKernel)
-        blurKernel.SetValueForKey(accumImage, 'src')
+        blurKernel.SetValueForKey(imageAccum.GetImage(), 'src')
         blurKernel.SetValueForKey(0.0, 1.0, 'direction')
         blurKernel.SetValueForKey(sigma, 'sigma')
 

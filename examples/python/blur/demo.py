@@ -34,7 +34,7 @@ from Firtree import *
 class FirtreeScene:
 
     def init (self):
-        sigma = 10.0
+        sigma = 20.0
 
         # Create a rendering context.
         self.context = GLRenderer.Create()
@@ -46,8 +46,7 @@ class FirtreeScene:
         firtreeExtent = Rect2D.Inset(firtreeExtent, -2.0*sigma, -2.0*sigma)
         
         # Create an accumulation image
-        self.accumImage = AccumulationImage.Create(int(firtreeExtent.Size.Width),
-            int(firtreeExtent.Size.Height), OpenGLContext.CreateNullContext())
+        self.accumulator = ImageAccumulator.Create(firtreeExtent)
 
         blurKernelSource = '''
             kernel vec4 blurKernel(sampler src, vec2 direction, float sigma)
@@ -78,7 +77,7 @@ class FirtreeScene:
 
         self.ximage = Image.CreateFromKernel(xBlurKernel)
 
-        yBlurKernel.SetValueForKey(self.accumImage, 'src')
+        yBlurKernel.SetValueForKey(self.accumulator.GetImage(), 'src')
         yBlurKernel.SetValueForKey(0.0, 1.0, 'direction')
         yBlurKernel.SetValueForKey(sigma, 'sigma')
 
@@ -86,8 +85,19 @@ class FirtreeScene:
         self.yk = yBlurKernel
 
         blurImage = Image.CreateFromKernel(yBlurKernel)
-        self.image = Image.CreateFromImageWithTransform(blurImage,
+        scaleBlurImage = Image.CreateFromImageWithTransform(blurImage,
             AffineTransform.Scaling(2.0, 2.0))
+
+        self.fadeKernel = Kernel.CreateFromSource('''
+            kernel vec4 fadeKernel(sampler src, float a)
+            {
+                return sample(src, samplerCoord(src)) * a;
+            }
+        ''')
+        self.fadeKernel.SetValueForKey(scaleBlurImage, 'src')
+        self.fadeKernel.SetValueForKey(1.0, 'a')
+
+        self.image = Image.CreateFromKernel(self.fadeKernel)
 
 
     def display (self, width, height):
@@ -96,23 +106,29 @@ class FirtreeScene:
 
         t = float(glutGet(GLUT_ELAPSED_TIME)) / 1000.0
         self.xk.SetValueForKey(
-            5.0 * (1.1 + math.sin(2.0 * t)), 'sigma')
+            10.0 * (1.1 + math.sin(2.0 * t)), 'sigma')
         self.yk.SetValueForKey(
-            5.0 * (1.1 + math.sin(2.0 * t)), 'sigma')
+            10.0 * (1.1 + math.sin(2.0 * t)), 'sigma')
+        self.fadeKernel.SetValueForKey(
+            0.5 * (1.0 - math.sin(2.0 * t)), 'a')
 
-        self.accumImage.GetRenderer().Clear(0,0,0,0)
-        self.accumImage.GetRenderer().RenderWithOrigin(self.ximage,
-            Point2D(10.0, 10.0))
+        self.accumulator.Clear()
+        self.accumulator.RenderImage(self.ximage)
 
         # Render the composited image into the framebuffer.
         self.context.RenderWithOrigin(self.image, 
-            Point2D(100,100))
+            Point2D(0,0))
 
     def clear_up (self):
         print('Clearing up...')
 
         self.image = None
+        self.ximage = None
         self.context = None
+        self.accumulator = None
+        self.xk = None
+        self.yk = None
+        self.fadeKernel = None
         
         # Sanity check to make sure that there are no objects left
         # dangling.

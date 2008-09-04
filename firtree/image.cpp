@@ -208,6 +208,12 @@ Image* Image::CreateFromImageProvider(ImageProvider* improv)
 }
 
 //=============================================================================
+Image* Image::CreateFromOpenGLTexture(unsigned int texObj)
+{
+    return new TextureImageImpl(texObj);
+}
+
+//=============================================================================
 bool BitmapImageRep::WriteToFile(const char* pFileName) 
 {
     if(pFileName == NULL) { return false; }
@@ -315,26 +321,62 @@ Image* Image::Copy() const
     return Image::CreateFromImage(this);
 }
 
-// ACCUMULATION IMAGE /////////////////////////////////////////////////////////
+// IMAGE ACCUMULATOR //////////////////////////////////////////////////////////
 
 //=============================================================================
-AccumulationImage::AccumulationImage()
-    : Image()
+ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
+    : ReferenceCounted()
+    , m_Extent(extent)
+    , m_Context(context)
 {
+    if(m_Context != NULL)
+    {
+        FIRTREE_SAFE_RETAIN(m_Context);
+    } else {
+        m_Context = OpenGLContext::CreateNullContext();
+    }
+
+    m_TextureContext = RenderTextureContext::Create(m_Extent.Size.Width, 
+            m_Extent.Size.Height, m_Context);
+    m_Renderer = GLRenderer::Create(m_TextureContext);
+
+    m_Image = Image::CreateFromOpenGLTexture(m_TextureContext->GetOpenGLTexture());
+
+    Clear();
 }
 
 //=============================================================================
-AccumulationImage::~AccumulationImage()
+ImageAccumulator::~ImageAccumulator()
 {
+    FIRTREE_SAFE_RELEASE(m_Context);
+    FIRTREE_SAFE_RELEASE(m_TextureContext);
+    FIRTREE_SAFE_RELEASE(m_Renderer);
+    FIRTREE_SAFE_RELEASE(m_Image);
 }
 
 //=============================================================================
-AccumulationImage* AccumulationImage::Create(unsigned int width, 
-                unsigned int height, OpenGLContext* parent)
+ImageAccumulator* ImageAccumulator::Create(Rect2D extent, OpenGLContext* context)
 {
-    return new AccumulationImageImpl(width, height, parent);
+    return new ImageAccumulator(extent, context);
 }
 
+//=============================================================================
+Image* ImageAccumulator::GetImage() const
+{
+    return m_Image;
+}
+
+//=============================================================================
+void ImageAccumulator::Clear()
+{
+    m_Renderer->Clear(0,0,0,0);
+}
+
+//=============================================================================
+void ImageAccumulator::RenderImage(Image* im)
+{
+    m_Renderer->RenderInRect(im, Rect2D(Point2D(0,0), m_Extent.Size), m_Extent);
+}
 
 } // namespace Firtree 
 

@@ -196,8 +196,8 @@ class Image : public ReferenceCounted
 };
 
 //=============================================================================
-// An image accumulator can be used to allow for feedback and iterative update
-// of images.
+/// An image accumulator can be used to allow for feedback and iterative update
+/// of images.
 class ImageAccumulator : public ReferenceCounted
 {
     protected:

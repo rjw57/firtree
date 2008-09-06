@@ -27,7 +27,7 @@ importDir = os.path.join(rootDir, 'bindings', 'python')
 imageDir = os.path.join(rootDir, 'artwork')
 
 # Append this path to our search path & import the firtree bindings.
-sys.path.insert(0, importDir)
+sys.path.append(importDir)
 
 from Firtree import *
 from PageCurlTransition import *
@@ -35,10 +35,9 @@ from PageCurlTransition import *
 class FirtreeScene:
 
     def init (self):
-        sigma = 20.0
-
-        # Create a rendering context.
-        self.context = GLRenderer.Create()
+        # Set background colour & disable depth testing
+        glClearColor(0, 0, 0, 1)
+        glDisable(GL_DEPTH_TEST)
 
         self._image_idx = -1
         self._image_files = [ 'bricks.jpg', 'tariffa.jpg', 'statues.jpg', 
@@ -47,27 +46,27 @@ class FirtreeScene:
         front = self.next_image()
         back = self.next_image()
 
-        self.transition = PageCurlTransition()
-        self.transition.set_front_image(front)
-        self.transition.set_back_image(back)
-        self.transition.set_progress(0.0)
-        self.transition.set_radius(100.0)
+        self._transition = PageCurlTransition()
+        self._transition.set_front_image(front)
+        self._transition.set_back_image(back)
+        self._transition.set_progress(0.0)
+        self._transition.set_radius(100.0)
 
         self._trans_start_time = None
+
+        # Create a rendering context.
+        self._renderer = GLRenderer.Create()
 
     def next_image(self):
         self._image_idx += 1
         if(self._image_idx >= len(self._image_files)):
             self._image_idx = 0
 
-        return Image.CreateFromFile(os.path.join(imageDir, self._image_files[self._image_idx]))
+        return Image.CreateFromFile(os.path.join(imageDir, 
+            self._image_files[self._image_idx]))
 
     def display (self, width, height):
-        glClearColor(0,0,0,1)
         glClear(GL_COLOR_BUFFER_BIT)
-
-        if(self.transition == None):
-            pass
 
         if(self._trans_start_time == None):
             self._trans_start_time = float(glutGet(GLUT_ELAPSED_TIME)) / 1000.0
@@ -76,22 +75,22 @@ class FirtreeScene:
         delta = now - self._trans_start_time
         pos = 0.5 * delta
 
-        self.transition.set_progress(max(0.0, min(1.0, pos)))
+        self._transition.set_progress(max(0.0, min(1.0, pos)))
         
         # Render the composited image into the framebuffer.
-        self.context.RenderWithOrigin(self.transition.get_output(), Point2D(0,0))
+        self._renderer.RenderWithOrigin(self._transition.get_output(), Point2D(0,0))
 
         if(pos > 1.0):
             self._trans_start_time = now + 1.0
-            old_back_image = self.transition.back_image()
-            self.transition.set_back_image(self.next_image())
-            self.transition.set_front_image(old_back_image)
+            old_back_image = self._transition.back_image()
+            self._transition.set_back_image(self.next_image())
+            self._transition.set_front_image(old_back_image)
 
     def clear_up (self):
         print('Clearing up...')
 
-        self.transition = None
-        self.context = None
+        self._transition = None
+        self._renderer = None
         
         # Sanity check to make sure that there are no objects left
         # dangling.

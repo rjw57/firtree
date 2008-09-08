@@ -73,6 +73,13 @@ struct Point2D
 
 	/// Construct a point by copying the co-ordinates of p.
 	Point2D(const Point2D& p) : X(p.X), Y(p.Y) { }
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed points are equal
+    static inline bool AreEqual(const Point2D& pointA, const Point2D& pointB)
+    {
+        return (pointA.X == pointB.X) && (pointA.Y == pointB.Y);
+    }
 };
 
 // ============================================================================
@@ -106,6 +113,13 @@ struct Size2D
     // ============================================================================
     /// Return a boolean which is true if the passed size is zero in extent.
     static bool IsZero(const Size2D& size);
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed sizes are equal
+    static inline bool AreEqual(const Size2D& sizeA, const Size2D& sizeB)
+    {
+        return (sizeA.Width == sizeB.Width) && (sizeA.Height == sizeB.Height);
+    }
 };
 
 // ============================================================================
@@ -157,6 +171,14 @@ struct Rect2D
     static inline bool IsZero(const Rect2D& rect) 
     {
         return Size2D::IsZero(rect.Size); 
+    }
+
+    // ============================================================================
+    /// Return a boolean which is true if the passed rectangles are equal
+    static inline bool AreEqual(const Rect2D& rectA, const Rect2D& rectB) 
+    {
+        return Size2D::AreEqual(rectA.Size, rectB.Size) && 
+            Point2D::AreEqual(rectA.Origin, rectB.Origin);
     }
 
     // ============================================================================

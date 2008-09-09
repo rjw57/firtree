@@ -34,6 +34,13 @@
 # if !defined(FIRTREE_NO_GLEW)
 #  include <GL/glew.h>
 # endif
+# ifdef FIRTREE_HAVE_OSMESA
+#  define GLAPI
+#  define GLAPIENTRY
+#  include <GL/osmesa.h>
+#  undef GLAPI
+#  undef GLAPIENTRY
+# endif
 # include <GL/gl.h>
 # include <GL/glu.h>
 # if !defined(FIRTREE_NO_GLX)

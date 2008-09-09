@@ -39,6 +39,87 @@ class PbufferPlatformImpl
         virtual void EndRendering() = 0;
 };
 
+#if defined(FIRTREE_HAVE_OSMESA)
+// ============================================================================
+//  SOFTWARE MESA IMPLEMENTATION
+// ============================================================================
+class PbufferOSMesaImpl : public PbufferPlatformImpl
+{
+    public:
+        PbufferOSMesaImpl() 
+            : m_Context(NULL)
+            , m_Width(0)
+            , m_Height(0)
+            , m_FrameBuffer(NULL)
+        {
+        }
+
+        virtual ~PbufferOSMesaImpl() 
+        {
+            if(m_Context != NULL)
+            {
+                OSMesaDestroyContext(m_Context);
+                m_Context = NULL;
+            }
+
+            if(m_FrameBuffer != NULL)
+            {
+                delete m_FrameBuffer;
+            }
+        }
+
+        virtual bool CreateContext(unsigned int width, unsigned int height,
+                PixelFormat format, Pbuffer::Flags flags)
+        {
+            if((format != R8G8B8A8) && (format != R8G8B8))
+                return false;
+
+            m_Context = OSMesaCreateContextExt(OSMESA_RGBA, 0, 0, 0, NULL);
+
+            m_Width = width;
+            m_Height = height;
+
+            m_FrameBuffer = new uint8_t[width * height * 4];
+
+            if(m_Context == NULL)
+            {
+                FIRTREE_WARNING("Error creating OSMesa context.");
+            }
+
+            return (m_Context != NULL);
+        }
+
+        virtual void SwapBuffers()
+        {
+            // NOP
+        }
+
+        virtual bool StartRendering() 
+        {
+            GLboolean retVal = OSMesaMakeCurrent(m_Context,
+                    m_FrameBuffer, GL_UNSIGNED_BYTE,
+                    m_Width, m_Height);
+
+            if(retVal != GL_TRUE)
+            {
+                FIRTREE_WARNING("Error making OSMesa context current.");
+            }
+
+            return (retVal == GL_TRUE);
+        }
+
+        virtual void EndRendering() 
+        {
+        }
+
+    private:
+        OSMesaContext   m_Context;
+        unsigned int    m_Width;
+        unsigned int    m_Height;
+        uint8_t*        m_FrameBuffer;
+};
+#endif
+
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
 // ============================================================================
 //  PBUFFER GLX IMPLEMENTATION
@@ -608,6 +689,8 @@ class PbufferWGLImpl : public PbufferPlatformImpl
 Pbuffer::Pbuffer()
     :   m_pPlatformImpl(NULL)
 {
+//#if defined(FIRTREE_HAVE_OSMESA)
+//    m_pPlatformImpl = new PbufferOSMesaImpl();
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
     m_pPlatformImpl = new PbufferGLXImpl();
 #elif defined(FIRTREE_APPLE)

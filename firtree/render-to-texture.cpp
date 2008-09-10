@@ -166,16 +166,6 @@ void RenderTextureContext::Begin()
         CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
         m_PreviousOpenGLFrameBufferName = currentFb;
 
-        GLenum framebufferStatus;
-        CHECK_GL( framebufferStatus = 
-                glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
-        if(framebufferStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
-        {
-            FIRTREE_ERROR("Frame buffer status is not complete for rendering. "
-                    "Status is 0x%x.", framebufferStatus);
-            assert(false);
-        }
-
         if(currentFb != m_OpenGLFrameBufferName)
         {
             CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
@@ -183,6 +173,16 @@ void RenderTextureContext::Begin()
             CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
             FIRTREE_DEBUG("Changing viewport to 0,0+%i+%i.",
                     m_Size.Width,m_Size.Height);
+        }
+
+        GLenum framebufferStatus;
+        CHECK_GL( framebufferStatus = 
+                glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
+        if(framebufferStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+        {
+            FIRTREE_WARNING("Frame buffer status is not complete for rendering. "
+                    "Status is 0x%x.", framebufferStatus);
+            // assert(false);
         }
     }
 }

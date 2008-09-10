@@ -168,7 +168,7 @@ class TextureImageImpl : public TextureBackedImageImpl
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        TextureImageImpl(unsigned int texObj);
+        TextureImageImpl(unsigned int texObj, OpenGLContext* context);
         virtual ~TextureImageImpl();
 
         // ====================================================================
@@ -185,6 +185,7 @@ class TextureImageImpl : public TextureBackedImageImpl
 
     private:
         unsigned int    m_TexObj;
+        OpenGLContext*  m_Context;
 };
 
 //=============================================================================

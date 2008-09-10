@@ -208,9 +208,9 @@ Image* Image::CreateFromImageProvider(ImageProvider* improv)
 }
 
 //=============================================================================
-Image* Image::CreateFromOpenGLTexture(unsigned int texObj)
+Image* Image::CreateFromOpenGLTexture(unsigned int texObj, OpenGLContext* c)
 {
-    return new TextureImageImpl(texObj);
+    return new TextureImageImpl(texObj, c);
 }
 
 //=============================================================================
@@ -341,7 +341,7 @@ ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
     m_Renderer = GLRenderer::Create(m_TextureContext);
 
     Image* untransImage = 
-        Image::CreateFromOpenGLTexture(m_TextureContext->GetOpenGLTexture());
+        Image::CreateFromOpenGLTexture(m_TextureContext->GetOpenGLTexture(), m_Context);
     AffineTransform* t = AffineTransform::Translation(m_Extent.Origin.X, m_Extent.Origin.Y);
     m_Image = Image::CreateFromImageWithTransform(untransImage, t);
     FIRTREE_SAFE_RELEASE(t);

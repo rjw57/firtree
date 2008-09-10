@@ -180,7 +180,8 @@ class Image : public ReferenceCounted
         static Image* CreateFromImageProvider(ImageProvider* improv);
 
         /// Construct an image from an existing OpenGL texture.
-        static Image* CreateFromOpenGLTexture(unsigned int texObj);
+        static Image* CreateFromOpenGLTexture(unsigned int texObj, 
+                OpenGLContext* context);
 
         // ====================================================================
         // CONST METHODS

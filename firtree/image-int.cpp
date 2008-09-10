@@ -33,12 +33,12 @@
 
 namespace Firtree { namespace Internal {
 
-#define CHECK_GL(a) do { \
-    { a ; } \
-    GLenum _err = glGetError(); \
+#define CHECK_GL(ctx,call) do { \
+    { ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
     if(_err != GL_NO_ERROR) { \
         FIRTREE_ERROR("OpenGL error executing '%s': %s", \
-            #a, gluErrorString(_err)); \
+            #call, gluErrorString(_err)); \
     } \
 } while(0)
 
@@ -218,12 +218,12 @@ Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
 
     c->Begin();
     GLint w, h;
-    CHECK_GL( glBindTexture(GL_TEXTURE_2D, tex) );
-    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
-    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
+    CHECK_GL( c, glBindTexture(GL_TEXTURE_2D, tex) );
+    CHECK_GL( c, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
+    CHECK_GL( c, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
 
     Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
-    CHECK_GL( glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
+    CHECK_GL( c, glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
                 (void*)(imageBlob->GetBytes())) );
     c->End();
 
@@ -241,42 +241,34 @@ Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
 //=============================================================================
 
 //=============================================================================
-TextureImageImpl::TextureImageImpl(unsigned int texObj)
+TextureImageImpl::TextureImageImpl(unsigned int texObj, OpenGLContext* context)
     :   TextureBackedImageImpl()
     ,   m_TexObj(texObj)
+    ,   m_Context(context)
 {
     FIRTREE_DEBUG("Created TextureImageImpl @ %p", this);
+
+    FIRTREE_SAFE_RETAIN(m_Context);
 }
 
 //=============================================================================
 TextureImageImpl::~TextureImageImpl()
 {
+    FIRTREE_SAFE_RELEASE(m_Context);
 }
 
 //=============================================================================
 Rect2D TextureImageImpl::GetExtent() const
 {
-    // FIXME: This should be done in some sort of context.
-    
-    /*
-    OpenGLContext* c = GLSL::GetCurrentGLContext();
+    GLint w,h;
 
-    if(c == NULL)
-    {
-        FIRTREE_ERROR("Attempt to perform OpenGL activities outside context.");
-    }
+    m_Context->Begin();
+    CHECK_GL( m_Context, glBindTexture(GL_TEXTURE_2D, m_TexObj) );
+    CHECK_GL( m_Context, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
+    CHECK_GL( m_Context, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
+    m_Context->End();
 
-    c->Begin();
-    */
-
-    GLint w, h;
-    CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_TexObj) );
-    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
-    CHECK_GL( glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
-    
-    //c->End();
-
-    return Rect2D(Point2D(0,0), Size2D(w,h));
+    return Rect2D(0,0,w,h);
 }
 
 //=============================================================================
@@ -374,18 +366,18 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
     {
         FIRTREE_DEBUG("Performance hint: copying CPU -> GPU.");
 
-        CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
+        CHECK_GL( ctx, glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 
         if(bir->Format == Firtree::BitmapImageRep::Float)
         { 
             assert(bir->Stride == bir->Width*4*4);
-            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+            CHECK_GL( ctx, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                         bir->Width, bir->Height, 0,
                         GL_RGBA, GL_FLOAT,
                         bir->ImageBlob->GetBytes()) );
         } else if(bir->Format == Firtree::BitmapImageRep::Byte) {
             assert(bir->Stride == bir->Width*4);
-            CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+            CHECK_GL( ctx, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
                         bir->Width, bir->Height, 0,
                         GL_RGBA, GL_UNSIGNED_BYTE,
                         bir->ImageBlob->GetBytes()) );

@@ -29,12 +29,22 @@
 namespace Firtree { namespace Internal {
 
 //=============================================================================
-#define CHECK_GL(a) do { \
-    { a ; } \
-    GLenum _err = glGetError(); \
+#define CHECK_GL(ctx,call) do { \
+    { ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
     if(_err != GL_NO_ERROR) { \
         FIRTREE_ERROR("OpenGL error executing '%s': %s", \
-            #a, gluErrorString(_err)); \
+            #call, gluErrorString(_err)); \
+    } \
+} while(0)
+
+//=============================================================================
+#define CHECK_GL_RV(rv, ctx,call) do { \
+    { rv = ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
+    if(_err != GL_NO_ERROR) { \
+        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
+            #call, gluErrorString(_err)); \
     } \
 } while(0)
 
@@ -90,26 +100,26 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
 
     m_OpenGLTextureName = m_ParentContext->GenTexture();
 
-    CHECK_GL( glBindTexture(GL_TEXTURE_2D, m_OpenGLTextureName) );
+    CHECK_GL( m_ParentContext, glBindTexture(GL_TEXTURE_2D, m_OpenGLTextureName) );
 
     // HACK: This should really be GL_RGBA32F_ARB but on older cards,
     // only the 16-bit version is supported.
-    CHECK_GL( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width,
+    CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width,
                 height, 0, GL_RGBA, GL_FLOAT, NULL) );
 
-    CHECK_GL( glGenerateMipmapEXT(GL_TEXTURE_2D) );
+    CHECK_GL( m_ParentContext, glGenerateMipmapEXT(GL_TEXTURE_2D) );
 
     GLint prevFb = 0;
-    CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &prevFb) );
+    CHECK_GL( m_ParentContext, glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &prevFb) );
 
-    CHECK_GL( glGenFramebuffersEXT(1, 
+    CHECK_GL( m_ParentContext, glGenFramebuffersEXT(1, 
                 reinterpret_cast<GLuint*>(&m_OpenGLFrameBufferName)) );
-    CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_OpenGLFrameBufferName) );
-    CHECK_GL( glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
+    CHECK_GL( m_ParentContext, glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_OpenGLFrameBufferName) );
+    CHECK_GL( m_ParentContext, glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
                 GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 
                 m_OpenGLTextureName, 0) );
     GLenum framebufferStatus;
-    CHECK_GL( framebufferStatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
+    CHECK_GL_RV( framebufferStatus, m_ParentContext, glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
 
     if(framebufferStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
     {
@@ -117,7 +127,7 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
                 "texture. Status is 0x%x.", framebufferStatus);
     }
 
-    CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, prevFb) );
+    CHECK_GL( m_ParentContext, glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, prevFb) );
     m_ParentContext->End();
 }
 
@@ -128,7 +138,7 @@ RenderTextureContext::~RenderTextureContext()
     if(m_OpenGLFrameBufferName != 0)
     {
         EnsureContextIsCurrent(m_ParentContext);
-        CHECK_GL( glDeleteFramebuffersEXT(1,
+        CHECK_GL( m_ParentContext, glDeleteFramebuffersEXT(1,
                    reinterpret_cast<GLuint*>(&m_OpenGLFrameBufferName)) );
         m_OpenGLFrameBufferName = 0;
     }
@@ -160,23 +170,23 @@ void RenderTextureContext::Begin()
     {
         m_ParentContext->Begin();
 
-        CHECK_GL( glGetFloatv(GL_VIEWPORT, m_PreviousViewport) );
+        CHECK_GL( m_ParentContext, glGetFloatv(GL_VIEWPORT, m_PreviousViewport) );
 
         GLint currentFb = 0;
-        CHECK_GL( glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
+        CHECK_GL( m_ParentContext, glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFb) );
         m_PreviousOpenGLFrameBufferName = currentFb;
 
         if(currentFb != m_OpenGLFrameBufferName)
         {
-            CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
+            CHECK_GL( m_ParentContext, glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
                         m_OpenGLFrameBufferName) );
-            CHECK_GL( glViewport(0,0,m_Size.Width,m_Size.Height) );
+            CHECK_GL( m_ParentContext, glViewport(0,0,m_Size.Width,m_Size.Height) );
             FIRTREE_DEBUG("Changing viewport to 0,0+%i+%i.",
                     m_Size.Width,m_Size.Height);
         }
 
         GLenum framebufferStatus;
-        CHECK_GL( framebufferStatus = 
+        CHECK_GL_RV( framebufferStatus, m_ParentContext, 
                 glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
         if(framebufferStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
         {
@@ -192,10 +202,10 @@ void RenderTextureContext::End()
 {
     if(GetBeginDepth() == 1)
     {
-        CHECK_GL( glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
+        CHECK_GL( m_ParentContext, glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 
                     m_PreviousOpenGLFrameBufferName) );
 
-        CHECK_GL( glViewport(
+        CHECK_GL( m_ParentContext, glViewport(
                 m_PreviousViewport[0], m_PreviousViewport[1],
                 m_PreviousViewport[2], m_PreviousViewport[3]) );
         FIRTREE_DEBUG("Restoring viewport to %f,%f+%f+%f.",

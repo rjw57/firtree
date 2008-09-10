@@ -25,6 +25,18 @@
 
 #include <firtree/kernel.h>
 #include <firtree/image.h>
+#include <firtree/opengl.h>
+
+// Extra typedefs for OpenGL functions not covered in glext.h
+typedef void (*PFNGLBINDTEXTUREPROC) (GLenum, GLuint);
+typedef void (*PFNGLGETTEXLEVELPARAMETERIVPROC) (GLenum, GLint, GLenum, GLint*);
+typedef void (*PFNGLGETTEXIMAGEPROC) (GLenum, GLint, GLenum, GLenum, GLvoid*);
+typedef void (*PFNGLTEXIMAGE2DPROC) (GLenum, GLint, GLint, GLsizei, GLsizei,
+        GLint, GLenum, GLenum, const GLvoid*);
+typedef GLenum (*PFNGLGETERRORPROC) ( void );
+typedef void (*PFNGLGETINTEGERVPROC) (GLenum, GLint*);
+typedef void (*PFNGLGETFLOATVPROC) (GLenum, GLfloat*);
+typedef void (*PFNGLVIEWPORTPROC) (GLint, GLint, GLsizei, GLsizei);
 
 #include <stack>
 
@@ -48,6 +60,27 @@ class OpenGLContext : public ReferenceCounted
         OpenGLContext();
 
     public:
+
+        // ====================================================================
+        // PUBLIC FUNCTION POINTER METHODS
+
+        PFNGLBINDTEXTUREPROC                glBindTexture;
+        PFNGLGETTEXLEVELPARAMETERIVPROC     glGetTexLevelParameteriv;
+        PFNGLGETTEXIMAGEPROC                glGetTexImage;
+        PFNGLTEXIMAGE2DPROC                 glTexImage2D;
+        PFNGLGETERRORPROC                   glGetError;
+        PFNGLGETINTEGERVPROC                glGetIntegerv;
+        PFNGLGETFLOATVPROC                  glGetFloatv;
+        PFNGLVIEWPORTPROC                   glViewport;
+
+        PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmapEXT;
+        PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffersEXT;
+        PFNGLDELETEFRAMEBUFFERSEXTPROC      glDeleteFramebuffersEXT;
+        PFNGLBINDFRAMEBUFFEREXTPROC         glBindFramebufferEXT;
+        PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2DEXT;
+        PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  glCheckFramebufferStatusEXT;
+
+    public:
         virtual ~OpenGLContext();
 
         // ====================================================================
@@ -66,7 +99,7 @@ class OpenGLContext : public ReferenceCounted
         // CONST METHODS
         
         /// Return a pointer to the named OpenGL routine.
-        void* GetProcAddress(const char* name) const;
+        virtual void* GetProcAddress(const char* name) const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -95,6 +128,10 @@ class OpenGLContext : public ReferenceCounted
         uint32_t GetBeginDepth() const { return m_BeginDepth; }
 
     protected:
+        /// Call this to use GetProcAddress() to fill in the function pointer table
+        /// for this class.
+        void FillFunctionPointerTable();
+        
         /// This is initially 0 on construction and is incremented once for
         /// every call to Begin() and decremented once for each call to End().
         uint32_t    m_BeginDepth;
@@ -106,6 +143,9 @@ class OpenGLContext : public ReferenceCounted
         /// Each call to Begin() pushes the currently active context to this
         /// stack, each call to End() pops it.
         std::stack<OpenGLContext*> m_PriorContexts;
+
+        /// Set to true once FillFunctionPointerTable() has been called.
+        bool m_FilledFunctionPointerTable;
 };
 
 //=============================================================================

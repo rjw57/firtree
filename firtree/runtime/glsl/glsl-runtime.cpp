@@ -1951,6 +1951,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 OpenGLContext::OpenGLContext()
     :   ReferenceCounted()
     ,   m_BeginDepth(0)
+    ,   m_FilledFunctionPointerTable(false)
 {
 }
 
@@ -1981,6 +1982,36 @@ void* OpenGLContext::GetProcAddress(const char* name) const
 #else
     #error No GetProcAddress implementation for this platform.
 #endif
+}
+
+//=============================================================================
+void OpenGLContext::FillFunctionPointerTable()
+{
+    if(m_FilledFunctionPointerTable)
+        return;
+
+#   define FILL_ENTRY(name, type) do { \
+        this->name = reinterpret_cast<type>(GetProcAddress(#name)); \
+        if(this->name == NULL) { FIRTREE_WARNING("No implementation for '%s'.", #name); } \
+    } while(0)
+
+    FILL_ENTRY(glBindTexture, PFNGLBINDTEXTUREPROC);
+    FILL_ENTRY(glGetTexLevelParameteriv, PFNGLGETTEXLEVELPARAMETERIVPROC);
+    FILL_ENTRY(glGetTexImage, PFNGLGETTEXIMAGEPROC);
+    FILL_ENTRY(glTexImage2D, PFNGLTEXIMAGE2DPROC);
+    FILL_ENTRY(glGetError, PFNGLGETERRORPROC);
+    FILL_ENTRY(glGetIntegerv, PFNGLGETINTEGERVPROC);
+    FILL_ENTRY(glGetFloatv, PFNGLGETFLOATVPROC);
+    FILL_ENTRY(glViewport, PFNGLVIEWPORTPROC);
+
+    FILL_ENTRY(glGenerateMipmapEXT, PFNGLGENERATEMIPMAPEXTPROC);
+    FILL_ENTRY(glGenFramebuffersEXT, PFNGLGENFRAMEBUFFERSEXTPROC);
+    FILL_ENTRY(glDeleteFramebuffersEXT, PFNGLDELETEFRAMEBUFFERSEXTPROC);
+    FILL_ENTRY(glBindFramebufferEXT, PFNGLBINDFRAMEBUFFEREXTPROC);
+    FILL_ENTRY(glFramebufferTexture2DEXT, PFNGLFRAMEBUFFERTEXTURE2DEXTPROC);
+    FILL_ENTRY(glCheckFramebufferStatusEXT, PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC);
+
+    m_FilledFunctionPointerTable = true;
 }
 
 //=============================================================================
@@ -2028,6 +2059,8 @@ void OpenGLContext::Begin()
     GLSL::_currentGLContext = this;
 
     m_BeginDepth++;
+
+    FillFunctionPointerTable();
 
     //FIRTREE_TRACE("OpenGLContext: 0x%x: Begin()", this);
 }

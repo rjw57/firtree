@@ -33,19 +33,18 @@ class Test (TestModule):
             kernel vec4 blurKernel(sampler src, vec2 direction, float sigma)
             {
                 vec4 outputColour = vec4(0,0,0,0);
-                float weightSum = 0.0;
                 for(float delta = -2.0; delta <= 2.0; delta += 1.0/sigma)
                 {
-                    float weight = exp(-delta*delta);
-                    weightSum += weight;
+                    float weight = exp(-0.5*delta*delta);
                     outputColour += weight * sample(src, 
                         samplerTransform(src, destCoord() + sigma * delta * direction));
                 }
                 
-                outputColour /= weightSum;
+                float oneOverRootTwoPi = 1.0 / 2.5066;
+                outputColour *= oneOverRootTwoPi / sigma;
 
                 return outputColour;
-            }
+           }
         ''')
 
         xBlur = Image.CreateFromKernel(blurKernel,
@@ -54,7 +53,7 @@ class Test (TestModule):
         blurKernel.SetValueForKey(1.0, 0.0, 'direction')
         blurKernel.SetValueForKey(sigma, 'sigma')
 
-        imageAccum = ImageAccumulator.Create(lenaExtent)
+        imageAccum = ImageAccumulator.Create(lenaExtent, context)
         imageAccum.RenderImage(xBlur)
 
         yBlur = Image.CreateFromKernel(blurKernel)

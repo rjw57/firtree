@@ -12,7 +12,7 @@ class Test (TestModule):
         fog = helper.load_image('fog.png')
         lena = helper.load_image('lena.png')
 
-        outputImageAccum = ImageAccumulator.Create(Rect2D(0,0,320,240))
+        outputImageAccum = ImageAccumulator.Create(Rect2D(0,0,320,240), context)
 
         smallLena = Image.CreateFromImageWithTransform(
             lena,

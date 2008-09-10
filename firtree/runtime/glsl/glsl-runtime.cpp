@@ -579,18 +579,18 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     std::string shaderSource;
     LinkShader(shaderSource, this);
 
-    CHECK_GL_RV(m_CachedFragmentShaderObject, m_GLContext, glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-    if(m_CachedFragmentShaderObject == 0)
-    {
-        FIRTREE_ERROR("Error creating fragment shader object.");
-        m_GLContext->End();
-        return 0;
-    }
-
     CHECK_GL_RV(m_CachedVertexShaderObject, m_GLContext, glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     if(m_CachedVertexShaderObject == 0)
     {
         FIRTREE_ERROR("Error creating vertex shader object.");
+        m_GLContext->End();
+        return 0;
+    }
+
+    CHECK_GL_RV(m_CachedFragmentShaderObject, m_GLContext, glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+    if(m_CachedFragmentShaderObject == 0)
+    {
+        FIRTREE_ERROR("Error creating fragment shader object.");
         m_GLContext->End();
         return 0;
     }
@@ -2020,6 +2020,9 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glBlendFunc, PFNGLBLENDFUNCPROC);
     FILL_ENTRY(glTexParameterf, PFNGLTEXPARAMETERFPROC);
     FILL_ENTRY(glTexParameteri, PFNGLTEXPARAMETERIPROC);
+    FILL_ENTRY(glDrawBuffer, PFNGLDRAWBUFFERPROC);
+    FILL_ENTRY(glGenTextures, PFNGLGENTEXTURESPROC);
+    FILL_ENTRY(glDeleteTextures, PFNGLDELETETEXTURESPROC);
 
     FILL_ENTRY(glGenerateMipmapEXT, PFNGLGENERATEMIPMAPEXTPROC);
     FILL_ENTRY(glGenFramebuffersEXT, PFNGLGENFRAMEBUFFERSEXTPROC);
@@ -2027,6 +2030,10 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glBindFramebufferEXT, PFNGLBINDFRAMEBUFFEREXTPROC);
     FILL_ENTRY(glFramebufferTexture2DEXT, PFNGLFRAMEBUFFERTEXTURE2DEXTPROC);
     FILL_ENTRY(glCheckFramebufferStatusEXT, PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC);
+    FILL_ENTRY(glGenRenderbuffersEXT, PFNGLGENRENDERBUFFERSEXTPROC);
+    FILL_ENTRY(glBindRenderbufferEXT, PFNGLBINDRENDERBUFFEREXTPROC);
+    FILL_ENTRY(glRenderbufferStorageEXT, PFNGLRENDERBUFFERSTORAGEEXTPROC);
+    FILL_ENTRY(glFramebufferRenderbufferEXT, PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC);
 
     FILL_ENTRY(glActiveTextureARB, PFNGLACTIVETEXTUREARBPROC);
     FILL_ENTRY(glUseProgramObjectARB, PFNGLUSEPROGRAMOBJECTARBPROC);
@@ -2058,7 +2065,7 @@ unsigned int OpenGLContext::GenTexture()
     unsigned int texName = 0;
 
     Begin();
-    glGenTextures(1, reinterpret_cast<GLuint*>(&texName));
+    CHECK_GL(this, glGenTextures(1, reinterpret_cast<GLuint*>(&texName)));
     m_ActiveTextures.push_back(texName);
     End();
 
@@ -2086,7 +2093,7 @@ void OpenGLContext::DeleteTexture(unsigned int texName)
     }
 
     Begin();
-    glDeleteTextures(1, reinterpret_cast<GLuint*>(&texName));
+    CHECK_GL(this, glDeleteTextures(1, reinterpret_cast<GLuint*>(&texName)));
     End();
 }
 

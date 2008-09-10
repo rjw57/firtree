@@ -54,6 +54,9 @@ typedef void (*PFNGLORTHOPROC) ( GLdouble, GLdouble, GLdouble, GLdouble,
 typedef void (*PFNGLBLENDFUNCPROC) ( GLenum, GLenum );
 typedef void (*PFNGLTEXPARAMETERFPROC) ( GLenum, GLenum, GLfloat );
 typedef void (*PFNGLTEXPARAMETERIPROC) ( GLenum, GLenum, GLint );
+typedef void (*PFNGLDRAWBUFFERPROC) ( GLenum );
+typedef void (*PFNGLGENTEXTURESPROC) ( GLsizei, GLuint* );
+typedef void (*PFNGLDELETETEXTURESPROC) ( GLsizei, GLuint* );
 
 #include <stack>
 
@@ -105,6 +108,9 @@ class OpenGLContext : public ReferenceCounted
         PFNGLBLENDFUNCPROC                  glBlendFunc;
         PFNGLTEXPARAMETERFPROC              glTexParameterf;
         PFNGLTEXPARAMETERIPROC              glTexParameteri;
+        PFNGLDRAWBUFFERPROC                 glDrawBuffer;
+        PFNGLGENTEXTURESPROC                glGenTextures;
+        PFNGLDELETETEXTURESPROC             glDeleteTextures;
 
         PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmapEXT;
         PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffersEXT;
@@ -112,6 +118,10 @@ class OpenGLContext : public ReferenceCounted
         PFNGLBINDFRAMEBUFFEREXTPROC         glBindFramebufferEXT;
         PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2DEXT;
         PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  glCheckFramebufferStatusEXT;
+        PFNGLGENRENDERBUFFERSEXTPROC        glGenRenderbuffersEXT;
+        PFNGLBINDRENDERBUFFEREXTPROC        glBindRenderbufferEXT;
+        PFNGLRENDERBUFFERSTORAGEEXTPROC     glRenderbufferStorageEXT;
+        PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbufferEXT;
 
         PFNGLACTIVETEXTUREARBPROC           glActiveTextureARB;
         PFNGLUSEPROGRAMOBJECTARBPROC        glUseProgramObjectARB;

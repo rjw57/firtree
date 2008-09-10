@@ -69,6 +69,8 @@ class RenderTextureContext : public Firtree::OpenGLContext
         /// Return the parent of this render context
         Firtree::OpenGLContext* GetParentContext() const { return m_ParentContext; }
 
+        virtual void* GetProcAddress(const char* name ) const;
+
         // ====================================================================
         // MUTATING METHODS
 

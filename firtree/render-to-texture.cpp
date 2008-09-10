@@ -82,8 +82,8 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     CHECK_GL( m_ParentContext, glBindTexture(GL_TEXTURE_2D, m_OpenGLTextureName) );
 
     // HACK: This should really be GL_RGBA32F_ARB but on older cards,
-    // only the 16-bit version is supported.
-    CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width,
+    // only the 8-bit version is supported.
+    CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width,
                 height, 0, GL_RGBA, GL_FLOAT, NULL) );
 
     CHECK_GL( m_ParentContext, glGenerateMipmapEXT(GL_TEXTURE_2D) );
@@ -94,9 +94,11 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
     CHECK_GL( m_ParentContext, glGenFramebuffersEXT(1, 
                 reinterpret_cast<GLuint*>(&m_OpenGLFrameBufferName)) );
     CHECK_GL( m_ParentContext, glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_OpenGLFrameBufferName) );
+
     CHECK_GL( m_ParentContext, glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
                 GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 
                 m_OpenGLTextureName, 0) );
+
     GLenum framebufferStatus;
     CHECK_GL_RV( framebufferStatus, m_ParentContext, glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) );
 
@@ -138,6 +140,12 @@ RenderTextureContext* RenderTextureContext::Create(uint32_t width,
         uint32_t height, Firtree::OpenGLContext* parentContext)
 {
     return new RenderTextureContext(width, height, parentContext);
+}
+
+//=============================================================================
+void* RenderTextureContext::GetProcAddress(const char* name ) const
+{
+    return m_ParentContext->GetProcAddress(name);
 }
 
 //=============================================================================

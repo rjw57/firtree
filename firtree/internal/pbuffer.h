@@ -56,6 +56,7 @@ class Pbuffer {
         enum Flags {
             NoFlags         = 0x0,      ///< No flags
             DoubleBuffered  = 0x1,      ///< Context should be double-buffered.
+            SoftwareOnly    = 0x2,      ///< Context should use software rendering if available.
         };
 
         ///             Default constructor

@@ -157,7 +157,7 @@ class OpenGLContext : public ReferenceCounted
         /// Create an off-screen pbuffer backed 8-bit rendering context which
         /// is of the specified size.
         static OpenGLContext* CreateOffScreenContext(uint32_t width,
-                uint32_t height);
+                uint32_t height, bool softwareOnly = false);
 
         // ====================================================================
         // CONST METHODS

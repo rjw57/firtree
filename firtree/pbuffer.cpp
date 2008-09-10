@@ -715,17 +715,6 @@ class PbufferWGLImpl : public PbufferPlatformImpl
 Pbuffer::Pbuffer()
     :   m_pPlatformImpl(NULL)
 {
-//#if defined(FIRTREE_HAVE_OSMESA)
-//    m_pPlatformImpl = new PbufferOSMesaImpl();
-#if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
-    m_pPlatformImpl = new PbufferGLXImpl();
-#elif defined(FIRTREE_APPLE)
-    m_pPlatformImpl = new PbufferAGLImpl();
-#elif defined(FIRTREE_WIN32)
-    m_pPlatformImpl = new PbufferWGLImpl();
-#else
-    FIRTREE_WARNING("No Pbuffer implementation available");
-#endif
 }
 
 // ============================================================================
@@ -742,8 +731,35 @@ Pbuffer::~Pbuffer()
 bool Pbuffer::CreateContext(unsigned int width, unsigned int height,
                             PixelFormat format, Flags flags)
 {
+    if(m_pPlatformImpl == NULL)
+    {
+        if(flags & Pbuffer::SoftwareOnly)
+        {
+#           if defined(FIRTREE_HAVE_OSMESA)
+                m_pPlatformImpl = new PbufferOSMesaImpl();
+#           else
+                FIRTREE_WARNING("No software renderer available. Falling back to hardware renderer.");
+#           endif
+        }
+
+        if(m_pPlatformImpl == NULL)
+        {
+
+#           if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
+                m_pPlatformImpl = new PbufferGLXImpl();
+#           elif defined(FIRTREE_APPLE)
+                m_pPlatformImpl = new PbufferAGLImpl();
+#           elif defined(FIRTREE_WIN32)
+                m_pPlatformImpl = new PbufferWGLImpl();
+#           else
+                FIRTREE_WARNING("No Pbuffer implementation available");
+#           endif
+        }
+    }
+
     if(!m_pPlatformImpl)
         return false;
+
     return m_pPlatformImpl->CreateContext(width, height, format, flags);
 }
 

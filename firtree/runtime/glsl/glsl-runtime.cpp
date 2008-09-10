@@ -78,13 +78,14 @@ static GLRenderer* _currentGLRenderer = NULL;
 class PBufferContext : public OpenGLContext
 {
     protected:
-        PBufferContext(uint32_t w, uint32_t h) 
+        PBufferContext(uint32_t w, uint32_t h, bool s) 
             :   OpenGLContext()
             ,   m_PBuffer(NULL)
         {
             m_PBuffer = new Internal::Pbuffer();
             bool rv = m_PBuffer->CreateContext(w,h,
-                    Internal::R8G8B8A8);
+                    Internal::R8G8B8A8, 
+                    s ? (Internal::Pbuffer::SoftwareOnly) : (Internal::Pbuffer::NoFlags));
             if(!rv)
             {
                 FIRTREE_ERROR("Error creating off-screen pbuffer.");
@@ -2134,9 +2135,10 @@ OpenGLContext* OpenGLContext::CreateNullContext()
 }
 
 //=============================================================================
-OpenGLContext* OpenGLContext::CreateOffScreenContext(uint32_t w, uint32_t h)
+OpenGLContext* OpenGLContext::CreateOffScreenContext(uint32_t w, uint32_t h, 
+        bool software)
 {
-    return new GLSL::PBufferContext(w, h);
+    return new GLSL::PBufferContext(w, h, software);
 }
 
 } // namespace Firtree

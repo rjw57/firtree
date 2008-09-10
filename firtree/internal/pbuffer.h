@@ -63,6 +63,9 @@ class Pbuffer {
 
         ///             Destructor
                         ~Pbuffer();
+ 
+        ///             Return a pointer to the named OpenGL routine.
+        void*           GetProcAddress(const char* name) const;
 
         ///             Create an OpenGL context associated with this Pbuffer
         ///             requesting the passed width and height in pixels, 

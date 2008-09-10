@@ -115,6 +115,11 @@ class PBufferContext : public OpenGLContext
             OpenGLContext::End();
         }
 
+        virtual void* GetProcAddress(const char* name) const
+        {
+            return m_PBuffer->GetProcAddress(name);
+        }
+
     private:
         Internal::Pbuffer*  m_PBuffer;
 

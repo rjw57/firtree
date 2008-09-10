@@ -37,6 +37,7 @@ class PbufferPlatformImpl
         virtual void SwapBuffers() = 0;
         virtual bool StartRendering() = 0;
         virtual void EndRendering() = 0;
+        virtual void* GetProcAddress(const char* name) const = 0;
 };
 
 #if defined(FIRTREE_HAVE_OSMESA)
@@ -110,6 +111,11 @@ class PbufferOSMesaImpl : public PbufferPlatformImpl
 
         virtual void EndRendering() 
         {
+        }
+
+        virtual void* GetProcAddress(const char* name) const
+        {
+            return (void*)(OSMesaGetProcAddress(name));
         }
 
     private:
@@ -271,6 +277,12 @@ class PbufferGLXImpl : public PbufferPlatformImpl
             }
         }
     
+//      =======================================================================
+        virtual void* GetProcAddress(const char* name) const
+        {
+            return (void*)(glXGetProcAddress((const GLubyte*)name));
+        }
+
     private:
         Display*    m_XDisplay;
         GLXPbuffer  m_Pbuffer;
@@ -414,7 +426,14 @@ class PbufferAGLImpl : public PbufferPlatformImpl
 
             aglSetCurrentContext(m_OldContext);
         }
-    
+     
+//      =======================================================================
+        virtual void* GetProcAddress(const char* name) const
+        {
+#           error FIXME: Missing GetProcAddress implementation.
+            return NULL;
+        }
+
     private:
         bool        m_IsCurrent;
 
@@ -669,6 +688,13 @@ class PbufferWGLImpl : public PbufferPlatformImpl
         {
             glFinish();
         }
+     
+//      =======================================================================
+        virtual void* GetProcAddress(const char* name) const
+        {
+#           error FIXME: Missing GetProcAddress implementation.
+            return NULL;
+        }
     
     private:
         HDC         m_hWindowDC;
@@ -743,6 +769,12 @@ void Pbuffer::EndRendering()
     if(!m_pPlatformImpl)
         return;
     return m_pPlatformImpl->EndRendering();
+}
+
+// ============================================================================
+void* Pbuffer::GetProcAddress(const char* name) const
+{
+    return m_pPlatformImpl->GetProcAddress(name);
 }
 
 // ============================================================================

@@ -31,9 +31,6 @@
 #include <firtree/platform.h>
 
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
-# if !defined(FIRTREE_NO_GLEW)
-#  include <GL/glew.h>
-# endif
 # ifdef FIRTREE_HAVE_OSMESA
 #  define GLAPI
 #  define GLAPIENTRY
@@ -53,9 +50,6 @@
 #  include <GL/freeglut_ext.h>
 # endif
 #elif defined(FIRTREE_APPLE)
-# if !defined(FIRTREE_NO_GLEW)
-#  include <GL/glew.h>
-# endif
 # include <OpenGL/gl.h>
 # include <AGL/agl.h>
 # include <OpenGL/glext.h>
@@ -63,9 +57,6 @@
 #elif defined(FIRTREE_WIN32)
 # include <windows.h>
 # include <wingdi.h> // For wgl
-# if !defined(FIRTREE_NO_GLEW)
-#  include <GL/glew.h>
-# endif
 # include <GL/gl.h>
 # include <GL/glu.h>
 # include <GL/glext.h>

@@ -26,6 +26,7 @@
 
 #cmakedefine FIRTREE_HAVE_GLUT 
 #cmakedefine FIRTREE_HAVE_OPENGL 
+#cmakedefine FIRTREE_HAVE_OSMESA 
 
 #cmakedefine FIRTREE_APPLE
 #cmakedefine FIRTREE_UNIX

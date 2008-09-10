@@ -675,6 +675,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                             TIntermSymbol* ns = (*i)->getAsSymbolNode();
                             TType* t = ns->getTypePointer();
                             AddSymbol(ns->getId(), "param_");
+                            AppendOutput("uniform ");
                             AppendGLSLType(t);
                             AppendOutput(" input_%s", m_Prefix.c_str());
                             AppendOutput("_%s; ", 

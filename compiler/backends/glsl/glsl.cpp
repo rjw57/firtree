@@ -168,7 +168,7 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
                 AppendOutput("inout ");
                 break;
             default:
-                FIRTREE_ERROR("Unknwon op: %i", n->getQualifier()); break;
+                FIRTREE_ERROR("Unknown op: %i", n->getQualifier()); break;
         }
 
         AddSymbol(n->getId(), "param_");
@@ -187,7 +187,7 @@ void GLSLBackend::VisitSymbol(TIntermSymbol* n)
         if(m_InKernel && (strncmp(symname, "param", 5) == 0))
         {
             static char fullname[255];
-            snprintf(fullname, 255, "%s_params.%s",
+            snprintf(fullname, 255, "input_%s_%s",
                     m_Prefix.c_str(), symname);
             PushTemporary(fullname);
         } else {
@@ -398,8 +398,38 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 PushTemporary(left.c_str());
                 break;
             case EOpIndexDirect:
-                AppendGLSLType(n->getTypePointer());
-                AppendOutput(" %s = %s[%s];\n", tmp, left.c_str(), right.c_str());
+                {
+                    AppendGLSLType(n->getTypePointer());
+                    TIntermConstantUnion* rightCU = n->getRight()->getAsConstantUnion();
+                    if(rightCU == NULL)
+                    {
+                        FIRTREE_ERROR("Internal error: direct index does not have constant union right-hand side.");
+                    }
+
+                    constUnion* ap = rightCU->getUnionArrayPointer();
+
+                    char indexChar = '\0';
+
+                    switch(ap->getIConst())
+                    {
+                        case 0:
+                            indexChar = 'r';
+                            break;
+                        case 1:
+                            indexChar = 'g';
+                            break;
+                        case 2:
+                            indexChar = 'b';
+                            break;
+                        case 3:
+                            indexChar = 'a';
+                            break;
+                        default:
+                            FIRTREE_ERROR("Internal error: direct index out of bounds (%i).", ap->getIConst());
+                    }
+
+                    AppendOutput(" %s = %s.%c;\n", tmp, left.c_str(), indexChar);
+                }
                 break;
             default:
                 AppendOutput("/* ");
@@ -633,9 +663,11 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                     if(paramSequence.size() > 0)
                     {
                         // Kernels have their 'parameters' passed via
-                        // a uniform structure.
-                        AppendOutput("struct %s_uniforms { \n", 
-                                m_Prefix.c_str());
+                        // a uniforms named in the following way:
+                        //
+                        // input_[A]_param_[B] where 'A' is the prefix and 'B' is the id.
+                        //AppendOutput("struct %s_uniforms { \n", 
+                        //        m_Prefix.c_str());
 
                         for(TIntermSequence::iterator i = paramSequence.begin();
                                 i != paramSequence.end(); i++)
@@ -643,9 +675,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                             TIntermSymbol* ns = (*i)->getAsSymbolNode();
                             TType* t = ns->getTypePointer();
                             AddSymbol(ns->getId(), "param_");
-                            AppendOutput("  ");
                             AppendGLSLType(t);
-                            AppendOutput(" %s; ", 
+                            AppendOutput(" input_%s", m_Prefix.c_str());
+                            AppendOutput("_%s; ", 
                                     GetSymbol(ns->getId()));
                             AppendOutput("/* orig: %s */\n", ns->getSymbol().c_str());
 
@@ -677,10 +709,6 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
 
                             m_InputParameters.push_back(paramStruct);
                         }
-
-                        AppendOutput("};\n\n");
-                        AppendOutput("uniform %s_uniforms %s_params;\n\n",
-                                m_Prefix.c_str(), m_Prefix.c_str());
                     }
                 }
 

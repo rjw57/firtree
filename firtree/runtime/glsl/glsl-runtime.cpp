@@ -1242,8 +1242,9 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
 
     const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
-    std::string uniPrefix = GetBlockPrefix();
-    uniPrefix += "_params.";
+    std::string uniPrefix = "input_"; 
+    uniPrefix += GetBlockPrefix();
+    uniPrefix += "_";
 
     // Setup any sampler parameters.
     std::vector<SamplerParameter*> children;

@@ -6,7 +6,7 @@ class Test (TestModule):
         return 'separable gaussian blur with prior processing'
 
     def expected_hash(self):
-        return '09edc9a416f95ff746c9b214ee748496'
+        return '295d09fe3489dbc7f85df3cf166208d5'
 
     def run_test(self, context, renderer, helper):
         lena = helper.load_image('lena.png')

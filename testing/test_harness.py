@@ -21,6 +21,9 @@ sys.path.insert(0, importDir)
 # Create path to the example images
 imageDir = os.path.join(rootDir, 'examples')
 
+# Create path to the artwork images
+artDir = os.path.join(rootDir, 'artwork')
+
 # Create path to the testing
 testingDir = os.path.join(rootDir, 'testing')
 
@@ -82,6 +85,8 @@ class TestHelper:
 
         if(os.path.isfile(os.path.join(imageDir, filename))):
             retVal = Image.CreateFromFile(os.path.join(imageDir, filename))
+        elif(os.path.isfile(os.path.join(artDir, filename))):
+            retVal = Image.CreateFromFile(os.path.join(artDir, filename))
         elif(os.path.isfile(filename)):
             retVal = Image.CreateFromFile(filename)
 

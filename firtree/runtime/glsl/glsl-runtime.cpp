@@ -25,7 +25,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define FIRTREE_NO_GLX
 #include <firtree/opengl.h>
 #include <firtree/main.h>
 #include <firtree/kernel.h>
@@ -33,6 +32,11 @@
 #include <firtree/internal/image-int.h>
 #include <firtree/internal/lru-cache.h>
 #include <firtree/internal/pbuffer.h>
+
+// HACK:
+// X11 headers define this. We don't really
+// want them to since it fscks up glsl.h.
+#undef Bool
 
 #include <compiler/include/compiler.h>
 #include <compiler/backends/glsl/glsl.h>
@@ -1965,6 +1969,18 @@ OpenGLContext::~OpenGLContext()
                 m_ActiveTextures.front());
         DeleteTexture(m_ActiveTextures.front());
     }
+}
+
+//=============================================================================
+void* OpenGLContext::GetProcAddress(const char* name) const
+{
+    // This is the default implementation. Perticular contexts may wish
+    // to override this.
+#if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
+    return (void*)(glXGetProcAddress(reinterpret_cast<const GLubyte*>(name)));
+#else
+    #error No GetProcAddress implementation for this platform.
+#endif
 }
 
 //=============================================================================

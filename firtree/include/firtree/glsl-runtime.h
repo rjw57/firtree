@@ -63,6 +63,12 @@ class OpenGLContext : public ReferenceCounted
                 uint32_t height);
 
         // ====================================================================
+        // CONST METHODS
+        
+        /// Return a pointer to the named OpenGL routine.
+        void* GetProcAddress(const char* name) const;
+
+        // ====================================================================
         // MUTATING METHODS
         
         /// Create a new texture within this context and return it's OpenGL

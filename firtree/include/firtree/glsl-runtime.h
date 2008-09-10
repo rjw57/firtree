@@ -37,6 +37,21 @@ typedef GLenum (*PFNGLGETERRORPROC) ( void );
 typedef void (*PFNGLGETINTEGERVPROC) (GLenum, GLint*);
 typedef void (*PFNGLGETFLOATVPROC) (GLenum, GLfloat*);
 typedef void (*PFNGLVIEWPORTPROC) (GLint, GLint, GLsizei, GLsizei);
+typedef void (*PFNGLPOPMATRIXPROC) ( void );
+typedef void (*PFNGLPUSHMATRIXPROC) ( void );
+typedef void (*PFNGLMATRIXMODEPROC) ( GLenum );
+typedef void (*PFNGLBEGINPROC) ( GLenum );
+typedef void (*PFNGLENDPROC) ( void );
+typedef void (*PFNGLCLEARPROC) ( GLenum );
+typedef void (*PFNGLLOADIDENTITYPROC) ( void );
+typedef void (*PFNGLCLEARCOLORPROC) ( GLfloat, GLfloat, GLfloat, GLfloat );
+typedef void (*PFNGLDISABLEPROC) ( GLenum );
+typedef void (*PFNGLENABLEPROC) ( GLenum );
+typedef void (*PFNGLVERTEX2FPROC) ( GLfloat, GLfloat );
+typedef void (*PFNGLTEXCOORD2FPROC) ( GLfloat, GLfloat );
+typedef void (*PFNGLORTHOPROC) ( GLdouble, GLdouble, GLdouble, GLdouble,
+        GLdouble, GLdouble );
+typedef void (*PFNGLBLENDFUNCPROC) ( GLenum, GLenum );
 
 #include <stack>
 
@@ -72,6 +87,20 @@ class OpenGLContext : public ReferenceCounted
         PFNGLGETINTEGERVPROC                glGetIntegerv;
         PFNGLGETFLOATVPROC                  glGetFloatv;
         PFNGLVIEWPORTPROC                   glViewport;
+        PFNGLPOPMATRIXPROC                  glPopMatrix;
+        PFNGLPUSHMATRIXPROC                 glPushMatrix;
+        PFNGLMATRIXMODEPROC                 glMatrixMode;
+        PFNGLBEGINPROC                      glBegin;
+        PFNGLENDPROC                        glEnd;
+        PFNGLCLEARPROC                      glClear;
+        PFNGLLOADIDENTITYPROC               glLoadIdentity;
+        PFNGLCLEARCOLORPROC                 glClearColor;
+        PFNGLENABLEPROC                     glEnable;
+        PFNGLDISABLEPROC                    glDisable;
+        PFNGLVERTEX2FPROC                   glVertex2f;
+        PFNGLTEXCOORD2FPROC                 glTexCoord2f;
+        PFNGLORTHOPROC                      glOrtho;
+        PFNGLBLENDFUNCPROC                  glBlendFunc;
 
         PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmapEXT;
         PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffersEXT;
@@ -79,6 +108,16 @@ class OpenGLContext : public ReferenceCounted
         PFNGLBINDFRAMEBUFFEREXTPROC         glBindFramebufferEXT;
         PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2DEXT;
         PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  glCheckFramebufferStatusEXT;
+
+        PFNGLACTIVETEXTUREARBPROC           glActiveTextureARB;
+        PFNGLUSEPROGRAMOBJECTARBPROC        glUseProgramObjectARB;
+        PFNGLGETINFOLOGARBPROC              glGetInfoLogARB;
+        PFNGLGETOBJECTPARAMETERIVARBPROC    glGetObjectParameterivARB;
+        PFNGLSHADERSOURCEARBPROC            glShaderSourceARB;
+        PFNGLCOMPILESHADERARBPROC           glCompileShaderARB;
+        PFNGLCREATEPROGRAMOBJECTARBPROC     glCreateProgramObjectARB;
+        PFNGLATTACHOBJECTARBPROC            glAttachObjectARB;
+        PFNGLLINKPROGRAMARBPROC             glLinkProgramARB;
 
     public:
         virtual ~OpenGLContext();

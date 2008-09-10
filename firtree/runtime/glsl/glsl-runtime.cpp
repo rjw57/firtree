@@ -517,13 +517,24 @@ void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
 }
 
 //=============================================================================
-#define CHECK_GL(a) do { \
-    { do { (a); } while(0); } \
-    GLenum _err = glGetError(); \
-    if(_err != GL_NO_ERROR) {  \
-        FIRTREE_ERROR("%s:%i: OpenGL Error %s", __FILE__, __LINE__,\
-                gluErrorString(_err)); \
-    } } while(0) 
+#define CHECK_GL(ctx,call) do { \
+    { ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
+    if(_err != GL_NO_ERROR) { \
+        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
+            #call, gluErrorString(_err)); \
+    } \
+} while(0)
+
+//=============================================================================
+#define CHECK_GL_RV(rv, ctx,call) do { \
+    { rv = ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
+    if(_err != GL_NO_ERROR) { \
+        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
+            #call, gluErrorString(_err)); \
+    } \
+} while(0)
 
 //=============================================================================
 int GLSLSamplerParameter::GetShaderProgramObject()
@@ -598,20 +609,20 @@ int GLSLSamplerParameter::GetShaderProgramObject()
 
     const char* pSrc = shaderSource.c_str();
     // printf("%s", pSrc);
-    CHECK_GL( glShaderSourceARB(m_CachedFragmentShaderObject, 1, &pSrc, NULL) );
-    CHECK_GL( glCompileShaderARB(m_CachedFragmentShaderObject) );
+    CHECK_GL( m_GLContext, glShaderSourceARB(m_CachedFragmentShaderObject, 1, &pSrc, NULL) );
+    CHECK_GL( m_GLContext, glCompileShaderARB(m_CachedFragmentShaderObject) );
 
     GLint status = 0;
-    CHECK_GL( glGetObjectParameterivARB(m_CachedFragmentShaderObject,
+    CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedFragmentShaderObject,
                 GL_OBJECT_COMPILE_STATUS_ARB, &status) );
 
     if(status != GL_TRUE)
     {
         GLint logLen = 0;
-        CHECK_GL( glGetObjectParameterivARB(m_CachedFragmentShaderObject,
+        CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedFragmentShaderObject,
                     GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
-        CHECK_GL( glGetInfoLogARB(m_CachedFragmentShaderObject,
+        CHECK_GL( m_GLContext, glGetInfoLogARB(m_CachedFragmentShaderObject,
                     logLen, &logLen, log) );
         FIRTREE_ERROR("Error compiling fragment shader: %s\nSource: %s\n", 
                 log, pSrc);
@@ -622,19 +633,19 @@ int GLSLSamplerParameter::GetShaderProgramObject()
 
     const char* vertexSrc = 
                 "void main(void) { gl_Position = gl_Vertex; gl_TexCoord[0] = gl_MultiTexCoord0; }";
-    CHECK_GL( glShaderSourceARB(m_CachedVertexShaderObject, 1, &vertexSrc, NULL) );
-    CHECK_GL( glCompileShaderARB(m_CachedVertexShaderObject) );
+    CHECK_GL( m_GLContext, glShaderSourceARB(m_CachedVertexShaderObject, 1, &vertexSrc, NULL) );
+    CHECK_GL( m_GLContext, glCompileShaderARB(m_CachedVertexShaderObject) );
 
-    CHECK_GL( glGetObjectParameterivARB(m_CachedVertexShaderObject,
+    CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedVertexShaderObject,
                 GL_OBJECT_COMPILE_STATUS_ARB, &status) );
 
     if(status != GL_TRUE)
     {
         GLint logLen = 0;
-        CHECK_GL( glGetObjectParameterivARB(m_CachedVertexShaderObject,
+        CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedVertexShaderObject,
                     GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
-        CHECK_GL( glGetInfoLogARB(m_CachedVertexShaderObject,
+        CHECK_GL( m_GLContext, glGetInfoLogARB(m_CachedVertexShaderObject,
                     logLen, &logLen, log) );
         FIRTREE_ERROR("Error compiling vertex shader: %s\nSource: %s\n", 
                 log, pSrc);
@@ -643,22 +654,22 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         return 0;
     }
 
-    CHECK_GL( m_CachedProgramObject = glCreateProgramObjectARB() );
-    CHECK_GL( glAttachObjectARB(m_CachedProgramObject, 
+    CHECK_GL_RV( m_CachedProgramObject, m_GLContext, glCreateProgramObjectARB() );
+    CHECK_GL( m_GLContext, glAttachObjectARB(m_CachedProgramObject, 
                 m_CachedFragmentShaderObject) );
-    CHECK_GL( glAttachObjectARB(m_CachedProgramObject, 
+    CHECK_GL( m_GLContext, glAttachObjectARB(m_CachedProgramObject, 
                 m_CachedVertexShaderObject) );
-    CHECK_GL( glLinkProgramARB(m_CachedProgramObject) );
-    CHECK_GL( glGetObjectParameterivARB(m_CachedProgramObject,
+    CHECK_GL( m_GLContext, glLinkProgramARB(m_CachedProgramObject) );
+    CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedProgramObject,
                 GL_OBJECT_LINK_STATUS_ARB, &status) );
 
     if(status != GL_TRUE)
     {
         GLint logLen = 0;
-        CHECK_GL( glGetObjectParameterivARB(m_CachedProgramObject,
+        CHECK_GL( m_GLContext, glGetObjectParameterivARB(m_CachedProgramObject,
                     GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLen) );
         char* log = (char*) malloc(logLen + 1);
-        CHECK_GL( glGetInfoLogARB(m_CachedProgramObject, logLen, &logLen, log) );
+        CHECK_GL( m_GLContext, glGetInfoLogARB(m_CachedProgramObject, logLen, &logLen, log) );
         FIRTREE_ERROR("Error linking shader: %s\n", log);
         free(log);
         m_GLContext->End();
@@ -1735,8 +1746,8 @@ void GLRenderer::Clear(float r, float g, float b, float a)
         m_OpenGLContext->Begin();
     }
 
-    CHECK_GL( glClearColor(r,g,b,a) );
-    CHECK_GL( glClear(GL_COLOR_BUFFER_BIT) );
+    CHECK_GL( m_OpenGLContext, glClearColor(r,g,b,a) );
+    CHECK_GL( m_OpenGLContext, glClear(GL_COLOR_BUFFER_BIT) );
 
     if(m_OpenGLContext != NULL)
     {
@@ -1765,7 +1776,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     m_OpenGLContext->Begin();
 
     float vp[4];
-    CHECK_GL( glGetFloatv(GL_VIEWPORT, vp) );
+    CHECK_GL( m_OpenGLContext, glGetFloatv(GL_VIEWPORT, vp) );
 
     Rect2D viewportRect = Rect2D(vp[0], vp[1], vp[2], vp[3]);
 
@@ -1773,24 +1784,23 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             viewportRect.Origin.X, viewportRect.Origin.Y,
             viewportRect.Size.Width, viewportRect.Size.Height);
 
-    CHECK_GL( glMatrixMode(GL_PROJECTION) );
-    CHECK_GL( glPushMatrix() );
-    CHECK_GL( glLoadIdentity() );
-    CHECK_GL( glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
+    /*
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
 
-    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
-    CHECK_GL( glPushMatrix() );
-    CHECK_GL( glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
 
-    CHECK_GL( glMatrixMode(GL_TEXTURE) );
-    CHECK_GL( glPushMatrix() );
-    CHECK_GL( glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    */
 
     GLRenderer* oldRenderer = GLSL::GetCurrentGLRenderer();
 
     GLSL::_currentGLRenderer = this;
 
-    CHECK_GL( glDisable(GL_DEPTH_TEST) );
+    CHECK_GL( m_OpenGLContext, glDisable(GL_DEPTH_TEST) );
 
     SamplerParameter* sampler;
 
@@ -1873,18 +1883,18 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             clipSrcRect.Size.Width, clipSrcRect.Size.Height);
 #endif
 
-    CHECK_GL( glDisable(GL_DEPTH_TEST) );
-    CHECK_GL( glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA) );      
+    CHECK_GL( m_OpenGLContext, glDisable(GL_DEPTH_TEST) );
+    CHECK_GL( m_OpenGLContext, glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA) );      
     // This causes a crash on OSX. No idea why :(
     //  `-> CHECK_GL( glBlendEquation(GL_FUNC_ADD) );
-    CHECK_GL( glEnable(GL_BLEND) );
+    CHECK_GL( m_OpenGLContext, glEnable(GL_BLEND) );
 
     int program = glslSampler->GetShaderProgramObject();
 
     if(program > 0)
     {
-        CHECK_GL( glUseProgramObjectARB(program) );
-        if((err = glGetError()) != GL_NO_ERROR)
+        CHECK_GL( m_OpenGLContext, glUseProgramObjectARB(program) );
+        if((err = m_OpenGLContext->glGetError()) != GL_NO_ERROR)
         {
             m_OpenGLContext->End();
             GLSL::_currentGLRenderer = oldRenderer;
@@ -1901,23 +1911,29 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             renderRect.MaxX(), renderRect.MaxY());
 #endif
   
-    CHECK_GL( glActiveTextureARB(GL_TEXTURE0) );
+    CHECK_GL( m_OpenGLContext, glActiveTextureARB(GL_TEXTURE0) );
 
     FIRTREE_DEBUG(" rdr rect: %f,%f+%f+%f.", 
             renderRect.Origin.X, renderRect.Origin.Y,
             renderRect.Size.Width, renderRect.Size.Height);
 
 #if 1
-    glBegin(GL_QUADS);
-    glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
-    glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2], -1.0 + 2.0*renderRect.MinY()/vp[3]);
-    glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MaxY());
-    glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2], -1.0 + 2.0*renderRect.MaxY()/vp[3]);
-    glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MaxY());
-    glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2], -1.0 + 2.0*renderRect.MaxY()/vp[3]);
-    glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
-    glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2], -1.0 + 2.0*renderRect.MinY()/vp[3]); 
-    CHECK_GL( glEnd() );
+    // We don't use CHECK_GL here because calling glGetError() between
+    // glBegin()/glEnd() itself is an error.
+    m_OpenGLContext->glBegin(GL_QUADS);
+    m_OpenGLContext->glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MinY());
+    m_OpenGLContext->glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2],
+            -1.0 + 2.0*renderRect.MinY()/vp[3]);
+    m_OpenGLContext->glTexCoord2f(clipSrcRect.MinX(), clipSrcRect.MaxY());
+    m_OpenGLContext->glVertex2f(-1.0 + 2.0*renderRect.MinX()/vp[2],
+            -1.0 + 2.0*renderRect.MaxY()/vp[3]);
+    m_OpenGLContext->glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MaxY());
+    m_OpenGLContext->glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2],
+            -1.0 + 2.0*renderRect.MaxY()/vp[3]);
+    m_OpenGLContext->glTexCoord2f(clipSrcRect.MaxX(), clipSrcRect.MinY());
+    m_OpenGLContext->glVertex2f(-1.0 + 2.0*renderRect.MaxX()/vp[2],
+            -1.0 + 2.0*renderRect.MinY()/vp[3]); 
+    CHECK_GL( m_OpenGLContext, glEnd() );
 #endif
 
     // HACK: display render rectangle
@@ -1932,15 +1948,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     glVertex2f(renderRect.MinX(), renderRect.MinY());
     CHECK_GL( glEnd() );
 #endif
-
-    CHECK_GL( glMatrixMode(GL_TEXTURE) );
-    CHECK_GL( glPopMatrix() );
-
-    CHECK_GL( glMatrixMode(GL_MODELVIEW) );
-    CHECK_GL( glPopMatrix() );
-
-    CHECK_GL( glMatrixMode(GL_PROJECTION) );
-    CHECK_GL( glPopMatrix() );
 
     m_OpenGLContext->End();
     
@@ -2003,6 +2010,20 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glGetIntegerv, PFNGLGETINTEGERVPROC);
     FILL_ENTRY(glGetFloatv, PFNGLGETFLOATVPROC);
     FILL_ENTRY(glViewport, PFNGLVIEWPORTPROC);
+    FILL_ENTRY(glPopMatrix, PFNGLPOPMATRIXPROC);
+    FILL_ENTRY(glPushMatrix, PFNGLPUSHMATRIXPROC);
+    FILL_ENTRY(glMatrixMode, PFNGLMATRIXMODEPROC);
+    FILL_ENTRY(glBegin, PFNGLBEGINPROC);
+    FILL_ENTRY(glEnd, PFNGLENDPROC);
+    FILL_ENTRY(glClear, PFNGLCLEARPROC);
+    FILL_ENTRY(glLoadIdentity, PFNGLLOADIDENTITYPROC);
+    FILL_ENTRY(glClearColor, PFNGLCLEARCOLORPROC);
+    FILL_ENTRY(glEnable, PFNGLENABLEPROC);
+    FILL_ENTRY(glDisable, PFNGLDISABLEPROC);
+    FILL_ENTRY(glVertex2f, PFNGLVERTEX2FPROC);
+    FILL_ENTRY(glTexCoord2f, PFNGLTEXCOORD2FPROC);
+    FILL_ENTRY(glOrtho, PFNGLORTHOPROC);
+    FILL_ENTRY(glBlendFunc, PFNGLBLENDFUNCPROC);
 
     FILL_ENTRY(glGenerateMipmapEXT, PFNGLGENERATEMIPMAPEXTPROC);
     FILL_ENTRY(glGenFramebuffersEXT, PFNGLGENFRAMEBUFFERSEXTPROC);
@@ -2010,6 +2031,16 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glBindFramebufferEXT, PFNGLBINDFRAMEBUFFEREXTPROC);
     FILL_ENTRY(glFramebufferTexture2DEXT, PFNGLFRAMEBUFFERTEXTURE2DEXTPROC);
     FILL_ENTRY(glCheckFramebufferStatusEXT, PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC);
+
+    FILL_ENTRY(glActiveTextureARB, PFNGLACTIVETEXTUREARBPROC);
+    FILL_ENTRY(glUseProgramObjectARB, PFNGLUSEPROGRAMOBJECTARBPROC);
+    FILL_ENTRY(glGetInfoLogARB, PFNGLGETINFOLOGARBPROC);
+    FILL_ENTRY(glGetObjectParameterivARB, PFNGLGETOBJECTPARAMETERIVARBPROC);
+    FILL_ENTRY(glShaderSourceARB, PFNGLSHADERSOURCEARBPROC);
+    FILL_ENTRY(glCompileShaderARB, PFNGLCOMPILESHADERARBPROC);
+    FILL_ENTRY(glCreateProgramObjectARB, PFNGLCREATEPROGRAMOBJECTARBPROC);
+    FILL_ENTRY(glAttachObjectARB, PFNGLATTACHOBJECTARBPROC);
+    FILL_ENTRY(glLinkProgramARB, PFNGLLINKPROGRAMARBPROC);
 
     m_FilledFunctionPointerTable = true;
 }

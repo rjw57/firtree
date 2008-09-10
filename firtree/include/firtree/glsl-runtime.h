@@ -52,6 +52,8 @@ typedef void (*PFNGLTEXCOORD2FPROC) ( GLfloat, GLfloat );
 typedef void (*PFNGLORTHOPROC) ( GLdouble, GLdouble, GLdouble, GLdouble,
         GLdouble, GLdouble );
 typedef void (*PFNGLBLENDFUNCPROC) ( GLenum, GLenum );
+typedef void (*PFNGLTEXPARAMETERFPROC) ( GLenum, GLenum, GLfloat );
+typedef void (*PFNGLTEXPARAMETERIPROC) ( GLenum, GLenum, GLint );
 
 #include <stack>
 
@@ -101,6 +103,8 @@ class OpenGLContext : public ReferenceCounted
         PFNGLTEXCOORD2FPROC                 glTexCoord2f;
         PFNGLORTHOPROC                      glOrtho;
         PFNGLBLENDFUNCPROC                  glBlendFunc;
+        PFNGLTEXPARAMETERFPROC              glTexParameterf;
+        PFNGLTEXPARAMETERIPROC              glTexParameteri;
 
         PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmapEXT;
         PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffersEXT;
@@ -118,6 +122,17 @@ class OpenGLContext : public ReferenceCounted
         PFNGLCREATEPROGRAMOBJECTARBPROC     glCreateProgramObjectARB;
         PFNGLATTACHOBJECTARBPROC            glAttachObjectARB;
         PFNGLLINKPROGRAMARBPROC             glLinkProgramARB;
+        PFNGLCREATESHADEROBJECTARBPROC      glCreateShaderObjectARB;
+        PFNGLGETUNIFORMLOCATIONARBPROC      glGetUniformLocationARB;
+        PFNGLUNIFORM1IARBPROC               glUniform1iARB;
+        PFNGLUNIFORM2IARBPROC               glUniform2iARB;
+        PFNGLUNIFORM3IARBPROC               glUniform3iARB;
+        PFNGLUNIFORM4IARBPROC               glUniform4iARB;
+        PFNGLUNIFORM1FARBPROC               glUniform1fARB;
+        PFNGLUNIFORM2FARBPROC               glUniform2fARB;
+        PFNGLUNIFORM3FARBPROC               glUniform3fARB;
+        PFNGLUNIFORM4FARBPROC               glUniform4fARB;
+        PFNGLDELETEOBJECTARBPROC            glDeleteObjectARB;
 
     public:
         virtual ~OpenGLContext();

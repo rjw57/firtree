@@ -55,27 +55,6 @@ static void EnsureContextIsCurrent(OpenGLContext* context)
     if(!initialised)
     {
         initialised = true;
-
-        GLenum err = glewInit();
-        if (GLEW_OK != err)
-        {
-            FIRTREE_ERROR("Could not initialize GLEW: %s", 
-                    glewGetErrorString(err));
-        }
-
-        if(!GLEW_EXT_framebuffer_object)
-        {
-            FIRTREE_ERROR("OpenGL EXT_framebuffer_object support required.");
-        }
-
-        // OSX does not claim to support this but everything works
-        // anyway.
-        // TOOD: Check if this is formally required or if we're actually
-        //       using some other extension without realising.
-        //if(!GLEW_ARB_texture_float)
-        //{
-        //    FIRTREE_ERROR("OpenGL ARB_texture_float support required.");
-        //}
     }
 }
 

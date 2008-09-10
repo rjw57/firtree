@@ -327,25 +327,6 @@ void initialize_kernels()
 
 void context_created()
 {
-    GLenum err = glewInit();
-    if (GLEW_OK != err)
-    {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-        return;
-    }
-    fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-
-    if(!GLEW_ARB_shading_language_100 || !GLEW_ARB_shader_objects)
-    {
-        fprintf(stdout, "OpenGL shading langugage required.\n");
-        exit(1);
-        return;
-    }
-
-    const GLubyte* versionStr = glGetString(GL_SHADING_LANGUAGE_VERSION);
-    printf("Shader langugage version supported: %s.\n", versionStr);
-
     try{
         initialize_kernels();
     } catch(Firtree::Exception e) {

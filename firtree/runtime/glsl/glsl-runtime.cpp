@@ -54,6 +54,26 @@ static OpenGLContext* _currentGLContext = NULL;
 static GLRenderer* _currentGLRenderer = NULL;
 
 //=============================================================================
+#define CHECK_GL(ctx,call) do { \
+    { ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
+    if(_err != GL_NO_ERROR) { \
+        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
+            #call, gluErrorString(_err)); \
+    } \
+} while(0)
+
+//=============================================================================
+#define CHECK_GL_RV(rv, ctx,call) do { \
+    { rv = ctx->call ; } \
+    GLenum _err = ctx->glGetError(); \
+    if(_err != GL_NO_ERROR) { \
+        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
+            #call, gluErrorString(_err)); \
+    } \
+} while(0)
+
+//=============================================================================
 /// Pubffer backed context
 class PBufferContext : public OpenGLContext
 {
@@ -130,23 +150,6 @@ static void EnsureContext(OpenGLContext* context)
     if(!initialised)
     {
         initialised = true;
-
-        GLenum err = glewInit();
-        if (GLEW_OK != err)
-        {
-            FIRTREE_ERROR("Could not initialize GLEW: %s", 
-                    glewGetErrorString(err));
-        }
-
-        if(!GLEW_ARB_shading_language_100 || !GLEW_ARB_shader_objects)
-        {
-            FIRTREE_ERROR("OpenGL shader language support required.");
-        }
-
-        if(!GLEW_ARB_multitexture)
-        {
-            FIRTREE_ERROR("ARB_mulitexture support required.");
-        }
     }
 }
 
@@ -475,7 +478,7 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     {
         m_GLContext->Begin();
         EnsureContext(m_GLContext);
-        glDeleteObjectARB(m_CachedProgramObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedProgramObject));
         m_CachedProgramObject = -1;
         m_GLContext->End();
     }
@@ -484,7 +487,7 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     {
         m_GLContext->Begin();
         EnsureContext(m_GLContext);
-        glDeleteObjectARB(m_CachedFragmentShaderObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedFragmentShaderObject));
         m_CachedFragmentShaderObject = -1;
         m_GLContext->End();
     }
@@ -493,7 +496,7 @@ GLSLSamplerParameter::~GLSLSamplerParameter()
     {
         m_GLContext->Begin();
         EnsureContext(m_GLContext);
-        glDeleteObjectARB(m_CachedVertexShaderObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedVertexShaderObject));
         m_CachedFragmentShaderObject = -1;
         m_GLContext->End();
     }
@@ -515,26 +518,6 @@ void GLSLSamplerParameter::SetOpenGLContext(OpenGLContext* glContext)
 
     FIRTREE_SAFE_RELEASE(oldContext);
 }
-
-//=============================================================================
-#define CHECK_GL(ctx,call) do { \
-    { ctx->call ; } \
-    GLenum _err = ctx->glGetError(); \
-    if(_err != GL_NO_ERROR) { \
-        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
-            #call, gluErrorString(_err)); \
-    } \
-} while(0)
-
-//=============================================================================
-#define CHECK_GL_RV(rv, ctx,call) do { \
-    { rv = ctx->call ; } \
-    GLenum _err = ctx->glGetError(); \
-    if(_err != GL_NO_ERROR) { \
-        FIRTREE_ERROR("OpenGL error executing '%s': %s", \
-            #call, gluErrorString(_err)); \
-    } \
-} while(0)
 
 //=============================================================================
 int GLSLSamplerParameter::GetShaderProgramObject()
@@ -570,19 +553,19 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     // programs we already have.
     if(m_CachedProgramObject > 0)
     {
-        glDeleteObjectARB(m_CachedProgramObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedProgramObject));
         m_CachedProgramObject = -1;
     }
 
     if(m_CachedFragmentShaderObject > 0)
     {
-        glDeleteObjectARB(m_CachedFragmentShaderObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedFragmentShaderObject));
         m_CachedFragmentShaderObject = -1;
     }
 
     if(m_CachedVertexShaderObject > 0)
     {
-        glDeleteObjectARB(m_CachedVertexShaderObject);
+        CHECK_GL(m_GLContext, glDeleteObjectARB(m_CachedVertexShaderObject));
         m_CachedVertexShaderObject = -1;
     }
 
@@ -591,7 +574,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
     std::string shaderSource;
     LinkShader(shaderSource, this);
 
-    m_CachedFragmentShaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+    CHECK_GL_RV(m_CachedFragmentShaderObject, m_GLContext, glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
     if(m_CachedFragmentShaderObject == 0)
     {
         FIRTREE_ERROR("Error creating fragment shader object.");
@@ -599,7 +582,7 @@ int GLSLSamplerParameter::GetShaderProgramObject()
         return 0;
     }
 
-    m_CachedVertexShaderObject = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
+    CHECK_GL_RV(m_CachedVertexShaderObject, m_GLContext, glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     if(m_CachedVertexShaderObject == 0)
     {
         FIRTREE_ERROR("Error creating vertex shader object.");
@@ -1250,6 +1233,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
     GetOpenGLContext()->Begin();
     EnsureContext(GetOpenGLContext());
 
+    OpenGLContext* ctx = GetOpenGLContext();
+
     const std::map<std::string, Parameter*>& params = m_Kernel->GetParameters();
 
     std::string uniPrefix = GetBlockPrefix();
@@ -1289,9 +1274,10 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         std::string paramName = uniPrefix + uniName;
 
         // Find this parameter's uniform location
-        GLint uniformLoc = glGetUniformLocationARB(program, paramName.c_str());
+        GLint uniformLoc;
+        CHECK_GL_RV(uniformLoc, ctx, glGetUniformLocationARB(program, paramName.c_str()));
 
-        GLenum err = glGetError();
+        GLenum err = ctx->glGetError();
         if(err != GL_NO_ERROR)
         {
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1328,23 +1314,23 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         switch(cp->GetSize())
                         {
                             case 1:
-                                glUniform1fARB(uniformLoc, vec[0]);
+                                CHECK_GL(ctx, glUniform1fARB(uniformLoc, vec[0]));
                                 break;
                             case 2:
-                                glUniform2fARB(uniformLoc, vec[0], vec[1]);
+                                CHECK_GL(ctx, glUniform2fARB(uniformLoc, vec[0], vec[1]));
                                 break;
                             case 3:
-                                glUniform3fARB(uniformLoc, vec[0], vec[1], vec[2]);
+                                CHECK_GL(ctx, glUniform3fARB(uniformLoc, vec[0], vec[1], vec[2]));
                                 break;
                             case 4:
-                                glUniform4fARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                CHECK_GL(ctx, glUniform4fARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]));
                                 break;
                             default:
                                 FIRTREE_ERROR("Parameter %s has invalid size: %i",
                                         paramName.c_str(), cp->GetSize());
                         }
 
-                        err = glGetError();
+                        err = ctx->glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1363,23 +1349,23 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
                         switch(cp->GetSize())
                         {
                             case 1:
-                                glUniform1iARB(uniformLoc, vec[0]);
+                                CHECK_GL(ctx, glUniform1iARB(uniformLoc, vec[0]));
                                 break;
                             case 2:
-                                glUniform2iARB(uniformLoc, vec[0], vec[1]);
+                                CHECK_GL(ctx, glUniform2iARB(uniformLoc, vec[0], vec[1]));
                                 break;
                             case 3:
-                                glUniform3iARB(uniformLoc, vec[0], vec[1], vec[2]);
+                                CHECK_GL(ctx, glUniform3iARB(uniformLoc, vec[0], vec[1], vec[2]));
                                 break;
                             case 4:
-                                glUniform4iARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]);
+                                CHECK_GL(ctx, glUniform4iARB(uniformLoc, vec[0], vec[1], vec[2], vec[3]));
                                 break;
                             default:
                                 FIRTREE_ERROR("Parameter %s has invalid size: %i",
                                         paramName.c_str(), cp->GetSize());
                         }
 
-                        err = glGetError();
+                        err = ctx->glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1395,8 +1381,8 @@ void KernelSamplerParameter::SetGLSLUniforms(unsigned int program)
         {
             GLSLSamplerParameter* gsp = 
                 GLSLSamplerParameter::ExtractFrom(sp);
-            glUniform1iARB(uniformLoc, gsp->GetSamplerIndex());
-            err = glGetError();
+            CHECK_GL(ctx, glUniform1iARB(uniformLoc, gsp->GetSamplerIndex()));
+            err = ctx->glGetError();
             if(err != GL_NO_ERROR)
             {
                 FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1529,11 +1515,14 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
     GetOpenGLContext()->Begin();
     EnsureContext(GetOpenGLContext());
 
+    OpenGLContext* ctx = GetOpenGLContext();
+
     std::string paramName(GetBlockPrefix());
     paramName += "_texture";
 
-    GLint uniformLoc = glGetUniformLocationARB(program, paramName.c_str());
-    GLenum err = glGetError();
+    GLint uniformLoc;
+    CHECK_GL_RV(uniformLoc, ctx, glGetUniformLocationARB(program, paramName.c_str()));
+    GLenum err = ctx->glGetError();
     if(err != GL_NO_ERROR)
     {
         FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -1541,16 +1530,16 @@ void TextureSamplerParameter::SetGLSLUniforms(unsigned int program)
 
     if(uniformLoc != -1)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB + GetGLTextureUnit());
-        glBindTexture(GL_TEXTURE_2D, GetGLTextureObject());
+        CHECK_GL(ctx, glActiveTextureARB(GL_TEXTURE0_ARB + GetGLTextureUnit()));
+        CHECK_GL(ctx, glBindTexture(GL_TEXTURE_2D, GetGLTextureObject()));
 
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
-        glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+        CHECK_GL(ctx, glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ));
+        CHECK_GL(ctx, glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ));
+        CHECK_GL(ctx, glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER ));
+        CHECK_GL(ctx, glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER ));
 
-        glUniform1iARB(uniformLoc, GetGLTextureUnit());
-        err = glGetError();
+        CHECK_GL(ctx, glUniform1iARB(uniformLoc, GetGLTextureUnit()));
+        err = ctx->glGetError();
         if(err != GL_NO_ERROR)
         {
             FIRTREE_ERROR("OpenGL error: %s", gluErrorString(err));
@@ -2024,6 +2013,8 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glTexCoord2f, PFNGLTEXCOORD2FPROC);
     FILL_ENTRY(glOrtho, PFNGLORTHOPROC);
     FILL_ENTRY(glBlendFunc, PFNGLBLENDFUNCPROC);
+    FILL_ENTRY(glTexParameterf, PFNGLTEXPARAMETERFPROC);
+    FILL_ENTRY(glTexParameteri, PFNGLTEXPARAMETERIPROC);
 
     FILL_ENTRY(glGenerateMipmapEXT, PFNGLGENERATEMIPMAPEXTPROC);
     FILL_ENTRY(glGenFramebuffersEXT, PFNGLGENFRAMEBUFFERSEXTPROC);
@@ -2041,6 +2032,17 @@ void OpenGLContext::FillFunctionPointerTable()
     FILL_ENTRY(glCreateProgramObjectARB, PFNGLCREATEPROGRAMOBJECTARBPROC);
     FILL_ENTRY(glAttachObjectARB, PFNGLATTACHOBJECTARBPROC);
     FILL_ENTRY(glLinkProgramARB, PFNGLLINKPROGRAMARBPROC);
+    FILL_ENTRY(glCreateShaderObjectARB, PFNGLCREATESHADEROBJECTARBPROC);
+    FILL_ENTRY(glGetUniformLocationARB, PFNGLGETUNIFORMLOCATIONARBPROC);
+    FILL_ENTRY(glUniform1iARB, PFNGLUNIFORM1IARBPROC);
+    FILL_ENTRY(glUniform2iARB, PFNGLUNIFORM2IARBPROC);
+    FILL_ENTRY(glUniform3iARB, PFNGLUNIFORM3IARBPROC);
+    FILL_ENTRY(glUniform4iARB, PFNGLUNIFORM4IARBPROC);
+    FILL_ENTRY(glUniform1fARB, PFNGLUNIFORM1FARBPROC);
+    FILL_ENTRY(glUniform2fARB, PFNGLUNIFORM2FARBPROC);
+    FILL_ENTRY(glUniform3fARB, PFNGLUNIFORM3FARBPROC);
+    FILL_ENTRY(glUniform4fARB, PFNGLUNIFORM4FARBPROC);
+    FILL_ENTRY(glDeleteObjectARB, PFNGLDELETEOBJECTARBPROC);
 
     m_FilledFunctionPointerTable = true;
 }

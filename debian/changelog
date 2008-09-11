@@ -1,3 +1,9 @@
+libfirtree (0.0.4-0ubuntu~ppa1) hardy; urgency=low
+
+  * Package new version. 
+
+ -- Rich Wareham <richwareham@gmail.com>  Thu, 11 Sep 2008 13:08:03 +0100
+
 libfirtree (0.0.3-0ubuntu1~ppa1) hardy; urgency=low
 
   * Package new version of Firtree.

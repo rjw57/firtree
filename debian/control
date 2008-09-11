@@ -4,8 +4,8 @@ Priority: optional
 Maintainer: Rich Wareham <richwareham@gmail.com>
 Build-Depends: cdbs, debhelper (>= 5), cmake, swig,
  doxygen, graphviz, flex, bison,
- libglew-dev, freeglut3-dev, libmagick++9-dev,
- libxmu-dev, libxi-dev, python2.5-dev,
+ freeglut3-dev, libmagick++9-dev,
+ libxmu-dev, libxi-dev, python2.5-dev, libosmesa6-dev,
  libglu1-mesa-dev | libglu-dev, libgl1-mesa-dev | libgl-dev
 Standards-Version: 3.7.2
 
@@ -23,8 +23,8 @@ Package: libfirtree0-dev
 Section: universe/libdevel
 Architecture: any
 Depends: libfirtree0 (= ${binary:Version}),
- libglew-dev, freeglut3-dev, libmagick++9-dev,
- libxmu-dev, libxi-dev, python2.5-dev,
+ freeglut3-dev, libmagick++9-dev,
+ libxmu-dev, libxi-dev, python2.5-dev, libosmesa6-dev,
  libglu1-mesa-dev | libglu-dev, libgl1-mesa-dev | libgl-dev
 Description: Development files for the Firtree image processing toolkit.
  Firtree is a general-purpose pipeline-based image processing toolkit centred

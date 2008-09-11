@@ -204,7 +204,7 @@ TextureBackedImageImpl::GetPreferredRepresentation() const
 //=============================================================================
 Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
 {
-    OpenGLContext* c = GLSL::GetCurrentGLContext();
+    OpenGLContext* c = GetCurrentGLContext();
 
     FIRTREE_DEBUG("Performance hint: copying GPU -> CPU.");
 

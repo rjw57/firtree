@@ -215,9 +215,8 @@ class ImageAccumulator : public ReferenceCounted
         // CONSTRUCTION METHODS
 
         /// Construct a new ImageAccumulator with the specified extent.
-        /// The accumulator will use the context specified or a 
-        /// null context created via OpenGLContextt::CreateNullContext()
-        /// should context be NULL.
+        /// The accumulator will use the context specified or, if NULL,
+        /// the currently active context.
         static ImageAccumulator* Create(Rect2D extent,
                 OpenGLContext* context = NULL);
         

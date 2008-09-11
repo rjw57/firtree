@@ -53,6 +53,22 @@ namespace GLSL {
 static OpenGLContext* _currentGLContext = NULL;
 static GLRenderer* _currentGLRenderer = NULL;
 
+}
+
+//=============================================================================
+OpenGLContext* GetCurrentGLContext()
+{
+    return GLSL::_currentGLContext;
+}
+
+//=============================================================================
+GLRenderer* GetCurrentGLRenderer()
+{
+    return GLSL::_currentGLRenderer;
+}
+
+namespace GLSL {
+
 //=============================================================================
 #define CHECK_GL(ctx,call) do { \
     { ctx->call ; } \
@@ -126,18 +142,6 @@ class PBufferContext : public OpenGLContext
 
         friend class OpenGLContext;
 };
-
-//=============================================================================
-OpenGLContext* GetCurrentGLContext()
-{
-    return _currentGLContext;
-}
-
-//=============================================================================
-GLRenderer* GetCurrentGLRenderer()
-{
-    return _currentGLRenderer;
-}
 
 //=============================================================================
 void LinkShader(std::string& dest, GLSLSamplerParameter* sampler);
@@ -1792,7 +1796,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     CHECK_GL( m_OpenGLContext, glLoadIdentity() );
     */
 
-    GLRenderer* oldRenderer = GLSL::GetCurrentGLRenderer();
+    GLRenderer* oldRenderer = GetCurrentGLRenderer();
 
     GLSL::_currentGLRenderer = this;
 

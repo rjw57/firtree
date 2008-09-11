@@ -329,12 +329,12 @@ ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
     , m_Extent(extent)
     , m_Context(context)
 {
-    if(m_Context != NULL)
+    if(m_Context == NULL)
     {
-        FIRTREE_SAFE_RETAIN(m_Context);
-    } else {
         m_Context = GetCurrentGLContext();
     }
+
+    FIRTREE_SAFE_RETAIN(m_Context);
 
     m_TextureContext = RenderTextureContext::Create(m_Extent.Size.Width, 
             m_Extent.Size.Height, m_Context);

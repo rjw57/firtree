@@ -46,16 +46,21 @@ class FirtreeScene:
         front = self.next_image()
         back = self.next_image()
 
+        # Create a rendering context.
+        self._context = OpenGLContext.CreateNullContext()
+        self._renderer = GLRenderer.Create(self._context)
+
+        self._context.Begin()
+
         self._transition = PageCurlTransition()
         self._transition.set_front_image(front)
         self._transition.set_back_image(back)
         self._transition.set_progress(0.0)
         self._transition.set_radius(100.0)
 
-        self._trans_start_time = None
+        self._context.End()
 
-        # Create a rendering context.
-        self._renderer = GLRenderer.Create()
+        self._trans_start_time = None
 
     def next_image(self):
         self._image_idx += 1
@@ -67,6 +72,8 @@ class FirtreeScene:
 
     def display (self, width, height):
         glClear(GL_COLOR_BUFFER_BIT)
+
+        self._context.Begin()
 
         if(self._trans_start_time == None):
             self._trans_start_time = float(glutGet(GLUT_ELAPSED_TIME)) / 1000.0
@@ -86,11 +93,14 @@ class FirtreeScene:
             self._transition.set_back_image(self.next_image())
             self._transition.set_front_image(old_back_image)
 
+        self._context.End()
+
     def clear_up (self):
         print('Clearing up...')
 
         self._transition = None
         self._renderer = None
+        self._context = None
         
         # Sanity check to make sure that there are no objects left
         # dangling.

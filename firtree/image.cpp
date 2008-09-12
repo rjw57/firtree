@@ -332,6 +332,11 @@ ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
     if(m_Context == NULL)
     {
         m_Context = GetCurrentGLContext();
+        if(m_Context == NULL)
+        {
+            FIRTREE_ERROR("ImageAccumulator asked to use current GL context. "
+                    "No such context exists.");
+        }
     }
 
     FIRTREE_SAFE_RETAIN(m_Context);

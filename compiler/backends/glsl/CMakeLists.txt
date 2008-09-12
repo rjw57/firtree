@@ -11,7 +11,6 @@ FIND_PACKAGE(GLUT)
 
 SET(BACKEND_SOURCES
 	glsl.h		glsl.cpp
-	glutil.h	glutil.cpp
 	../utils.cpp 	../utils.h
 )
 

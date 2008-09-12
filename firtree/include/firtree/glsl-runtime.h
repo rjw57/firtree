@@ -27,7 +27,12 @@
 #include <firtree/image.h>
 #include <firtree/opengl.h>
 
-// Extra typedefs for OpenGL functions not covered in glext.h
+#include <stack>
+
+namespace Firtree { 
+
+// We have our own glext.h - style function defs here so we don't have to rely
+// on them being provided.
 typedef void (*PFNGLBINDTEXTUREPROC) (GLenum, GLuint);
 typedef void (*PFNGLGETTEXLEVELPARAMETERIVPROC) (GLenum, GLint, GLenum, GLint*);
 typedef void (*PFNGLGETTEXIMAGEPROC) (GLenum, GLint, GLenum, GLenum, GLvoid*);
@@ -58,9 +63,67 @@ typedef void (*PFNGLDRAWBUFFERPROC) ( GLenum );
 typedef void (*PFNGLGENTEXTURESPROC) ( GLsizei, GLuint* );
 typedef void (*PFNGLDELETETEXTURESPROC) ( GLsizei, GLuint* );
 
-#include <stack>
+typedef GLboolean (*PFNGLISRENDERBUFFEREXTPROC) (GLuint);
+typedef void (*PFNGLBINDRENDERBUFFEREXTPROC) (GLenum, GLuint);
+typedef void (*PFNGLDELETERENDERBUFFERSEXTPROC) (GLsizei, const GLuint *);
+typedef void (*PFNGLGENRENDERBUFFERSEXTPROC) (GLsizei, GLuint *);
+typedef void (*PFNGLRENDERBUFFERSTORAGEEXTPROC) (GLenum, GLenum, GLsizei, GLsizei);
+typedef void (*PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC) (GLenum, GLenum, GLint *);
+typedef GLboolean (*PFNGLISFRAMEBUFFEREXTPROC) (GLuint);
+typedef void (*PFNGLBINDFRAMEBUFFEREXTPROC) (GLenum, GLuint);
+typedef void (*PFNGLDELETEFRAMEBUFFERSEXTPROC) (GLsizei, const GLuint *);
+typedef void (*PFNGLGENFRAMEBUFFERSEXTPROC) (GLsizei, GLuint *);
+typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) (GLenum);
+typedef void (*PFNGLFRAMEBUFFERTEXTURE1DEXTPROC) (GLenum, GLenum, GLenum, GLuint, GLint);
+typedef void (*PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) (GLenum, GLenum, GLenum, GLuint, GLint);
+typedef void (*PFNGLFRAMEBUFFERTEXTURE3DEXTPROC) (GLenum, GLenum, GLenum, GLuint, GLint, 
+        GLint);
+typedef void (*PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) (GLenum, GLenum, GLenum, GLuint);
+typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC) (GLenum, GLenum, GLenum, 
+        GLint *);
+typedef void (*PFNGLGENERATEMIPMAPEXTPROC) (GLenum);
 
-namespace Firtree { 
+typedef void (*PFNGLACTIVETEXTUREARBPROC) (GLenum);
+
+typedef unsigned int GLhandleARB;
+typedef void (*PFNGLDELETEOBJECTARBPROC) (GLhandleARB);
+typedef GLhandleARB (*PFNGLGETHANDLEARBPROC) (GLenum);
+typedef void (*PFNGLDETACHOBJECTARBPROC) (GLhandleARB, GLhandleARB);
+typedef GLhandleARB (*PFNGLCREATESHADEROBJECTARBPROC) (GLenum);
+typedef void (*PFNGLSHADERSOURCEARBPROC) (GLhandleARB, GLsizei, const GLcharARB* *,
+        const GLint *);
+typedef void (*PFNGLCOMPILESHADERARBPROC) (GLhandleARB);
+typedef GLhandleARB (*PFNGLCREATEPROGRAMOBJECTARBPROC) (void);
+typedef void (*PFNGLATTACHOBJECTARBPROC) (GLhandleARB, GLhandleARB);
+typedef void (*PFNGLLINKPROGRAMARBPROC) (GLhandleARB);
+typedef void (*PFNGLUSEPROGRAMOBJECTARBPROC) (GLhandleARB);
+typedef void (*PFNGLVALIDATEPROGRAMARBPROC) (GLhandleARB);
+typedef void (*PFNGLUNIFORM1FARBPROC) (GLint, GLfloat);
+typedef void (*PFNGLUNIFORM2FARBPROC) (GLint, GLfloat, GLfloat);
+typedef void (*PFNGLUNIFORM3FARBPROC) (GLint, GLfloat, GLfloat, GLfloat);
+typedef void (*PFNGLUNIFORM4FARBPROC) (GLint, GLfloat, GLfloat, GLfloat, GLfloat);
+typedef void (*PFNGLUNIFORM1IARBPROC) (GLint, GLint);
+typedef void (*PFNGLUNIFORM2IARBPROC) (GLint, GLint, GLint);
+typedef void (*PFNGLUNIFORM3IARBPROC) (GLint, GLint, GLint, GLint);
+typedef void (*PFNGLUNIFORM4IARBPROC) (GLint, GLint, GLint, GLint, GLint);
+typedef void (*PFNGLUNIFORM1FVARBPROC) (GLint, GLsizei, const GLfloat *);
+typedef void (*PFNGLUNIFORM2FVARBPROC) (GLint, GLsizei, const GLfloat *);
+typedef void (*PFNGLUNIFORM3FVARBPROC) (GLint, GLsizei, const GLfloat *);
+typedef void (*PFNGLUNIFORM4FVARBPROC) (GLint, GLsizei, const GLfloat *);
+typedef void (*PFNGLUNIFORM1IVARBPROC) (GLint, GLsizei, const GLint *);
+typedef void (*PFNGLUNIFORM2IVARBPROC) (GLint, GLsizei, const GLint *);
+typedef void (*PFNGLUNIFORM3IVARBPROC) (GLint, GLsizei, const GLint *);
+typedef void (*PFNGLUNIFORM4IVARBPROC) (GLint, GLsizei, const GLint *);
+typedef void (*PFNGLGETOBJECTPARAMETERFVARBPROC) (GLhandleARB, GLenum, GLfloat *);
+typedef void (*PFNGLGETOBJECTPARAMETERIVARBPROC) (GLhandleARB, GLenum, GLint *);
+typedef void (*PFNGLGETINFOLOGARBPROC) (GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
+typedef void (*PFNGLGETATTACHEDOBJECTSARBPROC) (GLhandleARB, GLsizei, GLsizei *, GLhandleARB *);
+typedef GLint (*PFNGLGETUNIFORMLOCATIONARBPROC) (GLhandleARB, const GLcharARB *);
+typedef void (*PFNGLGETACTIVEUNIFORMARBPROC) (GLhandleARB, GLuint index, GLsizei, GLsizei *, 
+        GLint *, GLenum *, GLcharARB *);
+typedef void (*PFNGLGETUNIFORMFVARBPROC) (GLhandleARB, GLint, GLfloat *);
+typedef void (*PFNGLGETUNIFORMIVARBPROC) (GLhandleARB, GLint, GLint *);
+typedef void (*PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
 
 namespace Internal { 
     template<typename Key> class LRUCache;

@@ -5,6 +5,8 @@ from ImageFilter import *
 
 class SimpleImageFilter(ImageFilter):
 	def __init__(self, update_cb):
+		ImageFilter.__init__(self, update_cb)
+
 		self._image = None
 		self._update_cb = update_cb
 	

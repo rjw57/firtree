@@ -7,6 +7,13 @@ class ImageFilter:
 	def __init__(self, update_cb):
 		pass
 	
+	def get_null_image(self):
+		null_kernel = Kernel.CreateFromSource('''
+			kernel vec4 nullKernel() { return vec4(0,0,0,0); }
+		''')
+		return Image.CreateFromImageCroppedTo( \
+			Image.CreateFromKernel(null_kernel), Rect2D(0,0,1,1))
+
 	def get_properties(self):
 		''' Return a dictionary ot tuples. The key of the dictionary is
 		    the property name, the value is a pair containing the 

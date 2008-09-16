@@ -6,6 +6,8 @@ from ImageFilter import *
 
 class WipeTransitionFilter(ImageFilter):
 	def __init__(self, update_cb):
+		ImageFilter.__init__(self, update_cb)
+
 		self._start_image = None
 		self._end_image = None
 		self._update_cb = update_cb
@@ -28,6 +30,7 @@ class WipeTransitionFilter(ImageFilter):
 
 		self.progress = 0.0
 		self.radius = 100.0
+		self.end_image = self.get_null_image()
 	
 	def _update_kernel(self):
 		if((self._start_image == None) or (self._end_image == None)):

@@ -33,6 +33,7 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 
 		self._images = []
 		self._context = None
+		self._renderer = None
 		self._realized = False
 
 		self._zoom = 1.0
@@ -44,6 +45,9 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 		self._offset = (0, 0)
 
 		self._vpSize = (0, 0)
+	
+	def get_renderer(self):
+		return self._renderer
 	
 	def get_context(self):
 		return self._context
@@ -133,8 +137,9 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 
 		self._vpSize = (event.width, event.height)
 
-		if(self._context == None):
-			self._context = Firtree.GLRenderer.Create()
+		if(self._renderer == None):
+			self._context = Firtree.OpenGLContext.CreateNullContext()
+			self._renderer = Firtree.GLRenderer.Create(self._context)
 
 		glViewport(0, 0, self._vpSize[0], self._vpSize[1])
 		glClearColor(0,0,0,1)
@@ -162,10 +167,10 @@ class ImageRenderer(gtk.DrawingArea, gtk.gtkgl.Widget):
 			
 		dstRect = Firtree.Rect2D(0, 0, self._vpSize[0], self._vpSize[1])
 
-		if((len(self._images) > 0) and (self._context != None)):
+		if((len(self._images) > 0) and (self._renderer != None)):
 			for im in self._images:
 				# Render the image into the framebuffer.
-				self._context.RenderInRect(im, dstRect, srcRect)
+				self._renderer.RenderInRect(im, dstRect, srcRect)
 
 
 

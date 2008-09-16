@@ -15,12 +15,14 @@ from SimpleImageFilter import *
 from ColouriseImageFilter import *
 from CrossfadeTransitionFilter import *
 from WipeTransitionFilter import *
+from PageCurlTransitionFilter import *
 
 filters = {
 	'Image': SimpleImageFilter,
 	'Colourise': ColouriseImageFilter,
 	'Crossfade': CrossfadeTransitionFilter,
 	'Wipe': WipeTransitionFilter,
+	'Page Curl': PageCurlTransitionFilter,
 }
 
 class PlaygroundApp:
@@ -71,12 +73,14 @@ class PlaygroundApp:
 			setattr(target, property_name, (1.0, 1.0, 1.0, 1.0))
 
 			def color_set_handler(widget):
+				self._imageRenderer.get_context().Begin()
 				col = widget.get_color()
 				red = col.red / 65535.0
 				green = col.green / 65535.0
 				blue = col.blue / 65535.0
 				alpha = widget.get_alpha() / 65535.0
 				setattr(target, property_name, (red,green,blue,alpha))
+				self._imageRenderer.get_context().End()
 
 			colour_chooser.connect('color-set', color_set_handler)
 			widget.pack_start(colour_chooser, True, True)
@@ -87,8 +91,10 @@ class PlaygroundApp:
 			file_chooser.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
 
 			def file_set_handler(widget):
+				self._imageRenderer.get_context().Begin()
 				image = Image.CreateFromFile(widget.get_filename())
 				setattr(target, property_name, image)
+				self._imageRenderer.get_context().End()
 
 			file_chooser.connect('file-set', file_set_handler)
 			widget.pack_start(file_chooser, True, True)
@@ -100,7 +106,9 @@ class PlaygroundApp:
 			scale.set_value_pos(gtk.POS_RIGHT)
 
 			def value_changed_handler(widget):
+				self._imageRenderer.get_context().Begin()
 				setattr(target, property_name, widget.get_value())
+				self._imageRenderer.get_context().End()
 
 			scale.connect('value-changed', value_changed_handler)
 			widget.pack_start(scale, True, True)
@@ -110,6 +118,8 @@ class PlaygroundApp:
 		return widget
 	
 	def redraw(self):
+		self._imageRenderer.get_context().Begin()
+
 		images = []
 		for f in self._filters:
 			try:
@@ -120,6 +130,8 @@ class PlaygroundApp:
 				print('Could not get output from filter %O.' % f)
 		
 		self._imageRenderer.set_images(images)
+
+		self._imageRenderer.get_context().End()
 
 	def add_new_filter(self):
 		module = self._filter_modules[self._filter_combo.get_active()]

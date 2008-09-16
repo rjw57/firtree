@@ -6,6 +6,8 @@ from ImageFilter import *
 
 class ColouriseImageFilter(ImageFilter):
 	def __init__(self, update_cb):
+		ImageFilter.__init__(self, update_cb)
+
 		self._input_image = None
 		self._update_cb = update_cb
 		self._kernel = Kernel.CreateFromSource('''

@@ -147,11 +147,6 @@ class PageCurlTransition:
 
         unionRect = Rect2D.Union(self._front_image.GetExtent(), self._back_image.GetExtent())
 
-        print(unionRect.Origin.X)
-        print(unionRect.Origin.Y)
-        print(unionRect.Size.Width)
-        print(unionRect.Size.Height)
-
         if((self._accum_image == None) or (not Rect2D.AreEqual(unionRect, self._accum_image.GetImage().GetExtent()))):
             self._accum_image = ImageAccumulator.Create(unionRect)
 

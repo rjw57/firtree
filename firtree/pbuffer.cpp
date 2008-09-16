@@ -20,6 +20,13 @@
 #include <firtree/platform.h>
 #include <internal/pbuffer.h>
 
+// For the Apple implementation of GetProcAddress...
+#if defined(FIRTREE_APPLE)
+#include <mach-o/dyld.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #include <assert.h>
 
 // ============================================================================
@@ -377,7 +384,7 @@ class PbufferAGLImpl : public PbufferPlatformImpl
                 err = AGLReportError ();
             }
 
-            if(!aglCreatePBuffer(width, height, GL_TEXTURE_RECTANGLE_EXT,
+            if(!aglCreatePBuffer(width, height, GL_TEXTURE_RECTANGLE_ARB,
                         GL_RGBA, 0, &m_AGLPbuffer))
             {
                 err = AGLReportError();
@@ -430,8 +437,18 @@ class PbufferAGLImpl : public PbufferPlatformImpl
 //      =======================================================================
         virtual void* GetProcAddress(const char* name) const
         {
-#           error FIXME: Missing GetProcAddress implementation.
-            return NULL;
+            // Taken from the Apple document 'Obtaining a Function Pointer to an
+            // Arbitrary OpenGL Entry Point'.
+            NSSymbol symbol;
+            char *symbolName;
+            symbolName = (char*)malloc (strlen (name) + 2);
+            strcpy(symbolName + 1, name);
+            symbolName[0] = '_';
+            symbol = NULL;
+            if (NSIsSymbolNameDefined (symbolName))
+                symbol = NSLookupAndBindSymbol (symbolName);
+            free (symbolName);
+            return symbol ? NSAddressOfSymbol (symbol) : NULL; 
         }
 
     private:

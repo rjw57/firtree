@@ -3,23 +3,70 @@ import math
 
 class PageCurlTransition:
     def __init__(self):
-        self._output = None
+        self._curve_image = None
         self._front_image = None
         self._back_image = None
+        self._accum_image = None
 
-        kernelSource = '''
+        curveKernelSource = '''
           vec4 atop(vec4 a, vec4 b)
           {
             return a + (1.0-a.a)*b;
           }
 
-          kernel vec4 transitionKernel(sampler front, sampler back,
+          kernel vec4 curve_kernel(sampler front, sampler back,
                                        vec2 diagonal, float offset,
                                        float radius)
           {
-            // Find the 'background' colour
-            vec4 backColour = sample(back, samplerCoord(back));
+            // Firstly we want to calculate the 'along diagonal' 
+            // co-ordinate.
+            float onDiagonalCoord = dot(destCoord(), diagonal);
 
+            // We offset this co-ordinate to advance the animation.
+            onDiagonalCoord -= offset;
+
+            // Calculate masks for regions A and E. These masks are
+            // 1.0 in the corresponding regions and 0.0 outside.
+            float aMask = step(onDiagonalCoord, 0.0);
+            float eMask = step(radius, onDiagonalCoord);
+
+            // Calculate a mask for the curved area
+            float curveMask = (1.0 - aMask) * (1.0 - eMask);
+
+            // Calculate the angles for both areas
+            float thetaC = acos(curveMask * onDiagonalCoord / radius);
+            float thetaB = (0.5*3.14159) - thetaC;
+
+            // Given these angles, calculate the offsets for each
+            float bOffset = radius*thetaB - onDiagonalCoord;
+            float cOffset = radius*(thetaC + 0.5*3.14159) - onDiagonalCoord;
+
+            // From the offsets, calculate the region colours.
+            vec4 bColour = sample(front, samplerTransform(front,
+                destCoord() + bOffset * diagonal)) * curveMask;
+            vec4 cColour = sample(front, samplerTransform(front,
+                destCoord() + cOffset * diagonal)) * curveMask;
+
+            // Darken the back side.
+            cColour *= vec4(0.7, 0.7, 0.7, 1.0);
+
+            // Calculate the final curve colour.
+            vec4 curveColour = atop(cColour, bColour);
+
+            return curveColour;
+          }
+        '''
+
+        flatKernelSource = '''
+          vec4 atop(vec4 a, vec4 b)
+          {
+            return a + (1.0-a.a)*b;
+          }
+
+          kernel vec4 flat_kernel(sampler front, sampler back,
+                                  vec2 diagonal, float offset,
+                                  float radius)
+          {
             // Firstly we want to calculate the 'along diagonal' 
             // co-ordinate.
             float onDiagonalCoord = dot(destCoord(), diagonal);
@@ -46,42 +93,21 @@ class PageCurlTransition:
             // Calculate a combined colour for this region
             vec4 flatColour = atop(eColour, aColour);
 
-            // Now we need to be a bit clever to calculate the curved areas.
-            
-            // Calculate a mask for the curved area
-            float curveMask = (1.0 - aMask) * (1.0 - eMask);
-
-            // Calculate the angles for both areas
-            float thetaC = acos(onDiagonalCoord/radius);
-            float thetaB = (0.5*3.14159) - thetaC;
-
-            // Given these angles, calculate the offsets for each
-            float bOffset = radius*thetaB - onDiagonalCoord;
-            float cOffset = radius*(thetaC + 0.5*3.14159) - onDiagonalCoord;
-
-            // From the offsets, calculate the region colours.
-            vec4 bColour = sample(front, samplerTransform(front,
-                destCoord() + bOffset * diagonal)) * curveMask;
-            vec4 cColour = sample(front, samplerTransform(front,
-                destCoord() + cOffset * diagonal)) * curveMask;
-
-            // Darken the back side.
-            cColour *= vec4(0.7, 0.7, 0.7, 1.0);
-
-            // Calculate the final curve colour.
-            vec4 curveColour = atop(cColour, bColour);
-
-            vec4 frontColour = atop(curveColour, flatColour);
-
-            return atop(frontColour, backColour);
+            return flatColour;
           }
         '''
 
-        self._transitionKernel = Kernel.CreateFromSource(kernelSource)
-        self._output = Image.CreateFromKernel(self._transitionKernel)
+        self._curve_kernel = Kernel.CreateFromSource(curveKernelSource)
+        self._curve_image = Image.CreateFromKernel(self._curve_kernel)
 
-        self._transitionKernel.SetValueForKey(0.707, 0.707, 'diagonal')
-        self._transitionKernel.SetValueForKey(0.0, 'offset')
+        self._curve_kernel.SetValueForKey(0.707, 0.707, 'diagonal')
+        self._curve_kernel.SetValueForKey(0.0, 'offset')
+
+        self._flat_kernel = Kernel.CreateFromSource(flatKernelSource)
+        self._flat_image = Image.CreateFromKernel(self._flat_kernel)
+
+        self._flat_kernel.SetValueForKey(0.707, 0.707, 'diagonal')
+        self._flat_kernel.SetValueForKey(0.0, 'offset')
 
         self.set_radius(40.0)
 
@@ -96,24 +122,55 @@ class PageCurlTransition:
 
     def set_radius(self, radius):
         self._radius = radius
-        self._transitionKernel.SetValueForKey(radius, 'radius')
+        self._curve_kernel.SetValueForKey(radius, 'radius')
+        self._flat_kernel.SetValueForKey(radius, 'radius')
 
     def set_front_image(self, im):
         self._front_image = im
-        self._transitionKernel.SetValueForKey(self._front_image, 'front')
+        self._curve_kernel.SetValueForKey(self._front_image, 'front')
+        self._flat_kernel.SetValueForKey(self._front_image, 'front')
+
+    	if(self._back_image != None):
+            self._create_accum_if_necessary()
 
     def set_back_image(self, im):
         self._back_image = im
-        self._transitionKernel.SetValueForKey(self._back_image, 'back')
+        self._curve_kernel.SetValueForKey(self._back_image, 'back')
+        self._flat_kernel.SetValueForKey(self._back_image, 'back')
+
+    	if(self._front_image != None):
+            self._create_accum_if_necessary()
+
+    def _create_accum_if_necessary(self):
+        if((self._front_image == None) or (self._back_image == None)):
+            return
+
+        unionRect = Rect2D.Union(self._front_image.GetExtent(), self._back_image.GetExtent())
+
+        if((self._accum_image == None) or (not Rect2D.AreEqual(unionRect, self._accum_image.GetImage().GetExtent()))):
+            self._accum_image = ImageAccumulator.Create(unionRect)
 
     def set_progress(self, p):
-        extent = self.get_output().GetExtent()
+        if(self._accum_image == None):
+            return
+
+        extent = self._accum_image.GetImage().GetExtent()
         diagonal = math.sqrt(extent.Size.Width*extent.Size.Width + 
             extent.Size.Height*extent.Size.Height)
         p = 1.0 - p
-        self._transitionKernel.SetValueForKey((diagonal + self._radius) * p - self._radius, 'offset')
-        self._transitionKernel.SetValueForKey(extent.Size.Width/diagonal,
+        self._curve_kernel.SetValueForKey((diagonal + self._radius) * p - self._radius, 'offset')
+        self._curve_kernel.SetValueForKey(extent.Size.Width/diagonal,
+            extent.Size.Height/diagonal, 'diagonal')
+        self._flat_kernel.SetValueForKey((diagonal + self._radius) * p - self._radius, 'offset')
+        self._flat_kernel.SetValueForKey(extent.Size.Width/diagonal,
             extent.Size.Height/diagonal, 'diagonal')
 
     def get_output(self):
-        return self._output
+        self._accum_image.Clear()
+        self._accum_image.RenderImage(self._back_image)
+        self._accum_image.RenderImage(self._curve_image)
+        self._accum_image.RenderImage(self._flat_image)
+
+        return self._accum_image.GetImage()
+
+# vim:sw=4:ts=4:autoindent:et

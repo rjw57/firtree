@@ -31,13 +31,6 @@
 #include <firtree/platform.h>
 
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
-# ifdef FIRTREE_HAVE_OSMESA
-#  define GLAPI
-#  define GLAPIENTRY
-#  include <GL/osmesa.h>
-#  undef GLAPI
-#  undef GLAPIENTRY
-# endif
 # include <GL/gl.h>
 # include <GL/glu.h>
 # if !defined(FIRTREE_NO_GLX)
@@ -63,6 +56,14 @@
 # ifdef FIRTREE_HAVE_GLUT
 #  include <GL/glut.h>
 # endif
+#endif
+
+#ifdef FIRTREE_HAVE_OSMESA
+# define GLAPI
+# define GLAPIENTRY
+# include <GL/osmesa.h>
+# undef GLAPI
+# undef GLAPIENTRY
 #endif
 
 // ============================================================================

@@ -21,6 +21,13 @@
 #include "glsl-runtime-priv.h"
 #include "sha1.h"
 
+// For the Apple implementation of GetProcAddress...
+#if defined(FIRTREE_APPLE)
+#include <mach-o/dyld.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #include <float.h>
 #include <string.h>
 #include <assert.h>
@@ -1986,8 +1993,22 @@ void* OpenGLContext::GetProcAddress(const char* name) const
     // to override this.
 #if defined(FIRTREE_UNIX) && !defined(FIRTREE_APPLE)
     return (void*)(glXGetProcAddress(reinterpret_cast<const GLubyte*>(name)));
+#elif defined(FIRTREE_APPLE)
+    // Taken from the Apple document 'Obtaining a Function Pointer to an
+    // Arbitrary OpenGL Entry Point'.
+    NSSymbol symbol;
+    char *symbolName;
+    symbolName = (char*)malloc (strlen (name) + 2);
+    strcpy(symbolName + 1, name);
+    symbolName[0] = '_';
+    symbol = NULL;
+    if (NSIsSymbolNameDefined (symbolName))
+        symbol = NSLookupAndBindSymbol (symbolName);
+    free (symbolName);
+    return symbol ? NSAddressOfSymbol (symbol) : NULL; 
 #else
     #error No GetProcAddress implementation for this platform.
+    return NULL
 #endif
 }
 

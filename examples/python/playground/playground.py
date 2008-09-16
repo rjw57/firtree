@@ -128,9 +128,27 @@ class PlaygroundApp:
 		
 		vBox = gtk.VBox(False, 3)
 
+		hBox = gtk.HBox(False, 1)
 		label = gtk.Label()
 		label.set_markup('<b>%s</b>' % new_filter.name)
-		vBox.pack_start(label)
+		hBox.pack_start(label, True, True)
+
+		delete_button = gtk.Button('')
+		im = gtk.Image()
+		im.set_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR)
+		delete_button.set_image(im)
+		delete_button.set_relief(gtk.RELIEF_NONE)
+		hBox.pack_start(delete_button, False, False)
+
+		def delete_clicked_handler(widget):
+			self._filter_box.remove(vBox)
+			self._filters.remove(new_filter)
+			self.redraw()
+			widget.destroy()
+
+		delete_button.connect('clicked', delete_clicked_handler)
+
+		vBox.pack_start(hBox)
 
 		prop_names = new_filter.preferred_property_order
 		if(prop_names == None):
@@ -141,12 +159,10 @@ class PlaygroundApp:
 			if(w != None):
 				vBox.pack_start(w, False, True)
 
-		self._filter_box.pack_start(vBox, False, True)
-
 		vBox.pack_start(gtk.HSeparator())
 		vBox.show_all()
 
-		# self._filter_box.pack_start(new_filter.create_ui_widget(), False, True)
+		self._filter_box.pack_start(vBox, False, True)
 		self.redraw()
 	
 	def on_main_window_delete_event(self, widget, event):

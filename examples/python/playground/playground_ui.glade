@@ -16,17 +16,6 @@
           <widget class="GtkVBox" id="vbox2">
             <property name="visible">True</property>
             <child>
-              <widget class="GtkVBox" id="filter_box">
-                <property name="visible">True</property>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-              </widget>
-            </child>
-            <child>
               <widget class="GtkHBox" id="hbox1">
                 <property name="visible">True</property>
                 <child>
@@ -54,6 +43,19 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkVBox" id="filter_box">
+                <property name="visible">True</property>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </widget>
+              <packing>
                 <property name="position">1</property>
               </packing>
             </child>

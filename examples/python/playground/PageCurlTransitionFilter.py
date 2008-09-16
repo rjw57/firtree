@@ -243,6 +243,6 @@ class PageCurlTransitionFilter(ImageFilter):
         return self._transition.get_output()
     
     def get_name(self):
-        return 'PageCurl'
+        return 'Page Curl'
 
 # vim:sw=4:ts=4:autoindent

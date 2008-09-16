@@ -14,11 +14,13 @@ from Firtree import *
 from SimpleImageFilter import *
 from ColouriseImageFilter import *
 from CrossfadeTransitionFilter import *
+from WipeTransitionFilter import *
 
 filters = {
 	'Image': SimpleImageFilter,
 	'Colourise': ColouriseImageFilter,
 	'Crossfade': CrossfadeTransitionFilter,
+	'Wipe': WipeTransitionFilter,
 }
 
 class PlaygroundApp:

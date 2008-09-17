@@ -266,8 +266,6 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
         // Vector swizzles are tricksy beasts
         if(n->getOp() == EOpVectorSwizzle)
         {
-            AppendGLSLType(n->getTypePointer());
-
             TIntermAggregate* right = n->getRight()->getAsAggregate();
             if((right == NULL) || (right->getOp() != EOpSequence))
             {
@@ -313,9 +311,9 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
 
             std::string left(PopTemporary());
 
-            tmp = AddTemporary();
-            PushTemporary(tmp);
-            AppendOutput(" %s = %s.%s;\n", tmp, left.c_str(), swizzleStr.c_str());
+            char tmpStr[255];
+            snprintf(tmpStr, 255, "%s.%s", left.c_str(), swizzleStr.c_str());
+            PushTemporary(tmpStr);
 
             return true;
         }
@@ -332,6 +330,10 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
             case EOpDivAssign:
             case EOpVectorTimesScalarAssign:
                 /* These do not create temporaries. */
+                break;
+
+            case EOpIndexDirect:
+                /* This creates its own temporary. */
                 break;
 
             default:
@@ -399,7 +401,6 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                 break;
             case EOpIndexDirect:
                 {
-                    AppendGLSLType(n->getTypePointer());
                     TIntermConstantUnion* rightCU = n->getRight()->getAsConstantUnion();
                     if(rightCU == NULL)
                     {
@@ -428,7 +429,9 @@ bool GLSLBackend::VisitBinary(bool preVisit, TIntermBinary* n)
                             FIRTREE_ERROR("Internal error: direct index out of bounds (%i).", ap->getIConst());
                     }
 
-                    AppendOutput(" %s = %s.%c;\n", tmp, left.c_str(), indexChar);
+                    char tmpStr[255];
+                    snprintf(tmpStr, 255, "%s.%c", left.c_str(), indexChar);
+                    PushTemporary(tmpStr);
                 }
                 break;
             default:

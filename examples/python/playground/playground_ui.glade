@@ -67,8 +67,6 @@
         </child>
         <child>
           <widget class="GtkVBox" id="image_box">
-            <property name="width_request">640</property>
-            <property name="height_request">480</property>
             <property name="visible">True</property>
             <child>
               <placeholder/>

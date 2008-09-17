@@ -30,6 +30,7 @@ class WipeTransitionFilter(ImageFilter):
 
 		self.progress = 0.0
 		self.radius = 100.0
+		self.start_image = self.get_null_image()
 		self.end_image = self.get_null_image()
 	
 	def _update_kernel(self):

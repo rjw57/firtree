@@ -19,6 +19,7 @@ class CrossfadeTransitionFilter(ImageFilter):
 		self._image = Image.CreateFromKernel(self._kernel)
 
 		self.progress = 0.0
+		self.start_image = self.get_null_image()
 		self.end_image = self.get_null_image()
 	
 	def set_progress(self, progress):

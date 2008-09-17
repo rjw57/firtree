@@ -185,6 +185,7 @@ class PageCurlTransitionFilter(ImageFilter):
         self._radius = 0.0
 
         self.progress = 0.0
+        self.start_image = self.get_null_image()
         self.end_image = self.get_null_image()
         self.radius = 100.0
     

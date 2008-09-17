@@ -134,6 +134,7 @@ class PlaygroundApp:
 		self._imageRenderer.get_context().End()
 
 	def add_new_filter(self):
+		self._imageRenderer.get_context().Begin()
 		module = self._filter_modules[self._filter_combo.get_active()]
 		new_filter = module(self.redraw)
 		self._filters.append(new_filter)
@@ -175,6 +176,8 @@ class PlaygroundApp:
 		vBox.show_all()
 
 		self._filter_box.pack_start(vBox, False, True)
+
+		self._imageRenderer.get_context().End()
 		self.redraw()
 	
 	def on_main_window_delete_event(self, widget, event):

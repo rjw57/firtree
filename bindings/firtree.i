@@ -15,11 +15,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-%module Firtree
+%module(directors=1) Firtree
 %{
-#include <firtree/blob.h>
-#include <firtree/image.h>
 #include <firtree/main.h>
+#include <firtree/image.h>
+#include <firtree/blob.h>
 #include <firtree/math.h>
 #include <firtree/kernel.h>
 #include <firtree/glsl-runtime.h>
@@ -35,6 +35,18 @@ using namespace Firtree;
 
 // %feature("ref")   Firtree::ReferenceCounted "printf(\"Ref: %p\\n\", $this);"
 // %feature("unref") Firtree::ReferenceCounted "printf(\"Unref: %p\\n\", $this); $this->Release();"
+
+%feature("director") Firtree::ImageProvider;
+
+// Suppress "Warning(473): Returning a pointer or reference 
+//           in a director method is not recommended."
+%warnfilter(473) Firtree::ImageProvider;
+
+%feature("director:except") {
+    if ($error != NULL) {
+        throw Swig::DirectorMethodException();
+    }
+}
 
 %feature("ref")   Firtree::ReferenceCounted ""
 %feature("unref") Firtree::ReferenceCounted "$this->Release();"
@@ -172,6 +184,8 @@ using namespace Firtree;
 %exception {
     try {
         $action
+    } catch (Swig::DirectorException &e) { 
+        SWIG_fail; 
     } catch ( Firtree::Exception& e ) {
         std::string message = e.GetFunction();
         message += ": ";
@@ -183,6 +197,7 @@ using namespace Firtree;
 #endif
 
 %include <firtree/main.h>
+%include <firtree/blob.h>
 %include <firtree/math.h>
 %include <firtree/image.h>
 %include <firtree/kernel.h>

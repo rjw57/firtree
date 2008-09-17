@@ -21,7 +21,7 @@ class ColouriseImageFilter(ImageFilter):
 		''')
 		self._image = Image.CreateFromKernel(self._kernel)
 
-		self._color = (1.0,1.0,1.0,1.0)
+		self.color = (1.0,1.0,1.0,1.0)
 	
 	def get_properties(self):
 		# Return a dictionary ot tuples. The key of the dictionary is

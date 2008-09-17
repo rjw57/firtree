@@ -12,11 +12,6 @@ class RandomFilter(ImageFilter):
 		randKernel = Kernel.CreateFromSource('''
 			vec4 mccool_rand(vec4 seed)
 			{
-				// From:
-				//  McCool, M.C. and W. Heidrich. Texture Shaders. 1999
-				//  SIGGRAPH/Eurographics Workshop on Graphics Hardware, Aug.
-				//  1999, pp. 117-126.
-
 				// The constant below is equivalient to: 
 				// float pi = 3.14159;
 				// vec4 a = vec4(pi * pi * pi * pi, exp(4.0),

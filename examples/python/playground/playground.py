@@ -4,10 +4,31 @@ import gtk			# Calls gtk module
 import gtk.glade		# Calls gtk.glade module
 import gtk.gtkgl		# Calls gtk.gtkgl module
 
-from ImageRenderer import *
-
 import sys
 import os
+
+#==============================================================================
+# Use sys to find the script path and hence construct a path in which to 
+# search for the Firtree bindings.
+
+import math
+import sys
+import os
+import gc
+
+# Find the script path.
+scriptDir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+# Walk down three subdirs...
+rootDir = os.path.dirname(os.path.dirname(os.path.dirname(scriptDir)))
+
+# Add path to the python bindings
+importDir = os.path.join(rootDir, 'bindings', 'python')
+
+# Append this path to our search path & import the firtree bindings.
+sys.path.append(importDir)
+
+from ImageRenderer import *
 
 from Firtree import *
 

@@ -16,6 +16,8 @@ from ColouriseImageFilter import *
 from CrossfadeTransitionFilter import *
 from WipeTransitionFilter import *
 from PageCurlTransitionFilter import *
+from FalseColourImageFilter import *
+from RandomFilter import *
 
 filters = {
 	'Image': SimpleImageFilter,
@@ -23,6 +25,8 @@ filters = {
 	'Crossfade': CrossfadeTransitionFilter,
 	'Wipe': WipeTransitionFilter,
 	'Page Curl': PageCurlTransitionFilter,
+	'False Colour': FalseColourImageFilter,
+	'Random': RandomFilter,
 }
 
 class PlaygroundApp:

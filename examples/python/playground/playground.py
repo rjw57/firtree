@@ -72,8 +72,10 @@ class PlaygroundApp:
 			widget.pack_start(gtk.Label('%s:' % name), False, True)
 			colour_chooser = gtk.ColorButton()
 			map = gtk.Entry().get_colormap()
-			colour_chooser.set_color(map.alloc_color('white'))
+			(r,g,b,a) = getattr(target, property_name)
 			colour_chooser.set_use_alpha(True)
+			colour_chooser.set_color(map.alloc_color(int(65535*r), int(65535*g), int(65535*b)))
+			colour_chooser.set_alpha(int(65535*a))
 			setattr(target, property_name, (1.0, 1.0, 1.0, 1.0))
 
 			def color_set_handler(widget):

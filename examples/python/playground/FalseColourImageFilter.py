@@ -42,7 +42,7 @@ class FalseColourImageFilter(ImageFilter):
 		return 'False Colour'
 		
 	def get_neg_color(self):
-		return self._color
+		return self._neg_color
 
 	def set_neg_color(self, r, g, b, a):
 		self._neg_color = (r,g,b,a)
@@ -50,7 +50,7 @@ class FalseColourImageFilter(ImageFilter):
 		self._update_cb()
 
 	def get_pos_color(self):
-		return self._color
+		return self._pos_color
 
 	def set_pos_color(self, r, g, b, a):
 		self._pos_color = (r,g,b,a)

@@ -56,6 +56,9 @@ using namespace Firtree;
     $result = static_cast<Firtree::BitmapImageRep*>(_p);
 }
 
+// Let blobs be assigned from Python strings
+%apply (char *STRING, int LENGTH) { (const void *buffer, size_t length) };
+
 %feature("ref")   Firtree::ReferenceCounted ""
 %feature("unref") Firtree::ReferenceCounted "$this->Release();"
 

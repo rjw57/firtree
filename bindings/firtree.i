@@ -48,6 +48,14 @@ using namespace Firtree;
     }
 }
 
+// Special typemap allowing us to return a BitmapImageRep from
+// an ImageProvider. This doesn't try to claim ownership of the object.
+%typemap(directorout) Firtree::BitmapImageRep* {
+    void* _p;
+    SWIG_ConvertPtr($1, &_p, SWIGTYPE_p_Firtree__BitmapImageRep, 0);
+    $result = static_cast<Firtree::BitmapImageRep*>(_p);
+}
+
 %feature("ref")   Firtree::ReferenceCounted ""
 %feature("unref") Firtree::ReferenceCounted "$this->Release();"
 

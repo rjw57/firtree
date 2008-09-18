@@ -362,7 +362,9 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         InvalidateCache();
     }
 
-    if(!m_CacheValid)
+    // HACK: Comment out this test for the moment since we have no
+    // way of signalling a bitmapimagerep as 'dirty'.
+    //if(!m_CacheValid)
     {
         FIRTREE_DEBUG("Performance hint: copying CPU -> GPU.");
 

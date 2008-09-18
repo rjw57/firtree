@@ -98,6 +98,77 @@ BitmapImageRep::~BitmapImageRep()
 }
 
 //=============================================================================
+void FormatConversion::ExpandComponents(Blob* src,
+        FormatConversion::SourcePixelFormat src_format,
+        Blob* dest, BitmapImageRep::PixelFormat dest_format)
+{
+    if((src == NULL) || (dest == NULL))
+    {
+        FIRTREE_ERROR("Passed a NULL reference.");
+        return;
+    }
+
+    bool dest_is_float = (dest_format == BitmapImageRep::Float);
+
+    // Separate loops for each format.
+    switch(src_format)
+    {
+        case Luminance8:
+            {
+                uint32_t num_pixels = src->GetLength();
+
+                uint32_t dest_min_size = num_pixels * 4 *
+                    (dest_is_float ? 4 : 1);
+                if(dest->GetLength() < dest_min_size)
+                {
+                    FIRTREE_ERROR("Destination blob is too small.");
+                    return;
+                }
+
+                if(dest_is_float)
+                {
+                    const uint8_t* inbuf = src->GetBytes();
+                    float* outbuf = const_cast<float*>(
+                            reinterpret_cast<const float*>(
+                                dest->GetBytes()));
+                    for(uint32_t pixel_idx=0; pixel_idx<num_pixels; pixel_idx++)
+                    {
+                        float pixel = (*inbuf / 255.0f);
+
+                        outbuf[0] = pixel;
+                        outbuf[1] = pixel;
+                        outbuf[2] = pixel;
+                        outbuf[3] = 1.0f;
+
+                        inbuf ++;
+                        outbuf += 4;
+                    }
+                } else {
+                    const uint8_t* inbuf = src->GetBytes();
+                    uint8_t* outbuf = const_cast<uint8_t*>(dest->GetBytes());
+                    for(uint32_t pixel_idx=0; pixel_idx<num_pixels; pixel_idx++)
+                    {
+                        uint8_t pixel = *inbuf;
+
+                        outbuf[0] = pixel;
+                        outbuf[1] = pixel;
+                        outbuf[2] = pixel;
+                        outbuf[3] = 0xff;
+
+                        inbuf ++;
+                        outbuf += 4;
+                    }
+                }
+            }
+            break;
+
+        default:
+            FIRTREE_ERROR("Unsupported conversion format: %i", src_format);
+            return;
+    }
+}
+
+//=============================================================================
 Image::Image()
     :   ReferenceCounted()
 {

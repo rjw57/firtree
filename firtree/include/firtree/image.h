@@ -124,6 +124,23 @@ class ImageProvider : public ReferenceCounted
 };
 
 //=============================================================================
+/// A class which provides static methods for converting pixel formats
+class FormatConversion
+{
+    public:
+        /// The possible source pixel formats,
+        enum SourcePixelFormat {
+            Luminance8,         ///< 8-bit luminance.
+        };
+
+        /// Perform a format conversion from the data in src in format
+        /// SourcePixelFormat to that in dest which is assumed to be
+        /// a 4-component image with pixels stored in dest_format.
+        static void ExpandComponents(Blob* src, SourcePixelFormat src_format,
+                Blob* dest, BitmapImageRep::PixelFormat dest_format);
+};
+
+//=============================================================================
 /// An image encapsulates all the information FIRTREE needs to render an
 /// image on screen.
 class Image : public ReferenceCounted

@@ -644,9 +644,9 @@ AffineTransform* ImageProviderImageImpl::GetTransformFromUnderlyingImage() const
 //=============================================================================
 Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep()
 {
+    // TODO: Should probably make this method return a const BitmapImageRep.
     Firtree::BitmapImageRep* rv = 
-        const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->GetImageRep());
-    FIRTREE_SAFE_RETAIN(rv);
+        const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->CreateImageRep());
     return rv;
 }
 

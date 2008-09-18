@@ -117,11 +117,10 @@ class ImageProvider : public ReferenceCounted
         /// returned from GetImageRep().
         virtual Size2D GetImageSize() const = 0;
 
-        /// Return a BitmapImageRep structure containing the image. This
-        /// is 'owned' by the ImageProvider insomuch as it is the 
-        /// ImageProvider's responsibility to call Release() on the 
-        /// BitmapImageRep*
-        virtual const BitmapImageRep* GetImageRep() const = 0;
+        /// Return a BitmapImageRep structure containing the image. 
+        /// The returned structure is 'owned' by the caller and
+        /// must be Release()-ed after use.
+        virtual const BitmapImageRep* CreateImageRep() const = 0;
 };
 
 //=============================================================================

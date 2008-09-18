@@ -170,14 +170,19 @@ void Blob::AssignFromBuffer(const void* buffer, size_t length)
     if((length == 0) || (buffer == NULL))
         return;
 
-    // Allocate room to copy data into.
-    m_Buffer = reinterpret_cast<uint8_t*>(malloc(length));
-
-    // If allocation failed, panic.
-    if(m_Buffer == NULL)
+    // Allocate room to copy data into if necessary.
+    if(length != m_Length)
     {
-        FIRTREE_ERROR("Failed to allocate buffer memory.");
-        return;
+        m_Buffer = reinterpret_cast<uint8_t*>(malloc(length));
+
+        // If allocation failed, panic.
+        if(m_Buffer == NULL)
+        {
+            FIRTREE_ERROR("Failed to allocate buffer memory.");
+            return;
+        }
+
+        m_Length = length;
     }
 
     // If succeeded, copy.

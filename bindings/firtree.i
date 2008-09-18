@@ -75,6 +75,8 @@ using namespace Firtree;
 %newobject Firtree::BitmapImageRep::Create;
 %newobject Firtree::BitmapImageRep::CreateFromBitmapImageRep;
 
+%newobject Firtree::ImageProvider::CreateImageRep;
+
 %newobject Firtree::Parameter::Create;
 
 %newobject Firtree::AffineTransform::Identity;

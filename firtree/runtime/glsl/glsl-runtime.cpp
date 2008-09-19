@@ -238,6 +238,7 @@ void CompiledGLSLKernel::Compile()
     m_InfoLog = c.GetInfoLog();
     if(!rv)
     {
+        FIRTREE_ERROR("Error compiling kernel:\n%s", m_InfoLog.c_str());
         return;
     }
 

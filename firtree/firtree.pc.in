@@ -1,9 +1,9 @@
-prefix=/usr/local
+prefix=@CMAKE_INSTALL_PREFIX@
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: firtree
 Description: The FIRTREE image processing library.
-Version: 0.1.1
+Version: @FIRTREE_VERSION_MAJOR@.@FIRTREE_VERSION_MINOR@.@FIRTREE_VERSION_PATCH@
 Libs: -L${libdir} -lfirtree
 Cflags: -I${includedir} 

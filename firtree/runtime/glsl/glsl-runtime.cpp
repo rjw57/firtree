@@ -1956,9 +1956,11 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     CHECK_GL( m_OpenGLContext, glEnd() );
 #endif
 
+    // Stop using our shader program.
+    CHECK_GL( m_OpenGLContext, glUseProgramObjectARB(0) );
+
     // HACK: display render rectangle
 #if 0
-    CHECK_GL( glUseProgramObjectARB(0) );
     CHECK_GL( glColor3f(1,1,0) );
     glBegin(GL_LINE_STRIP);
     glVertex2f(renderRect.MinX(), renderRect.MinY());

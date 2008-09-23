@@ -173,13 +173,15 @@ AffineTransform* Rect2D::ComputeTransform(const Rect2D& whence, const Rect2D& he
 
     AffineTransform* trans = AffineTransform::Identity();
 
-    // Firstly move the origins of the rectangle to co-incide.
-    trans->TranslateBy(hence.Origin.X - whence.Origin.X,
-            hence.Origin.Y - whence.Origin.Y);
+    float xscale = hence.Size.Width / whence.Size.Width;
+    float yscale = hence.Size.Height / whence.Size.Height;
 
     // Scale appropriately in X- and Y-
-    trans->ScaleBy(hence.Size.Width / whence.Size.Width, 
-            hence.Size.Height / whence.Size.Height);
+    trans->ScaleBy(xscale, yscale);
+
+    // Move the origins of the rectangle to co-incide.
+    trans->TranslateBy(hence.Origin.X - (whence.Origin.X * xscale),
+            hence.Origin.Y - (whence.Origin.Y * yscale));
 
     return trans;
 }

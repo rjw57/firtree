@@ -144,6 +144,7 @@ class TextureSamplerParameter : public GLSLSamplerParameter
 
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const { return m_Domain; }
+        virtual AffineTransform* GetAndOwnTransform() const;
         ///@}
 
         /// Write any top-level GLSL for this shader into dest.

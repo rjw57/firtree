@@ -1429,21 +1429,12 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
     m_Image = imImpl;
     FIRTREE_SAFE_RETAIN(m_Image);
 
-    Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
+    m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
 
     // NB underlyingTransform must be released.
     AffineTransform* underlyingTransform = 
         m_Image->GetTransformFromUnderlyingImage();
-
-    m_Domain = Rect2D(0.f, 0.f, 1.f, 1.f);
-
-    // The texture has co-ordinates in the rannge (0,1]. Re-scale
-    // to be pixel-based co-ordinates.
-    AffineTransform* t = GetAndOwnTransform();
-    t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
-    t->AppendTransform(underlyingTransform);
-    SetTransform(t);
-    FIRTREE_SAFE_RELEASE(t);
+    SetTransform(underlyingTransform);
     FIRTREE_SAFE_RELEASE(underlyingTransform);
 }
 
@@ -1451,6 +1442,23 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
 TextureSamplerParameter::~TextureSamplerParameter()
 {
     FIRTREE_SAFE_RELEASE(m_Image);
+}
+
+//=============================================================================
+AffineTransform* TextureSamplerParameter::GetAndOwnTransform() const
+{
+    AffineTransform* underlyingTransform = 
+        m_Image->GetTransformFromUnderlyingImage();
+    Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
+
+    // The texture has co-ordinates in the range (0,1]. Re-scale
+    // to be pixel-based co-ordinates.
+    AffineTransform* t = AffineTransform::Identity();
+    t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
+    t->AppendTransform(underlyingTransform);
+    FIRTREE_SAFE_RELEASE(underlyingTransform);
+
+    return t;
 }
 
 //=============================================================================

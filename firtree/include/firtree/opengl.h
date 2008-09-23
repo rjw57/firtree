@@ -59,11 +59,13 @@
 #endif
 
 #ifdef FIRTREE_HAVE_OSMESA
-# define GLAPI
-# define GLAPIENTRY
+# ifndef GLAPI
+#  define GLAPI
+# endif
+# ifndef GLAPIENTRY
+#  define GLAPIENTRY
+# endif
 # include <GL/osmesa.h>
-# undef GLAPI
-# undef GLAPIENTRY
 #endif
 
 // ============================================================================

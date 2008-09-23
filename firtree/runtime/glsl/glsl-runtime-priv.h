@@ -70,7 +70,7 @@ class GLSLSamplerParameter : public Firtree::ReferenceCounted
         /// Overloaded methods from Firtree::SamplerParameter.
         virtual const Rect2D GetDomain() const;
         virtual const Rect2D GetExtent() const;
-        virtual const AffineTransform* GetTransform() const { return m_Transform; }
+        virtual AffineTransform* GetAndOwnTransform() const { return m_Transform->Copy(); }
         ///@}
         
         inline static GLSLSamplerParameter* ExtractFrom(

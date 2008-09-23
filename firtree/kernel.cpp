@@ -426,9 +426,9 @@ const Rect2D SamplerParameter::GetExtent() const
 }
 
 //=============================================================================
-const AffineTransform* SamplerParameter::GetTransform() const
+AffineTransform* SamplerParameter::GetAndOwnTransform() const
 {
-    return m_WrappedGLSLSampler->GetTransform();
+    return m_WrappedGLSLSampler->GetAndOwnTransform();
 }
 
 //=============================================================================

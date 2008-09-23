@@ -744,7 +744,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
     m_Kernel = gk;
     FIRTREE_SAFE_RETAIN(m_Kernel);
 
-    AffineTransform* t = GetTransform()->Copy();
+    AffineTransform* t = GetAndOwnTransform();
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
     FIRTREE_SAFE_RELEASE(t);
@@ -830,7 +830,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
     if(samplerParams.size() == 1)
     {
         SamplerParameter *pSP = samplerParams.front();
-        AffineTransform* invTrans = pSP->GetTransform()->Copy();
+        AffineTransform* invTrans = pSP->GetAndOwnTransform();
         invTrans->Invert();
         const AffineTransformStruct& transform =
             invTrans->GetTransformStruct();
@@ -858,7 +858,7 @@ static void WriteSamplerFunctionsForKernel(std::string& dest,
                 GLSLSamplerParameter::ExtractFrom(pSP);
             if(pGSP->GetSamplerIndex() != -1)
             {
-                AffineTransform* invTrans = pSP->GetTransform()->Copy();
+                AffineTransform* invTrans = pSP->GetAndOwnTransform();
                 invTrans->Invert();
                 const AffineTransformStruct& transform =
                     invTrans->GetTransformStruct();
@@ -999,8 +999,10 @@ void KernelSamplerParameter::ComputeDigest(uint8_t digest[20])
     // Add in the current transform and extent.
     Rect2D extent = GetExtent();
     SHA1Update(&shaCtx, (uint8_t*)(&extent), sizeof(Rect2D));
-    const AffineTransformStruct& trans = GetTransform()->GetTransformStruct();
+    AffineTransform* transObj = GetAndOwnTransform();
+    const AffineTransformStruct& trans = transObj->GetTransformStruct();
     SHA1Update(&shaCtx, (uint8_t*)(&trans), sizeof(AffineTransformStruct));
+    FIRTREE_SAFE_RELEASE(transObj);
 
     // Finalise the SHA-1 digest.
     SHA1Final(digest, &shaCtx);
@@ -1096,7 +1098,7 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     dest += "void main() {\n"
         "vec3 inCoord = vec3(gl_TexCoord[0].xy, 1.0);\n";
 
-    AffineTransform* invTrans = sampler->GetTransform()->Copy();
+    AffineTransform* invTrans = sampler->GetAndOwnTransform();
     invTrans->Invert();
     if(!invTrans->IsIdentity())
     {
@@ -1437,7 +1439,7 @@ TextureSamplerParameter::TextureSamplerParameter(Image* im)
 
     // The texture has co-ordinates in the rannge (0,1]. Re-scale
     // to be pixel-based co-ordinates.
-    AffineTransform* t = GetTransform()->Copy();
+    AffineTransform* t = GetAndOwnTransform();
     t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
     t->AppendTransform(underlyingTransform);
     SetTransform(t);
@@ -1467,8 +1469,10 @@ void TextureSamplerParameter::ComputeDigest(uint8_t digest[20])
     // Add in the current transform and extent.
     Rect2D extent = GetExtent();
     SHA1Update(&shaCtx, (uint8_t*)(&extent), sizeof(Rect2D));
-    const AffineTransformStruct& trans = GetTransform()->GetTransformStruct();
+    AffineTransform* transObj = GetAndOwnTransform();
+    const AffineTransformStruct& trans = transObj->GetTransformStruct();
     SHA1Update(&shaCtx, (uint8_t*)(&trans), sizeof(AffineTransformStruct));
+    FIRTREE_SAFE_RELEASE(transObj);
 
     // Finalise the SHA-1 digest.
     SHA1Final(digest, &shaCtx);
@@ -1601,7 +1605,7 @@ GLSLSamplerParameter* CreateTextureSamplerWithTransform(
         Image* im, const AffineTransform* transform)
 {
     GLSLSamplerParameter* rv = TextureSamplerParameter::Create(im);
-    AffineTransform* tc = rv->GetTransform()->Copy();
+    AffineTransform* tc = rv->GetAndOwnTransform();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
     FIRTREE_SAFE_RELEASE(tc);
@@ -1613,7 +1617,7 @@ GLSLSamplerParameter* CreateKernelSamplerWithTransform(
         Image* im, const AffineTransform* transform)
 {
     GLSLSamplerParameter* rv = KernelSamplerParameter::Create(im);
-    AffineTransform* tc = rv->GetTransform()->Copy();
+    AffineTransform* tc = rv->GetAndOwnTransform();
     tc->AppendTransform(transform);
     rv->SetTransform(tc);
     FIRTREE_SAFE_RELEASE(tc);

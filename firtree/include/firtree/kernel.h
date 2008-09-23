@@ -203,7 +203,8 @@ class SamplerParameter : public Parameter
 
         /// Return a pointer to the affine transform which maps the
         /// sampler co-ordinate system to the world co-ordinate system.
-        const AffineTransform* GetTransform() const;
+        /// \note This *must* be Release()-ed when the caller is done.
+        AffineTransform* GetAndOwnTransform() const;
 
         // ====================================================================
         // CONST METHODS

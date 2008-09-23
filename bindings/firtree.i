@@ -68,6 +68,7 @@ using namespace Firtree;
 %newobject Firtree::Blob::CreateFromBlob;
 
 %newobject Firtree::SamplerParameter::CreateFromImage;
+%newobject Firtree::SamplerParameter::GetAndOwnTransform;
 
 %newobject Firtree::Kernel::CreateFromSource;
 

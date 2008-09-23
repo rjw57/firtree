@@ -28,6 +28,8 @@ using namespace Firtree;
 
 %}
 
+%include "cdata.i" 
+
 #ifdef SWIGPYTHON
 
 %apply unsigned int { uint32_t }
@@ -66,6 +68,14 @@ using namespace Firtree;
 %newobject Firtree::Blob::CreateWithLength;
 %newobject Firtree::Blob::CreateFromBuffer;
 %newobject Firtree::Blob::CreateFromBlob;
+
+%extend Firtree::Blob
+{
+    SWIGCDATA GetData() const
+    {
+        return cdata_void((void*)($self->GetBytes()), $self->GetLength());
+    }
+}
 
 %newobject Firtree::SamplerParameter::CreateFromImage;
 %newobject Firtree::SamplerParameter::GetAndOwnTransform;

@@ -126,15 +126,12 @@ let ExternalDeclaration
 ; A function prototype consistes of a function header describing the
 ; name and type of the function followed by a list of function
 ; parameters in parentheses.
-let FunctionPrototype
-    :functionprototype:     FunctionHeader "(" FunctionParameterDeclarationList ")"
-
 ; There are two sorts of functions available in Firtree, plain-ol'-simple
 ; functions which are inlined and kernel functions which are our
 ; entry points. Each is parameterised by a fully specified type and an
 ; identifier.
-let FunctionHeader
-    :functionheader:        FunctionQualifier FullySpecifiedType Identifier
+let FunctionPrototype
+    :functionprototype:     FunctionQualifier FullySpecifiedType Identifier "(" FunctionParameterDeclarationList ")"
 
 let FunctionQualifier
     :function:
@@ -227,17 +224,17 @@ let Statement
 
 ; Statements are also where we resume for error recovery.
 let [err] StatementNoScope
-    :noscope:               Statement
+    :ign0:                  Statement
 
 ; A compound statement is simply a list of statements surrounded by
 ; braces.
 let CompoundStatementNoScope
-    :noscope:               "{"
+    :ign0:                  "{"
                                 StatementList
                             "}"
 
 let CompoundStatement
-    :compoundstatement:     "{"
+    :compound:              "{"
                                 StatementList
                             "}"
 
@@ -258,14 +255,14 @@ let InitDeclaratorListTail
 ; A single declaration is a variable identifier followed by an
 ; (optional) initializer.
 let SingleDeclaration
-    :veariableinitializer:  Identifier OptionalInitializer
+    :variableinitializer:  Identifier OptionalInitializer
 
 ; An initializer is simply an expression.
 let Initializer
     :ign0:                  "=" AssignmentExpr
 
 let OptionalInitializer
-    :noinitializer:
+    :nop:
     :ign0:                  Initializer
 
 ; An expression statement is either an expression followed by a semicolon

@@ -1,0 +1,85 @@
+// This is a comment
+          vec4 atop(vec4 a, vec4 b)
+          {
+            return a + (1.0-a.a)*b;
+          }
+
+          kernel vec4 curve_kernel(sampler front, sampler back,
+                                       vec2 diagonal, float offset,
+                                       float radius)
+          {
+            // Firstly we want to calculate the 'along diagonal' 
+            // co-ordinate.
+	    float test = 7.0 + a / 6 - 2.0 * pi;
+	    float test2 = 7.0 + a / 6 - 2.0 * pi;
+	    float v;
+
+            float onDiagonalCoord = dot(destCoord(), diagonal);
+
+            // We offset this co-ordinate to advance the animation.
+            onDiagonalCoord -= offset;
+
+            // Calculate masks for regions A and E. These masks are
+            // 1.0 in the corresponding regions and 0.0 outside.
+            float aMask = step(onDiagonalCoord, 0.0);
+            float eMask = step(radius, onDiagonalCoord);
+
+            // Calculate a mask for the curved area
+            float curveMask = (1.0 - aMask) * (1.0 - eMask);
+
+            // Calculate the angles for both areas
+            float thetaC = acos(curveMask * onDiagonalCoord / radius);
+            float thetaB = (0.5*3.14159) - thetaC;
+
+            // Given these angles, calculate the offsets for each
+            float bOffset = radius*thetaB - onDiagonalCoord;
+            float cOffset = radius*(thetaC + 0.5*3.14159) - onDiagonalCoord;
+
+            // From the offsets, calculate the region colours.
+            vec4 bColour = sample(front, samplerTransform(front,
+                destCoord() + bOffset * diagonal)) * curveMask;
+            vec4 cColour = sample(front, samplerTransform(front,
+                destCoord() + cOffset * diagonal)) * curveMask;
+
+            // Darken the back side.
+            cColour *= vec4(0.7, 0.7, 0.7, 1.0);
+
+            // Calculate the final curve colour.
+            vec4 curveColour = atop(cColour, bColour);
+
+            return curveColour;
+          }
+
+          kernel vec4 flat_kernel(sampler front, sampler back,
+                                  vec2 diagonal, float offset,
+                                  float radius)
+          {
+            // Firstly we want to calculate the 'along diagonal' 
+            // co-ordinate.
+            float onDiagonalCoord = dot(destCoord(), diagonal);
+
+            // We offset this co-ordinate to advance the animation.
+            onDiagonalCoord -= offset;
+
+            // Calculate masks for regions A and E. These masks are
+            // 1.0 in the corresponding regions and 0.0 outside.
+            float aMask = step(onDiagonalCoord, 0.0);
+            float eMask = step(radius, onDiagonalCoord);
+
+            // We calculate the region A colour first
+            vec4 aColour = sample(front, samplerCoord(front)) * aMask;
+
+            // Calculate the 'backside' colour, or region E
+            float eOffset = - 2.0 * onDiagonalCoord + (3.14159 * radius);
+            vec4 eColour = sample(front, samplerTransform(front,
+                destCoord() + eOffset * diagonal));
+
+            // Darken the back side.
+            eColour *= vec4(0.7, 0.7, 0.7, 1.0) * aMask;
+
+            // Calculate a combined colour for this region
+            vec4 flatColour = atop(eColour, aColour);
+
+            return flatColour;
+          }
+

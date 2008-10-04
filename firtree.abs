@@ -8,96 +8,96 @@ LANGUAGE firtree
 
 TOKENS
 
-  Identifier, IntConst, FloatConst
+  Identifier, IntConst, FloatConst, BoolConst
 
 TYPES
 
   firtree                                 = Start_TranslationUnit(ExternalDeclaration*)
 
-  ExternalDeclaration                     = functionprototype(FunctionHeader, ParameterDeclaration*);
-                                            functiondefinition(ExternalDeclaration, OptionalElse*)
+  ExternalDeclaration                     = definefuntion(FunctionDefinition);
+                                            declarefunction(FunctionPrototype)
+
+  FunctionPrototype                       = functionprototype(FunctionHeader, ParameterDeclaration*)
 
   FunctionHeader                          = functionheader(FunctionQualifier, FullySpecifiedType, Identifier)
 
-  FunctionQualifier                       = kernel;
-                                            function
+  FunctionQualifier                       = function;
+                                            kernel
 
   FullySpecifiedType                      = unqualifiedtype(TypeSpecifier);
                                             qualifiedtype(OptionalTypeQualifier, TypeSpecifier)
 
-  TypeSpecifier                           = vec4;
-                                            vec3;
-                                            vec2;
-                                            sampler;
-                                            color;
-                                            bool;
+  TypeSpecifier                           = vec3;
                                             void;
-                                            int;
-                                            float
+                                            bool;
+                                            sampler;
+                                            vec2;
+                                            float;
+                                            color;
+                                            vec4;
+                                            int
 
   ParameterDeclaration                    = parameterdeclaration(OptionalTypeQualifier, OptionalParameterQualifier, TypeSpecifier, OptionalParameterIdentifier)
 
-  OptionalTypeQualifier                   = defaulttypequalifier;
-                                            const
+  OptionalTypeQualifier                   = const;
+                                            notypequalifier
 
-  OptionalParameterQualifier              = in;
-                                            defaultparameterqualifier;
-                                            inout;
-                                            out
+  OptionalParameterQualifier              = noparameterqualifier;
+                                            in;
+                                            out;
+                                            inout
 
   OptionalParameterIdentifier             = unnamedparameter;
                                             parametername(Identifier)
 
+  FunctionDefinition                      = functiondefinition(FunctionPrototype, CompoundStatementNoScope)
+
+  StatementNoScope                        = noscope(AdditiveExpr)
+
+  CompoundStatementNoScope                = noscope(AdditiveExpr*)
+
   SingleDeclaration                       = veariableinitializer(Identifier, AdditiveExpr)
 
-  OptionalElse                            = newscope(AdditiveExpr);
-                                            nop
-
-  AssignmentOp                            = subassign;
-                                            addassign;
-                                            equal;
-                                            mulassign;
-                                            divassign
-
-  AdditiveExpr                            = equal(AdditiveExpr, AdditiveExpr);
-                                            noinitializer;
-                                            inc(AdditiveExpr);
-                                            dec(AdditiveExpr);
-                                            selection(AdditiveExpr, OptionalElse, OptionalElse);
-                                            sub(AdditiveExpr, AdditiveExpr);
-                                            float(FloatConst);
-                                            less(AdditiveExpr, AdditiveExpr);
-                                            add(AdditiveExpr, AdditiveExpr);
-                                            ternary(AdditiveExpr, AdditiveExpr, AdditiveExpr);
-                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
-                                            logicaland(AdditiveExpr, AdditiveExpr);
-                                            negate(AdditiveExpr);
-                                            newscope(OptionalElse*);
-                                            assign(AdditiveExpr, AssignmentOp, AdditiveExpr);
-                                            bool(BoolConst);
-                                            logicalxor(AdditiveExpr, AdditiveExpr);
-                                            return(AdditiveExpr);
-                                            int(IntConst);
-                                            variablenamed(Identifier);
-                                            logicalor(AdditiveExpr, AdditiveExpr);
-                                            nop;
-                                            greaterequal(AdditiveExpr, AdditiveExpr);
-                                            do(OptionalElse, AdditiveExpr);
-                                            fieldselect(AdditiveExpr, Identifier);
-                                            functioncall(FunctionSpecifier, AdditiveExpr*);
-                                            lessequal(AdditiveExpr, AdditiveExpr);
-                                            for(AdditiveExpr, AdditiveExpr, AdditiveExpr, AdditiveExpr);
-                                            newsymbol(FullySpecifiedType, Identifier, AdditiveExpr);
-                                            postdec(AdditiveExpr);
+  AdditiveExpr                            = logicaland(AdditiveExpr, AdditiveExpr);
                                             expression(AdditiveExpr, AdditiveExpr*);
+                                            newsymbol(FullySpecifiedType, Identifier, AdditiveExpr);
+                                            greaterequal(AdditiveExpr, AdditiveExpr);
+                                            inc(AdditiveExpr);
+                                            bool(BoolConst);
+                                            add(AdditiveExpr, AdditiveExpr);
+                                            int(IntConst);
+                                            sub(AdditiveExpr, AdditiveExpr);
+                                            lessequal(AdditiveExpr, AdditiveExpr);
+                                            mulassign(AdditiveExpr, AdditiveExpr);
+                                            addassign(AdditiveExpr, AdditiveExpr);
+                                            noinitializer;
+                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
+                                            postdec(AdditiveExpr);
                                             greater(AdditiveExpr, AdditiveExpr);
+                                            compoundstatement(AdditiveExpr*);
+                                            fieldselect(AdditiveExpr, Identifier);
+                                            variablenamed(Identifier);
+                                            ternary(AdditiveExpr, AdditiveExpr, AdditiveExpr);
+                                            subassign(AdditiveExpr, AdditiveExpr);
+                                            for(AdditiveExpr, AdditiveExpr, AdditiveExpr, StatementNoScope);
+                                            logicalor(AdditiveExpr, AdditiveExpr);
+                                            divassign(AdditiveExpr, AdditiveExpr);
+                                            while(AdditiveExpr, StatementNoScope);
+                                            assign(AdditiveExpr, AdditiveExpr);
+                                            selection(AdditiveExpr, AdditiveExpr, AdditiveExpr);
+                                            do(AdditiveExpr, AdditiveExpr);
+                                            nop;
                                             postinc(AdditiveExpr);
+                                            return(AdditiveExpr);
+                                            functioncall(FunctionSpecifier, AdditiveExpr*);
+                                            dec(AdditiveExpr);
+                                            logicalxor(AdditiveExpr, AdditiveExpr);
+                                            float(FloatConst);
+                                            negate(AdditiveExpr);
                                             notequal(AdditiveExpr, AdditiveExpr);
-                                            while(AdditiveExpr, AdditiveExpr)
+                                            less(AdditiveExpr, AdditiveExpr);
+                                            equal(AdditiveExpr, AdditiveExpr)
 
   FunctionSpecifier                       = functionnamed(Identifier);
                                             constructorfor(TypeSpecifier)
-
-  BoolConst                               = true;
-                                            false
 

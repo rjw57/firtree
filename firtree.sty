@@ -24,7 +24,32 @@ Regular Grammar
     com MultiLnComment  = "/*" ({Byte}-({Byte}"*/"{Byte})) "*/"
 
     ;;;; Identifier and keywords
-    tok Identifier      = Letter { AlphaNum }
+    tok Identifier      = ( Letter { AlphaNum } ) - ReservedWord
+
+    ;;;; Reserved words
+    let True            = "true"
+    let False           = "false"
+
+    tok Const           = "const"
+    tok Do              = "do"
+    tok For             = "for"
+    tok While           = "while"
+    tok If              = "if"
+    tok Else            = "else"
+    tok In              = "in"
+    tok Out             = "out"
+    tok InOut           = "inout"
+    tok Kernel          = "kernel"
+    tok Float           = "float"
+    tok Int             = "int"
+    tok Void            = "void"
+    tok Bool            = "bool"
+    tok Return          = "return"
+    tok Vec2            = "vec2"
+    tok Vec3            = "vec3"
+    tok Vec4            = "vec4"
+    tok Sampler         = "sampler"
+    tok Color           = "__color"
 
     ;;;; Static constants
     tok IntConst        = "0" 'xX' HexDigit+
@@ -32,6 +57,13 @@ Regular Grammar
                         | Digit+
     tok FloatConst      = Digit+ Exponent
                         | Digit+ "." { Digit } [ Exponent ]
+
+    tok BoolConst       = True | False
+
+    let ReservedWord    = True | False | Const | Do | For | While | If 
+                        | Else | In | Out | InOut | Kernel | Float | Int
+                        | Void | Bool | Return | Vec2 | Vec3 | Vec4 | Sampler
+                        | Color
 
     ;;;; Assignment operators
     tok AddAssign       = "+="
@@ -83,12 +115,13 @@ Context Free Grammar
 ; It contains zero or more external declarations.
 start [err] TranslationUnit
     :nil:
-    :cons:                  ExternalDeclaration TranslationUnit
+    :cons:                  ExternalDeclaration 
+                            TranslationUnit
 
 ; An external declaration is a function or kernel definition or prototype.
 let ExternalDeclaration
-    :ign0:                  FunctionDefinition
-    :ign1:                  FunctionPrototype ";"
+    :definefuntion:         FunctionDefinition
+    :declarefunction:       FunctionPrototype ";"
 
 ; A function prototype consistes of a function header describing the
 ; name and type of the function followed by a list of function
@@ -146,7 +179,7 @@ let TypeQualifier
     :const:                 "const"
 
 let OptionalTypeQualifier
-    :defaulttypequalifier:  
+    :notypequalifier:  
     :ign0:                  TypeQualifier
 
 ; Parameters can have an 'in', 'out', or 'inout' qualifier depending
@@ -157,7 +190,7 @@ let ParameterQualifier
     :inout:                 "inout"
 
 let OptionalParameterQualifier
-    :defaultparameterqualifier:  
+    :noparameterqualifier:  
     :ign0:                  ParameterQualifier
 
 ; Parameters can possess an optional identifier when in function
@@ -171,7 +204,8 @@ let OptionalParameterIdentifier
 ; declaration. It is grammatically correct for the parameters to be
 ; unnamed but in Firtree, this generates an error in practice.
 let FunctionDefinition
-    :functiondefinition:    FunctionPrototype CompoundStatementNoScope
+    :functiondefinition:    FunctionPrototype
+                            CompoundStatementNoScope
 
 ; A statement can either be a simple statement on its own or a compound
 ; statement. It can also cause a a new scope to be created. We firstly 
@@ -179,14 +213,11 @@ let FunctionDefinition
 ; statements.
 let StatementList
     :nil:
-    :cons:                  Statement StatementList
+    :cons:                  Statement 
+                            StatementList
 
 ; Each statement is one of a class of possible statements.
 let Statement
-    :newscope:              StatementNoScope
-
-; Statements are also where we resume for error recovery.
-let [err] StatementNoScope
     :ign0:                  CompoundStatement
     :ign1:                  DeclarationStatement
     :ign2:                  ExpressionStatement
@@ -194,13 +225,21 @@ let [err] StatementNoScope
     :ign4:                  IterationStatement
     :ign5:                  JumpStatement
 
+; Statements are also where we resume for error recovery.
+let [err] StatementNoScope
+    :noscope:               Statement
+
 ; A compound statement is simply a list of statements surrounded by
 ; braces.
 let CompoundStatementNoScope
-    :ign0:                  "{" StatementList "}"
+    :noscope:               "{"
+                                StatementList
+                            "}"
 
 let CompoundStatement
-    :newscope:              CompoundStatementNoScope
+    :compoundstatement:     "{"
+                                StatementList
+                            "}"
 
 ; A Declaration statement declares a set of variables, their type and
 ; (optionally) their initial values.
@@ -246,9 +285,13 @@ let OptionalElse
 
 ; An iteration statement is a loop construct.
 let IterationStatement
-    :while:                 "while" "(" Condition ")" StatementNoScope
-    :do:                    "do" Statement "while" "(" ExprList ")" ";"
-    :for:                   "for" "(" ForInitStatement OptionalCondition ";" OptionalExpr ")" StatementNoScope
+    :while:                 "while" "(" Condition ")" 
+                            StatementNoScope
+    :do:                    "do"
+                            Statement
+                            "while" "(" ExprList ")" ";"
+    :for:                   "for" "(" ForInitStatement OptionalCondition ";" OptionalExpr ")" 
+                            StatementNoScope
 
 ; An iteration condition is either an Expression or a combined 
 ; declaraion and assignment of a variable
@@ -287,14 +330,11 @@ let ExprListTail
 ; (assuming it is an lvalue) or a conditional.
 let AssignmentExpr
     :ign0:                  ConditionalExpr
-    :assign:                UnaryExpr AssignmentOp AssignmentExpr
-
-let AssignmentOp
-    :equal:                 "="
-    :mulassign:             "*="
-    :divassign:             "/="
-    :addassign:             "+="
-    :subassign:             "-="
+    :assign:                UnaryExpr "=" AssignmentExpr
+    :addassign:             UnaryExpr "+=" AssignmentExpr
+    :subassign:             UnaryExpr "-=" AssignmentExpr
+    :mulassign:             UnaryExpr "*=" AssignmentExpr
+    :divassign:             UnaryExpr "/=" AssignmentExpr
 
 ; A Conditional expression is either the result of a ternary operator or
 ; an logical or expression.
@@ -384,10 +424,6 @@ let PrimaryExpr
     :float:                 FloatConst
     :bool:                  BoolConst
     :ign1:                  "(" ExprList ")"
-
-let BoolConst
-    :true:                  "true"
-    :false:                 "false"
 
 let VariableIdentifier
     :variablenamed:         Identifier

@@ -176,19 +176,23 @@ let TypeQualifier
     :const:                 "const"
 
 let OptionalTypeQualifier
-    :notypequalifier:  
-    :ign0:                  TypeQualifier
+    :const:                 "const"
+    :none:  
 
 ; Parameters can have an 'in', 'out', or 'inout' qualifier depending
 ; on whether they are function inputs, outputs or inputs and outputs.
-let ParameterQualifier
+
+;; Commented out because all parameter qualifiers are optional.
+;; let ParameterQualifier
+;;     :in:                    "in"
+;;     :out:                   "out"
+;;     :inout:                 "inout"
+
+let OptionalParameterQualifier
     :in:                    "in"
     :out:                   "out"
     :inout:                 "inout"
-
-let OptionalParameterQualifier
-    :noparameterqualifier:  
-    :ign0:                  ParameterQualifier
+    :none:  
 
 ; Parameters can possess an optional identifier when in function
 ; prototypes.
@@ -202,7 +206,7 @@ let OptionalParameterIdentifier
 ; unnamed but in Firtree, this generates an error in practice.
 let FunctionDefinition
     :functiondefinition:    FunctionPrototype
-                            CompoundStatementNoScope
+                            StatementCompoundNoScope
 
 ; A statement can either be a simple statement on its own or a compound
 ; statement. It can also cause a a new scope to be created. We firstly 
@@ -215,12 +219,12 @@ let StatementList
 
 ; Each statement is one of a class of possible statements.
 let Statement
-    :ign0:                  CompoundStatement
-    :ign1:                  DeclarationStatement
-    :ign2:                  ExpressionStatement
-    :ign3:                  SelectionStatement
-    :ign4:                  IterationStatement
-    :ign5:                  JumpStatement
+    :ign0:                  StatementCompound
+    :ign1:                  StatementDeclaration
+    :ign2:                  StatementExpression
+    :ign3:                  StatementSelection
+    :ign4:                  StatementIteration
+    :ign5:                  StatementJump
 
 ; Statements are also where we resume for error recovery.
 let [err] StatementNoScope
@@ -228,19 +232,19 @@ let [err] StatementNoScope
 
 ; A compound statement is simply a list of statements surrounded by
 ; braces.
-let CompoundStatementNoScope
+let StatementCompoundNoScope
     :ign0:                  "{"
                                 StatementList
                             "}"
 
-let CompoundStatement
+let StatementCompound
     :compound:              "{"
                                 StatementList
                             "}"
 
 ; A Declaration statement declares a set of variables, their type and
 ; (optionally) their initial values.
-let DeclarationStatement
+let StatementDeclaration
     :ign0:                  InitDeclaratorList ";"
 
 ; A declaration list consists of a type for the variables followed
@@ -259,7 +263,7 @@ let SingleDeclaration
 
 ; An initializer is simply an expression.
 let Initializer
-    :ign0:                  "=" AssignmentExpr
+    :ign0:                  "=" ExpressionAssignment
 
 let OptionalInitializer
     :nop:
@@ -267,128 +271,129 @@ let OptionalInitializer
 
 ; An expression statement is either an expression followed by a semicolon
 ; or a semicolon on its own indicating a NOP.
-let ExpressionStatement
+let StatementExpression
     :nop:                   ";"
-    :ign0:                  ExprList ";"
+    :ign0:                  Expression ";"
 
 ; A selection statement is an if() statement followed by an optional
 ; 'else' clause.
-let SelectionStatement
-    :selection:             "if" "(" ExprList ")" Statement OptionalElse
+let StatementSelection
+    :selection:             "if" "(" Expression ")" 
+                            Statement OptionalElse
 
 let OptionalElse
     :nop:
     :ign0:                  "else" Statement
 
 ; An iteration statement is a loop construct.
-let IterationStatement
-    :while:                 "while" "(" Condition ")" 
+let StatementIteration
+    :while:                 "while" "(" StatementCondition ")" 
                             StatementNoScope
     :do:                    "do"
                             Statement
-                            "while" "(" ExprList ")" ";"
-    :for:                   "for" "(" ForInitStatement OptionalCondition ";" OptionalExpr ")" 
+                            "while" "(" Expression ")" ";"
+    :for:                   "for" "(" ForStatementInit OptionalCondition ";" ExpressionOptional ")" 
                             StatementNoScope
 
 ; An iteration condition is either an Expression or a combined 
 ; declaraion and assignment of a variable
-let Condition
-    :ign0:                  ExprList
+let StatementCondition
+    :ign0:                  Expression
     :newsymbol:             FullySpecifiedType Identifier "=" Initializer
 
 ; The initialization statement in a for loop is either an expression or
 ; the declaration of a new variable.
-let ForInitStatement
-    :ign0:                  ExpressionStatement
-    :ign1:                  DeclarationStatement
+let ForStatementInit
+    :ign0:                  StatementExpression
+    :ign1:                  StatementDeclaration
 
 let OptionalCondition
     :nop:      
-    :ign0:                  Condition
+    :ign0:                  StatementCondition
 
-let OptionalExpr
+let ExpressionOptional
     :nop:
-    :ign0:                  ExprList
+    :ign0:                  Expression
 
 ; A jump statement is 'return', optionally followed by an expression.
-let JumpStatement
-    :return:                "return" OptionalExpr ";"
+let StatementJump
+    :return:                "return" ExpressionOptional ";"
  
 ; An expression is one or more assignment expressions chained together
 ; via commas.
-let ExprList
-    :expression:            AssignmentExpr ExprListTail
+let Expression
+    :expression:            ExpressionAssignment ExpressionTail
 
-let ExprListTail
+let ExpressionTail
     :nil:
-    :cons:                  "," AssignmentExpr ExprListTail
+    :cons:                  "," ExpressionAssignment ExpressionTail
 
 ; An assignment expression is either the assignment to a unary expression
 ; (assuming it is an lvalue) or a conditional.
-let AssignmentExpr
-    :ign0:                  ConditionalExpr
-    :assign:                UnaryExpr "=" AssignmentExpr
-    :addassign:             UnaryExpr "+=" AssignmentExpr
-    :subassign:             UnaryExpr "-=" AssignmentExpr
-    :mulassign:             UnaryExpr "*=" AssignmentExpr
-    :divassign:             UnaryExpr "/=" AssignmentExpr
+let ExpressionAssignment
+    :ign0:                  ExpressionConditional
+    :assign:                ExpressionUnary "=" ExpressionAssignment
+    :addassign:             ExpressionUnary "+=" ExpressionAssignment
+    :subassign:             ExpressionUnary "-=" ExpressionAssignment
+    :mulassign:             ExpressionUnary "*=" ExpressionAssignment
+    :divassign:             ExpressionUnary "/=" ExpressionAssignment
 
 ; A Conditional expression is either the result of a ternary operator or
 ; an logical or expression.
-let ConditionalExpr
-    :ign0:                  LogicalOrExpr      
-    :ternary:               LogicalOrExpr "?" ExprList ":" AssignmentExpr
+let ExpressionConditional
+    :ign0:                  LogicalExpressionOr      
+    :ternary:               LogicalExpressionOr "?" Expression ":" ExpressionAssignment
 
-let LogicalOrExpr      
-    :ign0:                  LogicalXorExpr      
-    :logicalor:             LogicalOrExpr "||" LogicalXorExpr      
+let LogicalExpressionOr      
+    :ign0:                  LogicalExpressionXor      
+    :logicalor:             LogicalExpressionOr "||" LogicalExpressionXor      
 
-let LogicalXorExpr      
-    :ign0:                  LogicalAndExpr      
-    :logicalxor:            LogicalXorExpr "^^" LogicalAndExpr      
+let LogicalExpressionXor      
+    :ign0:                  LogicalExpressionAnd      
+    :logicalxor:            LogicalExpressionXor "^^" LogicalExpressionAnd      
 
-let LogicalAndExpr      
-    :ign0:                  EqualityExpr      
-    :logicaland:            LogicalAndExpr "&&" EqualityExpr      
+let LogicalExpressionAnd      
+    :ign0:                  ExpressionEquality      
+    :logicaland:            LogicalExpressionAnd "&&" ExpressionEquality      
 
-let EqualityExpr      
-    :ign0:                  RelationalExpr      
-    :equal:                 EqualityExpr "==" RelationalExpr      
-    :notequal:              EqualityExpr "!=" RelationalExpr      
+let ExpressionEquality      
+    :ign0:                  ExpressionRelational      
+    :equal:                 ExpressionEquality "==" ExpressionRelational      
+    :notequal:              ExpressionEquality "!=" ExpressionRelational      
 
-let RelationalExpr      
-    :ign0:                  AdditiveExpr      
-    :less:                  RelationalExpr "<" AdditiveExpr      
-    :greater:               RelationalExpr ">" AdditiveExpr      
-    :lessequal:             RelationalExpr "<=" AdditiveExpr      
-    :greaterequal:          RelationalExpr ">=" AdditiveExpr      
+let ExpressionRelational      
+    :ign0:                  ExpressionAdditive      
+    :less:                  ExpressionRelational "<" ExpressionAdditive      
+    :greater:               ExpressionRelational ">" ExpressionAdditive      
+    :lessequal:             ExpressionRelational "<=" ExpressionAdditive      
+    :greaterequal:          ExpressionRelational ">=" ExpressionAdditive      
 
-let AdditiveExpr      
-    :ign0:                  MultiplicativeExpr      
-    :add:                   AdditiveExpr "+" MultiplicativeExpr      
-    :sub:                   AdditiveExpr "-" MultiplicativeExpr      
+let ExpressionAdditive      
+    :ign0:                  ExpressionMultiplicative      
+    :add:                   ExpressionAdditive "+" ExpressionMultiplicative      
+    :sub:                   ExpressionAdditive "-" ExpressionMultiplicative      
 
-let MultiplicativeExpr      
-    :ign0:                  UnaryExpr      
-    :add:                   MultiplicativeExpr "*" UnaryExpr      
-    :sub:                   MultiplicativeExpr "/" UnaryExpr      
+let ExpressionMultiplicative      
+    :ign0:                  ExpressionUnary      
+    :add:                   ExpressionMultiplicative "*" ExpressionUnary      
+    :sub:                   ExpressionMultiplicative "/" ExpressionUnary      
 
-let UnaryExpr
-    :ign0:                  PostfixExpr      
-    :inc:                   "++" UnaryExpr
-    :dec:                   "--" UnaryExpr
-    :ign1:                  "+" UnaryExpr
-    :negate:                "-" UnaryExpr
+let ExpressionUnary
+    :ign0:                  ExpressionPostfix      
+    :inc:                   "++" ExpressionUnary
+    :dec:                   "--" ExpressionUnary
+    :ign1:                  "+" ExpressionUnary
+    :negate:                "-" ExpressionUnary
 
 ; A postfix expression is nearly the lowest level in our tree of 
 ; expressions. It is either a primary expression (i.e. constant or
 ; variable), function call, swizzle operation or post inc/decrement.
-let PostfixExpr
-    :ign0:                  PrimaryExpr
+let ExpressionPostfix
+    :ign0:                  ExpressionPrimary
     :ign1:                  FunctionCall
-    :fieldselect:           PostfixExpr "." Identifier
-    :postinc:               PostfixExpr "++"
-    :postdec:               PostfixExpr "--"
+    :fieldselect:           ExpressionPostfix "." Identifier
+    :postinc:               ExpressionPostfix "++"
+    :postdec:               ExpressionPostfix "--"
 
 ; A function call is a function name followed by a parameter list in
 ; parentheses.
@@ -412,15 +417,15 @@ let FunctionCallParameterListTail
 
 ; Function parameters are simply assignment expressions.
 let FunctionParameter
-    :ign0:                  AssignmentExpr
+    :ign0:                  ExpressionAssignment
 
 ; A primary expression is a constant, bracketed expression or variable.
-let PrimaryExpr
+let ExpressionPrimary
     :ign0:                  VariableIdentifier
     :int:                   IntConst
     :float:                 FloatConst
     :bool:                  BoolConst
-    :ign1:                  "(" ExprList ")"
+    :ign1:                  "(" Expression ")"
 
 let VariableIdentifier
     :variablenamed:         Identifier

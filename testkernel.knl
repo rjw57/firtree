@@ -16,6 +16,19 @@
 
             float onDiagonalCoord = dot(destCoord(), diagonal);
 
+	    for(int i=0; i<5; i++)
+	    {
+	      printf(i);
+	    }
+
+	    if(a)
+	    {
+	    	b;
+	    } else if(c) {
+	    	d;
+	    }
+	    	
+
             // We offset this co-ordinate to advance the animation.
             onDiagonalCoord -= offset;
 

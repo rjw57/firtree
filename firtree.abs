@@ -22,7 +22,7 @@ TYPES
   FunctionQualifier                       = kernel;
                                             function
 
-  FullySpecifiedType                      = qualifiedtype(OptionalTypeQualifier, TypeSpecifier);
+  FullySpecifiedType                      = qualifiedtype(TypeQualifier, TypeSpecifier);
                                             unqualifiedtype(TypeSpecifier)
 
   TypeSpecifier                           = vec4;
@@ -37,60 +37,62 @@ TYPES
 
   ParameterDeclaration                    = parameterdeclaration(OptionalTypeQualifier, OptionalParameterQualifier, TypeSpecifier, OptionalParameterIdentifier)
 
-  OptionalTypeQualifier                   = notypequalifier;
-                                            const
+  TypeQualifier                           = const
+
+  OptionalTypeQualifier                   = const;
+                                            none
 
   OptionalParameterQualifier              = in;
                                             out;
                                             inout;
-                                            noparameterqualifier
+                                            none
 
-  OptionalParameterIdentifier             = parametername(Identifier);
-                                            unnamedparameter
+  OptionalParameterIdentifier             = unnamedparameter;
+                                            parametername(Identifier)
 
-  FunctionDefinition                      = functiondefinition(FunctionPrototype, AdditiveExpr*)
+  FunctionDefinition                      = functiondefinition(FunctionPrototype, Expression*)
 
-  SingleDeclaration                       = variableinitializer(Identifier, AdditiveExpr)
+  SingleDeclaration                       = variableinitializer(Identifier, Expression)
 
-  AdditiveExpr                            = less(AdditiveExpr, AdditiveExpr);
-                                            nop;
-                                            dec(AdditiveExpr);
-                                            sub(AdditiveExpr, AdditiveExpr);
-                                            float(FloatConst);
-                                            inc(AdditiveExpr);
-                                            greaterequal(AdditiveExpr, AdditiveExpr);
-                                            logicalor(AdditiveExpr, AdditiveExpr);
-                                            divassign(AdditiveExpr, AdditiveExpr);
-                                            assign(AdditiveExpr, AdditiveExpr);
-                                            ternary(AdditiveExpr, AdditiveExpr, AdditiveExpr);
-                                            subassign(AdditiveExpr, AdditiveExpr);
-                                            add(AdditiveExpr, AdditiveExpr);
-                                            compound(AdditiveExpr*);
-                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
-                                            functioncall(FunctionSpecifier, AdditiveExpr*);
-                                            lessequal(AdditiveExpr, AdditiveExpr);
-                                            negate(AdditiveExpr);
-                                            postinc(AdditiveExpr);
-                                            mulassign(AdditiveExpr, AdditiveExpr);
-                                            selection(AdditiveExpr, AdditiveExpr, AdditiveExpr);
-                                            do(AdditiveExpr, AdditiveExpr);
-                                            addassign(AdditiveExpr, AdditiveExpr);
-                                            for(AdditiveExpr, AdditiveExpr, AdditiveExpr, AdditiveExpr);
+  Expression                              = greater(Expression, Expression);
+                                            equal(Expression, Expression);
+                                            add(Expression, Expression);
                                             int(IntConst);
                                             variablenamed(Identifier);
-                                            newsymbol(FullySpecifiedType, Identifier, AdditiveExpr);
-                                            postdec(AdditiveExpr);
-                                            expression(AdditiveExpr, AdditiveExpr*);
-                                            logicaland(AdditiveExpr, AdditiveExpr);
-                                            equal(AdditiveExpr, AdditiveExpr);
-                                            return(AdditiveExpr);
-                                            while(AdditiveExpr, AdditiveExpr);
+                                            inc(Expression);
                                             bool(BoolConst);
-                                            fieldselect(AdditiveExpr, Identifier);
-                                            greater(AdditiveExpr, AdditiveExpr);
-                                            logicalxor(AdditiveExpr, AdditiveExpr);
-                                            notequal(AdditiveExpr, AdditiveExpr)
+                                            dec(Expression);
+                                            addassign(Expression, Expression);
+                                            mulassign(Expression, Expression);
+                                            sub(Expression, Expression);
+                                            return(Expression);
+                                            nop;
+                                            compound(Expression*);
+                                            fieldselect(Expression, Identifier);
+                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
+                                            greaterequal(Expression, Expression);
+                                            postdec(Expression);
+                                            logicalor(Expression, Expression);
+                                            divassign(Expression, Expression);
+                                            while(Expression, Expression);
+                                            newsymbol(FullySpecifiedType, Identifier, Expression);
+                                            logicalxor(Expression, Expression);
+                                            ternary(Expression, Expression, Expression);
+                                            for(Expression, Expression, Expression, Expression);
+                                            subassign(Expression, Expression);
+                                            float(FloatConst);
+                                            selection(Expression, Expression, Expression);
+                                            functioncall(FunctionSpecifier, Expression*);
+                                            negate(Expression);
+                                            notequal(Expression, Expression);
+                                            expression(Expression, Expression*);
+                                            logicaland(Expression, Expression);
+                                            do(Expression, Expression);
+                                            less(Expression, Expression);
+                                            postinc(Expression);
+                                            lessequal(Expression, Expression);
+                                            assign(Expression, Expression)
 
-  FunctionSpecifier                       = constructorfor(TypeSpecifier);
-                                            functionnamed(Identifier)
+  FunctionSpecifier                       = functionnamed(Identifier);
+                                            constructorfor(TypeSpecifier)
 

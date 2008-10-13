@@ -34,6 +34,15 @@
 	    	d;
 	    }
 
+	    while(true)
+	    {
+		i ++;
+	    }
+
+	    do {
+		somefunc(i + 4);
+	    } while(i<5);
+
             // We offset this co-ordinate to advance the animation.
             onDiagonalCoord -= offset;
 

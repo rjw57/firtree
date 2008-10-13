@@ -55,43 +55,44 @@ TYPES
   SingleDeclaration                       = variableinitializer(Identifier, Expression)
 
   Expression                              = greater(Expression, Expression);
-                                            equal(Expression, Expression);
+                                            subassign(Expression, Expression);
                                             add(Expression, Expression);
+                                            div(Expression, Expression);
+                                            fieldselect(Expression, Identifier);
                                             int(IntConst);
                                             variablenamed(Identifier);
                                             inc(Expression);
                                             bool(BoolConst);
                                             dec(Expression);
-                                            addassign(Expression, Expression);
-                                            mulassign(Expression, Expression);
-                                            sub(Expression, Expression);
+                                            mul(Expression, Expression);
+                                            negate(Expression);
                                             return(Expression);
                                             nop;
                                             compound(Expression*);
-                                            fieldselect(Expression, Identifier);
                                             initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
-                                            greaterequal(Expression, Expression);
                                             postdec(Expression);
+                                            logicaland(Expression, Expression);
                                             logicalor(Expression, Expression);
-                                            divassign(Expression, Expression);
                                             while(Expression, Expression);
-                                            newsymbol(FullySpecifiedType, Identifier, Expression);
+                                            equal(Expression, Expression);
                                             logicalxor(Expression, Expression);
                                             ternary(Expression, Expression, Expression);
                                             for(Expression, Expression, Expression, Expression);
-                                            subassign(Expression, Expression);
                                             float(FloatConst);
                                             selection(Expression, Expression, Expression);
-                                            functioncall(FunctionSpecifier, Expression*);
-                                            negate(Expression);
-                                            notequal(Expression, Expression);
-                                            expression(Expression, Expression*);
-                                            logicaland(Expression, Expression);
-                                            do(Expression, Expression);
                                             less(Expression, Expression);
+                                            addassign(Expression, Expression);
                                             postinc(Expression);
                                             lessequal(Expression, Expression);
-                                            assign(Expression, Expression)
+                                            mulassign(Expression, Expression);
+                                            assign(Expression, Expression);
+                                            do(Expression, Expression);
+                                            functioncall(FunctionSpecifier, Expression*);
+                                            sub(Expression, Expression);
+                                            notequal(Expression, Expression);
+                                            greaterequal(Expression, Expression);
+                                            divassign(Expression, Expression);
+                                            expression(Expression, Expression*)
 
   FunctionSpecifier                       = functionnamed(Identifier);
                                             constructorfor(TypeSpecifier)

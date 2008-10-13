@@ -1,7 +1,7 @@
 LANG_NAME=firtree
 STYX=styx
 CTOH=ctoh
-CFLAGS=-I/usr/include/styx
+CFLAGS=-I/usr/include/styx --std=c99 -Wall
 LDFLAGS=-L/usr/lib
 
 GENERATED_SOURCES= $(LANG_NAME)_int.c \

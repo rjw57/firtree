@@ -287,29 +287,19 @@ let OptionalElse
 
 ; An iteration statement is a loop construct.
 let StatementIteration
-    :while:                 "while" "(" StatementCondition ")" 
+    :while:                 "while" "(" Expression ")" 
                             StatementNoScope
     :do:                    "do"
                             Statement
                             "while" "(" Expression ")" ";"
-    :for:                   "for" "(" ForStatementInit OptionalCondition ";" ExpressionOptional ")" 
+    :for:                   "for" "(" ForStatementInit ExpressionOptional ";" ExpressionOptional ")" 
                             StatementNoScope
-
-; An iteration condition is either an Expression or a combined 
-; declaraion and assignment of a variable
-let StatementCondition
-    :ign0:                  Expression
-    :newsymbol:             FullySpecifiedType Identifier "=" Initializer
 
 ; The initialization statement in a for loop is either an expression or
 ; the declaration of a new variable.
 let ForStatementInit
     :ign0:                  StatementExpression
     :ign1:                  StatementDeclaration
-
-let OptionalCondition
-    :nop:      
-    :ign0:                  StatementCondition
 
 let ExpressionOptional
     :nop:
@@ -375,8 +365,8 @@ let ExpressionAdditive
 
 let ExpressionMultiplicative      
     :ign0:                  ExpressionUnary      
-    :add:                   ExpressionMultiplicative "*" ExpressionUnary      
-    :sub:                   ExpressionMultiplicative "/" ExpressionUnary      
+    :mul:                   ExpressionMultiplicative "*" ExpressionUnary      
+    :div:                   ExpressionMultiplicative "/" ExpressionUnary      
 
 let ExpressionUnary
     :ign0:                  ExpressionPostfix      

@@ -480,7 +480,7 @@ void printDecls(GLS_Lst(firtreeExternalDeclaration) decls)
 
 /* Main Program ------------------------------------------------------------ */
 
-void Kernel(string fileid)
+void compile_kernel(const char* fileid)
 /* initialize and get source */
 { Scn_T scn; Scn_Stream cstream; // scanner table & configuration
   PLR_Tab plr; PT_Cfg PCfg;      // parser  table & configuration
@@ -494,7 +494,7 @@ void Kernel(string fileid)
   // Parse the source file
   //
   Scn_get_firtree(&scn);                           // Get scanner table
-  cstream = Stream_file(scn,"",fileid,"");     // Open source file
+  cstream = Stream_file(scn,"",(char*)fileid,"");     // Open source file
   plr     = PLR_get_firtree();                     // Get parser table
   PCfg    = PT_init(plr,cstream);              // Create parser
   srcterm = PT_PARSE(PCfg,"TranslationUnit");          // Parse
@@ -530,9 +530,9 @@ void Kernel(string fileid)
   MAP_quit();
 }
 
-int main(int argc, string argv[])
+int main(int argc, const char* argv[])
 {
-  if( argc > 1 ) Kernel(argv[1]);
+  if( argc > 1 ) compile_kernel(argv[1]);
   else fprintf(stderr,"missing source\n");
   BUG_CORE; // check for object left over
   return 0;

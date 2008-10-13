@@ -1,7 +1,6 @@
 // prototype
           kernel vec4 curve_kernel(sampler front, sampler back,
-                                       vec2 diagonal, float offset,
-                                       float radius);
+                                       vec2, float, float);
 
 
 // This is a comment

@@ -168,37 +168,35 @@ let FunctionParameterDeclarationListTail
 ; an (optional) parameter, a type specifier and an (optional)
 ; name
 let ParameterDeclaration
-    :parameterdeclaration:  OptionalTypeQualifier OptionalParameterQualifier TypeSpecifier OptionalParameterIdentifier
+    :parameterdeclaration:  TypeQualifierOpt ParameterQualifierOpt TypeSpecifier ParameterIdentifierOpt
 
 ; The only type qualifier supported by Firtree is the 'const' qualifier
 ; for declaring constants.
 let TypeQualifier
     :const:                 "const"
 
-let OptionalTypeQualifier
-    :const:                 "const"
+let TypeQualifierOpt
+    :ign0:                  TypeQualifier
     :none:  
 
 ; Parameters can have an 'in', 'out', or 'inout' qualifier depending
 ; on whether they are function inputs, outputs or inputs and outputs.
 
 ;; Commented out because all parameter qualifiers are optional.
-;; let ParameterQualifier
-;;     :in:                    "in"
-;;     :out:                   "out"
-;;     :inout:                 "inout"
+let ParameterQualifier
+     :in:                    "in"
+     :out:                   "out"
+     :inout:                 "inout"
 
-let OptionalParameterQualifier
-    :in:                    "in"
-    :out:                   "out"
-    :inout:                 "inout"
-    :none:  
+let ParameterQualifierOpt
+    :ign0:                  ParameterQualifier
+    :in:
 
 ; Parameters can possess an optional identifier when in function
 ; prototypes.
-let OptionalParameterIdentifier
-    :unnamedparameter:  
-    :parametername:         Identifier
+let ParameterIdentifierOpt
+    :anonymous:      
+    :named:                 Identifier
 
 ; A function definition is much like a function prototype except that
 ; it posesses a compound statement defining the function after its
@@ -218,7 +216,7 @@ let StatementList
                             StatementList
 
 ; Each statement is one of a class of possible statements.
-let Statement
+let [err] Statement
     :ign0:                  StatementCompound
     :ign1:                  StatementDeclaration
     :ign2:                  StatementExpression
@@ -227,7 +225,7 @@ let Statement
     :ign5:                  StatementJump
 
 ; Statements are also where we resume for error recovery.
-let [err] StatementNoScope
+let StatementNoScope
     :ign0:                  Statement
 
 ; A compound statement is simply a list of statements surrounded by

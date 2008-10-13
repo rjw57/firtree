@@ -14,85 +14,82 @@ TYPES
 
   firtree                                 = Start_TranslationUnit(ExternalDeclaration*)
 
-  ExternalDeclaration                     = definefuntion(FunctionDefinition);
-                                            declarefunction(FunctionPrototype)
+  ExternalDeclaration                     = declarefunction(FunctionPrototype);
+                                            definefuntion(FunctionDefinition)
 
   FunctionPrototype                       = functionprototype(FunctionQualifier, FullySpecifiedType, Identifier, ParameterDeclaration*)
 
-  FunctionQualifier                       = kernel;
-                                            function
+  FunctionQualifier                       = function;
+                                            kernel
 
-  FullySpecifiedType                      = qualifiedtype(TypeQualifier, TypeSpecifier);
-                                            unqualifiedtype(TypeSpecifier)
+  FullySpecifiedType                      = unqualifiedtype(TypeSpecifier);
+                                            qualifiedtype(TypeQualifier, TypeSpecifier)
 
-  TypeSpecifier                           = vec4;
-                                            float;
-                                            vec2;
-                                            color;
+  TypeSpecifier                           = sampler;
+                                            vec4;
                                             vec3;
-                                            int;
-                                            sampler;
+                                            color;
+                                            vec2;
+                                            float;
+                                            void;
                                             bool;
-                                            void
+                                            int
 
-  ParameterDeclaration                    = parameterdeclaration(OptionalTypeQualifier, OptionalParameterQualifier, TypeSpecifier, OptionalParameterIdentifier)
+  ParameterDeclaration                    = parameterdeclaration(TypeQualifier, ParameterQualifier, TypeSpecifier, ParameterIdentifierOpt)
 
-  TypeQualifier                           = const
+  TypeQualifier                           = none;
+                                            const
 
-  OptionalTypeQualifier                   = const;
-                                            none
-
-  OptionalParameterQualifier              = in;
+  ParameterQualifier                      = in;
                                             out;
-                                            inout;
-                                            none
+                                            inout
 
-  OptionalParameterIdentifier             = unnamedparameter;
-                                            parametername(Identifier)
+  ParameterIdentifierOpt                  = named(Identifier);
+                                            anonymous
 
   FunctionDefinition                      = functiondefinition(FunctionPrototype, Expression*)
 
   SingleDeclaration                       = variableinitializer(Identifier, Expression)
 
-  Expression                              = greater(Expression, Expression);
-                                            subassign(Expression, Expression);
-                                            add(Expression, Expression);
-                                            div(Expression, Expression);
-                                            fieldselect(Expression, Identifier);
-                                            int(IntConst);
-                                            variablenamed(Identifier);
-                                            inc(Expression);
-                                            bool(BoolConst);
-                                            dec(Expression);
-                                            mul(Expression, Expression);
-                                            negate(Expression);
-                                            return(Expression);
-                                            nop;
-                                            compound(Expression*);
-                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*);
+  Expression                              = add(Expression, Expression);
                                             postdec(Expression);
+                                            notequal(Expression, Expression);
+                                            return(Expression);
+                                            sub(Expression, Expression);
+                                            int(IntConst);
                                             logicaland(Expression, Expression);
                                             logicalor(Expression, Expression);
-                                            while(Expression, Expression);
+                                            inc(Expression);
+                                            greater(Expression, Expression);
+                                            subassign(Expression, Expression);
+                                            functioncall(FunctionSpecifier, Expression*);
+                                            selection(Expression, Expression, Expression);
+                                            expression(Expression, Expression*);
+                                            assign(Expression, Expression);
                                             equal(Expression, Expression);
-                                            logicalxor(Expression, Expression);
+                                            div(Expression, Expression);
+                                            mulassign(Expression, Expression);
                                             ternary(Expression, Expression, Expression);
                                             for(Expression, Expression, Expression, Expression);
-                                            float(FloatConst);
-                                            selection(Expression, Expression, Expression);
-                                            less(Expression, Expression);
-                                            addassign(Expression, Expression);
-                                            postinc(Expression);
                                             lessequal(Expression, Expression);
-                                            mulassign(Expression, Expression);
-                                            assign(Expression, Expression);
-                                            do(Expression, Expression);
-                                            functioncall(FunctionSpecifier, Expression*);
-                                            sub(Expression, Expression);
-                                            notequal(Expression, Expression);
-                                            greaterequal(Expression, Expression);
                                             divassign(Expression, Expression);
-                                            expression(Expression, Expression*)
+                                            while(Expression, Expression);
+                                            mul(Expression, Expression);
+                                            bool(BoolConst);
+                                            nop;
+                                            addassign(Expression, Expression);
+                                            variablenamed(Identifier);
+                                            negate(Expression);
+                                            less(Expression, Expression);
+                                            do(Expression, Expression);
+                                            float(FloatConst);
+                                            greaterequal(Expression, Expression);
+                                            logicalxor(Expression, Expression);
+                                            dec(Expression);
+                                            compound(Expression*);
+                                            postinc(Expression);
+                                            fieldselect(Expression, Identifier);
+                                            initdeclaratorlist(FullySpecifiedType, SingleDeclaration, SingleDeclaration*)
 
   FunctionSpecifier                       = functionnamed(Identifier);
                                             constructorfor(TypeSpecifier)

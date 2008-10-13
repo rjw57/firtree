@@ -13,7 +13,7 @@ GENERATED_FILES= $(GENDIR)/$(LANG_NAME)_int.c \
 	$(GENDIR)/$(LANG_NAME)_int.h \
 	$(GENDIR)/$(LANG_NAME)_pim.h \
 	$(GENDIR)/$(LANG_NAME)_lim.h \
-	$(LANG_NAME).abs ctoh.cth 
+	$(GENDIR)/$(LANG_NAME).abs ctoh.cth 
 
 GENERATED_C_SOURCES=$(filter %.c, $(GENERATED_FILES))
 
@@ -54,7 +54,7 @@ kernelparse: $(KERNELPARSE_FILES) $(KERNELPARSE_OBJECTS)
 kernelcompile: $(KERNELCOMPILE_FILES) $(KERNELCOMPILE_OBJECTS)
 	$(CXX) -o kernelcompile $(KERNELCOMPILE_OBJECTS) $(LDFLAGS) $(LIBS)
 
-$(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c %.abs: %.sty 
+$(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c $(GENDIR)/%.abs: %.sty 
 	mkdir -p $(GENDIR)
 	GENSTYX=$(GENDIR) $(STYX) -makeC $*
 

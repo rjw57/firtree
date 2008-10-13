@@ -2,7 +2,7 @@ LANG_NAME=firtree
 STYX=styx
 CTOH=ctoh
 CFLAGS=-I/usr/include/styx --std=c99 -Wall
-CXXFLAGS=$(CFLAGS)
+CXXFLAGS=-I/usr/include/styx -Wall
 LDFLAGS=-L/usr/lib
 
 GENERATED_FILES= $(LANG_NAME)_int.c \
@@ -24,7 +24,7 @@ KERNELPARSE_OBJECTS=$(KERNELPARSE_C_SOURCES:.c=.o) \
 	$(KERNELPARSE_CXX_SOURCES:.cc=.o)
 
 KERNELCOMPILE_FILES=$(GENERATED_FILES)\
-	kernelcompile.cc
+	kernelcompile.cc llvmout.h llvmout.cc
 
 KERNELCOMPILE_C_SOURCES=$(filter %.c, $(KERNELCOMPILE_FILES))
 KERNELCOMPILE_CXX_SOURCES=$(filter %.cc, $(KERNELCOMPILE_FILES))
@@ -38,7 +38,10 @@ parsetest: kernelparse
 
 clean:
 	rm -f $(GENERATED_FILES)
-	rm -f kernelparse.o
+	rm -f $(KERNELCOMPILE_OBJECTS)
+	rm -f $(KERNELPARSE_OBJECTS)
+	rm -f kernelparse
+	rm -f kernelcompile
 
 kernelparse: $(KERNELPARSE_FILES) $(KERNELPARSE_OBJECTS)
 	$(CC) -o kernelparse $(KERNELPARSE_OBJECTS) $(LDFLAGS) -ldstyx

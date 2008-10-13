@@ -2,7 +2,7 @@
 #define __LLVM_OUT_H
 
 #include "gls.h"     // General Language Services
-#include "firtree_int.h" // grammar interface
+#include "gen/firtree_int.h" // grammar interface
 
 #ifdef __cpluplus
 extern "C" {

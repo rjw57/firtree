@@ -5,11 +5,23 @@
 #include "hmap.h"    // Datatype: Finite Maps
 #include "symbols.h" // Datatype: Symbols
 
-#include "firtree_int.h" // grammar interface
-#include "firtree_lim.h" // scanner table
-#include "firtree_pim.h" // parser  table
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Support/LLVMBuilder.h"
+
+#include "gen/firtree_int.h" // grammar interface
+#include "gen/firtree_lim.h" // scanner table
+#include "gen/firtree_pim.h" // parser  table
 
 #include "llvmout.h"
+
+using namespace llvm;
+
+struct llvm_context {
+  Module*       the_module;
+  LLVMBuilder   builder;
+};
 
 void printIndent(int indent)
 {

@@ -2,15 +2,17 @@ LANG_NAME=firtree
 STYX=styx
 CTOH=ctoh
 CFLAGS=-I/usr/include/styx --std=c99 -Wall
-CXXFLAGS=-I/usr/include/styx -Wall
-LDFLAGS=-L/usr/lib
+CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags`
+LDFLAGS=-L/usr/lib `llvm-config --ldflags`
+LIBS=-ldstyx `llvm-config --libs core`
+GENDIR=gen
 
-GENERATED_FILES= $(LANG_NAME)_int.c \
-	$(LANG_NAME)_pim.c \
-	$(LANG_NAME)_lim.c \
-	$(LANG_NAME)_int.h \
-	$(LANG_NAME)_pim.h \
-	$(LANG_NAME)_lim.h \
+GENERATED_FILES= $(GENDIR)/$(LANG_NAME)_int.c \
+	$(GENDIR)/$(LANG_NAME)_pim.c \
+	$(GENDIR)/$(LANG_NAME)_lim.c \
+	$(GENDIR)/$(LANG_NAME)_int.h \
+	$(GENDIR)/$(LANG_NAME)_pim.h \
+	$(GENDIR)/$(LANG_NAME)_lim.h \
 	$(LANG_NAME).abs ctoh.cth 
 
 GENERATED_C_SOURCES=$(filter %.c, $(GENERATED_FILES))
@@ -44,16 +46,17 @@ clean:
 	rm -f kernelcompile
 
 kernelparse: $(KERNELPARSE_FILES) $(KERNELPARSE_OBJECTS)
-	$(CC) -o kernelparse $(KERNELPARSE_OBJECTS) $(LDFLAGS) -ldstyx
+	$(CC) -o kernelparse $(KERNELPARSE_OBJECTS) $(LDFLAGS) $(LIBS)
 
 kernelcompile: $(KERNELCOMPILE_FILES) $(KERNELCOMPILE_OBJECTS)
-	$(CXX) -o kernelcompile $(KERNELCOMPILE_OBJECTS) $(LDFLAGS) -ldstyx
+	$(CXX) -o kernelcompile $(KERNELCOMPILE_OBJECTS) $(LDFLAGS) $(LIBS)
 
-%_int.c %_pim.c %_lim.c %.abs: %.sty
-	$(STYX) -makeC $*
+$(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c %.abs: %.sty 
+	mkdir -p $(GENDIR)
+	GENSTYX=$(GENDIR) $(STYX) -makeC $*
 
-%_int.h %_pim.h %_lim.h: %_int.c %_pim.c %_lim.c
-	ctoh -api=$*
+$(GENDIR)/%_int.h $(GENDIR)/%_pim.h $(GENDIR)/%_lim.h: $(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c
+	ctoh -CPATH=$(GENDIR) -HPATH=$(GENDIR)
 
 .PHONY: all clean test
 

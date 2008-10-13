@@ -12,9 +12,9 @@
 #include "hmap.h"    // Datatype: Finite Maps
 #include "symbols.h" // Datatype: Symbols
 
-#include "firtree_int.h" // grammar interface
-#include "firtree_lim.h" // scanner table
-#include "firtree_pim.h" // parser  table
+#include "gen/firtree_int.h" // grammar interface
+#include "gen/firtree_lim.h" // scanner table
+#include "gen/firtree_pim.h" // parser  table
 
 void printIndent(int indent)
 {

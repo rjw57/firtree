@@ -4,7 +4,7 @@ CTOH=ctoh
 CFLAGS=-I/usr/include/styx --std=c99 -Wall
 CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags`
 LDFLAGS=-L/usr/lib `llvm-config --ldflags`
-LIBS=-ldstyx `llvm-config --libs core`
+LIBS=-ldstyx `llvm-config --libs core bitwriter`
 GENDIR=gen
 
 GENERATED_FILES= $(GENDIR)/$(LANG_NAME)_int.c \
@@ -35,6 +35,9 @@ KERNELCOMPILE_OBJECTS=$(KERNELCOMPILE_C_SOURCES:.c=.o) \
 
 all: kernelparse kernelcompile
 
+compiletest: kernelcompile
+	./kernelcompile testkernel.knl | llvm-dis
+
 parsetest: kernelparse
 	./kernelparse testkernel.knl
 
@@ -58,5 +61,5 @@ $(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c %.abs: %.sty
 $(GENDIR)/%_int.h $(GENDIR)/%_pim.h $(GENDIR)/%_lim.h: $(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c
 	ctoh -CPATH=$(GENDIR) -HPATH=$(GENDIR)
 
-.PHONY: all clean test
+.PHONY: all clean parsetest compiletest
 

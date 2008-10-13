@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void printDeclList(GLS_Lst(firtreeExternalDeclaration) decls);
+void emitDeclList(GLS_Lst(firtreeExternalDeclaration) decls);
 
 #ifdef __cpluplus
 }

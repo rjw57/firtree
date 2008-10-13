@@ -52,7 +52,7 @@ void compile_kernel(const char* fileid)
     // get tree for start symbol
     bug0( firtree_Start_TranslationUnit((firtree)srcterm,&decls), "Program expected");
     // check & execute program
-    printDeclList(decls);
+    emitDeclList(decls);
     //StaticSemantic(src);
     //if (PT_errorCnt() == 0) DynamicSemantic(src);
   }

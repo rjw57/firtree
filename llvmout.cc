@@ -5,10 +5,8 @@
 #include "hmap.h"    // Datatype: Finite Maps
 #include "symbols.h" // Datatype: Symbols
 
-#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 
 #include "gen/firtree_int.h" // grammar interface
 #include "gen/firtree_lim.h" // scanner table
@@ -16,11 +14,12 @@
 
 #include "llvmout.h"
 
+#include <iostream>
+
 using namespace llvm;
 
 struct llvm_context {
   Module*       the_module;
-  LLVMBuilder   builder;
 };
 
 void printIndent(int indent)
@@ -475,14 +474,22 @@ void printDecl(firtreeExternalDeclaration decl)
   }
 }
 
-void printDeclList(GLS_Lst(firtreeExternalDeclaration) decls)
+void emitDeclList(GLS_Lst(firtreeExternalDeclaration) decls)
 {
-  firtreeExternalDeclaration dit;
+  // Create the LLVM module...
+  Module *M = new Module("firtree_test");
 
+  firtreeExternalDeclaration dit;
   GLS_FORALL(dit, decls) {
     firtreeExternalDeclaration decl = GLS_FIRST(firtreeExternalDeclaration,dit);
-    printDecl(decl);
+    //printDecl(decl);
   }
+
+  // Output the bitcode file to stdout
+  WriteBitcodeToFile(M, std::cout);
+
+  // Delete the module and all of its contents.
+  delete M;
 }
 
 /* vim:sw=2:ts=2:cindent:et 

@@ -6,9 +6,6 @@ float func_a(float a, float b)
 
 kernel float kernel_a(float a, __color background)
 {
-	{
-		return 4.0;
-	}
 	return 1.0 * 2.0 - 4.0 / 2.0;
 }
 

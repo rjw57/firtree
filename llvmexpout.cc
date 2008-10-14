@@ -1,5 +1,6 @@
 #include "llvmout.h"
 #include "llvmout_priv.h"
+#include "llvmutil.h"
 
 #include "stdosx.h"  // General Definitions (for gcc)
 #include "ptm_gen.h" // General Parsing Routines
@@ -16,6 +17,53 @@
 #include <assert.h>
 
 using namespace llvm;
+
+//==========================================================================
+// Emit a variable declaraion, recording it in the symbol table
+void emitSingleDeclaration(llvm_context* ctx, 
+    firtreeTypeSpecifier spec, firtreeTypeQualifier qual,
+    firtreeSingleDeclaration decl)
+{
+  GLS_Tok name;
+  firtreeExpression expr;
+
+  if(firtreeSingleDeclaration_variableinitializer(decl, &name, &expr))
+  {
+    // Check for conflicts
+    const variable& existing_var = find_symbol(ctx,
+        stringToSymbol(GLS_Tok_string(name)));
+    if(is_valid_variable(existing_var)) {
+      cerr << "E: Variable '" << GLS_Tok_string(name) <<
+        "' already exists.\n";
+      PANIC("duplicated variable.");
+    }
+
+    // Create a new memory location to store the variable.
+    AllocaInst* new_value = new AllocaInst(
+        getLLVMTypeForTerm(qual, spec),
+        GLS_Tok_string(name),
+        ctx->BB);
+
+    // Record the new variable
+    variable new_variable = {
+      decl, new_value, stringToSymbol(GLS_Tok_string(name)), spec, qual
+    };
+    declare_variable(ctx, new_variable);
+
+    // Check special case of nop
+    if(!firtreeExpression_nop(expr))
+    {
+      // Emit an expression for the initialiser
+      emitExpression(ctx, expr);
+
+      // Store this into our variable
+      new StoreInst(pop_value(ctx), new_value, ctx->BB);
+    }
+    return;
+  }
+
+  PANIC("unknown single declaration");
+}
 
 //==========================================================================
 // Emit a list of expressions.
@@ -47,7 +95,6 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   GLS_Tok left_tok;
   GLS_Lst(firtreeExpression) rest;
   int found_expr = 0;
-  char* func_name = NULL;
   firtreeFullySpecifiedType type;
   firtreeSingleDeclaration declaration;
   GLS_Lst(firtreeSingleDeclaration) rest_declarations;
@@ -67,7 +114,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
 
   // Binary expr.
 # define BIN_OP(name) if(firtreeExpression_##name(expr, &left, &right)) { \
-    found_expr = 1; func_name = #name; \
+    found_expr = 1; \
   } else
 
   BIN_OP(assign)
@@ -147,7 +194,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
 
   // Unary expr.
 # define UN_OP(name) if(firtreeExpression_##name(expr, &left)) { \
-    found_expr = 1; func_name = #name; \
+    found_expr = 1; \
   } else
 
   UN_OP(negate)
@@ -183,15 +230,23 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   }
 
   // Primitive expressions
-# define PRIMITIVE(name) if(firtreeExpression_##name(expr, &left_tok)) { \
-    found_expr = 1; func_name = #name; \
-  } else
+  if(firtreeExpression_variablenamed(expr, &left_tok))
+  {
+    // Find the variable in the symbol table.
+    const variable& existing_var = find_symbol(ctx,
+        stringToSymbol(GLS_Tok_string(left_tok)));
+    if(!is_valid_variable(existing_var))
+    {
+      cerr << "E: Unknown variable '" << GLS_Tok_string(left_tok) <<
+        "'.\n";
+      PANIC("unknown variable");
+    }
 
-  PRIMITIVE(variablenamed)
-  /* else */ { found_expr = 0; }
-
-  if(found_expr) {
-    // printf("%s( \"%s\" )", func_name, GLS_Tok_string(left_tok));
+    // Load the variable from memory
+    LoadInst* value = new LoadInst(existing_var.value,
+        "tmpvarload", ctx->BB);
+    push_value(ctx, value);
+    
     return;
   }
 
@@ -222,14 +277,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   }
 
   // Ternary expr.
-# define TERN_OP(name) if(firtreeExpression_##name(expr, &condition, &left, &right)) { \
-    found_expr = 1; func_name = #name; \
-  } else
- 
-  TERN_OP(ternary)
-  /* else */ { found_expr = 0; }
-
-  if(found_expr) {
+  if(firtreeExpression_ternary(expr, &condition, &left, &right)) {
     // printf("%s( ", func_name);
     // printIndent(indent+2); // printExpression(indent+2, condition); // printf("\n");
     // printIndent(indent+2); // printExpression(indent+2, left); // printf("\n");
@@ -261,22 +309,17 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   {
     GLS_Lst(firtreeSingleDeclaration) decl_tail;
 
-    // printf("declare( ");
-    // printFullySpecifiedType(type);
-    // printf("\n");
+    firtreeTypeSpecifier spec;
+    firtreeTypeQualifier qual;
+    crack_fully_specified_type(type, &spec, &qual);
 
-    // printIndent(indent+2); 
-    // printSingleDeclaration(indent+2, declaration);
-    // printf("\n");
+    emitSingleDeclaration(ctx, spec, qual, declaration);
 
     GLS_FORALL(decl_tail, rest_declarations) {
       firtreeSingleDeclaration d = GLS_FIRST(firtreeSingleDeclaration, decl_tail);
-      // printIndent(indent+2); 
-      // printSingleDeclaration(indent+2, d);
-      // printf("\n");
+      emitSingleDeclaration(ctx, spec, qual, d);
     }
 
-    // printIndent(indent); // printf(")");
     return;
   }
 

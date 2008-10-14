@@ -26,7 +26,9 @@ KERNELPARSE_OBJECTS=$(KERNELPARSE_C_SOURCES:.c=.o) \
 	$(KERNELPARSE_CXX_SOURCES:.cc=.o)
 
 KERNELCOMPILE_FILES=$(GENERATED_FILES)\
-	kernelcompile.cc llvmout.h llvmout.cc llvmout_priv.h llvmexpout.cc
+	kernelcompile.cc llvmout.h llvmout.cc \
+	llvmutil.h llvmutil.cc \
+	llvmout_priv.h llvmexpout.cc
 
 KERNELCOMPILE_C_SOURCES=$(filter %.c, $(KERNELCOMPILE_FILES))
 KERNELCOMPILE_CXX_SOURCES=$(filter %.cc, $(KERNELCOMPILE_FILES))

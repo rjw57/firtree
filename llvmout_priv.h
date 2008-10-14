@@ -1,7 +1,11 @@
 #ifndef __LLVM_OUT_PRIV_H
 #define __LLVM_OUT_PRIV_H
 
+#include "ptm_gen.h" // General Parsing Routines
+#include "ptm_pp.h"  // Pretty Printer
 #include "gls.h"     // General Language Services
+#include "symbols.h" // Datatype: Symbols
+
 #include "gen/firtree_int.h" // grammar interface
 
 #include <map>
@@ -13,11 +17,27 @@
 #include "llvm/Instructions.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 
+#include "llvmout.h"
+
+struct variable {
+  PT_Term               declaration;
+  llvm::Value*          value;
+  symbol                name;
+  firtreeTypeSpecifier  type_spec;
+  firtreeTypeQualifier  type_qual;
+};
+
 struct llvm_context {
   llvm::Module*       M;  //< current module.
   llvm::Function*     F;  //< current function.
   llvm::BasicBlock*   BB; //< current block.
   std::stack<llvm::Value*>  val_stack;  //< value stack.
+
+  // A 'stack' of scopes, each scope is a map between a symbol
+  // and a pointer to the associated value. This isn't a true
+  // stack because we want to search up the 'stack' to find symbols
+  // in parent scopes.
+  std::vector< std::map<symbol, variable> > scope_stack;
 
   // A multimap between function identifier and it's prototype. We use
   // a multimap because we can have overloaded functions in Firtree 
@@ -27,6 +47,8 @@ struct llvm_context {
   // A map between function prototype and the LLVM function.
   std::map<firtreeFunctionPrototype, llvm::Function*>   llvm_func_table;
 };
+
+#define PANIC(msg) do { assert(false && (msg)); } while(0)
 
 #ifdef __cpluplus
 extern "C" {
@@ -39,7 +61,72 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr);
 }
 #endif
 
-#define PANIC(msg) do { assert(false && (msg)); } while(0)
+inline llvm::Value* pop_value(llvm_context* ctx)
+{
+  llvm::Value* rv = ctx->val_stack.top();
+  ctx->val_stack.pop();
+  return rv;
+}
+
+inline void push_value(llvm_context* ctx, llvm::Value* val)
+{
+  ctx->val_stack.push(val);
+}
+
+inline void push_scope(llvm_context* ctx)
+{
+  ctx->scope_stack.push_back( std::map<symbol, variable> () );
+}
+
+inline void pop_scope(llvm_context* ctx)
+{
+  ctx->scope_stack.pop_back();
+}
+
+inline void declare_variable(llvm_context* ctx, const variable& var)
+{
+  ctx->scope_stack.back().insert(
+      std::pair<symbol, variable>(var.name, var));
+}
+
+inline const variable& find_symbol(llvm_context* ctx, symbol sym)
+{
+  static variable invalid_var = {
+    NULL, NULL, NULL, NULL, NULL,
+  };
+
+  std::vector< std::map<symbol, variable> >::const_reverse_iterator i =
+    ctx->scope_stack.rbegin();
+  for( ; i != ctx->scope_stack.rend(); i++)
+  {
+    const std::map<symbol, variable>& sym_table = *i;
+
+    if(sym_table.count(sym) != 0)
+    {
+      return sym_table.find(sym)->second;
+    }
+  }
+
+  return invalid_var;
+}
+
+inline bool is_valid_variable(const variable& var)
+{
+  return (var.declaration != NULL);
+}
+
+inline void crack_fully_specified_type(firtreeFullySpecifiedType type,
+    firtreeTypeSpecifier* spec, firtreeTypeQualifier* qual)
+{
+  if(firtreeFullySpecifiedType_unqualifiedtype(type, spec))
+  { 
+    *qual = NULL;
+  } else if(firtreeFullySpecifiedType_qualifiedtype(type, qual, spec))
+  { /* nop */
+  } else {
+    PANIC("unknown fully specified type.");
+  }
+}
 
 #endif /* __LLVM_OUT_PRIV_H */
 

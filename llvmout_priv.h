@@ -27,11 +27,17 @@ struct variable {
   firtreeTypeQualifier  type_qual;
 };
 
+struct firtree_value {
+  llvm::Value*          value;
+  llvm::Value*          lvalue;
+};
+
 struct llvm_context {
   llvm::Module*       M;  //< current module.
   llvm::Function*     F;  //< current function.
   llvm::BasicBlock*   BB; //< current block.
-  std::stack<llvm::Value*>  val_stack;  //< value stack.
+
+  std::stack<firtree_value>  val_stack;  //< value (and ptr to said if lvalue) stack.
 
   // A 'stack' of scopes, each scope is a map between a symbol
   // and a pointer to the associated value. This isn't a true
@@ -63,14 +69,23 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr);
 
 inline llvm::Value* pop_value(llvm_context* ctx)
 {
-  llvm::Value* rv = ctx->val_stack.top();
+  firtree_value rv = ctx->val_stack.top();
+  ctx->val_stack.pop();
+  return rv.value;
+}
+
+inline firtree_value pop_full_value(llvm_context* ctx)
+{
+  firtree_value rv = ctx->val_stack.top();
   ctx->val_stack.pop();
   return rv;
 }
 
-inline void push_value(llvm_context* ctx, llvm::Value* val)
+inline void push_value(llvm_context* ctx, llvm::Value* val,
+    llvm::Value* lval = NULL)
 {
-  ctx->val_stack.push(val);
+  firtree_value v = { val, lval };
+  ctx->val_stack.push(v);
 }
 
 inline void push_scope(llvm_context* ctx)

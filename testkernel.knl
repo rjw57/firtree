@@ -1,12 +1,22 @@
 float func_a(float a, float b)
 {
-	return 1.0 + 1.6;
+	return 1.0;
 }
 
-kernel int kernel_a(float a, __color background)
+kernel float kernel_a(float a, __color background)
 {
 	int a = 2, c, b = 2;
-	return 3 - b + 3*a;
+	float f = 1.0;
+	float g;
+
+	g = ++f + 2.0;
+	g *= 5.0;
+
+	{
+		float r = 1.0;
+	}
+
+	return func_a(1.0, g + 7.0);
 }
 
 //void foo()

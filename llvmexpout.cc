@@ -2,6 +2,8 @@
 #include "llvmout_priv.h"
 #include "llvmutil.h"
 
+#include "llvm/ADT/SmallVector.h"
+
 #include "stdosx.h"  // General Definitions (for gcc)
 #include "ptm_gen.h" // General Parsing Routines
 #include "ptm_pp.h"  // Pretty Printer
@@ -70,7 +72,7 @@ void emitSingleDeclaration(llvm_context* ctx,
 void emitExpressionList(llvm_context* ctx, GLS_Lst(firtreeExpression) exprs)
 {
   // HACK: push something on the value stack
-  ctx->val_stack.push(ConstantInt::get(Type::Int32Ty, 2));
+  push_value(ctx, ConstantInt::get(Type::Int32Ty, 2));
 
   GLS_Lst(firtreeExpression) tail;
   GLS_FORALL(tail, exprs) {
@@ -117,12 +119,6 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     found_expr = 1; \
   } else
 
-  BIN_OP(assign)
-  BIN_OP(addassign)
-  BIN_OP(subassign)
-  BIN_OP(mulassign)
-  BIN_OP(divassign)
-
   BIN_OP(greater)
   BIN_OP(greaterequal)
   BIN_OP(less)
@@ -144,58 +140,104 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     emitExpression(ctx, left);
     emitExpression(ctx, right);
 
-    Value* right_val = ctx->val_stack.top();
-    ctx->val_stack.pop();
-    Value* left_val = ctx->val_stack.top();
-    ctx->val_stack.pop();
+    Value* right_val = pop_value(ctx);
+    Value* left_val = pop_value(ctx);
 
     if(firtreeExpression_add(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::Add, 
           left_val, right_val, "tmpadd", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_sub(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::Sub, 
           left_val, right_val, "tmpsub", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_mul(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::Mul, 
           left_val, right_val, "tmpmul", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_div(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::FDiv, 
           left_val, right_val, "tmpdiv", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_logicaland(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::And, 
           left_val, right_val, "tmpand", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_logicalor(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::Or, 
           left_val, right_val, "tmpor", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
     if(firtreeExpression_logicalxor(expr, NULL, NULL)) {
       Instruction* instr = BinaryOperator::create(Instruction::Xor, 
           left_val, right_val, "tmpxor", ctx->BB);
-      ctx->val_stack.push(instr);
+      push_value(ctx, instr);
     }
 
-    // printf("%s(\n", func_name);
-    // printIndent(indent+2); // printExpression(indent+2, left); // printf("\n");
-    // printIndent(indent+2); // printExpression(indent+2, right); // printf("\n");
-    // printIndent(indent); // printf(")");
     return;
   }
+
+  BIN_OP(assign)
+  BIN_OP(addassign)
+  BIN_OP(subassign)
+  BIN_OP(mulassign)
+  BIN_OP(divassign)
+  /* else */ { found_expr = 0; }
 
   // Unary expr.
 # define UN_OP(name) if(firtreeExpression_##name(expr, &left)) { \
     found_expr = 1; \
   } else
+ 
+  if(found_expr) {
+    // Emit the expression
+    emitExpression(ctx, left);
+    emitExpression(ctx, right);
+
+    llvm::Value* right_val = pop_value(ctx);
+    firtree_value left_val = pop_full_value(ctx);
+
+    // check this is an lvalue.
+    if(left_val.lvalue == NULL)
+    {
+      cerr << "E: Attempt to modify a non-lvalue.\n";
+      PANIC("cannot modify non lvalue.");
+    }
+
+    if(firtreeExpression_assign(expr, NULL, NULL)) {
+      new StoreInst(right_val, left_val.lvalue, ctx->BB);
+    }
+    if(firtreeExpression_addassign(expr, NULL, NULL)) {
+      llvm::Value* new_val = BinaryOperator::create(Instruction::Add,
+          left_val.value, right_val, "tmpadd", ctx->BB);
+      new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    }
+    if(firtreeExpression_subassign(expr, NULL, NULL)) {
+      llvm::Value* new_val = BinaryOperator::create(Instruction::Sub,
+          left_val.value, right_val, "tmpsub", ctx->BB);
+      new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    }
+    if(firtreeExpression_mulassign(expr, NULL, NULL)) {
+      llvm::Value* new_val = BinaryOperator::create(Instruction::Mul,
+          left_val.value, right_val, "tmpmul", ctx->BB);
+      new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    }
+    if(firtreeExpression_divassign(expr, NULL, NULL)) {
+      llvm::Value* new_val = BinaryOperator::create(Instruction::FDiv,
+          left_val.value, right_val, "tmpdiv", ctx->BB);
+      new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    }
+    
+    // Push lvalue back on stack
+    push_value(ctx, left_val.value, left_val.lvalue);
+
+    return;
+  }
 
   UN_OP(negate)
   UN_OP(inc)
@@ -205,9 +247,52 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   /* else */ { found_expr = 0; }
   
   if(found_expr) {
-    // printf("%s( ", func_name);
-    // printExpression(indent, left);
-    // printf(" )");
+    // Emit the expression
+    emitExpression(ctx, left);
+    firtree_value prev_val = pop_full_value(ctx);
+
+    // Get an appropriately typed '1' and '-1'.
+    // FIXME: make sure this is typed
+    Value* one = ConstantFP::get(Type::FloatTy, APFloat(1.f));
+    Value* negone = ConstantFP::get(Type::FloatTy, APFloat(-1.f));
+
+    // Special case, negation
+    if(firtreeExpression_negate(expr, NULL)) {
+      push_value(ctx, BinaryOperator::create(Instruction::Mul,
+          prev_val.value, negone, "tmpdec", ctx->BB));
+      return;
+    }
+
+    // check this is an lvalue.
+    if(prev_val.lvalue == NULL)
+    {
+      cerr << "E: Attempt to modify a non-lvalue.\n";
+      PANIC("cannot modify non lvalue.");
+    }
+
+    Value* result = prev_val.value;
+
+    if(firtreeExpression_inc(expr, NULL)) {
+      result = BinaryOperator::create(Instruction::Add,
+          prev_val.value, one, "tmpinc", ctx->BB);
+    }
+    if(firtreeExpression_dec(expr, NULL)) {
+      result = BinaryOperator::create(Instruction::Sub,
+          prev_val.value, one, "tmpdec", ctx->BB);
+    }
+    if(firtreeExpression_postinc(expr, NULL)) {
+      BinaryOperator::create(Instruction::Add,
+          prev_val.value, one, "tmpinc", ctx->BB);
+    }
+    if(firtreeExpression_postdec(expr, NULL)) {
+      BinaryOperator::create(Instruction::Sub,
+          prev_val.value, one, "tmpdec", ctx->BB);
+    }
+
+    // Store the result and push it on the stack
+    new StoreInst(result, prev_val.lvalue, ctx->BB);
+    push_value(ctx, result, prev_val.lvalue);
+
     return;
   }
 
@@ -220,8 +305,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     Value* retVal;
     if(!firtreeExpression_nop(left))
     {
-      retVal = ctx->val_stack.top();
-      ctx->val_stack.pop();
+      retVal = pop_value(ctx);
     }
 
     // Create the new instruction.
@@ -245,7 +329,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     // Load the variable from memory
     LoadInst* value = new LoadInst(existing_var.value,
         "tmpvarload", ctx->BB);
-    push_value(ctx, value);
+    push_value(ctx, value, existing_var.value);
     
     return;
   }
@@ -254,14 +338,15 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   if(firtreeExpression_int(expr, &left_tok))
   {
     int val = atoi(GLS_Tok_string(left_tok));
-    ctx->val_stack.push(ConstantInt::get(Type::Int32Ty, val));
+    push_value(ctx, ConstantInt::get(Type::Int32Ty, val));
     return;
   }
 
   if(firtreeExpression_float(expr, &left_tok))
   {
     float val = atof(GLS_Tok_string(left_tok));
-    ctx->val_stack.push(ConstantFP::get(Type::FloatTy, APFloat(static_cast<float>(val))));
+    push_value(ctx, ConstantFP::get(Type::FloatTy, 
+          APFloat(static_cast<float>(val))));
     return;
   }
   
@@ -272,7 +357,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     {
       val = 1;
     }
-    ctx->val_stack.push(ConstantInt::get(Type::Int1Ty, val));
+    push_value(ctx, ConstantInt::get(Type::Int1Ty, val));
     return;
   }
 
@@ -298,9 +383,11 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   // compound
   if(firtreeExpression_compound(expr, &rest))
   {
-    BasicBlock *BB = new BasicBlock("block", ctx->F);
-    ctx->BB = BB;
+    //BasicBlock *BB = new BasicBlock("block", ctx->F);
+    //ctx->BB = BB;
+    push_scope(ctx);
     emitExpressionList(ctx, rest);
+    pop_scope(ctx);
     return;
   }
 
@@ -329,7 +416,16 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     firtreeTypeSpecifier type_spec;
     GLS_Lst(firtreeExpression) tail;
 
-    // printf("functioncall( ");
+    // Emit each parameter
+    //llvm::SmallVector<llvm::Value*> param_vec;
+    llvm::SmallVector<llvm::Value*, 8> param_vec;
+    GLS_FORALL(tail, rest) {
+      firtreeExpression e = GLS_FIRST(firtreeExpression, tail);
+      emitExpression(ctx, e);
+
+      // FIXME: Handle in/out params
+      param_vec.push_back(pop_value(ctx));
+    }
 
     if(firtreeFunctionSpecifier_constructorfor(func_spec, &type_spec))
     {
@@ -337,24 +433,25 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
       // printTypeSpecifier(type_spec);
       // printf("\"");
     } else if(firtreeFunctionSpecifier_functionnamed(func_spec, &left_tok)) {
-      // printf("\"%s\"", GLS_Tok_string(left_tok));
+      if(ctx->func_table.count(GLS_Tok_string(left_tok)) == 0)
+      {
+        cerr << "E: Unknown function '" << GLS_Tok_string(left_tok) << "'\n";
+        PANIC("unknown function");
+      }
+
+      // FIXME: Match prototypes.
+      const firtreeFunctionPrototype proto = 
+        ctx->func_table.find(GLS_Tok_string(left_tok))->second;
+
+      llvm::Function* F = ctx->llvm_func_table.find(proto)->second;
+
+      llvm::Value* retVal = new CallInst(
+          F, param_vec.begin(), param_vec.end(), 
+          GLS_Tok_string(left_tok), ctx->BB);
+      push_value(ctx, retVal);
     } else {
-      // printf("/* unknown func specifier */");
+      PANIC("unknown func specifier");
     }
-
-    // Now see if there are any parameters
-    if(GLS_EMPTY(rest))
-    {
-      // printf(" )");
-      return;
-    }
-
-    // printf("\n");
-    GLS_FORALL(tail, rest) {
-      firtreeExpression e = GLS_FIRST(firtreeExpression, tail);
-      // printIndent(indent+2); // printExpression(indent+2, e); // printf("\n");
-    }
-    // printIndent(indent); // printf(")");
 
     return;
   }

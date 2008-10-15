@@ -496,14 +496,17 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
     }
 
     Value* result = prev_val.value;
+    Value* returned_value = prev_val.value;
 
     if(firtreeExpression_inc(expr, NULL)) {
       result = BinaryOperator::create(Instruction::Add,
           prev_val.value, one, "tmpinc", ctx->BB);
+      returned_value = result;
     }
     if(firtreeExpression_dec(expr, NULL)) {
       result = BinaryOperator::create(Instruction::Sub,
           prev_val.value, one, "tmpdec", ctx->BB);
+      returned_value = result;
     }
     if(firtreeExpression_postinc(expr, NULL)) {
       result = BinaryOperator::create(Instruction::Add,
@@ -514,9 +517,9 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
           prev_val.value, one, "tmpdec", ctx->BB);
     }
 
-    // Store the result and push it on the stack
+    // Store the result and push the new value on the stack
     new StoreInst(result, prev_val.lvalue, ctx->BB);
-    push_value(ctx, result, prev_val.lvalue);
+    push_value(ctx, returned_value, prev_val.lvalue);
 }
 
 // Emit a constructor for the specified type

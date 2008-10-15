@@ -229,8 +229,12 @@ void emitFunction(llvm_context* ctx, firtreeFunctionDefinition def)
 
   emitExpressionList(ctx, expressions);
 
-  // Create a default return inst.
-  // new ReturnInst(NULL, ctx->BB);
+  // Create a default return inst if there was no terminator.
+  if(ctx->BB->getTerminator() == NULL)
+  {
+    // FIXME: Check function return type is void.
+    new ReturnInst(NULL, ctx->BB);
+  }
 
   ctx->BB = NULL;
   ctx->F = NULL;

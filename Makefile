@@ -4,7 +4,7 @@ CTOH=ctoh
 CFLAGS=-I/usr/include/styx --std=c99 -Wall
 CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags`
 LDFLAGS=-L/usr/lib `llvm-config --ldflags`
-LIBS=-ldstyx `llvm-config --libs core bitwriter`
+LIBS=`llvm-config --libs core bitwriter` -ldstyx
 GENDIR=gen
 
 GENERATED_FILES= $(GENDIR)/$(LANG_NAME)_int.c \

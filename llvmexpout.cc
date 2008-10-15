@@ -951,22 +951,52 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   // while
   if(firtreeExpression_while(expr, &left, &right))
   {
-    // printf("loop_precond(\n");
-    // printIndent(indent+2); // printExpression(indent+2, left); // printf(" /* condition */\n");
-    // printIndent(indent+2); // printExpression(indent+2, right); // printf("\n");
-    // printIndent(indent); // printf(")");
-    PANIC("FIXME: Not implemented.");
+    BasicBlock* loopBB = new BasicBlock("loop", ctx->F);
+    BasicBlock* bodyBB = new BasicBlock("body", ctx->F);
+    BasicBlock* contBB = new BasicBlock("afterloop", ctx->F);
+
+    ctx->BB->getInstList().push_back(new BranchInst(loopBB));
+    ctx->BB = loopBB;
+
+    // Emit code for calculating condition
+    emitExpression(ctx, left);
+    Value* cond_val = pop_value(ctx);
+
+    new BranchInst(bodyBB, contBB, cond_val, ctx->BB);
+
+    ctx->BB = bodyBB;
+
+    emitExpression(ctx, right);
+
+    // Add a terminator if required
+    if(ctx->BB->getTerminator() == NULL)
+    {
+      ctx->BB->getInstList().push_back(new BranchInst(loopBB));
+    }
+
+    ctx->BB = contBB;
     return;
   }
 
   // do
   if(firtreeExpression_do(expr, &left, &right))
   {
-    // printf("loop_postcond(\n");
-    // printIndent(indent+2); // printExpression(indent+2, right); // printf(" /* condition */\n");
-    // printIndent(indent+2); // printExpression(indent+2, left); // printf("\n");
-    // printIndent(indent); // printf(")");
-    PANIC("FIXME: Not implemented.");
+    BasicBlock* loopBB = new BasicBlock("loop", ctx->F);
+    BasicBlock* contBB = new BasicBlock("afterloop", ctx->F);
+
+    ctx->BB->getInstList().push_back(new BranchInst(loopBB));
+    ctx->BB = loopBB;
+
+    // Wmit body
+    emitExpression(ctx, left);
+
+    // Emit code for calculating condition
+    emitExpression(ctx, right);
+    Value* cond_val = pop_value(ctx);
+
+    new BranchInst(loopBB, contBB, cond_val, ctx->BB);
+
+    ctx->BB = contBB;
     return;
   }
 

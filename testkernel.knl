@@ -2,10 +2,11 @@ kernel float kernel_a()
 {
 	float a = 0.0;
 
-	for(int i=0; i<5; i++)
-	{
-		a += 2.0;
-	}
+	int i = 5;
+	do {
+		a += 1.0;
+		i--;
+	} while(false);
 
 	return a;
 }

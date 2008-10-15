@@ -148,6 +148,45 @@ Value* getAsType(llvm_context* ctx, Value* val, const Type* type)
 }
 
 //==========================================================================
+// Return true if the types of left and right are identical.
+bool typesMatch(llvm_context* ctx, Value* left, Value* right)
+{
+  // Get the types of left and right
+  const Type* left_type = left->getType();
+  const Type* right_type = right->getType();
+
+  // Both sides are integers.
+  if(isa<IntegerType>(left_type) && isa<IntegerType>(right_type))
+  {
+    const IntegerType* left_int = cast<IntegerType>(left_type);
+    const IntegerType* right_int = cast<IntegerType>(right_type);
+
+    if(left_int->getBitWidth() == right_int->getBitWidth()) {
+      return true;
+    }
+  }
+
+  if((left_type->getTypeID() == Type::FloatTyID) &&
+      (right_type->getTypeID() == Type::FloatTyID)) 
+  {
+    return true;
+  }
+
+  if(isa<VectorType>(left_type) && isa<VectorType>(right_type))
+  {
+    const VectorType* left_vec = cast<VectorType>(left_type);
+    const VectorType* right_vec = cast<VectorType>(right_type);
+
+    if(left_vec->getNumElements() == right_vec->getNumElements())
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+//==========================================================================
 // Attempt to promote types of values either side of a binary operator so
 // that the types of the values returned in new_left and new_right are the
 // same.
@@ -274,6 +313,17 @@ void emitSingleDeclaration(llvm_context* ctx,
   }
 
   PANIC("unknown single declaration");
+}
+
+//==========================================================================
+// Emit a swizzle operation
+void emitSwizzle(llvm_context* ctx, firtreeExpression expr,
+    GLS_Tok swizzle)
+{
+  const char* swizzle_string = GLS_Tok_string(swizzle);
+  int swizzle_spec[] = {-1, -1, -1, -1};
+
+  PANIC("FIXME");
 }
 
 //==========================================================================
@@ -771,22 +821,58 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
 
   // Ternary expr.
   if(firtreeExpression_ternary(expr, &condition, &left, &right)) {
-    // printf("%s( ", func_name);
-    // printIndent(indent+2); // printExpression(indent+2, condition); // printf("\n");
-    // printIndent(indent+2); // printExpression(indent+2, left); // printf("\n");
-    // printIndent(indent+2); // printExpression(indent+2, right); // printf("\n");
-    // printIndent(indent); // printf(")");
-    PANIC("FIXME: Not implemented.");
+    // Emit the condition test
+    emitExpression(ctx, condition);
+    Value* cond_val = pop_value(ctx);
+
+    BasicBlock* thenBB = new BasicBlock("true", ctx->F);
+    BasicBlock* elseBB = new BasicBlock("false", ctx->F);
+    BasicBlock* contBB = new BasicBlock("continue", ctx->F);
+
+    BasicBlock* orig_bb = ctx->BB;
+
+    // Emit the true and false blocks (ahead of time so we can
+    // get the values).
+    ctx->BB = thenBB;
+    emitExpression(ctx, left);
+    Value* left_val = pop_value(ctx);
+    ctx->BB = elseBB;
+    emitExpression(ctx, right);
+    Value* right_val = pop_value(ctx);
+
+    if(!typesMatch(ctx, left_val, right_val))
+    {
+      cerr << "E: Both values of ternary expression must be of same type.\n";
+      PANIC("invalid ternary");
+    }
+
+    ctx->BB = orig_bb;
+
+    // Create a temporary to hold the result
+    AllocaInst* ret_val = new AllocaInst(
+      left_val->getType(), "ternarytmp", ctx->BB);
+
+    // Emit a branch instruction.
+    new BranchInst(thenBB, elseBB, cond_val, ctx->BB);
+
+    // Store the result and branch out
+    ctx->BB = thenBB;
+    new StoreInst(left_val, ret_val, ctx->BB);
+    ctx->BB->getInstList().push_back(new BranchInst(contBB));
+    ctx->BB = elseBB;
+    new StoreInst(right_val, ret_val, ctx->BB);
+    ctx->BB->getInstList().push_back(new BranchInst(contBB));
+
+    ctx->BB = contBB;
+    push_value(ctx, new LoadInst(ret_val, "tmpload", ctx->BB));
+
     return;
   }
 
   // fieldselect
   if(firtreeExpression_fieldselect(expr, &left, &left_tok))
   {
-    // printf("fieldselect( ");
-    // printExpression(indent, left);
-    // printf(" , \"%s\" )", GLS_Tok_string(left_tok));
-    PANIC("FIXME: Not implemented.");
+    emitSwizzle(ctx, left, left_tok);
     return;
   }
 

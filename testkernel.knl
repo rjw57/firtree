@@ -1,14 +1,8 @@
 kernel float kernel_a()
 {
-	float a = 0.0;
-
-	int i = 5;
-	do {
-		a += 1.0;
-		i--;
-	} while(false);
-
-	return a;
+	bool c = false;
+	float a = 1;
+	return (c) ? a : 2.0;
 }
 
 void foo()

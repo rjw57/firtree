@@ -484,7 +484,16 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
 
     // Get an appropriately typed '1'.
     // FIXME: make sure this is typed
-    Value* one = ConstantFP::get(Type::FloatTy, APFloat(1.f));
+    Value* one = NULL;
+    const Type* prev_type = prev_val.value->getType();
+    if(isa<IntegerType>(prev_type)) {
+      one = ConstantInt::get(prev_type, 1);
+    } else if(prev_type->getTypeID() == Type::FloatTyID) {
+      one = ConstantFP::get(Type::FloatTy, APFloat(1.f));
+    } else {
+      cerr << "E: Cannot inc/decrement a vector type.\n";
+      PANIC("Cannot inc/decrement a vector type.");
+    }
 
     Value* result = prev_val.value;
 
@@ -497,11 +506,11 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
           prev_val.value, one, "tmpdec", ctx->BB);
     }
     if(firtreeExpression_postinc(expr, NULL)) {
-      BinaryOperator::create(Instruction::Add,
+      result = BinaryOperator::create(Instruction::Add,
           prev_val.value, one, "tmpinc", ctx->BB);
     }
     if(firtreeExpression_postdec(expr, NULL)) {
-      BinaryOperator::create(Instruction::Sub,
+      result = BinaryOperator::create(Instruction::Sub,
           prev_val.value, one, "tmpdec", ctx->BB);
     }
 
@@ -535,7 +544,7 @@ void emitConstructor(llvm_context* ctx, firtreeTypeSpecifier spec,
   } while(0)
 
   // Vector types
-  if(firtreeTypeSpecifier_vec4(spec)) {
+  if(firtreeTypeSpecifier_vec4(spec) || firtreeTypeSpecifier_color(spec)) {
     Value* vec_val = ConstantVector::get(zeros, 4);
     PROCESS_PARAMS(4);
     push_value(ctx, vec_val);
@@ -552,7 +561,35 @@ void emitConstructor(llvm_context* ctx, firtreeTypeSpecifier spec,
     return;
   }
 
-  // FIXME: Type conversion constr.
+  // Float
+  if(firtreeTypeSpecifier_float(spec)) {
+    if(param_vec.size() != 1) {
+      cerr << "E: Conversion to float requires one parameter.\n";
+      PANIC("invalid conversion.");
+    }
+    push_value(ctx, getAsFloat(ctx, param_vec.front()));
+    return;
+  }
+
+  // Int
+  if(firtreeTypeSpecifier_int(spec)) {
+    if(param_vec.size() != 1) {
+      cerr << "E: Conversion to int requires one parameter.\n";
+      PANIC("invalid conversion.");
+    }
+    push_value(ctx, getAsInt(ctx, param_vec.front(), Type::Int32Ty));
+    return;
+  }
+
+  // Bool
+  if(firtreeTypeSpecifier_bool(spec)) {
+    if(param_vec.size() != 1) {
+      cerr << "E: Conversion to bool requires one parameter.\n";
+      PANIC("invalid conversion.");
+    }
+    push_value(ctx, getAsInt(ctx, param_vec.front(), Type::Int1Ty));
+    return;
+  }
 
   cerr << "E: No constructor available for type '" << symbolToString(PT_product(spec)) << "'\n";
   PANIC("unimplemented constructor.");
@@ -828,13 +865,40 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     firtreeExpression init, cond, iter, body;
     if(firtreeExpression_for(expr, &init, &cond, &iter, &body))
     {
-      // printf("for(\n");
-      // printIndent(indent+2); // printExpression(indent+2, init); // printf(" /* initializer */\n");
-      // printIndent(indent+2); // printExpression(indent+2, cond); // printf(" /* loop cond. */\n");
-      // printIndent(indent+2); // printExpression(indent+2, iter); // printf(" /* loop iter. */\n");
-      // printIndent(indent+2); // printExpression(indent+2, body); // printf("\n");
-      // printIndent(indent); // printf(")");
-      PANIC("FIXME: Not implemented.");
+      // Emit the initialiser
+      emitExpression(ctx, init);
+
+      BasicBlock* loopBB = new BasicBlock("loop", ctx->F);
+      BasicBlock* bodyBB = new BasicBlock("body", ctx->F);
+      BasicBlock* contBB = new BasicBlock("afterloop", ctx->F);
+
+      ctx->BB->getInstList().push_back(new BranchInst(loopBB));
+      ctx->BB = loopBB;
+
+      // Emit code for calculating condition
+      emitExpression(ctx, cond);
+      Value* cond_val = pop_value(ctx);
+
+      new BranchInst(bodyBB, contBB, cond_val, ctx->BB);
+
+      ctx->BB = bodyBB;
+
+      emitExpression(ctx, body);
+
+      // Add a terminator if required
+      if(ctx->BB->getTerminator() == NULL)
+      {
+        emitExpression(ctx, iter);
+        
+        if(ctx->BB->getTerminator() != NULL)
+        {
+          PANIC("iteration expression cannot be terminal.");
+        }
+
+        ctx->BB->getInstList().push_back(new BranchInst(loopBB));
+      }
+
+      ctx->BB = contBB;
       return;
     }
   }

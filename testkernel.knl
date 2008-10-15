@@ -1,17 +1,13 @@
-kernel vec4 kernel_a()
+kernel float kernel_a()
 {
-	float b = 1.0;
-	float c;
+	float a = 0.0;
 
-	if(b > 0.5)
+	for(int i=0; i<5; i++)
 	{
-		c = 1.0;
-		return vec4(0.0,0.0,0.0,0.0);
-	} else {
-		c = 2.0;
+		a += 2.0;
 	}
 
-	return vec4(b,c,3.0,4.0);
+	return a;
 }
 
 void foo()

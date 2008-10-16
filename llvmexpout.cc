@@ -316,6 +316,11 @@ void emitSingleDeclaration(llvm_context* ctx,
 }
 
 //==========================================================================
+// A lavalue callback suitable for directly setting a variable's value.
+//void variable_lvalue_cb(llvm_context* ctx, llvm::Value* new_value, 
+//    void* lvalue_context)
+
+//==========================================================================
 // Emit a swizzle operation
 void emitSwizzle(llvm_context* ctx, firtreeExpression expr,
     GLS_Tok swizzle)
@@ -417,40 +422,46 @@ void emitBinaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
   right_val = getAsType(ctx, right_val, left_val.value->getType());
 
   // check this is an lvalue.
-  if(left_val.lvalue == NULL)
+  if(left_val.lvalue_cb == NULL)
   {
     cerr << "E: Attempt to modify a non-lvalue.\n";
     PANIC("cannot modify non lvalue.");
   }
 
   if(firtreeExpression_assign(expr, NULL, NULL)) {
-    new StoreInst(right_val, left_val.lvalue, ctx->BB);
+    left_val.lvalue_cb(ctx, right_val, left_val.lvalue_context);
+ //   new StoreInst(right_val, left_val.lvalue, ctx->BB);
   }
   if(firtreeExpression_addassign(expr, NULL, NULL)) {
     llvm::Value* new_val = BinaryOperator::create(Instruction::Add,
         left_val.value, right_val, "tmpadd", ctx->BB);
-    new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    left_val.lvalue_cb(ctx, new_val, left_val.lvalue_context);
+//    new StoreInst(new_val, left_val.lvalue, ctx->BB);
   }
   if(firtreeExpression_subassign(expr, NULL, NULL)) {
     llvm::Value* new_val = BinaryOperator::create(Instruction::Sub,
         left_val.value, right_val, "tmpsub", ctx->BB);
-    new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    left_val.lvalue_cb(ctx, new_val, left_val.lvalue_context);
+//    new StoreInst(new_val, left_val.lvalue, ctx->BB);
   }
   if(firtreeExpression_mulassign(expr, NULL, NULL)) {
     llvm::Value* new_val = BinaryOperator::create(Instruction::Mul,
         left_val.value, right_val, "tmpmul", ctx->BB);
-    new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    left_val.lvalue_cb(ctx, new_val, left_val.lvalue_context);
+//    new StoreInst(new_val, left_val.lvalue, ctx->BB);
   }
   if(firtreeExpression_divassign(expr, NULL, NULL)) {
     llvm::Value* new_val = BinaryOperator::create(Instruction::FDiv,
         getAsFloat(ctx, left_val.value),
         getAsFloat(ctx, right_val),
         "tmpdiv", ctx->BB);
-    new StoreInst(new_val, left_val.lvalue, ctx->BB);
+    left_val.lvalue_cb(ctx, new_val, left_val.lvalue_context);
+//    new StoreInst(new_val, left_val.lvalue, ctx->BB);
   }
   
   // Push lvalue back on stack
-  push_value(ctx, left_val.value, left_val.lvalue);
+  push_value(ctx, left_val.value, left_val.lvalue_cb, 
+      left_val.lvalue_context);
 }
 
 //==========================================================================
@@ -526,7 +537,7 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
     firtree_value prev_val = pop_full_value(ctx);
 
     // check this is an lvalue.
-    if(prev_val.lvalue == NULL)
+    if(prev_val.lvalue_cb == NULL)
     {
       cerr << "E: Attempt to modify a non-lvalue.\n";
       PANIC("cannot modify non lvalue.");
@@ -568,8 +579,10 @@ void emitUnaryAssignmentExpression(llvm_context* ctx, firtreeExpression expr,
     }
 
     // Store the result and push the new value on the stack
-    new StoreInst(result, prev_val.lvalue, ctx->BB);
-    push_value(ctx, returned_value, prev_val.lvalue);
+    prev_val.lvalue_cb(ctx, result, prev_val.lvalue_context);
+//    new StoreInst(result, prev_val.lvalue, ctx->BB);
+    push_value(ctx, returned_value, prev_val.lvalue_cb,
+        prev_val.lvalue_context);
 }
 
 // Emit a constructor for the specified type
@@ -646,6 +659,17 @@ void emitConstructor(llvm_context* ctx, firtreeTypeSpecifier spec,
 
   cerr << "E: No constructor available for type '" << symbolToString(PT_product(spec)) << "'\n";
   PANIC("unimplemented constructor.");
+}
+
+//==========================================================================
+// A lavalue callback suitable for directly setting a variable's value.
+void variable_lvalue_cb(llvm_context* ctx, llvm::Value* new_value, 
+    void* lvalue_context)
+{
+  // The context in this case is the pointer to the variable
+  Value* ptr = reinterpret_cast<Value*>(lvalue_context);
+
+  new StoreInst(new_value, ptr, ctx->BB);
 }
 
 //==========================================================================
@@ -787,7 +811,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     // Load the variable from memory
     LoadInst* value = new LoadInst(existing_var.value,
         "tmpvarload", ctx->BB);
-    push_value(ctx, value, existing_var.value);
+    push_value(ctx, value, variable_lvalue_cb, existing_var.value);
     
     return;
   }

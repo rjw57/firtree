@@ -19,6 +19,8 @@
 
 #include "llvmout.h"
 
+struct llvm_context;
+
 struct variable {
   PT_Term               declaration;
   llvm::Value*          value;
@@ -27,9 +29,15 @@ struct variable {
   firtreeTypeQualifier  type_qual;
 };
 
+typedef void (*lvalue_cb_t) (llvm_context* ctx, 
+    llvm::Value* new_value, void* lvalue_context);
+
+// A value is a llvm value along with, if it is also an lvalue, a call-back
+// plus context for setting it.
 struct firtree_value {
   llvm::Value*          value;
-  llvm::Value*          lvalue;
+  lvalue_cb_t           lvalue_cb;
+  void*                 lvalue_context;
 };
 
 struct llvm_context {
@@ -82,9 +90,9 @@ inline firtree_value pop_full_value(llvm_context* ctx)
 }
 
 inline void push_value(llvm_context* ctx, llvm::Value* val,
-    llvm::Value* lval = NULL)
+    lvalue_cb_t cb = NULL, void* context = NULL)
 {
-  firtree_value v = { val, lval };
+  firtree_value v = { val, cb, context };
   ctx->val_stack.push(v);
 }
 

@@ -320,10 +320,67 @@ void emitSingleDeclaration(llvm_context* ctx,
 void emitSwizzle(llvm_context* ctx, firtreeExpression expr,
     GLS_Tok swizzle)
 {
+  // FIXME - MORE THINKING! How to handle foo.xz = vec2(4,5); ?
+  // Emit the swizzlee
+  emitExpression(ctx, expr);
+
   const char* swizzle_string = GLS_Tok_string(swizzle);
   int swizzle_spec[] = {-1, -1, -1, -1};
 
-  PANIC("FIXME");
+  int output_size = 0;
+  for(output_size=0; swizzle_string[output_size] != '\0'; output_size++)
+  {
+    if(output_size>=4) {
+      cerr << "E: Invalid swizzle string (too long).\n";
+      PANIC("invalid swizzle");
+    }
+
+    switch(swizzle_string[output_size]) {
+      case 'r':
+      case 'x':
+      case 's':
+        swizzle_spec[output_size] = 0;
+        break;
+      case 'g':
+      case 'y':
+      case 't':
+        swizzle_spec[output_size] = 1;
+        break;
+      case 'b':
+      case 'z':
+      case 'p':
+        swizzle_spec[output_size] = 2;
+        break;
+      case 'a':
+      case 'w':
+      case 'q':
+        swizzle_spec[output_size] = 3;
+        break;
+      default:
+        cerr << "E: Invalid swizzle character '" << 
+          swizzle_string[output_size] << "'\n";
+        PANIC("invalid swizzle");
+        break;
+    }
+  }
+
+  // Alloc a new variable for the swizzle.
+  const Type* new_vec_type = NULL;
+  if(output_size == 1) {
+    new_vec_type = Type::FloatTy;
+  } else {
+    new_vec_type = VectorType::get(Type::FloatTy, output_size);
+  }
+
+  Value* new_vec = new AllocaInst(new_vec_type, "swizzletmp", ctx->BB);
+
+  for(int i=0; i<output_size; i++)
+  {
+ //   Value* element = new ExtractElementInst(
+  }
+
+  Value* new_vec_val = new LoadInst(new_vec, "tmpload", ctx->BB);
+  push_value(ctx, new_vec_val, new_vec);
 }
 
 //==========================================================================

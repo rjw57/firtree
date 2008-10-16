@@ -137,8 +137,6 @@ let FunctionQualifier
     :function:
     :kernel:                "kernel"
 
-; A fully specified type is an optional type qualifier followed
-; by a type specifier.
 let FullySpecifiedType
     :unqualifiedtype:       TypeSpecifier
     :qualifiedtype:         TypeQualifier TypeSpecifier
@@ -243,13 +241,8 @@ let StatementCompound
 ; A Declaration statement declares a set of variables, their type and
 ; (optionally) their initial values.
 let StatementDeclaration
-    :ign0:                  InitDeclaratorList ";"
+    :declare:               FullySpecifiedType SingleDeclaration InitDeclaratorListTail ";"
 
-; A declaration list consists of a type for the variables followed
-; by one or more variable names along with optional initializers.
-let InitDeclaratorList
-    :initdeclaratorlist:    FullySpecifiedType SingleDeclaration InitDeclaratorListTail
- 
 let InitDeclaratorListTail
     :nil:
     :cons:                  "," SingleDeclaration InitDeclaratorListTail

@@ -885,8 +885,8 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
     return;
   }
 
-  // initdeclaratorlist
-  if(firtreeExpression_initdeclaratorlist(expr, &type, &declaration, &rest_declarations))
+  // variable declaration(s)
+  if(firtreeExpression_declare(expr, &type, &declaration, &rest_declarations))
   {
     GLS_Lst(firtreeSingleDeclaration) decl_tail;
 

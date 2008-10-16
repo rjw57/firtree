@@ -240,8 +240,8 @@ void printExpression(int indent, firtreeExpression expr)
     return;
   }
 
-  // initdeclaratorlist
-  if(firtreeExpression_initdeclaratorlist(expr, &type, &declaration, &rest_declarations))
+  // declaration
+  if(firtreeExpression_declare(expr, &type, &declaration, &rest_declarations))
   {
     GLS_Lst(firtreeSingleDeclaration) decl_tail;
 

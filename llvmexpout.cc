@@ -316,19 +316,161 @@ void emitSingleDeclaration(llvm_context* ctx,
 }
 
 //==========================================================================
-// A lavalue callback suitable for directly setting a variable's value.
-//void variable_lvalue_cb(llvm_context* ctx, llvm::Value* new_value, 
-//    void* lvalue_context)
+// For a particular token describing a swizzle operation, return the
+// number of elements in the swizzle and fill swizzle_spec with the
+// indices for each element.
+int parseSwizzleSpec(GLS_Tok swizzle, int swizzle_spec[])
+{
+  for(int i=0; i<4; i++) { swizzle_spec[i] = -1; }
+  const char* swizzle_string = GLS_Tok_string(swizzle);
+
+  int output_size = 0;
+  for(output_size=0; swizzle_string[output_size] != '\0'; output_size++)
+  {
+    if(output_size>=4) {
+      cerr << "E: Invalid swizzle string (too long).\n";
+      PANIC("invalid swizzle");
+    }
+
+    switch(swizzle_string[output_size]) {
+      case 'r':
+      case 'x':
+      case 's':
+        swizzle_spec[output_size] = 0;
+        break;
+      case 'g':
+      case 'y':
+      case 't':
+        swizzle_spec[output_size] = 1;
+        break;
+      case 'b':
+      case 'z':
+      case 'p':
+        swizzle_spec[output_size] = 2;
+        break;
+      case 'a':
+      case 'w':
+      case 'q':
+        swizzle_spec[output_size] = 3;
+        break;
+      default:
+        cerr << "E: Invalid swizzle character '" << 
+          swizzle_string[output_size] << "'\n";
+        PANIC("invalid swizzle");
+        break;
+    }
+  }
+
+  return output_size;
+}
+
+//==========================================================================
+// A lvalue callback suitable for setting a variable via swizzling.
+void swizzle_lvalue_cb(llvm_context* ctx, llvm::Value* new_value, 
+    void* lvalue_context)
+{
+  firtreeExpression swizzlee_expr;
+  GLS_Tok swizzle_spec_tok;
+
+  // The context is actually the swizzle expresison
+  firtreeExpression original_swizzle = 
+    reinterpret_cast<firtreeExpression>(lvalue_context);
+
+  // Extract the swizzlee and the swizzle specifier token.
+  if(!firtreeExpression_fieldselect(original_swizzle,
+        &swizzlee_expr, &swizzle_spec_tok))
+  {
+    cerr << "E: Attempt to set non swizzle lvalue via swizzle cb.\n";
+    PANIC("bad callback.");
+    return;
+  }
+
+  // Parse the swizzle operand.
+  int swizzle_spec[] = {-1, -1, -1, -1};
+  int output_size = parseSwizzleSpec(swizzle_spec_tok, swizzle_spec);
+
+  // Emit the vector being swizzled (the swizlee) and grab it's value,
+  // asserting its lvalue status.
+  emitExpression(ctx, swizzlee_expr);
+  firtree_value swizlee_val = pop_full_value(ctx);
+
+  if(swizlee_val.lvalue_cb == NULL) { 
+    cerr << "E: Attempt to set invalid swizzled lvalue.\n";
+    PANIC("bad lvalue.");
+    return;
+  }
+
+  // FIXME: prob. need some type checking here?
+  
+  // The new value is either a float or a vector depending on the size
+  // of the swizzle specifier
+  if(output_size == 1) {
+    Value* new_vec_value = swizlee_val.value;
+    new_vec_value = new InsertElementInst(new_vec_value,
+        new_value, swizzle_spec[0], "tmpins", ctx->BB);
+    swizlee_val.lvalue_cb(ctx, new_vec_value, swizlee_val.lvalue_context);
+  } else {
+    Value* new_vec_value = swizlee_val.value;
+    for(int i=0; i<output_size; i++)
+    {
+      Value* element_value = new ExtractElementInst(new_value,
+          i, "tmpelement", ctx->BB);
+      new_vec_value = new InsertElementInst(new_vec_value,
+          element_value, swizzle_spec[i], "tmpins", ctx->BB);
+    }
+    swizlee_val.lvalue_cb(ctx, new_vec_value, swizlee_val.lvalue_context);
+  }
+}
 
 //==========================================================================
 // Emit a swizzle operation
-void emitSwizzle(llvm_context* ctx, firtreeExpression expr,
+void emitSwizzle(llvm_context* ctx, firtreeExpression original_swizzle,
+    firtreeExpression expr,
     GLS_Tok swizzle)
 {
-  const char* swizzle_string = GLS_Tok_string(swizzle);
-  int swizzle_spec[] = {-1, -1, -1, -1};
+  static Constant* const zeros[] = {
+    ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+    ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+    ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+    ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+  };
 
-  PANIC("FIXME");
+  // Parse the swizzle operand.
+  int swizzle_spec[] = {-1, -1, -1, -1};
+  int output_size = parseSwizzleSpec(swizzle, swizzle_spec);
+
+  // Emit the vector being swizzled (the swizlee) and grab it's value.
+  emitExpression(ctx, expr);
+  firtree_value swizlee_val = pop_full_value(ctx);
+
+  // Create a (temporary) variable to hold the swizzled vector. It is
+  // either a float or a vector depending on the size of the swizzle
+  // specifier
+  Value* swizzled_value = NULL;
+  if(output_size == 1) {
+    swizzled_value = new ExtractElementInst(swizlee_val.value,
+        swizzle_spec[0], "tmpelement", ctx->BB);
+  } else {
+    swizzled_value = ConstantVector::get(zeros, output_size);
+    for(int i=0; i<output_size; i++)
+    {
+      Value* element_value = new ExtractElementInst(swizlee_val.value,
+          swizzle_spec[i], "tmpelement", ctx->BB);
+      swizzled_value = new InsertElementInst(swizzled_value,
+          element_value, i, "tmpins", ctx->BB);
+    }
+  }
+
+  // The swizzlee is either an lvalue or it isn't. If it isnt, the
+  // swizzle isn't either.
+  if(swizlee_val.lvalue_cb == NULL) {
+    // Not an lvalue, just push the value.
+    push_value(ctx, swizzled_value);
+  } else {
+    // It is an lvalue, push the value and a callback for setting
+    // stuff.
+    push_value(ctx, swizzled_value, swizzle_lvalue_cb, original_swizzle);
+  }
 }
 
 //==========================================================================
@@ -662,7 +804,7 @@ void emitConstructor(llvm_context* ctx, firtreeTypeSpecifier spec,
 }
 
 //==========================================================================
-// A lavalue callback suitable for directly setting a variable's value.
+// A lvalue callback suitable for directly setting a variable's value.
 void variable_lvalue_cb(llvm_context* ctx, llvm::Value* new_value, 
     void* lvalue_context)
 {
@@ -896,7 +1038,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
   // fieldselect
   if(firtreeExpression_fieldselect(expr, &left, &left_tok))
   {
-    emitSwizzle(ctx, left, left_tok);
+    emitSwizzle(ctx, expr, left, left_tok);
     return;
   }
 

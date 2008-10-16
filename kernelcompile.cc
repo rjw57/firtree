@@ -18,6 +18,8 @@
 
 #include "llvmout.h"
 
+#include "llvm_backend/llvm_backend.h"
+
 /* Main Program ------------------------------------------------------------ */
 
 void compile_kernel(const char* fileid)

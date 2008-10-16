@@ -22,7 +22,6 @@
 struct llvm_context;
 
 struct variable {
-  PT_Term               declaration;
   llvm::Value*          value;
   symbol                name;
   firtreeTypeSpecifier  type_spec;
@@ -115,7 +114,7 @@ inline void declare_variable(llvm_context* ctx, const variable& var)
 inline const variable& find_symbol(llvm_context* ctx, symbol sym)
 {
   static variable invalid_var = {
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
   };
 
   std::vector< std::map<symbol, variable> >::const_reverse_iterator i =
@@ -135,7 +134,7 @@ inline const variable& find_symbol(llvm_context* ctx, symbol sym)
 
 inline bool is_valid_variable(const variable& var)
 {
-  return (var.declaration != NULL);
+  return (var.value != NULL);
 }
 
 inline void crack_fully_specified_type(firtreeFullySpecifiedType type,

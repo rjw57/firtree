@@ -1,10 +1,10 @@
 LANG_NAME=firtree
 STYX=styx
 CTOH=ctoh
-CFLAGS=-I/usr/include/styx --std=c99 -Wall
-CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags`
+CFLAGS=-I/usr/include/styx --std=c99 -Wall -g 
+CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags` -g `pkg-config firtree --cflags`
 LDFLAGS=-L/usr/lib `llvm-config --ldflags`
-LIBS=`llvm-config --libs core bitwriter` -ldstyx
+LIBS=`llvm-config --libs core bitwriter` -ldstyx `pkg-config firtree --libs`
 GENDIR=gen
 
 GENERATED_FILES= $(GENDIR)/$(LANG_NAME)_int.c \
@@ -28,7 +28,9 @@ KERNELPARSE_OBJECTS=$(KERNELPARSE_C_SOURCES:.c=.o) \
 KERNELCOMPILE_FILES=$(GENERATED_FILES)\
 	kernelcompile.cc llvmout.h llvmout.cc \
 	llvmutil.h llvmutil.cc \
-	llvmout_priv.h llvmexpout.cc
+	llvmout_priv.h llvmexpout.cc \
+	llvm_backend/llvm_backend.h \
+	llvm_backend/symbol_table.cc
 
 KERNELCOMPILE_C_SOURCES=$(filter %.c, $(KERNELCOMPILE_FILES))
 KERNELCOMPILE_CXX_SOURCES=$(filter %.cc, $(KERNELCOMPILE_FILES))

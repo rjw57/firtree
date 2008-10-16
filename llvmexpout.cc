@@ -295,7 +295,7 @@ void emitSingleDeclaration(llvm_context* ctx,
 
     // Record the new variable
     variable new_variable = {
-      decl, new_value, stringToSymbol(GLS_Tok_string(name)), spec, qual
+      new_value, stringToSymbol(GLS_Tok_string(name)), spec, qual
     };
     declare_variable(ctx, new_variable);
 
@@ -1103,6 +1103,7 @@ void emitExpression(llvm_context* ctx, firtreeExpression expr)
         ctx->func_table.find(GLS_Tok_string(left_tok))->second;
 
       llvm::Function* F = ctx->llvm_func_table.find(proto)->second;
+      assert(F != NULL);
 
       llvm::Value* retVal = new CallInst(
           F, param_vec.begin(), param_vec.end(), 

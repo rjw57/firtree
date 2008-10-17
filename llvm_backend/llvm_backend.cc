@@ -13,6 +13,56 @@ using namespace llvm;
 namespace Firtree {
 
 //===========================================================================
+FullType FullType::FromQualiferAndSpecifier(firtreeTypeQualifier qual,
+      firtreeTypeSpecifier spec)
+{
+  FullType rv;
+
+  if(qual == NULL) {
+    rv.Qualifier = FullType::TyQualNone;
+  } else if(firtreeTypeQualifier_none(qual)) {
+    rv.Qualifier = FullType::TyQualNone;
+  } else if(firtreeTypeQualifier_const(qual)) {
+    rv.Qualifier = FullType::TyQualConstant;
+  }
+
+  if(firtreeTypeSpecifier_float(spec)) {
+    rv.Specifier = FullType::TySpecFloat;
+  } else if(firtreeTypeSpecifier_int(spec)) {
+    rv.Specifier = FullType::TySpecInt;
+  } else if(firtreeTypeSpecifier_bool(spec)) {
+    rv.Specifier = FullType::TySpecBool;
+  } else if(firtreeTypeSpecifier_vec2(spec)) {
+    rv.Specifier = FullType::TySpecVec2;
+  } else if(firtreeTypeSpecifier_vec3(spec)) {
+    rv.Specifier = FullType::TySpecVec3;
+  } else if(firtreeTypeSpecifier_vec4(spec)) {
+    rv.Specifier = FullType::TySpecVec4;
+  } else if(firtreeTypeSpecifier_sampler(spec)) {
+    rv.Specifier = FullType::TySpecSampler;
+  } else if(firtreeTypeSpecifier_color(spec)) {
+    rv.Specifier = FullType::TySpecColor;
+  }
+
+  return rv;
+}
+
+//===========================================================================
+FullType FullType::FromFullySpecifiedType(firtreeFullySpecifiedType t)
+{
+  firtreeTypeQualifier qual = NULL;
+  firtreeTypeSpecifier spec = NULL;
+
+  if(firtreeFullySpecifiedType_unqualifiedtype(t, &spec)) {
+    /* nop */
+  } else if(firtreeFullySpecifiedType_qualifiedtype(t, &qual, &spec)) {
+    /* nop */
+  }
+
+  return FromQualiferAndSpecifier(qual, spec);
+}
+  
+//===========================================================================
 CompileErrorException::CompileErrorException(std::string message_str,
     const char* file, int line, const char* func, 
     PT_Term term, bool is_ice)

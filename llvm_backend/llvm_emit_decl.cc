@@ -68,8 +68,61 @@ void EmitDeclarations::emitDeclarationList(
 
 //===========================================================================
 /// Emit a function prototype.
-void EmitDeclarations::emitPrototype(firtreeFunctionPrototype proto)
+void EmitDeclarations::emitPrototype(firtreeFunctionPrototype proto_term)
 {
+  firtreeFunctionQualifier qual;
+  firtreeFullySpecifiedType type;
+  GLS_Tok name;
+  GLS_Lst(firtreeParameterDeclaration) params;
+
+  if(!firtreeFunctionPrototype_functionprototype(proto_term,
+        &qual, &type, &name, &params))
+  {
+    FIRTREE_LLVM_ICE(m_Context, proto_term, "Invalid function prototype.");
+  }
+
+  // Form a FunctionPrototype structure for the function
+  FunctionPrototype prototype;
+
+  prototype.Term = proto_term;
+
+  if(firtreeFunctionQualifier_function(qual)) {
+    prototype.Qualifier = FunctionPrototype::FuncQualFunction;
+  } else if(firtreeFunctionQualifier_kernel(qual)) {
+    prototype.Qualifier = FunctionPrototype::FuncQualKernel;
+  } else {
+    FIRTREE_LLVM_ICE(m_Context, qual, "Invalid function qualifier.");
+  }
+
+  prototype.Name = name;
+  if(prototype.Name == NULL) {
+    FIRTREE_LLVM_ICE(m_Context, type, "Invalid name.");
+  }
+
+  prototype.ReturnType = FullType::FromFullySpecifiedType(type);
+  if(!FullType::IsValid(prototype.ReturnType)) {
+    FIRTREE_LLVM_ICE(m_Context, type, "Invalid type.");
+  }
+
+  GLS_Lst(firtreeParameterDeclaration) params_tail;
+  GLS_FORALL(params_tail, params) {
+    firtreeParameterDeclaration param_decl = 
+      GLS_FIRST(firtreeParameterDeclaration, params_tail);
+
+    firtreeTypeQualifier param_type_qual;
+    firtreeParameterQualifier param_qual;
+    firtreeTypeSpecifier param_type_spec;
+    firtreeParameterIdentifierOpt param_identifier;
+
+    if(firtreeParameterDeclaration_parameterdeclaration(param_decl,
+          &param_type_qual, &param_qual, &param_type_spec,
+          &param_identifier))
+    {
+    } else {
+      FIRTREE_LLVM_ICE(m_Context, param_decl,
+          "Invalid parameter declaration.");
+    }
+  }
 }
 
 //===========================================================================

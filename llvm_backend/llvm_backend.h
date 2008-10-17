@@ -55,11 +55,24 @@ struct FullType {
     TySpecInvalid = -1,   ///< An 'invalid' type.
   };
 
-  TypeQualfier    qualifier;
-  TypeSpecifier   specifier;
+  TypeQualfier    Qualifier;
+  TypeSpecifier   Specifier;
 
   /// The constructor defines the default values.
-  inline FullType() : qualifier(TyQualNone), specifier(TySpecInvalid) { }
+  inline FullType() : Qualifier(TyQualInvalid), Specifier(TySpecInvalid) { }
+
+  /// Return a flag indicating the validity of the passed type.
+  inline static bool IsValid(const FullType& t) {
+    return (t.Qualifier != TyQualInvalid) && (t.Specifier != TySpecInvalid);
+  }
+
+  /// Static initialiser from a perse tree qualifier and specifier. If
+  /// the qualifier is NULL, it is assumed to be TyQualNone.
+  static FullType FromQualiferAndSpecifier(firtreeTypeQualifier qual,
+      firtreeTypeSpecifier spec);
+
+  /// Static initialiser from a perse tree fully specified type.
+  static FullType FromFullySpecifiedType(firtreeFullySpecifiedType t);
 };
 
 //===========================================================================

@@ -34,8 +34,18 @@ struct FunctionParameter {
 //===========================================================================
 /// \brief A structure decribing a prototype.
 struct FunctionPrototype {
+  /// The possible function types.
+  enum FunctionQualifier {
+    FuncQualFunction,
+    FuncQualKernel,
+    FuncQualInvalid = -1,
+  };
+
   /// The parse tree term which defined this prototype.
   firtreeFunctionPrototype    Term;
+
+  /// The function qualifier
+  FunctionQualifier           Qualifier;
 
   /// The name of the function (as a symbol).
   symbol                      Name;

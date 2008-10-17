@@ -30,6 +30,9 @@ KERNELCOMPILE_FILES=$(GENERATED_FILES)\
 	llvmutil.h llvmutil.cc \
 	llvmout_priv.h llvmexpout.cc \
 	llvm_backend/llvm_backend.h \
+	llvm_backend/llvm_private.h \
+	llvm_backend/llvm_backend.cc \
+	llvm_backend/llvm_emit_decl.h llvm_backend/llvm_emit_decl.cc \
 	llvm_backend/symbol_table.cc
 
 KERNELCOMPILE_C_SOURCES=$(filter %.c, $(KERNELCOMPILE_FILES))

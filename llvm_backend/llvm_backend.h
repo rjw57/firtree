@@ -5,8 +5,8 @@
 /// also takes care of checking the well-formedness of the passed abstract
 /// depth grammar.
 
-#ifndef __LLVM_OUT_H
-#define __LLVM_OUT_H
+#ifndef __LLVM_BACKEND_H
+#define __LLVM_BACKEND_H
 
 #include "ptm_gen.h" // General Parsing Routines
 #include "ptm_pp.h"  // Pretty Printer
@@ -25,9 +25,11 @@
 
 namespace Firtree {
 
+class CompileErrorException;
+
 //===========================================================================
-/// \brief A structure defining a fully qualified type.
-struct Type {
+/// \brief A structure defining a fully specified type.
+struct FullType {
   //=========================================================================
   /// \brief The possible type qualifiers.
   enum TypeQualfier {
@@ -57,7 +59,7 @@ struct Type {
   TypeSpecifier   specifier;
 
   /// The constructor defines the default values.
-  inline Type() : qualifier(TyQualNone), specifier(TySpecInvalid) { }
+  inline FullType() : qualifier(TyQualNone), specifier(TySpecInvalid) { }
 };
 
 //===========================================================================
@@ -67,7 +69,7 @@ struct VariableDeclaration {
                               ///< variable in memory.
   symbol            name;     ///< The Styx symbol associated with the 
                               ///< variable's name.
-  Type              type;     ///< The variable's type.
+  FullType          type;     ///< The variable's type.
 };
 
 //===========================================================================
@@ -107,6 +109,10 @@ class SymbolTable {
     std::vector< std::map<symbol, VariableDeclaration> > m_scopeStack;
 };
 
+/// Opaque type used for passing the current LLVM context around
+/// between code-generators.
+struct LLVMContext;
+
 //===========================================================================
 /// \brief The LLVM backend class.
 /// 
@@ -115,12 +121,53 @@ class SymbolTable {
 /// and can query the LLVM module genereated therefrom.
 class LLVMBackend {
   public:
+    /// Construct the backend by passing it the top-level translation 
+    /// unit node.
+    LLVMBackend(firtree top_level_term);
+
+    virtual ~LLVMBackend();
+
+    /// Retrieve the LLVM module which was constructed.
+    const llvm::Module* GetCompiledModule() const;
+
+    /// Retrieve the compilation success flag: true on success, false
+    /// otherwise.
+    bool GetCompilationSucceeded() const;
+
+    /// Retrieve the compilation log.
+    const std::vector<std::string>& GetLog() const { return m_Log; }
+
+    //=======================================================================
+    /// These methods are intended to be called by code generation objects.
+    ///@{
+
+    /// Throw a compiler exception.
+    void ThrowCompileErrorException(
+        const char* file, int line, const char* func,
+        bool is_ice, PT_Term term, const char* format, ...);
+    
+    /// Handle a compiler error exception by recording it in the error 
+    /// log.
+    void HandleCompilerError(const CompileErrorException& error_exception);
+
+    /// Record a warning in the log.
+    void RecordWarning(PT_Term term, const char* format, ...);
+
+    /// Record an error or warning in the log.
+    void RecordMessage(PT_Term term, bool is_error, const char* format, ...);
+
+    ///@}
 
   private:
+    LLVMContext*       m_LLVMContext;     ///< The current LLVM context.
+
+    std::vector<std::string>  m_Log;      ///< The compilation log.
+
+    bool               m_Status;          ///< The compilation status.
 };
 
 } // namespace Firtree
 
-#endif // __LLVM_OUT_H 
+#endif // __LLVM_BACKEND_H 
 
 // vim:sw=2:ts=2:cindent:et 

@@ -20,6 +20,9 @@
 
 #include "llvm_backend/llvm_backend.h"
 
+#include "llvm/Bitcode/ReaderWriter.h"
+#include <iostream>
+
 /* Main Program ------------------------------------------------------------ */
 
 void compile_kernel(const char* fileid)
@@ -50,13 +53,32 @@ void compile_kernel(const char* fileid)
   // done parsing, proceed if no syntax errors
   //
   if (PT_errorCnt() == 0)
-  { GLS_Lst(firtreeExternalDeclaration) decls;
+  { 
+#if 1
+    Firtree::LLVMBackend llvm_backend((firtree)srcterm);
+
+    if(llvm_backend.GetCompilationSucceeded())
+    {
+      // Output the bitcode file to stdout
+      WriteBitcodeToFile(llvm_backend.GetCompiledModule(), std::cout);
+    } 
+
+    // Write the log (if any).
+    const std::vector<std::string>& log = llvm_backend.GetLog();
+    std::vector<std::string>::const_iterator i = log.begin();
+    for( ; i != log.end(); i++)
+    {
+      fprintf(stderr, "%s\n", i->c_str());
+    }
+#else  
+    GLS_Lst(firtreeExternalDeclaration) decls;
     // get tree for start symbol
     bug0( firtree_Start_TranslationUnit((firtree)srcterm,&decls), "Program expected");
     // check & execute program
     emitDeclList(decls);
     //StaticSemantic(src);
     //if (PT_errorCnt() == 0) DynamicSemantic(src);
+#endif
   }
   if (PT_errorCnt() > 0)
   {

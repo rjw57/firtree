@@ -188,18 +188,24 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
     ++AI;
   }
 
-  // FIXME: Emit function.
+  // Do the following inside a try/catch block
+  // so that compile errors don't cause us to leak memory.
+  try {
+    // FIXME: Emit function.
 
-  // Create a default return inst if there was no terminator.
-  if(m_Context->BB->getTerminator() == NULL)
-  {
-    // Check function return type is void.
-    if(prototype.ReturnType.Specifier != FullType::TySpecVoid)
+    // Create a default return inst if there was no terminator.
+    if(m_Context->BB->getTerminator() == NULL)
     {
-      FIRTREE_LLVM_ERROR(m_Context, func, "Control reaches end of "
-          "non-void function.");
+      // Check function return type is void.
+      if(prototype.ReturnType.Specifier != FullType::TySpecVoid)
+      {
+        FIRTREE_LLVM_ERROR(m_Context, func, "Control reaches end of "
+            "non-void function.");
+      }
+      new ReturnInst(NULL, m_Context->BB);
     }
-    new ReturnInst(NULL, m_Context->BB);
+  } catch (CompileErrorException e) {
+    m_Context->Backend->HandleCompilerError(e);
   }
 
   delete m_Context->Variables;

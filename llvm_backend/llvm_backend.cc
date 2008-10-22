@@ -1,5 +1,5 @@
 //===========================================================================
-/// \file symbol_table.cc Implementation of Firtree::SymbolTable.
+/// \file llvm_backend.cc 
 
 #include "llvm_backend.h"
 #include "llvm_private.h"
@@ -42,6 +42,8 @@ FullType FullType::FromQualiferAndSpecifier(firtreeTypeQualifier qual,
     rv.Specifier = FullType::TySpecSampler;
   } else if(firtreeTypeSpecifier_color(spec)) {
     rv.Specifier = FullType::TySpecColor;
+  } else if(firtreeTypeSpecifier_void(spec)) {
+    rv.Specifier = FullType::TySpecVoid;
   }
 
   return rv;
@@ -62,6 +64,36 @@ FullType FullType::FromFullySpecifiedType(firtreeFullySpecifiedType t)
   return FromQualiferAndSpecifier(qual, spec);
 }
   
+//===========================================================================
+/// Convert this type to the matching LLVM type. Pass a LLVM context
+/// which can be used for error reporting.
+const llvm::Type* FullType::ToLLVMType(LLVMContext* ctx) const
+{
+  switch(Specifier)
+  {
+    case TySpecFloat:
+      return Type::FloatTy;
+    case TySpecInt:
+    case TySpecSampler:
+      return Type::Int32Ty;
+    case TySpecBool:
+      return Type::Int1Ty;
+    case TySpecVec2:
+      return VectorType::get(Type::FloatTy, 2);
+    case TySpecVec3:
+      return VectorType::get(Type::FloatTy, 3);
+    case TySpecVec4:
+    case TySpecColor:
+      return VectorType::get(Type::FloatTy, 4);
+    case TySpecVoid:
+      return Type::VoidTy;
+    default:
+      FIRTREE_LLVM_ICE(ctx, NULL, "Unknown type.");
+  }
+
+  return NULL;
+}
+
 //===========================================================================
 CompileErrorException::CompileErrorException(std::string message_str,
     const char* file, int line, const char* func, 
@@ -96,6 +128,8 @@ LLVMBackend::LLVMBackend(firtree top_level_term)
     GLS_Lst(firtreeExternalDeclaration) decls;
     if(firtree_Start_TranslationUnit(top_level_term, &decls)) {
       emit_decls.emitDeclarationList(decls);
+
+      emit_decls.checkEmittedDeclarations();
     } else {
       FIRTREE_LLVM_ICE(m_LLVMContext, top_level_term, "Program expected.");
     }

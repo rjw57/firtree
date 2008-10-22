@@ -1,5 +1,8 @@
-vec4 foo(vec4);
+void blobble(int a, int b)
+{
+}
 
+/*
 kernel vec4 kernel_a()
 {
 	//float a = 1, b, c = 3.0, d = float(4);
@@ -14,5 +17,6 @@ vec4 foo(vec4 b)
 	a.yx = vec2(1.0,2.0);
 	return a;
 }
+*/
 
 // vim:sw=2:ts=2:cindent:filetype=c

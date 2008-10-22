@@ -27,6 +27,10 @@ namespace Firtree {
 
 class CompileErrorException;
 
+/// Opaque type used for passing the current LLVM context around
+/// between code-generators.
+struct LLVMContext;
+
 //===========================================================================
 /// \brief A structure defining a fully specified type.
 struct FullType {
@@ -52,6 +56,7 @@ struct FullType {
     TySpecVec4,           ///< A 4 component floating point vector.
     TySpecSampler,        ///< An image sampler.
     TySpecColor,          ///< A colour.
+    TySpecVoid,           ///< A 'void' type.
     TySpecInvalid = -1,   ///< An 'invalid' type.
   };
 
@@ -73,6 +78,18 @@ struct FullType {
 
   /// Static initialiser from a perse tree fully specified type.
   static FullType FromFullySpecifiedType(firtreeFullySpecifiedType t);
+
+  /// Convert this type to the matching LLVM type. Pass a LLVM context
+  /// which can be used for error reporting.
+  const llvm::Type* ToLLVMType(LLVMContext* ctx) const;
+
+  inline bool operator == (const FullType& b) const {
+    return (Qualifier == b.Qualifier) && (Specifier == b.Specifier);
+  }
+
+  inline bool operator != (const FullType& b) const {
+    return (Qualifier != b.Qualifier) || (Specifier != b.Specifier);
+  }
 };
 
 //===========================================================================
@@ -121,10 +138,6 @@ class SymbolTable {
     // and a pointer to the associated value.
     std::vector< std::map<symbol, VariableDeclaration> > m_scopeStack;
 };
-
-/// Opaque type used for passing the current LLVM context around
-/// between code-generators.
-struct LLVMContext;
 
 //===========================================================================
 /// \brief The LLVM backend class.

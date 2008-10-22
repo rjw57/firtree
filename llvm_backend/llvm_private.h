@@ -35,6 +35,15 @@ class CompileErrorException : public Exception {
 };
 
 //===========================================================================
+/// \brief A macro for asserting which calls FIRTREE_LLVM_ERROR( ) if
+/// the assertion fails.
+#define FIRTREE_LLVM_ASSERT(ctx, term, assertion) do { \
+  if(!(assertion)) { \
+    FIRTREE_LLVM_ICE(ctx, term, "Assertion failed: " #assertion); \
+  } \
+} while(0)
+
+//===========================================================================
 /// \brief A macro for reporting compile warnings (i.e. warnings
 /// which should be reported to user). 'term' is the parse-tree
 /// terminal which contains the error or NULL if there is none.
@@ -82,6 +91,9 @@ struct LLVMContext {
 
   ///                   The backend which is generating the code.
   LLVMBackend*          Backend;
+
+  ///                   The current symbol table for the function.
+  SymbolTable*          Variables;
 
   /// Constructor defining default values.
   LLVMContext() : Module(NULL), Function(NULL), BB(NULL) { }

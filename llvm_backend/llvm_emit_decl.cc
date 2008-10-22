@@ -154,11 +154,11 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
       param_llvm_types, false);
   Function* F = NULL;
   if(prototype.Qualifier == FunctionPrototype::FuncQualKernel) {
-    F = new Function(FT, 
+    F = Function::Create(FT, 
         Function::ExternalLinkage, symbolToString(prototype.Name),
         m_Context->Module);
   } else {
-    F = new Function(FT, 
+    F = Function::Create(FT, 
         Function::InternalLinkage, symbolToString(prototype.Name),
         m_Context->Module);
   }
@@ -167,7 +167,7 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
   m_Context->Function = F;
 
   // Create a basic block for this function
-  BasicBlock *BB = new BasicBlock("entry", F);
+  BasicBlock *BB = BasicBlock::Create("entry", F);
   m_Context->BB = BB;
 
   // Create a symbol table
@@ -202,7 +202,7 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
         FIRTREE_LLVM_ERROR(m_Context, func, "Control reaches end of "
             "non-void function.");
       }
-      new ReturnInst(NULL, m_Context->BB);
+      ReturnInst::Create(NULL, m_Context->BB);
     }
   } catch (CompileErrorException e) {
     m_Context->Backend->HandleCompilerError(e);

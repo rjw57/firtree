@@ -1,8 +1,11 @@
 LANG_NAME=firtree
 STYX=styx
 CTOH=ctoh
-CFLAGS=-I/usr/include/styx --std=c99 -Wall -g 
-CXXFLAGS=-I/usr/include/styx -Wall `llvm-config --cppflags` -g `pkg-config firtree --cflags`
+LLVM_MAJOR=`llvm-config --version | cut -d . -f 1`
+LLVM_MINOR=`llvm-config --version | cut -d . -f 2`
+COMMON_FLAGS=-DLLVM_MAJOR_VER=$(LLVM_MAJOR) -DLLVM_MINOR_VER=$(LLVM_MINOR) -I/usr/include/styx -Wall -g
+CFLAGS=--std=c99 $(COMMON_FLAGS)
+CXXFLAGS=$(COMMON_FLAGS) `llvm-config --cppflags` `pkg-config firtree --cflags`
 LDFLAGS=-L/usr/lib `llvm-config --ldflags`
 LIBS=`llvm-config --libs core bitwriter` -ldstyx `pkg-config firtree --libs`
 GENDIR=gen

@@ -153,6 +153,8 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
       prototype.ReturnType.ToLLVMType(m_Context),
       param_llvm_types, false);
   Function* F = NULL;
+
+#if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2)
   if(prototype.Qualifier == FunctionPrototype::FuncQualKernel) {
     F = Function::Create(FT, 
         Function::ExternalLinkage, symbolToString(prototype.Name),
@@ -162,12 +164,27 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
         Function::InternalLinkage, symbolToString(prototype.Name),
         m_Context->Module);
   }
+#else
+  if(prototype.Qualifier == FunctionPrototype::FuncQualKernel) {
+    F = new Function(FT, 
+        Function::ExternalLinkage, symbolToString(prototype.Name),
+        m_Context->Module);
+  } else {
+    F = new Function(FT, 
+        Function::InternalLinkage, symbolToString(prototype.Name),
+        m_Context->Module);
+  }
+#endif
 
   prototype.LLVMFunction = F;
   m_Context->Function = F;
 
   // Create a basic block for this function
+#if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2)
   BasicBlock *BB = BasicBlock::Create("entry", F);
+#else
+  BasicBlock *BB = new BasicBlock("entry", F);
+#endif
   m_Context->BB = BB;
 
   // Create a symbol table
@@ -202,7 +219,11 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
         FIRTREE_LLVM_ERROR(m_Context, func, "Control reaches end of "
             "non-void function.");
       }
+#if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2)
       ReturnInst::Create(NULL, m_Context->BB);
+#else
+      new ReturnInst(NULL, m_Context->BB);
+#endif
     }
   } catch (CompileErrorException e) {
     m_Context->Backend->HandleCompilerError(e);

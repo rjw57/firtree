@@ -99,6 +99,22 @@ struct LLVMContext {
   LLVMContext() : Module(NULL), Function(NULL), BB(NULL) { }
 };
 
+//===========================================================================
+/// \brief A macro to create a LLVM object.
+///
+/// Prior to LLVM 2.3, object creation was done via new Foo(). Since
+/// LLVM 2.3, the preferred method is Foo::Create(). This macro selects
+/// the appropriate mechanism based upon the LLVM_MAJOR_VER and 
+/// LLVM_MINOR_VER macros.
+///
+/// FIXME: The way this macro is constructed *requires* that the constructor
+/// takes arguments.
+#if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2) 
+# define LLVM_CREATE(type, ...) ( type::Create(__VA_ARGS__) )
+#else 
+# define LLVM_CREATE(type, ...) ( new type(__VA_ARGS__) )
+#endif 
+
 } // namespace Firtree
 
 #endif // __LLVM_PRIVATE_H 

@@ -47,7 +47,11 @@ KERNELCOMPILE_OBJECTS=$(KERNELCOMPILE_C_SOURCES:.c=.o) \
 all: kernelparse kernelcompile
 
 compiletest: kernelcompile
-	./kernelcompile testkernel.knl | llvm-dis
+	./kernelcompile testkernel.knl >testkernel.llo
+	@echo "=========> GENERATED CODE <========="
+	llvm-dis -o - testkernel.llo
+	@echo "=========> OPTIMISED CODE <========="
+	opt -std-compile-opts testkernel.llo | llvm-dis -o -
 
 parsetest: kernelparse
 	./kernelparse testkernel.knl

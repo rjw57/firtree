@@ -1,5 +1,5 @@
 //===========================================================================
-/// \file llvm_backend.cc 
+/// \file llvm_backend.cc
 
 #include "llvm_backend.h"
 #include "llvm_private.h"
@@ -10,97 +10,108 @@
 
 using namespace llvm;
 
-namespace Firtree {
+namespace Firtree
+{
 
 //===========================================================================
-FullType FullType::FromQualiferAndSpecifier(firtreeTypeQualifier qual,
-      firtreeTypeSpecifier spec)
+FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
+        firtreeTypeSpecifier spec )
 {
-  FullType rv;
+	FullType rv;
 
-  if(qual == NULL) {
-    rv.Qualifier = FullType::TyQualNone;
-  } else if(firtreeTypeQualifier_none(qual)) {
-    rv.Qualifier = FullType::TyQualNone;
-  } else if(firtreeTypeQualifier_const(qual)) {
-    rv.Qualifier = FullType::TyQualConstant;
-  }
+	if ( qual == NULL ) {
+		rv.Qualifier = FullType::TyQualNone;
+	} else if ( firtreeTypeQualifier_none( qual ) ) {
+		rv.Qualifier = FullType::TyQualNone;
+	} else if ( firtreeTypeQualifier_const( qual ) ) {
+		rv.Qualifier = FullType::TyQualConstant;
+	}
 
-  if(firtreeTypeSpecifier_float(spec)) {
-    rv.Specifier = FullType::TySpecFloat;
-  } else if(firtreeTypeSpecifier_int(spec)) {
-    rv.Specifier = FullType::TySpecInt;
-  } else if(firtreeTypeSpecifier_bool(spec)) {
-    rv.Specifier = FullType::TySpecBool;
-  } else if(firtreeTypeSpecifier_vec2(spec)) {
-    rv.Specifier = FullType::TySpecVec2;
-  } else if(firtreeTypeSpecifier_vec3(spec)) {
-    rv.Specifier = FullType::TySpecVec3;
-  } else if(firtreeTypeSpecifier_vec4(spec)) {
-    rv.Specifier = FullType::TySpecVec4;
-  } else if(firtreeTypeSpecifier_sampler(spec)) {
-    rv.Specifier = FullType::TySpecSampler;
-  } else if(firtreeTypeSpecifier_color(spec)) {
-    rv.Specifier = FullType::TySpecColor;
-  } else if(firtreeTypeSpecifier_void(spec)) {
-    rv.Specifier = FullType::TySpecVoid;
-  }
+	if ( firtreeTypeSpecifier_float( spec ) ) {
+		rv.Specifier = FullType::TySpecFloat;
+	} else if ( firtreeTypeSpecifier_int( spec ) ) {
+		rv.Specifier = FullType::TySpecInt;
+	} else if ( firtreeTypeSpecifier_bool( spec ) ) {
+		rv.Specifier = FullType::TySpecBool;
+	} else if ( firtreeTypeSpecifier_vec2( spec ) ) {
+		rv.Specifier = FullType::TySpecVec2;
+	} else if ( firtreeTypeSpecifier_vec3( spec ) ) {
+		rv.Specifier = FullType::TySpecVec3;
+	} else if ( firtreeTypeSpecifier_vec4( spec ) ) {
+		rv.Specifier = FullType::TySpecVec4;
+	} else if ( firtreeTypeSpecifier_sampler( spec ) ) {
+		rv.Specifier = FullType::TySpecSampler;
+	} else if ( firtreeTypeSpecifier_color( spec ) ) {
+		rv.Specifier = FullType::TySpecColor;
+	} else if ( firtreeTypeSpecifier_void( spec ) ) {
+		rv.Specifier = FullType::TySpecVoid;
+	}
 
-  return rv;
+	return rv;
 }
 
 //===========================================================================
-FullType FullType::FromFullySpecifiedType(firtreeFullySpecifiedType t)
+FullType FullType::FromFullySpecifiedType( firtreeFullySpecifiedType t )
 {
-  firtreeTypeQualifier qual = NULL;
-  firtreeTypeSpecifier spec = NULL;
+	firtreeTypeQualifier qual = NULL;
+	firtreeTypeSpecifier spec = NULL;
 
-  if(firtreeFullySpecifiedType_unqualifiedtype(t, &spec)) {
-    /* nop */
-  } else if(firtreeFullySpecifiedType_qualifiedtype(t, &qual, &spec)) {
-    /* nop */
-  }
+	if ( firtreeFullySpecifiedType_unqualifiedtype( t, &spec ) ) {
+		/* nop */
+	} else if ( firtreeFullySpecifiedType_qualifiedtype(
+	                t, &qual, &spec ) ) {
+		/* nop */
+	}
 
-  return FromQualiferAndSpecifier(qual, spec);
+	return FromQualiferAndSpecifier( qual, spec );
 }
-  
+
 //===========================================================================
 /// Convert this type to the matching LLVM type. Pass a LLVM context
 /// which can be used for error reporting.
-const llvm::Type* FullType::ToLLVMType(LLVMContext* ctx) const
+const llvm::Type* FullType::ToLLVMType( LLVMContext* ctx ) const
 {
-  switch(Specifier)
-  {
-    case TySpecFloat:
-      return Type::FloatTy;
-    case TySpecInt:
-    case TySpecSampler:
-      return Type::Int32Ty;
-    case TySpecBool:
-      return Type::Int1Ty;
-    case TySpecVec2:
-      return VectorType::get(Type::FloatTy, 2);
-    case TySpecVec3:
-      return VectorType::get(Type::FloatTy, 3);
-    case TySpecVec4:
-    case TySpecColor:
-      return VectorType::get(Type::FloatTy, 4);
-    case TySpecVoid:
-      return Type::VoidTy;
-    default:
-      FIRTREE_LLVM_ICE(ctx, NULL, "Unknown type.");
-  }
+	switch ( Specifier ) {
 
-  return NULL;
+		case TySpecFloat:
+			return Type::FloatTy;
+
+		case TySpecInt:
+
+		case TySpecSampler:
+			return Type::Int32Ty;
+
+		case TySpecBool:
+			return Type::Int1Ty;
+
+		case TySpecVec2:
+			return VectorType::get( Type::FloatTy, 2 );
+
+		case TySpecVec3:
+			return VectorType::get( Type::FloatTy, 3 );
+
+		case TySpecVec4:
+
+		case TySpecColor:
+			return VectorType::get( Type::FloatTy, 4 );
+
+		case TySpecVoid:
+			return Type::VoidTy;
+
+		default:
+			FIRTREE_LLVM_ICE( ctx, NULL, "Unknown type." );
+	}
+
+	return NULL;
 }
 
 //===========================================================================
-CompileErrorException::CompileErrorException(std::string message_str,
-    const char* file, int line, const char* func, 
-    PT_Term term, bool is_ice)
-: Exception::Exception(message_str.c_str(), file, line, func)
-, m_IsIce(is_ice)
-, m_Term(term)
+CompileErrorException::CompileErrorException( std::string message_str,
+        const char* file, int line, const char* func,
+        PT_Term term, bool is_ice )
+		: Exception::Exception( message_str.c_str(), file, line, func )
+		, m_IsIce( is_ice )
+		, m_Term( term )
 {
 }
 
@@ -110,59 +121,62 @@ CompileErrorException::~CompileErrorException()
 }
 
 //===========================================================================
-LLVMBackend::LLVMBackend(firtree top_level_term)
-  : m_Status(true)
+LLVMBackend::LLVMBackend( firtree top_level_term )
+		: m_Status( true )
 {
-  // Create the context
-  m_LLVMContext = new LLVMContext();
+	// Create the context
+	m_LLVMContext = new LLVMContext();
 
-  m_LLVMContext->Backend = this;
+	m_LLVMContext->Backend = this;
 
-  // Create the LLVM module.
-  m_LLVMContext->Module = new Module("kernel_module");
+	// Create the LLVM module.
+	m_LLVMContext->Module = new Module( "kernel_module" );
 
-  try {
-    EmitDeclarations emit_decls(m_LLVMContext);
+	try {
+		EmitDeclarations emit_decls( m_LLVMContext );
 
-    // Start the compilation
-    GLS_Lst(firtreeExternalDeclaration) decls;
-    if(firtree_Start_TranslationUnit(top_level_term, &decls)) {
-      emit_decls.emitDeclarationList(decls);
+		// Start the compilation
+		GLS_Lst( firtreeExternalDeclaration ) decls;
 
-      emit_decls.checkEmittedDeclarations();
-    } else {
-      FIRTREE_LLVM_ICE(m_LLVMContext, top_level_term, "Program expected.");
-    }
-  } catch (CompileErrorException e) {
-    HandleCompilerError(e);
-  }
+		if ( firtree_Start_TranslationUnit( top_level_term, &decls ) ) {
+			emit_decls.emitDeclarationList( decls );
+
+			emit_decls.checkEmittedDeclarations();
+		} else {
+			FIRTREE_LLVM_ICE( m_LLVMContext, top_level_term,
+			                  "Program expected." );
+		}
+	} catch ( CompileErrorException e ) {
+		HandleCompilerError( e );
+	}
 }
 
 //===========================================================================
 LLVMBackend::~LLVMBackend()
 {
-  // Check that we don't think we're in the middle of a function/block.
-  if(m_LLVMContext->BB != NULL) {
-    FIRTREE_LLVM_ICE(m_LLVMContext, NULL, 
-        "Finished compilation within a basic block.");
-  }
-  if(m_LLVMContext->Function != NULL) {
-    FIRTREE_LLVM_ICE(m_LLVMContext, NULL, 
-        "Finished compilation within a function.");
-  }
+	// Check that we don't think we're in the middle of a function/block.
+	if ( m_LLVMContext->BB != NULL ) {
+		FIRTREE_LLVM_ICE( m_LLVMContext, NULL,
+		                  "Finished compilation within a basic block." );
+	}
 
-  // Delete the LLVM module.
-  delete m_LLVMContext->Module;
+	if ( m_LLVMContext->Function != NULL ) {
+		FIRTREE_LLVM_ICE( m_LLVMContext, NULL,
+		                  "Finished compilation within a function." );
+	}
 
-  // Delete the context.
-  delete m_LLVMContext;
+	// Delete the LLVM module.
+	delete m_LLVMContext->Module;
+
+	// Delete the context.
+	delete m_LLVMContext;
 }
 
 //===========================================================================
 /// Retrieve the LLVM module constructed from compilation.
 const llvm::Module* LLVMBackend::GetCompiledModule() const
 {
-  return m_LLVMContext->Module;
+	return m_LLVMContext->Module;
 }
 
 //===========================================================================
@@ -170,129 +184,135 @@ const llvm::Module* LLVMBackend::GetCompiledModule() const
 /// otherwise.
 bool LLVMBackend::GetCompilationSucceeded() const
 {
-  return m_Status;
+	return m_Status;
 }
 
 //===========================================================================
 /// Throw a compiler exception.
 void LLVMBackend::ThrowCompileErrorException(
     const char* file, int line, const char* func,
-    bool is_ice, PT_Term term, 
-    const char* format, ...)
+    bool is_ice, PT_Term term,
+    const char* format, ... )
 {
-  va_list args;
+	va_list args;
 
-  // Work out how much space is required for the message.
-  va_start(args, format);
-  int message_length = vsnprintf(NULL, 0, format, args);
-  va_end(args);
+	// Work out how much space is required for the message.
+	va_start( args, format );
+	int message_length = vsnprintf( NULL, 0, format, args );
+	va_end( args );
 
-  // Allocate room for message.
-  char* message = new char[message_length + 1];
+	// Allocate room for message.
+	char* message = new char[message_length + 1];
 
-  // Form the error message.
-  va_start(args, format);
-  vsnprintf(message, message_length + 1,
-      format, args);
-  va_end(args);
+	// Form the error message.
+	va_start( args, format );
+	vsnprintf( message, message_length + 1,
+	           format, args );
+	va_end( args );
 
-  std::string message_str(message);
+	std::string message_str( message );
 
-  delete message;
+	delete message;
 
-  // Throw exception.
-  throw CompileErrorException(message_str, file, line, func, term, is_ice);
+	// Throw exception.
+	throw CompileErrorException( message_str, file,
+	                             line, func, term, is_ice );
 }
 
 //===========================================================================
-/// Handle a compiler error exception by recording it in the error 
+/// Handle a compiler error exception by recording it in the error
 /// log.
 void LLVMBackend::HandleCompilerError(
-    const CompileErrorException& error_exception)
+    const CompileErrorException& error_exception )
 {
-  if(error_exception.IsIce())
-  {
-    RecordMessage(error_exception.GetTerm(), true,
-        "error: ICE: %s @ %s:%s:%i", 
-        error_exception.GetMessage().c_str(),
-        error_exception.GetFile().c_str(),
-        error_exception.GetFunction().c_str(),
-        error_exception.GetLine());
-  } else {
-    RecordMessage(error_exception.GetTerm(), true,
-        "error: %s", 
-        error_exception.GetMessage().c_str());
-  }
+	if ( error_exception.IsIce() ) {
+		RecordMessage( error_exception.GetTerm(), true,
+		               "error: ICE: %s @ %s:%s:%i",
+		               error_exception.GetMessage().c_str(),
+		               error_exception.GetFile().c_str(),
+		               error_exception.GetFunction().c_str(),
+		               error_exception.GetLine() );
+	} else {
+		RecordMessage( error_exception.GetTerm(), true,
+		               "error: %s",
+		               error_exception.GetMessage().c_str() );
+	}
 }
 
 //===========================================================================
 /// Record an error or warning in the log.
-void LLVMBackend::RecordWarning(PT_Term term, const char* format, ...)
+void LLVMBackend::RecordWarning( PT_Term term, const char* format, ... )
 {
-  va_list args;
+	va_list args;
 
-  // Work out how much space is required for the rest of the message.
-  va_start(args, format);
-  int message_length = vsnprintf(NULL, 0, format, args);
-  va_end(args);
- 
-  // Allocate room for message.
-  char* message = new char[message_length + 1];
+	// Work out how much space is required for the rest of the message.
+	va_start( args, format );
+	int message_length = vsnprintf( NULL, 0, format, args );
+	va_end( args );
 
-  // Form the error message.
-  va_start(args, format);
-  vsnprintf(message, message_length + 1, format, args);
-  va_end(args);
+	// Allocate room for message.
+	char* message = new char[message_length + 1];
 
-  RecordMessage(term, false, "warning: %s", message);
+	// Form the error message.
+	va_start( args, format );
+	vsnprintf( message, message_length + 1, format, args );
+	va_end( args );
 
-  delete message;
+	RecordMessage( term, false, "warning: %s", message );
+
+	delete message;
 }
 
 //===========================================================================
 /// Record an error or warning in the log.
-void LLVMBackend::RecordMessage(PT_Term term, bool is_error,
-    const char* format, ...)
+void LLVMBackend::RecordMessage( PT_Term term, bool is_error,
+                                 const char* format, ... )
 {
-  va_list args;
+	va_list args;
 
-  // Work out how much space is required for the term location in the
-  // message.
-  int term_loc_length = 0;
-  if((term != NULL) && (PT_hasPos(term))) {
-    term_loc_length = snprintf(NULL, 0, "%li:%li: ", PT_row(term),
-        PT_col(term));
-  }
+	// Work out how much space is required for the term location in the
+	// message.
+	int term_loc_length = 0;
 
-  // Work out how much space is required for the rest of the message.
-  va_start(args, format);
-  int message_length = vsnprintf(NULL, 0, format, args);
-  va_end(args);
+	if (( term != NULL ) && ( PT_hasPos( term ) ) ) {
+		term_loc_length = snprintf( NULL, 0, "%li:%li: ", PT_row( term ),
+		                            PT_col( term ) );
+	}
 
-  // Allocate room for message.
-  char* message = new char[term_loc_length + message_length + 1];
+	// Work out how much space is required for the rest of the message.
+	va_start( args, format );
 
-  if(term_loc_length != 0)
-  {
-    snprintf(message, term_loc_length+1, "%li:%li: ", PT_row(term),
-        PT_col(term));
-  }
+	int message_length = vsnprintf( NULL, 0, format, args );
 
-  // Form the error message.
-  va_start(args, format);
-  vsnprintf(message + term_loc_length, message_length + 1,
-      format, args);
-  va_end(args);
+	va_end( args );
 
-  // record message.
-  m_Log.push_back(message);
+	// Allocate room for message.
+	char* message = new char[term_loc_length + message_length + 1];
 
-  // set error flag is necessary
-  if(is_error) { m_Status = false; }
+	if ( term_loc_length != 0 ) {
+		snprintf( message, term_loc_length+1, "%li:%li: ", PT_row( term ),
+		          PT_col( term ) );
+	}
 
-  delete message;
+	// Form the error message.
+	va_start( args, format );
+
+	vsnprintf( message + term_loc_length, message_length + 1,
+	           format, args );
+
+	va_end( args );
+
+	// record message.
+	m_Log.push_back( message );
+
+	// set error flag is necessary
+	if ( is_error ) {
+		m_Status = false;
+	}
+
+	delete message;
 }
 
 }
 
-// vim:sw=2:ts=2:cindent:et
+// vim:sw=4:ts=4:cindent:noet

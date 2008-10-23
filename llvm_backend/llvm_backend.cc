@@ -154,6 +154,9 @@ LLVMBackend::LLVMBackend( firtree top_level_term )
 //===========================================================================
 LLVMBackend::~LLVMBackend()
 {
+	// Commented out because throwing an error inside the Function
+	// emission will trigger this too.
+#if 0
 	// Check that we don't think we're in the middle of a function/block.
 	if ( m_LLVMContext->BB != NULL ) {
 		FIRTREE_LLVM_ICE( m_LLVMContext, NULL,
@@ -164,6 +167,7 @@ LLVMBackend::~LLVMBackend()
 		FIRTREE_LLVM_ICE( m_LLVMContext, NULL,
 		                  "Finished compilation within a function." );
 	}
+#endif
 
 	// Delete the LLVM module.
 	delete m_LLVMContext->Module;

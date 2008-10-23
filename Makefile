@@ -34,6 +34,10 @@ KERNELCOMPILE_FILES=$(GENERATED_FILES)\
 	llvm_backend/llvm_private.h \
 	llvm_backend/llvm_backend.cc \
 	llvm_backend/llvm_emit_decl.h llvm_backend/llvm_emit_decl.cc \
+	llvm_backend/llvm_expression.h \
+	llvm_backend/llvm_expression.cc \
+	llvm_backend/llvm_emit_return.cc \
+	llvm_backend/llvm_emit_expr_list.cc \
 	llvm_backend/symbol_table.cc
 #	llvmout.h llvmout.cc \
 #	llvmutil.h llvmutil.cc \
@@ -48,10 +52,10 @@ all: kernelparse kernelcompile
 
 beautify:
 	for file in $(filter %.cc, $(KERNELCOMPILE_FILES)); do \
-		astyle -s4 -t4 -l -C -S -w -f -U -D "$$file"; \
+		astyle -s4 -t4 -l -C -S -w -U -D "$$file"; \
 	done
 	for file in $(filter %.h, $(KERNELCOMPILE_FILES)); do \
-		astyle -s4 -t4 -l -C -S -w -f -U -D "$$file"; \
+		astyle -s4 -t4 -l -C -S -w -U -D "$$file"; \
 	done
 
 compiletest: kernelcompile

@@ -7,6 +7,7 @@
 #include <firtree/main.h>
 
 #include "llvm_emit_decl.h"
+#include "llvm_expression.h"
 
 #include <llvm/Instructions.h>
 
@@ -190,6 +191,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	prototype.LLVMFunction = F;
 
 	m_Context->Function = F;
+	m_Context->CurrentPrototype = &prototype;
 
 	// Create a basic block for this function
 	BasicBlock *BB = LLVM_CREATE( BasicBlock, "entry", F );
@@ -275,23 +277,33 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		++AI;
 	}
 
-	// Do the following inside a try/catch block
-	// so that compile errors don't cause us to leak memory.
-	try {
-		// FIXME: Emit function.
-
-		// Create a default return inst if there was no terminator.
-		if ( m_Context->BB->getTerminator() == NULL ) {
-			// Check function return type is void.
-			if ( prototype.ReturnType.Specifier != FullType::TySpecVoid ) {
-				FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
-				                    "of non-void function." );
-			}
-
-			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+	// Do the following inside using try/catch block
+	// so that compile errors don't cause us to leak memory and
+	// we can continue after errors.
+	GLS_Lst( firtreeExpression ) tail;
+	GLS_FORALL( tail, function_body ) {
+		firtreeExpression e = GLS_FIRST( firtreeExpression, tail );
+		try {
+			// Emit expression
+			ExpressionValue* emitted_val = 
+				ExpressionEmitterRegistry::GetRegistry()->Emit( 
+						m_Context, e );
+			// Free the emitted value
+			FIRTREE_SAFE_RELEASE(emitted_val);
+		} catch ( CompileErrorException e ) {
+			m_Context->Backend->HandleCompilerError( e );
 		}
-	} catch ( CompileErrorException e ) {
-		m_Context->Backend->HandleCompilerError( e );
+	}
+
+	// Create a default return inst if there was no terminator.
+	if ( m_Context->BB->getTerminator() == NULL ) {
+		// Check function return type is void.
+		if ( prototype.ReturnType.Specifier != FullType::TySpecVoid ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
+			                    "of non-void function." );
+		}
+
+		LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
 	}
 
 	delete m_Context->Variables;
@@ -299,6 +311,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	m_Context->Variables = NULL;
 	m_Context->BB = NULL;
 	m_Context->Function = NULL;
+	m_Context->CurrentPrototype = NULL;
 }
 
 //===========================================================================

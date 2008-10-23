@@ -83,10 +83,10 @@ class CompileErrorException : public Exception
 	} while(0)
 
 class LLVMBackend;
+struct FunctionPrototype;
 
 //===========================================================================
 /// \brief A structure defining the current LLVM context.
-
 struct LLVMContext {
 	///                   The current LLVM module we're inserting functions
 	///                   into.
@@ -104,6 +104,10 @@ struct LLVMContext {
 
 	///                   The current symbol table for the function.
 	SymbolTable*          Variables;
+
+	///					  A pointer to the FunctionPrototype structure
+	///					  associated with the current function.
+	FunctionPrototype*	  CurrentPrototype;
 
 	/// Constructor defining default values.
 	LLVMContext() : Module( NULL ), Function( NULL ), BB( NULL ) { }

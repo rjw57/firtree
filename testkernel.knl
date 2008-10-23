@@ -1,5 +1,6 @@
-void blobble(int a, in int b, out int c, inout vec4 d)
+int blobble(int a, in int b, out int c, inout vec4 d)
 {
+	return 1;
 }
 
 /*
@@ -21,4 +22,4 @@ vec4 foo(vec4 b)
 }
 */
 
-// vim:sw=2:ts=2:cindent:filetype=c
+// vim:sw=4:ts=4:cindent:filetype=c

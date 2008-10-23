@@ -12,270 +12,293 @@
 
 using namespace llvm;
 
-namespace Firtree {
+namespace Firtree
+{
 
 //===========================================================================
-EmitDeclarations::EmitDeclarations(LLVMContext* ctx)
+EmitDeclarations::EmitDeclarations( LLVMContext* ctx )
 {
-  m_Context = ctx;
+	m_Context = ctx;
 }
 
 //===========================================================================
 EmitDeclarations::~EmitDeclarations()
 {
-  // Not really necessary but it gives one the warm fuzzy feeling of being
-  // a Good Boy.
-  m_Context = NULL;
+	// Not really necessary but it gives one the warm fuzzy feeling of being
+	// a Good Boy.
+	m_Context = NULL;
 }
 
 //===========================================================================
 /// Emit a single firtree declaration.
-void EmitDeclarations::emitDeclaration(firtreeExternalDeclaration decl)
+void EmitDeclarations::emitDeclaration( firtreeExternalDeclaration decl )
 {
-  firtreeFunctionDefinition func_def;
-  firtreeFunctionPrototype func_proto;
+	firtreeFunctionDefinition func_def;
+	firtreeFunctionPrototype func_proto;
 
-  // Decide if this declaration is a prototype or definition and
-  // act accordingly.
-  if(firtreeExternalDeclaration_definefuntion(decl, &func_def))
-  {
-    emitFunction(func_def);
-  } else if(firtreeExternalDeclaration_declarefunction(decl, &func_proto)) {
-    emitPrototype(func_proto);
-  } else {
-    FIRTREE_LLVM_ICE(m_Context, decl, "Unknown declaration node.");
-  }
+	// Decide if this declaration is a prototype or definition and
+	// act accordingly.
+
+	if ( firtreeExternalDeclaration_definefuntion( decl, &func_def ) ) {
+		emitFunction( func_def );
+	} else if ( firtreeExternalDeclaration_declarefunction( decl,
+	            &func_proto ) ) {
+		emitPrototype( func_proto );
+	} else {
+		FIRTREE_LLVM_ICE( m_Context, decl, "Unknown declaration node." );
+	}
 }
 
 //===========================================================================
 /// Emit a list of firtree declarations.
 void EmitDeclarations::emitDeclarationList(
-    GLS_Lst(firtreeExternalDeclaration) decl_list)
+    GLS_Lst( firtreeExternalDeclaration ) decl_list )
 {
-  GLS_Lst(firtreeExternalDeclaration) tail = decl_list;
-  firtreeExternalDeclaration decl;
+	GLS_Lst( firtreeExternalDeclaration ) tail = decl_list;
+	firtreeExternalDeclaration decl;
 
-  GLS_FORALL(tail, decl_list) {
-    decl = GLS_FIRST(firtreeExternalDeclaration, tail);
+	GLS_FORALL( tail, decl_list ) {
+		decl = GLS_FIRST( firtreeExternalDeclaration, tail );
 
-    // Wrap each external declaration in an exception handler so 
-    // we can re-start from here.
-    try {
-      emitDeclaration(decl);
-    } catch (CompileErrorException e) {
-      m_Context->Backend->HandleCompilerError(e);
-    }
-  }
+		// Wrap each external declaration in an exception handler so
+		// we can re-start from here.
+
+		try {
+			emitDeclaration( decl );
+		} catch ( CompileErrorException e ) {
+			m_Context->Backend->HandleCompilerError( e );
+		}
+	}
 }
 
 //===========================================================================
 /// Emit a function prototype.
-void EmitDeclarations::emitPrototype(firtreeFunctionPrototype proto_term)
+void EmitDeclarations::emitPrototype( firtreeFunctionPrototype proto_term )
 {
-  FunctionPrototype prototype;
-  constructPrototypeStruct(prototype, proto_term);
+	FunctionPrototype prototype;
+	constructPrototypeStruct( prototype, proto_term );
 
-  // Check this prototype does not conflict with an existing one.
-  if(existsConflictingPrototype(prototype)) {
-    FIRTREE_LLVM_ERROR(m_Context, proto_term, "Function '%s' "
-        "conflicts with previously declared or defined function.",
-        symbolToString(prototype.Name));
-  }
+	// Check this prototype does not conflict with an existing one.
 
-  // Insert this prototype into the function table.
-  m_FuncTable.insert( 
-      std::pair<symbol, FunctionPrototype>(prototype.Name, prototype) );
+	if ( existsConflictingPrototype( prototype ) ) {
+		FIRTREE_LLVM_ERROR( m_Context, proto_term, "Function '%s' "
+		                    "conflicts with previously declared or defined "
+		                    "function.", symbolToString( prototype.Name ) );
+	}
+
+	// Insert this prototype into the function table.
+	m_FuncTable.insert(
+	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 }
 
 //===========================================================================
 /// Emit a function definition.
-void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
+void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 {
-  firtreeFunctionPrototype function_prototype;
-  GLS_Lst(firtreeExpression) function_body;
+	firtreeFunctionPrototype function_prototype;
+	GLS_Lst( firtreeExpression ) function_body;
 
-  if(!firtreeFunctionDefinition_functiondefinition(func,
-        &function_prototype, &function_body)) {
-    FIRTREE_LLVM_ICE(m_Context, func, "Invalid function definition.");
-  }
+	if ( !firtreeFunctionDefinition_functiondefinition( func,
+	        &function_prototype, &function_body ) ) {
+		FIRTREE_LLVM_ICE( m_Context, func, "Invalid function definition." );
+	}
 
-  // Form prototype struct from parse tree term.
-  FunctionPrototype prototype;
-  constructPrototypeStruct(prototype, function_prototype);
-  prototype.DefinitionTerm = func;
+	// Form prototype struct from parse tree term.
+	FunctionPrototype prototype;
 
-  // Do we have an existing prototype for this function?
-  std::multimap<symbol, FunctionPrototype>::iterator existing_proto_it;
-  if(existsConflictingPrototype(prototype, &existing_proto_it)) {
-    // Check that the existing prototype does not have a definition
-    // already.
-    if(existing_proto_it->second.DefinitionTerm != NULL) {
-      FIRTREE_LLVM_ERROR(m_Context, func, "Multiple defintions of "
-          "function '%s'.", symbolToString(prototype.Name));
-    }
+	constructPrototypeStruct( prototype, function_prototype );
 
-    // Check the function qualifiers
-    if(existing_proto_it->second.Qualifier != prototype.Qualifier) {
-      FIRTREE_LLVM_ERROR(m_Context, func, "Conflicting function qualifiers "
-          "between definition and declaration of function '%s'.",
-          symbolToString(prototype.Name));
-    }
+	prototype.DefinitionTerm = func;
 
-    // Check the return types are compatible.
-    if(existing_proto_it->second.ReturnType != prototype.ReturnType) {
-      FIRTREE_LLVM_ERROR(m_Context, func, "Conflicting return types "
-          "between definition and declaration of function '%s'.",
-          symbolToString(prototype.Name));
-    }
+	// Do we have an existing prototype for this function?
+	std::multimap<symbol, FunctionPrototype>::iterator existing_proto_it;
 
-    // Erase the old prototype.
-    m_FuncTable.erase(existing_proto_it);
-  }
-    
-  // This function does not yet exist in the function table, since
-  // we erase it above if it did so. Insert it.
-  m_FuncTable.insert( 
-      std::pair<symbol, FunctionPrototype>(prototype.Name, prototype) );
+	if ( existsConflictingPrototype( prototype, &existing_proto_it ) ) {
+		// Check that the existing prototype does not have a definition
+		// already.
+		if ( existing_proto_it->second.DefinitionTerm != NULL ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Multiple defintions of "
+			                    "function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
 
-  // Create a LLVM function object corresponding to this definition.
-  
-  std::vector<const Type*> param_llvm_types;
-  std::vector<FunctionParameter>::const_iterator it = 
-    prototype.Parameters.begin();
-  while(it != prototype.Parameters.end())
-  {
-    // output parameters are passed by reference.
-    const llvm::Type* base_type = it->Type.ToLLVMType(m_Context);
-    const llvm::Type* param_type = base_type;
+		// Check the function qualifiers
+		if ( existing_proto_it->second.Qualifier != prototype.Qualifier ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting function "
+			                    "qualifiers between definition and "
+			                    "declaration of function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
 
-    if((it->Direction == FunctionParameter::FuncParamOut) ||
-        (it->Direction == FunctionParameter::FuncParamInOut)) {
-      param_type = PointerType::get(base_type, 0);
-    }
+		// Check the return types are compatible.
+		if ( existing_proto_it->second.ReturnType != prototype.ReturnType ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting return types "
+			                    "between definition and declaration of "
+			                    "function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
 
-    param_llvm_types.push_back(param_type);
-    it++;
-  }
+		// Erase the old prototype.
+		m_FuncTable.erase( existing_proto_it );
+	}
 
-  FunctionType *FT = FunctionType::get(
-      prototype.ReturnType.ToLLVMType(m_Context),
-      param_llvm_types, false);
-  Function* F = NULL;
+	// This function does not yet exist in the function table, since
+	// we erase it above if it did so. Insert it.
+	m_FuncTable.insert(
+	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 
-  if(prototype.Qualifier == FunctionPrototype::FuncQualKernel) {
-    F = LLVM_CREATE(Function, FT, 
-        Function::ExternalLinkage, symbolToString(prototype.Name),
-        m_Context->Module);
-  } else {
-    F = LLVM_CREATE(Function, FT, 
-        Function::InternalLinkage, symbolToString(prototype.Name),
-        m_Context->Module);
-  }
+	// Create a LLVM function object corresponding to this definition.
 
-  prototype.LLVMFunction = F;
-  m_Context->Function = F;
+	std::vector<const Type*> param_llvm_types;
 
-  // Create a basic block for this function
-  BasicBlock *BB = LLVM_CREATE(BasicBlock, "entry", F);
-  m_Context->BB = BB;
+	std::vector<FunctionParameter>::const_iterator it =
+	    prototype.Parameters.begin();
 
-  // Create a symbol table
-  m_Context->Variables = new SymbolTable();
+	while ( it != prototype.Parameters.end() ) {
+		// output parameters are passed by reference.
+		const llvm::Type* base_type = it->Type.ToLLVMType( m_Context );
+		const llvm::Type* param_type = base_type;
 
-  // Set names for all arguments.
-  it = prototype.Parameters.begin();
-  Function::arg_iterator AI = F->arg_begin();
-  while(it != prototype.Parameters.end())
-  {
-    if(it->Name != NULL)
-    {
-      AI->setName(symbolToString(it->Name));
+		if (( it->Direction == FunctionParameter::FuncParamOut ) ||
+		        ( it->Direction == FunctionParameter::FuncParamInOut ) ) {
+			param_type = PointerType::get( base_type, 0 );
+		}
 
-      // We now add this parameter to the function table. There
-      // are three sorts of parameter: in, out and inout. We
-      // treat each case differently.
-      switch(it->Direction)
-      {
-        case FunctionParameter::FuncParamIn:
-          {
-            // Variables are assumed to be implemented as pointers to
-            // the underlying value. Since we pass 'in' parameters by
-            // value, allocate a temporary variable on the stack to hold
-            // the value.
-            Value* paramLoc = LLVM_CREATE(AllocaInst,
-                it->Type.ToLLVMType(m_Context), 
-                "paramtmp", m_Context->BB
-                );
-            Value* argValue = cast<Value>(AI);
-            LLVM_CREATE(StoreInst, argValue, paramLoc, m_Context->BB);
+		param_llvm_types.push_back( param_type );
 
-            // Create a 'declaration' for this parameter.
-            VariableDeclaration var_decl;
-            var_decl.value = paramLoc;
-            var_decl.name = it->Name;
-            var_decl.type = it->Type;
-            var_decl.initialised = true;
+		it++;
+	}
 
-            // Add this parameter to the symbol table.
-            m_Context->Variables->AddDeclaration(var_decl);
-          }
-          break;
-        case FunctionParameter::FuncParamInOut:
-        case FunctionParameter::FuncParamOut:
-          {
-            // The only difference between inout and out parameters is
-            // that inout parameters are initialised. We use the parameter
-            // value directly as a pointer to the variable.
+	FunctionType *FT = FunctionType::get(
 
-            VariableDeclaration var_decl;
-            var_decl.value = cast<Value>(AI);
-            var_decl.name = it->Name;
-            var_decl.type = it->Type;
+	                       prototype.ReturnType.ToLLVMType( m_Context ),
+	                       param_llvm_types, false );
+	Function* F = NULL;
 
-            if(it->Direction == FunctionParameter::FuncParamInOut)
-            {
-              var_decl.initialised = true;
-            } else {
-              var_decl.initialised = false;
-            }
+	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
+		F = LLVM_CREATE( Function, FT,
+		                 Function::ExternalLinkage,
+		                 symbolToString( prototype.Name ),
+		                 m_Context->Module );
+	} else {
+		F = LLVM_CREATE( Function, FT,
+		                 Function::InternalLinkage,
+		                 symbolToString( prototype.Name ),
+		                 m_Context->Module );
+	}
 
-            // Add this parameter to the symbol table.
-            m_Context->Variables->AddDeclaration(var_decl);
-          }
-          break;
-        default:
-          FIRTREE_LLVM_ICE(m_Context, it->Term, "Unknown parameter type.");
-      }
-    }
-    ++it;
-    ++AI;
-  }
+	prototype.LLVMFunction = F;
 
-  // Do the following inside a try/catch block
-  // so that compile errors don't cause us to leak memory.
-  try {
-    // FIXME: Emit function.
+	m_Context->Function = F;
 
-    // Create a default return inst if there was no terminator.
-    if(m_Context->BB->getTerminator() == NULL)
-    {
-      // Check function return type is void.
-      if(prototype.ReturnType.Specifier != FullType::TySpecVoid)
-      {
-        FIRTREE_LLVM_ERROR(m_Context, func, "Control reaches end of "
-            "non-void function.");
-      }
+	// Create a basic block for this function
+	BasicBlock *BB = LLVM_CREATE( BasicBlock, "entry", F );
+	m_Context->BB = BB;
 
-      LLVM_CREATE(ReturnInst, NULL, m_Context->BB);
-    }
-  } catch (CompileErrorException e) {
-    m_Context->Backend->HandleCompilerError(e);
-  }
+	// Create a symbol table
+	m_Context->Variables = new SymbolTable();
 
-  delete m_Context->Variables;
-  m_Context->Variables = NULL;
-  m_Context->BB = NULL;
-  m_Context->Function = NULL;
+	// Set names for all arguments.
+	it = prototype.Parameters.begin();
+	Function::arg_iterator AI = F->arg_begin();
+
+	while ( it != prototype.Parameters.end() ) {
+		if ( it->Name != NULL ) {
+			AI->setName( symbolToString( it->Name ) );
+
+			// We now add this parameter to the function table. There
+			// are three sorts of parameter: in, out and inout. We
+			// treat each case differently.
+
+			switch ( it->Direction ) {
+
+				case FunctionParameter::FuncParamIn: {
+					// Variables are assumed to be implemented as pointers to
+					// the underlying value. Since we pass 'in' parameters by
+					// value, allocate a temporary variable on the stack to
+					// hold the value.
+					Value* paramLoc = LLVM_CREATE(
+					                      AllocaInst,
+					                      it->Type.ToLLVMType( m_Context ),
+					                      "paramtmp", m_Context->BB
+					                  );
+					Value* argValue = cast<Value>( AI );
+					LLVM_CREATE( StoreInst, argValue, paramLoc,
+					             m_Context->BB );
+
+					// Create a 'declaration' for this parameter.
+					VariableDeclaration var_decl;
+					var_decl.value = paramLoc;
+					var_decl.name = it->Name;
+					var_decl.type = it->Type;
+					var_decl.initialised = true;
+
+					// Add this parameter to the symbol table.
+					m_Context->Variables->AddDeclaration( var_decl );
+				}
+
+				break;
+
+				case FunctionParameter::FuncParamInOut:
+
+				case FunctionParameter::FuncParamOut: {
+					// The only difference between inout and out parameters
+					// is that inout parameters are initialised. We use the
+					// parameter value directly as a pointer to the variable.
+
+					VariableDeclaration var_decl;
+					var_decl.value = cast<Value>( AI );
+					var_decl.name = it->Name;
+					var_decl.type = it->Type;
+
+					if ( it->Direction ==
+					        FunctionParameter::FuncParamInOut ) {
+						var_decl.initialised = true;
+					} else {
+						var_decl.initialised = false;
+					}
+
+					// Add this parameter to the symbol table.
+					m_Context->Variables->AddDeclaration( var_decl );
+				}
+
+				break;
+
+				default:
+					FIRTREE_LLVM_ICE( m_Context, it->Term,
+					                  "Unknown parameter type." );
+			}
+		}
+
+		++it;
+
+		++AI;
+	}
+
+	// Do the following inside a try/catch block
+	// so that compile errors don't cause us to leak memory.
+	try {
+		// FIXME: Emit function.
+
+		// Create a default return inst if there was no terminator.
+		if ( m_Context->BB->getTerminator() == NULL ) {
+			// Check function return type is void.
+			if ( prototype.ReturnType.Specifier != FullType::TySpecVoid ) {
+				FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
+				                    "of non-void function." );
+			}
+
+			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+		}
+	} catch ( CompileErrorException e ) {
+		m_Context->Backend->HandleCompilerError( e );
+	}
+
+	delete m_Context->Variables;
+
+	m_Context->Variables = NULL;
+	m_Context->BB = NULL;
+	m_Context->Function = NULL;
 }
 
 //===========================================================================
@@ -283,21 +306,24 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
 /// prototypes but no definition).
 void EmitDeclarations::checkEmittedDeclarations()
 {
-  std::multimap<symbol, FunctionPrototype>::const_iterator it =
-    m_FuncTable.begin();
-  while(it != m_FuncTable.end()) {
-    if((it->second.DefinitionTerm == NULL) && 
-        (it->second.Qualifier != FunctionPrototype::FuncQualIntrinsic)) {
-      try {
-        FIRTREE_LLVM_ERROR(m_Context, it->second.PrototypeTerm,
-            "No definition found for function '%s'.",
-            symbolToString(it->second.Name));
-      } catch (CompileErrorException e) {
-        m_Context->Backend->HandleCompilerError(e);
-      }
-    }
-    it++;
-  }
+	std::multimap<symbol, FunctionPrototype>::const_iterator it =
+	    m_FuncTable.begin();
+
+	while ( it != m_FuncTable.end() ) {
+		if (( it->second.DefinitionTerm == NULL ) &&
+		        ( it->second.Qualifier !=
+		          FunctionPrototype::FuncQualIntrinsic ) ) {
+			try {
+				FIRTREE_LLVM_ERROR( m_Context, it->second.PrototypeTerm,
+				                    "No definition found for function '%s'.",
+				                    symbolToString( it->second.Name ) );
+			} catch ( CompileErrorException e ) {
+				m_Context->Backend->HandleCompilerError( e );
+			}
+		}
+
+		it++;
+	}
 }
 
 //===========================================================================
@@ -305,7 +331,7 @@ void EmitDeclarations::checkEmittedDeclarations()
 /// in the function table which conflicts with the passed prototype.
 /// A prototype conflicts if it matches both the function name of
 /// an existing prototype and the type and number of it's parameters.
-/// 
+///
 /// Optionally, if matched_proto_iter_ptr is non-NULL, write an
 /// iterator pointing to the matched prototype into it. If no prototype
 /// is matched, matched_proto_iter_ptr has m_FuncTable.end() written
@@ -313,184 +339,195 @@ void EmitDeclarations::checkEmittedDeclarations()
 bool EmitDeclarations::existsConflictingPrototype(
     const FunctionPrototype& proto,
     std::multimap<symbol, FunctionPrototype>::iterator*
-      matched_proto_iter_ptr)
+    matched_proto_iter_ptr )
 {
-  // Initially, assume no matching prototype.
-  if(matched_proto_iter_ptr != NULL)
-  {
-    *matched_proto_iter_ptr = m_FuncTable.end();
-  }
+	// Initially, assume no matching prototype.
+	if ( matched_proto_iter_ptr != NULL ) {
+		*matched_proto_iter_ptr = m_FuncTable.end();
+	}
 
-  // First test: does there exist at least one prototype with a matching
-  // name.
-  if(m_FuncTable.count(proto.Name) == 0)
-  {
-    // No match, return false.
-    return false;
-  }
+	// First test: does there exist at least one prototype with a matching
+	// name.
+	if ( m_FuncTable.count( proto.Name ) == 0 ) {
+		// No match, return false.
+		return false;
+	}
 
-  // If we got this far, there a potential conflict. Iterate over all of 
-  // them.
-  std::multimap<symbol, FunctionPrototype>::
-    iterator it = m_FuncTable.begin();
-  for( ; it != m_FuncTable.end(); it ++ )
-  {
-    if(it->first != proto.Name)
-      continue;
+	// If we got this far, there a potential conflict. Iterate over all of
+	// them.
+	std::multimap<symbol, FunctionPrototype>::
+	iterator it = m_FuncTable.begin();
 
-    // Sanity check.
-    FIRTREE_LLVM_ASSERT(m_Context, NULL, it->second.Name == proto.Name);
+	for ( ; it != m_FuncTable.end(); it ++ ) {
+		if ( it->first != proto.Name )
+			continue;
 
-    // If the number of parameters is different, no conflict
-    if(it->second.Parameters.size() != proto.Parameters.size()) {
-      continue;
-    }
+		// Sanity check.
+		FIRTREE_LLVM_ASSERT( m_Context, NULL, it->second.Name == proto.Name );
 
-    // Clear the is_conflict flag if any parameters have differing
-    // type.
-    bool is_conflict = true;
-    std::vector<FunctionParameter>::const_iterator it_a =
-      it->second.Parameters.begin();
-    std::vector<FunctionParameter>::const_iterator it_b =
-      proto.Parameters.begin();
-    while((it_a != it->second.Parameters.end()) &&
-        (it_b != proto.Parameters.end())) {
-      if(it_a->Type != it_b->Type) {
-        is_conflict = false;
-      }
-      it_a++;
-      it_b++;
-    }
+		// If the number of parameters is different, no conflict
+		if ( it->second.Parameters.size() != proto.Parameters.size() ) {
+			continue;
+		}
 
-    // Test the is_conflict flag and return signalling conflict if
-    // one found.
-    if(is_conflict) {
-      if(matched_proto_iter_ptr != NULL)
-      {
-        *matched_proto_iter_ptr = it;
-      }
-      return true;
-    }
-  }
-  
-  // If we got this far, none of the candidate prototypes conflicted.
-  return false;
+		// Clear the is_conflict flag if any parameters have differing
+		// type.
+		bool is_conflict = true;
+
+		std::vector<FunctionParameter>::const_iterator it_a =
+		    it->second.Parameters.begin();
+
+		std::vector<FunctionParameter>::const_iterator it_b =
+		    proto.Parameters.begin();
+
+		while (( it_a != it->second.Parameters.end() ) &&
+		        ( it_b != proto.Parameters.end() ) ) {
+			if ( it_a->Type != it_b->Type ) {
+				is_conflict = false;
+			}
+
+			it_a++;
+
+			it_b++;
+		}
+
+		// Test the is_conflict flag and return signalling conflict if
+		// one found.
+		if ( is_conflict ) {
+			if ( matched_proto_iter_ptr != NULL ) {
+				*matched_proto_iter_ptr = it;
+			}
+
+			return true;
+		}
+	}
+
+	// If we got this far, none of the candidate prototypes conflicted.
+	return false;
 }
 
 //===========================================================================
-/// Construct a FunctionPrototype struct from a 
+/// Construct a FunctionPrototype struct from a
 /// firtreeFunctionPrototype parse-tree term.
 void EmitDeclarations::constructPrototypeStruct(
     FunctionPrototype& prototype,
-    firtreeFunctionPrototype proto_term)
+    firtreeFunctionPrototype proto_term )
 {
-  firtreeFunctionQualifier qual;
-  firtreeFullySpecifiedType type;
-  GLS_Tok name;
-  GLS_Lst(firtreeParameterDeclaration) params;
+	firtreeFunctionQualifier qual;
+	firtreeFullySpecifiedType type;
+	GLS_Tok name;
+	GLS_Lst( firtreeParameterDeclaration ) params;
 
-  if(!firtreeFunctionPrototype_functionprototype(proto_term,
-        &qual, &type, &name, &params))
-  {
-    FIRTREE_LLVM_ICE(m_Context, proto_term, "Invalid function prototype.");
-  }
+	if ( !firtreeFunctionPrototype_functionprototype( proto_term,
+	        &qual, &type, &name, &params ) ) {
+		FIRTREE_LLVM_ICE( m_Context, proto_term,
+		                  "Invalid function prototype." );
+	}
 
-  prototype.PrototypeTerm = proto_term;
-  prototype.DefinitionTerm = NULL;
-  prototype.LLVMFunction = NULL;
+	prototype.PrototypeTerm = proto_term;
 
-  if(firtreeFunctionQualifier_function(qual)) {
-    prototype.Qualifier = FunctionPrototype::FuncQualFunction;
-  } else if(firtreeFunctionQualifier_kernel(qual)) {
-    prototype.Qualifier = FunctionPrototype::FuncQualKernel;
-  } else {
-    FIRTREE_LLVM_ICE(m_Context, qual, "Invalid function qualifier.");
-  }
+	prototype.DefinitionTerm = NULL;
+	prototype.LLVMFunction = NULL;
 
-  prototype.Name = GLS_Tok_symbol(name);
-  if(prototype.Name == NULL) {
-    FIRTREE_LLVM_ICE(m_Context, type, "Invalid name.");
-  }
+	if ( firtreeFunctionQualifier_function( qual ) ) {
+		prototype.Qualifier = FunctionPrototype::FuncQualFunction;
+	} else if ( firtreeFunctionQualifier_kernel( qual ) ) {
+		prototype.Qualifier = FunctionPrototype::FuncQualKernel;
+	} else {
+		FIRTREE_LLVM_ICE( m_Context, qual, "Invalid function qualifier." );
+	}
 
-  prototype.ReturnType = FullType::FromFullySpecifiedType(type);
-  if(!FullType::IsValid(prototype.ReturnType)) {
-    FIRTREE_LLVM_ICE(m_Context, type, "Invalid type.");
-  }
+	prototype.Name = GLS_Tok_symbol( name );
 
-  // For each parameter, append a matching FunctionParameter structure
-  // to the prototype's Parameters field.
-  GLS_Lst(firtreeParameterDeclaration) params_tail;
-  GLS_FORALL(params_tail, params) {
-    firtreeParameterDeclaration param_decl = 
-      GLS_FIRST(firtreeParameterDeclaration, params_tail);
+	if ( prototype.Name == NULL ) {
+		FIRTREE_LLVM_ICE( m_Context, type, "Invalid name." );
+	}
 
-    firtreeTypeQualifier param_type_qual;
-    firtreeParameterQualifier param_qual;
-    firtreeTypeSpecifier param_type_spec;
-    firtreeParameterIdentifierOpt param_identifier;
+	prototype.ReturnType = FullType::FromFullySpecifiedType( type );
 
-    if(firtreeParameterDeclaration_parameterdeclaration(param_decl,
-          &param_type_qual, &param_qual, &param_type_spec,
-          &param_identifier))
-    {
-      FunctionParameter new_param;
+	if ( !FullType::IsValid( prototype.ReturnType ) ) {
+		FIRTREE_LLVM_ICE( m_Context, type, "Invalid type." );
+	}
 
-      new_param.Term = param_decl;
+	// For each parameter, append a matching FunctionParameter structure
+	// to the prototype's Parameters field.
+	GLS_Lst( firtreeParameterDeclaration ) params_tail;
 
-      // Extract the parameter type
-      new_param.Type = FullType::FromQualiferAndSpecifier(
-          param_type_qual, param_type_spec);
-      if(!FullType::IsValid(new_param.Type)) {
-        FIRTREE_LLVM_ICE(m_Context, param_decl, "Invalid type.");
-      }
+	GLS_FORALL( params_tail, params ) {
+		firtreeParameterDeclaration param_decl =
+		    GLS_FIRST( firtreeParameterDeclaration, params_tail );
 
-      // Get the parameter name
-      GLS_Tok parameter_name_token;
-      if(firtreeParameterIdentifierOpt_named(param_identifier, 
-            &parameter_name_token)) {
-        new_param.Name = GLS_Tok_symbol(parameter_name_token);
-      } else if(firtreeParameterIdentifierOpt_anonymous(param_identifier)) {
-        new_param.Name = NULL;
-      } else {
-        FIRTREE_LLVM_ICE(m_Context, param_identifier, "Invalid identifier.");
-      }
+		firtreeTypeQualifier param_type_qual;
+		firtreeParameterQualifier param_qual;
+		firtreeTypeSpecifier param_type_spec;
+		firtreeParameterIdentifierOpt param_identifier;
 
-      // Get the parameter direction
-      if(firtreeParameterQualifier_in(param_qual)) {
-        new_param.Direction = FunctionParameter::FuncParamIn;
-      } else if(firtreeParameterQualifier_out(param_qual)) {
-        new_param.Direction = FunctionParameter::FuncParamOut;
-      } else if(firtreeParameterQualifier_inout(param_qual)) {
-        new_param.Direction = FunctionParameter::FuncParamInOut;
-      } else {
-        FIRTREE_LLVM_ICE(m_Context, param_qual, 
-            "Invalid parameter qualifier.");
-      }
+		if ( firtreeParameterDeclaration_parameterdeclaration( param_decl,
+		        &param_type_qual, &param_qual, &param_type_spec,
+		        &param_identifier ) ) {
+			FunctionParameter new_param;
 
-      // Kernels must have 'in' parameters only.
-      if(!firtreeParameterQualifier_in(param_qual) &&
-          (prototype.Qualifier == FunctionPrototype::FuncQualKernel))
-      {
-        FIRTREE_LLVM_ERROR(m_Context, param_decl, "Kernel functions must "
-            "only have 'in' parameters.");
-      }
+			new_param.Term = param_decl;
 
-      prototype.Parameters.push_back(new_param);
-    } else {
-      FIRTREE_LLVM_ICE(m_Context, param_decl,
-          "Invalid parameter declaration.");
-    }
-  }
+			// Extract the parameter type
+			new_param.Type = FullType::FromQualiferAndSpecifier(
+			                     param_type_qual, param_type_spec );
 
-  // Kernels must return vec4
-  if(prototype.Qualifier == FunctionPrototype::FuncQualKernel) {
-    if(prototype.ReturnType.Specifier != FullType::TySpecVec4) {
-      FIRTREE_LLVM_ERROR(m_Context, proto_term, "Kernel functions "
-          "must have a return type of vec4.");
-    }
-  }
+			if ( !FullType::IsValid( new_param.Type ) ) {
+				FIRTREE_LLVM_ICE( m_Context, param_decl, "Invalid type." );
+			}
+
+			// Get the parameter name
+			GLS_Tok parameter_name_token;
+
+			if ( firtreeParameterIdentifierOpt_named( param_identifier,
+			        &parameter_name_token ) ) {
+				new_param.Name = GLS_Tok_symbol( parameter_name_token );
+			} else if ( firtreeParameterIdentifierOpt_anonymous(
+			                param_identifier ) ) {
+				new_param.Name = NULL;
+			} else {
+				FIRTREE_LLVM_ICE( m_Context, param_identifier,
+				                  "Invalid identifier." );
+			}
+
+			// Get the parameter direction
+			if ( firtreeParameterQualifier_in( param_qual ) ) {
+				new_param.Direction = FunctionParameter::FuncParamIn;
+			} else if ( firtreeParameterQualifier_out( param_qual ) ) {
+				new_param.Direction = FunctionParameter::FuncParamOut;
+			} else if ( firtreeParameterQualifier_inout( param_qual ) ) {
+				new_param.Direction = FunctionParameter::FuncParamInOut;
+			} else {
+				FIRTREE_LLVM_ICE( m_Context, param_qual,
+				                  "Invalid parameter qualifier." );
+			}
+
+			// Kernels must have 'in' parameters only.
+			if ( !firtreeParameterQualifier_in( param_qual ) &&
+			        ( prototype.Qualifier ==
+			          FunctionPrototype::FuncQualKernel ) ) {
+				FIRTREE_LLVM_ERROR( m_Context, param_decl,
+				                    "Kernel functions must "
+				                    "only have 'in' parameters." );
+			}
+
+			prototype.Parameters.push_back( new_param );
+		} else {
+			FIRTREE_LLVM_ICE( m_Context, param_decl,
+			                  "Invalid parameter declaration." );
+		}
+	}
+
+	// Kernels must return vec4
+	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
+		if ( prototype.ReturnType.Specifier != FullType::TySpecVec4 ) {
+			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Kernel functions "
+			                    "must have a return type of vec4." );
+		}
+	}
 }
 
 } // namespace Firtree
 
-// vim:sw=2:ts=2:cindent:et
+// vim:sw=4:ts=4:cindent:noet

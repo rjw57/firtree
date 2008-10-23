@@ -80,8 +80,8 @@ void compile_kernel( const char* fileid )
 		GLS_Lst( firtreeExternalDeclaration ) decls;
 
 		// get tree for start symbol
-		bug0( firtree_Start_TranslationUnit(( firtree )srcterm,&decls ), 
-        "Program expected" );
+		bug0( firtree_Start_TranslationUnit(( firtree )srcterm,&decls ),
+		      "Program expected" );
 
 		// check & execute program
 		emitDeclList( decls );

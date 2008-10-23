@@ -46,6 +46,14 @@ KERNELCOMPILE_OBJECTS=$(KERNELCOMPILE_C_SOURCES:.c=.o) \
 
 all: kernelparse kernelcompile
 
+beautify:
+	for file in $(filter %.cc, $(KERNELCOMPILE_FILES)); do \
+		astyle -s4 -t4 -l -C -S -w -f -U -D "$$file"; \
+	done
+	for file in $(filter %.h, $(KERNELCOMPILE_FILES)); do \
+		astyle -s4 -t4 -l -C -S -w -f -U -D "$$file"; \
+	done
+
 compiletest: kernelcompile
 	./kernelcompile testkernel.knl >testkernel.llo
 	@echo "=========> GENERATED CODE <========="
@@ -76,5 +84,5 @@ $(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c $(GENDIR)/%.abs: %.sty
 $(GENDIR)/%_int.h $(GENDIR)/%_pim.h $(GENDIR)/%_lim.h: $(GENDIR)/%_int.c $(GENDIR)/%_pim.c $(GENDIR)/%_lim.c
 	ctoh -CPATH=$(GENDIR) -HPATH=$(GENDIR)
 
-.PHONY: all clean parsetest compiletest
+.PHONY: all beautify clean parsetest compiletest
 

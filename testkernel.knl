@@ -1,16 +1,18 @@
-void blobble(int a, int b)
+void blobble(int a, in int b, out int c, inout vec4 d)
 {
 }
 
 /*
-kernel vec4 kernel_a()
+kernel vec4 kernel_a(float a, in vec4 b, out vec4 d)
 {
 	//float a = 1, b, c = 3.0, d = float(4);
 	vec4 a = vec4(3.0,4.0,5.0,6.0);
 	a.yx = vec2(1.0,2.0);
 	return a;
 }
+*/
 
+/*
 vec4 foo(vec4 b)
 {
 	vec4 a = vec4(3.0,4.0,5.0,6.0);

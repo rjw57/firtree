@@ -144,8 +144,16 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
     prototype.Parameters.begin();
   while(it != prototype.Parameters.end())
   {
-    // FIXME: in/out/inout types
-    param_llvm_types.push_back(it->Type.ToLLVMType(m_Context));
+    // output parameters are passed by reference.
+    const llvm::Type* base_type = it->Type.ToLLVMType(m_Context);
+    const llvm::Type* param_type = base_type;
+
+    if((it->Direction == FunctionParameter::FuncParamOut) ||
+        (it->Direction == FunctionParameter::FuncParamInOut)) {
+      param_type = PointerType::get(base_type, 0);
+    }
+
+    param_llvm_types.push_back(param_type);
     it++;
   }
 
@@ -183,7 +191,61 @@ void EmitDeclarations::emitFunction(firtreeFunctionDefinition func)
     {
       AI->setName(symbolToString(it->Name));
 
-      // FIXME: Add function parameters to symbol table.
+      // We now add this parameter to the function table. There
+      // are three sorts of parameter: in, out and inout. We
+      // treat each case differently.
+      switch(it->Direction)
+      {
+        case FunctionParameter::FuncParamIn:
+          {
+            // Variables are assumed to be implemented as pointers to
+            // the underlying value. Since we pass 'in' parameters by
+            // value, allocate a temporary variable on the stack to hold
+            // the value.
+            Value* paramLoc = LLVM_CREATE(AllocaInst,
+                it->Type.ToLLVMType(m_Context), 
+                "paramtmp", m_Context->BB
+                );
+            Value* argValue = cast<Value>(AI);
+            LLVM_CREATE(StoreInst, argValue, paramLoc, m_Context->BB);
+
+            // Create a 'declaration' for this parameter.
+            VariableDeclaration var_decl;
+            var_decl.value = paramLoc;
+            var_decl.name = it->Name;
+            var_decl.type = it->Type;
+            var_decl.initialised = true;
+
+            // Add this parameter to the symbol table.
+            m_Context->Variables->AddDeclaration(var_decl);
+          }
+          break;
+        case FunctionParameter::FuncParamInOut:
+        case FunctionParameter::FuncParamOut:
+          {
+            // The only difference between inout and out parameters is
+            // that inout parameters are initialised. We use the parameter
+            // value directly as a pointer to the variable.
+
+            VariableDeclaration var_decl;
+            var_decl.value = cast<Value>(AI);
+            var_decl.name = it->Name;
+            var_decl.type = it->Type;
+
+            if(it->Direction == FunctionParameter::FuncParamInOut)
+            {
+              var_decl.initialised = true;
+            } else {
+              var_decl.initialised = false;
+            }
+
+            // Add this parameter to the symbol table.
+            m_Context->Variables->AddDeclaration(var_decl);
+          }
+          break;
+        default:
+          FIRTREE_LLVM_ICE(m_Context, it->Term, "Unknown parameter type.");
+      }
     }
     ++it;
     ++AI;
@@ -403,6 +465,14 @@ void EmitDeclarations::constructPrototypeStruct(
       } else {
         FIRTREE_LLVM_ICE(m_Context, param_qual, 
             "Invalid parameter qualifier.");
+      }
+
+      // Kernels must have 'in' parameters only.
+      if(!firtreeParameterQualifier_in(param_qual) &&
+          (prototype.Qualifier == FunctionPrototype::FuncQualKernel))
+      {
+        FIRTREE_LLVM_ERROR(m_Context, param_decl, "Kernel functions must "
+            "only have 'in' parameters.");
       }
 
       prototype.Parameters.push_back(new_param);

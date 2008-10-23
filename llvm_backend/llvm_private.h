@@ -108,7 +108,8 @@ struct LLVMContext {
 /// LLVM_MINOR_VER macros.
 ///
 /// FIXME: The way this macro is constructed *requires* that the constructor
-/// takes arguments.
+/// takes arguments. Hell, it also requires variadic macro support but then
+/// I'm just that sort of crazy mo-fo.
 #if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2) 
 # define LLVM_CREATE(type, ...) ( type::Create(__VA_ARGS__) )
 #else 

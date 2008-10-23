@@ -100,6 +100,9 @@ struct VariableDeclaration {
   symbol            name;     ///< The Styx symbol associated with the 
                               ///< variable's name.
   FullType          type;     ///< The variable's type.
+
+  bool              initialised;  ///< Is the variable initialised. i.e.,
+                                  ///< has it been assigned to at least once.
 };
 
 //===========================================================================

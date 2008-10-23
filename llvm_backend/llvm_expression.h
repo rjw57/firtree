@@ -129,7 +129,7 @@ class ExpressionEmitterRegistry
 		/// Convenience wrapper around CreateEmitterForTerm() which
 		/// calls Emit() on the result.
 		ExpressionValue* Emit( LLVMContext* context,
-				firtreeExpression expr );
+		                       firtreeExpression expr );
 
 	protected:
 		/// Internal method to register an emitter factory with a
@@ -169,7 +169,7 @@ class RegisterEmitter
 		Factory			m_Factory;
 
 	public:
-		RegisterEmitter(const char *name) {
+		RegisterEmitter( const char *name ) {
 			ExpressionEmitterRegistry::GetRegistry()->RegisterFactory(
 			    name, &m_Factory );
 		}

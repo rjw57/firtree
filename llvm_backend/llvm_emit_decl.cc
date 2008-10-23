@@ -285,11 +285,11 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		firtreeExpression e = GLS_FIRST( firtreeExpression, tail );
 		try {
 			// Emit expression
-			ExpressionValue* emitted_val = 
-				ExpressionEmitterRegistry::GetRegistry()->Emit( 
-						m_Context, e );
+			ExpressionValue* emitted_val =
+			    ExpressionEmitterRegistry::GetRegistry()->Emit(
+			        m_Context, e );
 			// Free the emitted value
-			FIRTREE_SAFE_RELEASE(emitted_val);
+			FIRTREE_SAFE_RELEASE( emitted_val );
 		} catch ( CompileErrorException e ) {
 			m_Context->Backend->HandleCompilerError( e );
 		}

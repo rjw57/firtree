@@ -16,15 +16,14 @@ namespace Firtree
 
 //===========================================================================
 /// \brief Class to emit a list of expressions.
-class ExprListEmitter : ExpressionEmitter {
+class ExprListEmitter : ExpressionEmitter
+{
 	public:
 		ExprListEmitter()
-			: ExpressionEmitter()
-		{
+				: ExpressionEmitter() {
 		}
 
-		virtual ~ExprListEmitter()
-		{
+		virtual ~ExprListEmitter() {
 		}
 
 		/// Create an instance of this emitter.
@@ -36,29 +35,27 @@ class ExprListEmitter : ExpressionEmitter {
 		/// a ExpressionValue containing it's value. It is the
 		/// responsibility of the caller to Release() this value.
 		virtual ExpressionValue* Emit( LLVMContext* context,
-		                               firtreeExpression expression ) 
-		{
+		                               firtreeExpression expression ) {
 			firtreeExpression head;
-			GLS_Lst(firtreeExpression) tail;
-			if(!firtreeExpression_expression(expression, &head, &tail))
-			{
-				FIRTREE_LLVM_ICE(context, expression, 
-						"Invalid expression list.");
+			GLS_Lst( firtreeExpression ) tail;
+			if ( !firtreeExpression_expression( expression, &head, &tail ) ) {
+				FIRTREE_LLVM_ICE( context, expression,
+				                  "Invalid expression list." );
 			}
-			
+
 			// Emit head expression.
 			ExpressionValue* expression_value =
-				ExpressionEmitterRegistry::GetRegistry()->Emit(
-						context, head);
+			    ExpressionEmitterRegistry::GetRegistry()->Emit(
+			        context, head );
 
 			// Emit remaining expressions.
-			GLS_Lst(firtreeExpression) it;
-			GLS_FORALL(it, tail) {
-				firtreeExpression e = GLS_FIRST(firtreeExpression, it);
+			GLS_Lst( firtreeExpression ) it;
+			GLS_FORALL( it, tail ) {
+				firtreeExpression e = GLS_FIRST( firtreeExpression, it );
 
-				FIRTREE_SAFE_RELEASE(expression_value);
+				FIRTREE_SAFE_RELEASE( expression_value );
 				expression_value = ExpressionEmitterRegistry::
-					GetRegistry()->Emit(context, e);
+				                   GetRegistry()->Emit( context, e );
 			}
 
 			return expression_value;
@@ -67,7 +64,7 @@ class ExprListEmitter : ExpressionEmitter {
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<ExprListEmitter> g_ExprListEmitterReg("expression");
+RegisterEmitter<ExprListEmitter> g_ExprListEmitterReg( "expression" );
 
 }
 

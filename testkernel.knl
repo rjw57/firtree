@@ -1,6 +1,6 @@
-int blobble(int a, in int b, out int c, inout vec4 d)
+float blobble(int a, in int b, out int c, inout vec4 d)
 {
-	return 1;
+	return 1.0;
 }
 
 /*

@@ -88,6 +88,22 @@ struct FullType {
 	/// which can be used for error reporting.
 	const llvm::Type* ToLLVMType( LLVMContext* ctx ) const;
 
+	/// Return true if this type can be promoted to type t by simply removing
+	/// a const qualifier.
+	inline bool IsConstCastableTo( const FullType& t ) {
+		if ( *this == t ) {
+			return true;
+		}
+
+		if ( Qualifier == FullType::TyQualConstant ) {
+			if ( t.Specifier == Specifier ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	inline bool operator == ( const FullType& b ) const {
 		return ( Qualifier == b.Qualifier ) && ( Specifier == b.Specifier );
 	}

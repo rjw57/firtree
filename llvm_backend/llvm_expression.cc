@@ -25,9 +25,9 @@ VoidExpressionValue::~VoidExpressionValue()
 }
 
 //===========================================================================
-VoidExpressionValue* VoidExpressionValue::Create(LLVMContext* ctx)
+VoidExpressionValue* VoidExpressionValue::Create( LLVMContext* ctx )
 {
-	return new VoidExpressionValue(ctx);
+	return new VoidExpressionValue( ctx );
 }
 
 //===========================================================================
@@ -114,7 +114,7 @@ ExpressionEmitter* ExpressionEmitterRegistry::CreateEmitterForTerm(
 
 //===========================================================================
 ExpressionValue* ExpressionEmitterRegistry::Emit( LLVMContext* context,
-		firtreeExpression expr ) 
+        firtreeExpression expr )
 {
 	ExpressionEmitter* emitter = CreateEmitterForTerm( context, expr );
 	if ( emitter != NULL ) {

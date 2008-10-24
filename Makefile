@@ -36,9 +36,11 @@ KERNELCOMPILE_FILES=$(GENERATED_FILES)\
 	llvm_backend/llvm_emit_decl.h llvm_backend/llvm_emit_decl.cc \
 	llvm_backend/llvm_expression.h \
 	llvm_backend/llvm_expression.cc \
+	llvm_backend/llvm_type_cast.h llvm_backend/llvm_type_cast.cc \
 	llvm_backend/llvm_emit_return.cc \
 	llvm_backend/llvm_emit_expr_list.cc \
-	llvm_backend/llvm_emit_constant.cc \
+	llvm_backend/llvm_emit_constant.h llvm_backend/llvm_emit_constant.cc \
+	llvm_backend/llvm_emit_function_call.cc \
 	llvm_backend/symbol_table.cc
 #	llvmout.h llvmout.cc \
 #	llvmutil.h llvmutil.cc \

@@ -7,6 +7,7 @@
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
+#include "llvm_type_cast.h"
 
 #include <llvm/Instructions.h>
 
@@ -38,7 +39,8 @@ class ReturnEmitter : ExpressionEmitter
 		virtual ExpressionValue* Emit( LLVMContext* context,
 		                               firtreeExpression expression ) {
 			firtreeExpression return_value_expr;
-			if ( !firtreeExpression_return( expression, &return_value_expr ) ) {
+			if ( !firtreeExpression_return( expression, 
+						&return_value_expr ) ) {
 				FIRTREE_LLVM_ICE( context, expression, "Invalid return." );
 			}
 
@@ -46,24 +48,33 @@ class ReturnEmitter : ExpressionEmitter
 			ExpressionValue* return_value =
 			    ExpressionEmitterRegistry::GetRegistry()->Emit(
 			        context, return_value_expr );
+			ExpressionValue* cast_return_value = NULL;
 
-			// Check if the return type matches the function
-			if ( ! return_value->GetType().IsConstCastableTo(
-			            context->CurrentPrototype->ReturnType ) ) {
+			try {
+				// Cast the return value if necessary.
+				cast_return_value =
+					TypeCaster::CastValue( context, return_value_expr,
+				                           return_value,
+				                           context->CurrentPrototype->
+				                           ReturnType.Specifier );
 				FIRTREE_SAFE_RELEASE( return_value );
-				FIRTREE_LLVM_ERROR( context, expression,
-				                    "Return value does not match "
-				                    "expected return type of function." );
-				return NULL;
+
+				// Create the return statement.
+				llvm::Value* llvm_ret_val = NULL;
+				if ( cast_return_value->GetType().Specifier !=
+				        FullType::TySpecVoid ) {
+					llvm_ret_val = cast_return_value->GetLLVMValue();
+				}
+				LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );
+
+				return cast_return_value;
+			} catch ( CompileErrorException e ) {
+				FIRTREE_SAFE_RELEASE( return_value );
+				FIRTREE_SAFE_RELEASE( cast_return_value );
+				throw e;
 			}
 
-			// Create the return statement.
-			llvm::Value* llvm_ret_val =
-			    ( return_value->GetType().Specifier == FullType::TySpecVoid ) ?
-			    NULL : return_value->GetLLVMValue();
-			LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );
-
-			return return_value;
+			return NULL;
 		}
 };
 

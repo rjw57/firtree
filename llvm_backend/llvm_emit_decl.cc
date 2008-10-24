@@ -171,7 +171,6 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	}
 
 	FunctionType *FT = FunctionType::get(
-
 	                       prototype.ReturnType.ToLLVMType( m_Context ),
 	                       param_llvm_types, false );
 	Function* F = NULL;

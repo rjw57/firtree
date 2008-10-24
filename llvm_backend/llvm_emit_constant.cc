@@ -6,6 +6,7 @@
 #include "llvm_backend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
+#include "llvm_emit_constant.h"
 
 #include <llvm/Instructions.h>
 
@@ -15,61 +16,64 @@ namespace Firtree
 {
 
 //===========================================================================
-/// \brief A constant value.
-///
-/// Descended from VoidExpressionValue since, like a void value, it is
-/// not mutable.
-class ConstantExpressionValue : public VoidExpressionValue
+ConstantExpressionValue::ConstantExpressionValue( LLVMContext* ctx,
+        Value* val )
+		: VoidExpressionValue( ctx )
+		, m_WrappedValue( val )
 {
-	protected:
-		ConstantExpressionValue( LLVMContext* ctx, Value* val )
-				: VoidExpressionValue( ctx )
-				,	m_WrappedValue( val ) {
-		}
-
-		virtual ~ConstantExpressionValue() {
-		}
-
-	public:
-		static ExpressionValue* Create( LLVMContext* ctx, Value* val ) {
-			return new ConstantExpressionValue( ctx, val );
-		}
-
-		virtual llvm::Value*	GetLLVMValue() const {
-			return m_WrappedValue;
-		}
-
-		virtual FullType		GetType() const {
-			FullType return_value;
-			return_value.Qualifier = FullType::TyQualConstant;
-
-			const llvm::Type* type = GetLLVMValue()->getType();
-
-			if ( type->getTypeID() == Type::FloatTyID ) {
-				return_value.Specifier = FullType::TySpecFloat;
-			} else if ( isa<IntegerType>( type ) ) {
-				const llvm::IntegerType* int_type = cast<IntegerType>( type );
-				if ( int_type->getBitWidth() == 32 ) {
-					return_value.Specifier = FullType::TySpecInt;
-				} else if ( int_type->getBitWidth() == 1 ) {
-					return_value.Specifier = FullType::TySpecBool;
-				} else {
-					FIRTREE_LLVM_ICE( GetContext(), NULL,
-					                  "unknown integer type." );
-				}
-			} else {
-				FIRTREE_LLVM_ICE( GetContext(), NULL, "unknown type." );
-			}
-
-			return return_value;
-		}
-
-	private:
-		llvm::Value*			m_WrappedValue;
-};
+}
 
 //===========================================================================
-/// \brief Class to emit a return instruction.
+ConstantExpressionValue::~ConstantExpressionValue()
+{
+}
+
+//===========================================================================
+ExpressionValue* ConstantExpressionValue::Create( LLVMContext* ctx,
+        llvm::Value* val )
+{
+	return new ConstantExpressionValue( ctx, val );
+}
+
+//===========================================================================
+llvm::Value* ConstantExpressionValue::GetLLVMValue() const
+{
+	return m_WrappedValue;
+}
+
+//===========================================================================
+FullType ConstantExpressionValue::GetType() const
+{
+	FullType return_value;
+	return_value.Qualifier = FullType::TyQualConstant;
+
+	const llvm::Type* type = GetLLVMValue()->getType();
+
+	if ( type->getTypeID() == llvm::Type::FloatTyID ) {
+		return_value.Specifier = FullType::TySpecFloat;
+	} else if ( llvm::isa<llvm::IntegerType>( type ) ) {
+		const llvm::IntegerType* int_type =
+		    llvm::cast<llvm::IntegerType>( type );
+		if ( int_type->getBitWidth() == 32 ) {
+			return_value.Specifier = FullType::TySpecInt;
+		} else if ( int_type->getBitWidth() == 1 ) {
+			return_value.Specifier = FullType::TySpecBool;
+		} else {
+			FIRTREE_LLVM_ICE( GetContext(), NULL,
+			                  "unknown integer type." );
+		}
+	} else {
+		FIRTREE_LLVM_ICE( GetContext(), NULL, "unknown type." );
+	}
+
+	return return_value;
+}
+
+//===========================================================================
+//===========================================================================
+
+//===========================================================================
+/// \brief Class to emit an immediate constant.
 class ConstantEmitter : ExpressionEmitter
 {
 	public:

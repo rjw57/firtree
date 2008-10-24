@@ -20,7 +20,6 @@ namespace Firtree
 /// Errors are reported via exceptions so that the compilation progress
 /// can be 'unwound' through the call chain to the point where it should
 /// be re-started.
-
 class CompileErrorException : public Exception
 {
 
@@ -124,7 +123,7 @@ struct LLVMContext {
 /// FIXME: The way this macro is constructed *requires* that the constructor
 /// takes arguments. Hell, it also requires variadic macro support but then
 /// I'm just that sort of crazy mo-fo.
-#if (LLVM_MAJOR_VER > 2) || (LLVM_MINOR_VER > 2)
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER > 2))
 # define LLVM_CREATE(type, ...) ( type::Create(__VA_ARGS__) )
 #else
 # define LLVM_CREATE(type, ...) ( new type(__VA_ARGS__) )

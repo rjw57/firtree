@@ -30,12 +30,10 @@ class CompileErrorException;
 
 /// Opaque type used for passing the current LLVM context around
 /// between code-generators.
-
 struct LLVMContext;
 
 //===========================================================================
 /// \brief A structure defining a fully specified type.
-
 struct FullType {
 	//=======================================================================
 	/// \brief The possible type qualifiers.
@@ -143,7 +141,6 @@ struct VariableDeclaration {
 /// be removed, or 'popped', when the scope changes. 'Popping' the scope
 /// causes all symbols added to the table since the matching 'push' to
 /// be removed. Scope pushes/pops can be nested.
-
 class SymbolTable
 {
 
@@ -177,7 +174,6 @@ class SymbolTable
 /// This class defines the interface to the LLVM output backend. A compiler
 /// constructs an instance of this class with a Styx abstract depth grammer
 /// and can query the LLVM module genereated therefrom.
-
 class LLVMBackend
 {
 

@@ -25,7 +25,7 @@
 
 /* Main Program ------------------------------------------------------------ */
 
-void compile_kernel( const char* fileid )
+int compile_kernel( const char* fileid )
 /* initialize and get source */
 {
 	Scn_T scn;
@@ -58,6 +58,8 @@ void compile_kernel( const char* fileid )
 	// done parsing, proceed if no syntax errors
 	//
 
+  int return_value = 0;
+
 	if ( PT_errorCnt() == 0 ) {
 #if 1
 		Firtree::LLVMBackend llvm_backend(( firtree )srcterm );
@@ -65,7 +67,9 @@ void compile_kernel( const char* fileid )
 		if ( llvm_backend.GetCompilationSucceeded() ) {
 			// Output the bitcode file to stdout
 			WriteBitcodeToFile( llvm_backend.GetCompiledModule(), std::cout );
-		}
+		} else {
+      return_value = 1;
+    }
 
 		// Write the log (if any).
 		const std::vector<std::string>& log = llvm_backend.GetLog();
@@ -106,16 +110,22 @@ void compile_kernel( const char* fileid )
 	freeSymbols();
 
 	MAP_quit();
+
+  return return_value;
 }
 
 int main( int argc, const char* argv[] )
 {
-	if ( argc > 1 ) compile_kernel( argv[1] );
-	else fprintf( stderr,"missing source\n" );
+  int rv = 1;
+	if ( argc > 1 ) {
+    rv = compile_kernel( argv[1] );
+  }	else {
+    fprintf( stderr,"missing source\n" );
+  }
 
 	BUG_CORE; // check for object left over
 
-	return 0;
+	return rv;
 }
 
 /* vim:sw=2:ts=2:cindent:et

@@ -49,6 +49,8 @@
 #include <compiler/backends/glsl/glsl.h>
 #include <compiler/backends/irdump/irdump.h>
 
+#include <algorithm>
+
 extern "C" { 
 #include <selog/selog.h>
 }

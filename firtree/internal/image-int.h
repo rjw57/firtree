@@ -78,6 +78,9 @@ class ImageImpl : public Image
         /// Return a pointer to the kernel which generates this image or
         /// NULL if theres is none.
         virtual Firtree::Kernel* GetKernel() const;
+ 
+        /// Return true if this image should be flipped vertically.
+        virtual bool GetIsFlipped() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -119,6 +122,7 @@ class TransformedImageImpl : public ImageImpl
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
         virtual Firtree::Kernel* GetKernel() const;
+        virtual bool GetIsFlipped() const;
 
         /// Get the underlying non-transformed image.
         Image*  GetBaseImage() const;
@@ -168,7 +172,8 @@ class TextureImageImpl : public TextureBackedImageImpl
         // ====================================================================
         // CONSTRUCTION METHODS
 
-        TextureImageImpl(unsigned int texObj, OpenGLContext* context);
+        TextureImageImpl(unsigned int texObj, OpenGLContext* context,
+                bool flipped);
         virtual ~TextureImageImpl();
 
         // ====================================================================
@@ -177,6 +182,7 @@ class TextureImageImpl : public TextureBackedImageImpl
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual bool GetIsFlipped() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -186,6 +192,7 @@ class TextureImageImpl : public TextureBackedImageImpl
     private:
         unsigned int    m_TexObj;
         OpenGLContext*  m_Context;
+        bool            m_IsFlipped;
 };
 
 //=============================================================================
@@ -271,6 +278,7 @@ class BitmapImageImpl : public BitmapBackedImageImpl
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual bool GetIsFlipped() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -298,6 +306,7 @@ class ImageProviderImageImpl : public BitmapBackedImageImpl
         virtual Rect2D GetExtent() const;
         virtual Size2D GetUnderlyingPixelSize() const;
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
+        virtual bool GetIsFlipped() const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -305,7 +314,8 @@ class ImageProviderImageImpl : public BitmapBackedImageImpl
         virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
 
     private:
-        ImageProvider*     m_ImageProvider;
+        ImageProvider*      m_ImageProvider;
+        bool                m_FlipFlagCache;
 };
 
 } }

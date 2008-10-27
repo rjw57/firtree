@@ -61,9 +61,10 @@ class BitmapImageRep : public ReferenceCounted {
                 unsigned int width, unsigned int height,
                 unsigned int stride,
                 PixelFormat format,
-                bool copyData);
+                bool copyData,
+                bool flipped);
 
-        BitmapImageRep(const BitmapImageRep* rep, bool copyData);
+        BitmapImageRep(const BitmapImageRep* rep, bool copyData, bool flipped);
         ///@}
 
     public:
@@ -75,6 +76,9 @@ class BitmapImageRep : public ReferenceCounted {
         unsigned int    Stride;     ///< The length of one image row in bytes.
         PixelFormat     Format;     ///< The image representation uses elements
         ///< of this type to encode pixel component values.
+        
+        bool            Flipped;    ///< True if the first scan line in the 
+                                    ///< BitmapImageRep is the top one.
 
         /// Constructor for a BitmapImageRep.
         ///
@@ -85,19 +89,24 @@ class BitmapImageRep : public ReferenceCounted {
         /// \param format The format of one component of one pixel.
         /// \param copyData If true, a deep copy of the data is made otherwise
         ///                 the reference count of the blob is merely incremented.
+        /// \param flipped If true the first scan line in the image data corresponds
+        ///               to the top of the image.
         static BitmapImageRep* Create(Blob* blob,
                 unsigned int width, unsigned int height,
                 unsigned int stride,
                 PixelFormat format = Byte,
-                bool copyData = false);
+                bool copyData = false,
+                bool flipped = false);
 
         /// Construct a BitmapImageRep by copying an existing BitmapImageRep.
         ///
         /// \param rep A reference to the BitmapImageRep containing the 
         ///            bitmap image.
         /// \param copyData If true, a deep copy of the bitmap is made.
+        /// \param flipped If true the first scan line in the image data corresponds
+        ///               to the top of the image.
         static BitmapImageRep* CreateFromBitmapImageRep(const BitmapImageRep* rep,
-                bool copyData = false);
+                bool copyData = false, bool flipped = false);
 
         /// Write a copy of this image a file. If this image is infinite or
         /// the file could not be written, this returns false. Otherwise it
@@ -196,8 +205,9 @@ class Image : public ReferenceCounted
         static Image* CreateFromImageProvider(ImageProvider* improv);
 
         /// Construct an image from an existing OpenGL texture.
+        /// If 'flipped' is true, the image will be flipped vertically.
         static Image* CreateFromOpenGLTexture(unsigned int texObj, 
-                OpenGLContext* context);
+                OpenGLContext* context, bool flipped = false);
 
         // ====================================================================
         // CONST METHODS

@@ -39,26 +39,27 @@ using namespace Internal;
 //=============================================================================
 BitmapImageRep* BitmapImageRep::Create(Blob* blob,
     unsigned int width, unsigned int height, unsigned int stride,
-    PixelFormat format, bool copy)
+    PixelFormat format, bool copy, bool flipped)
 {
-    return new BitmapImageRep(blob, width, height, stride, format, copy);
+    return new BitmapImageRep(blob, width, height, stride, format, copy, flipped);
 }
 
 //=============================================================================
 BitmapImageRep* BitmapImageRep::CreateFromBitmapImageRep(
-        const BitmapImageRep* rep, bool copyData)
+        const BitmapImageRep* rep, bool copyData, bool flipped)
 {
-    return new BitmapImageRep(rep, copyData);
+    return new BitmapImageRep(rep, copyData, flipped);
 }
 
 //=============================================================================
 BitmapImageRep::BitmapImageRep(Blob* blob,
     unsigned int width, unsigned int height, unsigned int stride,
-    PixelFormat format, bool copy)
+    PixelFormat format, bool copy, bool flipped)
     :   Width(width)
     ,   Height(height)
     ,   Stride(stride)
     ,   Format(format)
+    ,   Flipped(flipped)
 {
     if(blob == NULL)
         return;
@@ -73,11 +74,13 @@ BitmapImageRep::BitmapImageRep(Blob* blob,
 }
 
 //=============================================================================
-BitmapImageRep::BitmapImageRep(const BitmapImageRep* rep, bool copy)
+BitmapImageRep::BitmapImageRep(const BitmapImageRep* rep, bool copy, 
+        bool flipped)
     :   Width(rep->Width)
     ,   Height(rep->Height)
     ,   Stride(rep->Stride)
     ,   Format(rep->Format)
+    ,   Flipped(flipped)
 {
     if(rep->ImageBlob == NULL)
         return;
@@ -286,9 +289,10 @@ Image* Image::CreateFromImageProvider(ImageProvider* improv)
 }
 
 //=============================================================================
-Image* Image::CreateFromOpenGLTexture(unsigned int texObj, OpenGLContext* c)
+Image* Image::CreateFromOpenGLTexture(unsigned int texObj, OpenGLContext* c,
+        bool flipped)
 {
-    return new TextureImageImpl(texObj, c);
+    return new TextureImageImpl(texObj, c, flipped);
 }
 
 //=============================================================================

@@ -54,6 +54,12 @@ ImageImpl::~ImageImpl()
 }
 
 //=============================================================================
+bool ImageImpl::GetIsFlipped() const
+{
+    return false;
+}
+
+//=============================================================================
 Kernel* ImageImpl::GetKernel() const
 {
     return NULL;
@@ -93,6 +99,14 @@ TransformedImageImpl::GetPreferredRepresentation() const
 }
 
 //=============================================================================
+bool TransformedImageImpl::GetIsFlipped() const
+{
+    // TransformedImageImpl implements the flip in 
+    // GetTransformFromUnderlyingImage
+    return false;
+}
+
+//=============================================================================
 Image* TransformedImageImpl::GetBaseImage() const
 {
     TransformedImageImpl* transImage = 
@@ -122,6 +136,17 @@ Size2D TransformedImageImpl::GetUnderlyingPixelSize() const
 AffineTransform* TransformedImageImpl::GetTransformFromUnderlyingImage() const
 {
     AffineTransform* t = m_BaseImage->GetTransformFromUnderlyingImage();
+    if(m_BaseImage->GetIsFlipped())
+    {
+        Rect2D baseExtent = m_BaseImage->GetExtent();
+        
+        // Flipping inifinite images in undefined.
+        if(!Rect2D::IsInfinite(baseExtent)) 
+        {
+            t->ScaleBy(1.0, -1.0);
+            t->TranslateBy(0.0, baseExtent.Size.Height - baseExtent.Origin.Y);
+        }
+    }
     t->AppendTransform(m_Transform);
     return t;
 }
@@ -241,10 +266,12 @@ Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
 //=============================================================================
 
 //=============================================================================
-TextureImageImpl::TextureImageImpl(unsigned int texObj, OpenGLContext* context)
+TextureImageImpl::TextureImageImpl(unsigned int texObj, OpenGLContext* context,
+        bool flipped)
     :   TextureBackedImageImpl()
     ,   m_TexObj(texObj)
     ,   m_Context(context)
+    ,   m_IsFlipped(flipped)
 {
     FIRTREE_DEBUG("Created TextureImageImpl @ %p", this);
 
@@ -278,9 +305,28 @@ Size2D TextureImageImpl::GetUnderlyingPixelSize() const
 }
 
 //=============================================================================
+bool TextureImageImpl::GetIsFlipped() const
+{
+    return m_IsFlipped;
+}
+
+
+//=============================================================================
 AffineTransform* TextureImageImpl::GetTransformFromUnderlyingImage() const
 {
-    return AffineTransform::Identity();
+    if(!m_IsFlipped)
+    {
+        return AffineTransform::Identity();
+    } else {
+        float height = GetExtent().Size.Height;
+        AffineTransform* flip_transform = AffineTransform::Scaling(1.0, -1.0);
+        flip_transform->AppendTransform(
+                AffineTransform::Translation(0.0, height));
+        return flip_transform;
+    }
+
+    FIRTREE_ERROR("Unreachable code has been reached!");
+    return NULL;
 }
 
 //=============================================================================
@@ -575,6 +621,12 @@ Size2D BitmapImageImpl::GetUnderlyingPixelSize() const
 }
 
 //=============================================================================
+bool BitmapImageImpl::GetIsFlipped() const
+{
+    return m_BitmapRep->Flipped;
+}
+
+//=============================================================================
 AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 {
     return AffineTransform::Identity();
@@ -594,6 +646,7 @@ Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep()
 ImageProviderImageImpl::ImageProviderImageImpl(ImageProvider* improv)
     :   BitmapBackedImageImpl()
     ,   m_ImageProvider(improv)
+    ,   m_FlipFlagCache(false)
 {
     FIRTREE_DEBUG("Created ImageProviderImageImpl @ %p", this);
     FIRTREE_SAFE_RETAIN(m_ImageProvider);
@@ -603,6 +656,12 @@ ImageProviderImageImpl::ImageProviderImageImpl(ImageProvider* improv)
 ImageProviderImageImpl::~ImageProviderImageImpl()
 {
     FIRTREE_SAFE_RELEASE(m_ImageProvider);
+}
+
+//=============================================================================
+bool ImageProviderImageImpl::GetIsFlipped() const
+{
+    return m_FlipFlagCache;
 }
 
 //=============================================================================
@@ -649,6 +708,7 @@ Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep()
     // TODO: Should probably make this method return a const BitmapImageRep.
     Firtree::BitmapImageRep* rv = 
         const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->CreateImageRep());
+    m_FlipFlagCache = rv->Flipped;
     return rv;
 }
 

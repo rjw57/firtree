@@ -1452,10 +1452,17 @@ AffineTransform* TextureSamplerParameter::GetAndOwnTransform() const
     AffineTransform* underlyingTransform = 
         m_Image->GetTransformFromUnderlyingImage();
     Size2D underlyingSize = m_Image->GetUnderlyingPixelSize();
+    AffineTransform* t = AffineTransform::Identity();
+
+    // Undo the flip if necessary.
+    if(m_Image->GetIsFlipped())
+    {
+        t->ScaleBy(1.0, -1.0);
+        t->TranslateBy(0.0, 1.0);
+    }
 
     // The texture has co-ordinates in the range (0,1]. Re-scale
     // to be pixel-based co-ordinates.
-    AffineTransform* t = AffineTransform::Identity();
     t->ScaleBy(underlyingSize.Width, underlyingSize.Height);
     t->AppendTransform(underlyingTransform);
     FIRTREE_SAFE_RELEASE(underlyingTransform);

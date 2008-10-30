@@ -67,6 +67,8 @@ struct FullType {
 	/// The constructor defines the default values.
 	inline FullType()
 			: Qualifier( TyQualInvalid ), Specifier( TySpecInvalid ) { }
+	inline FullType( TypeQualfier q, TypeSpecifier s )
+			: Qualifier( q ), Specifier( s ) { }
 
 	/// Return a flag indicating the validity of the passed type.
 	inline static bool IsValid( const FullType& t ) {
@@ -100,6 +102,51 @@ struct FullType {
 		}
 
 		return false;
+	}
+
+	/// Return true if this type is a scalar type (int, float, bool).
+	inline bool IsScalar() const {
+		return ( Specifier == TySpecFloat ) || ( Specifier == TySpecInt ) ||
+		       ( Specifier == TySpecBool );
+	}
+
+	/// Return true if this type is a vector type (vec{2,3,4} or color).
+	inline bool IsVector() const {
+		return ( Specifier == TySpecVec2 ) || ( Specifier == TySpecVec3 ) ||
+		       ( Specifier == TySpecVec4 ) || ( Specifier == TySpecColor );
+	}
+
+	/// Return true if this type is a compound type (sampler).
+	inline bool IsCompound() const {
+		return ( Specifier == TySpecSampler );
+	}
+
+	/// Return the artiy of this type. Scalar types have arity 1,
+	/// vector types have artiy 2-4 and compound types have arity 0.
+	inline uint32_t GetArity() const {
+		if ( IsScalar() ) {
+			return 1;
+		}
+
+		if ( IsVector() ) {
+			switch ( Specifier ) {
+				case TySpecVec2:
+					return 2;
+					break;
+				case TySpecVec3:
+					return 3;
+					break;
+				case TySpecVec4:
+				case TySpecColor:
+					return 4;
+					break;
+				default:
+					// Do nothing, handled by return below.
+					break;
+			}
+		}
+
+		return 0;
 	}
 
 	inline bool operator == ( const FullType& b ) const {

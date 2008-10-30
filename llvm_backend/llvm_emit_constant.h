@@ -31,6 +31,41 @@ class ConstantExpressionValue : public VoidExpressionValue
 		llvm::Value*			m_WrappedValue;
 };
 
+//===========================================================================
+/// Utilitiy function to create a floating point immediate value.
+ExpressionValue* CreateFloat( LLVMContext* context, float float_val );
+
+//===========================================================================
+/// Utilitiy function to create an integer immediate value.
+ExpressionValue* CreateInt( LLVMContext* context, int int_val );
+
+//===========================================================================
+/// Utilitiy function to create a boolean immediate value.
+ExpressionValue* CreateBool( LLVMContext* context, bool bool_val );
+
+//===========================================================================
+/// Utilitiy function to create a vector immediate value.
+ExpressionValue* CreateVector( LLVMContext* context,
+                               const float* params, int param_count );
+ExpressionValue* CreateVector( LLVMContext* context,
+                               float x, float y );
+ExpressionValue* CreateVector( LLVMContext* context,
+                               float x, float y, float z );
+ExpressionValue* CreateVector( LLVMContext* context,
+                               float x, float y, float z, float w );
+
+//===========================================================================
+/// Utility function to create a vector from a set of ExpressionValues.
+ExpressionValue* CreateVector( LLVMContext* context,
+                               std::vector<ExpressionValue*> values );
+
+//===========================================================================
+/// Utility function to extend a vector of ExpressionValues by cracking a
+/// vector.
+void CrackVector( LLVMContext* context, ExpressionValue* vector,
+                  std::vector<ExpressionValue*>& output_values );
+
+
 } // namespace Firtree
 
 #endif // __LLVM_EMIT_CONSTANT_H 

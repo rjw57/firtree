@@ -39,8 +39,8 @@ class ReturnEmitter : ExpressionEmitter
 		virtual ExpressionValue* Emit( LLVMContext* context,
 		                               firtreeExpression expression ) {
 			firtreeExpression return_value_expr;
-			if ( !firtreeExpression_return( expression, 
-						&return_value_expr ) ) {
+			if ( !firtreeExpression_return( expression,
+			                                &return_value_expr ) ) {
 				FIRTREE_LLVM_ICE( context, expression, "Invalid return." );
 			}
 
@@ -53,7 +53,7 @@ class ReturnEmitter : ExpressionEmitter
 			try {
 				// Cast the return value if necessary.
 				cast_return_value =
-					TypeCaster::CastValue( context, return_value_expr,
+				    TypeCaster::CastValue( context, return_value_expr,
 				                           return_value,
 				                           context->CurrentPrototype->
 				                           ReturnType.Specifier );

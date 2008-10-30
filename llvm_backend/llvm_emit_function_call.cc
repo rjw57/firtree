@@ -6,6 +6,7 @@
 #include "llvm_backend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
+#include "llvm_emit_constant.h"
 #include "llvm_type_cast.h"
 
 #include <llvm/Instructions.h>
@@ -66,9 +67,11 @@ class FunctionCallEmitter : ExpressionEmitter
 
 			switch ( required_type.Specifier ) {
 				case FullType::TySpecInt:
+				case FullType::TySpecFloat:
+				case FullType::TySpecBool:
 					if ( parameters.size() != 1 ) {
 						FIRTREE_LLVM_ERROR( context, func_spec,
-						                    "Constructor for 'int' expects "
+						                    "Constructor for expects "
 						                    "1 argument." );
 					}
 					return TypeCaster::CastValue( context,
@@ -76,16 +79,73 @@ class FunctionCallEmitter : ExpressionEmitter
 					                              parameters.back(),
 					                              required_type.Specifier );
 				default:
-					// No action because we are caught by the call
-					// to FIRTREE_LLVM_ERROR below.
+					// No action because we are processed by code
+					// below.
 					break;
 			}
 
+			// If we get this far, the constructor must be for a
+			// vector type. Get the required dimension.
+			uint32_t required_dimension = required_type.GetArity();
 
-			FIRTREE_LLVM_ERROR( context, func_spec,
-			                    "No constructor for type." );
+			// Vector constructors can take scalar or vector
+			// parameters. Vector parameters are 'cracked' into
+			// individual scalar values. This vector stores the
+			// cracked parameters
+			std::vector<ExpressionValue*> cracked_params;
+			ExpressionValue* return_value = NULL;
 
-			return NULL;
+			try {
+				std::vector<ExpressionValue*>::iterator param_it =
+				    parameters.begin();
+				for ( ; param_it != parameters.end(); ++param_it ) {
+					// Depending on the parameter type it is either
+					// implicitly cast to a float, or cracked.
+					ExpressionValue* param_value = *param_it;
+					FullType param_type = param_value->GetType();
+					if ( param_type.IsScalar() ) {
+						cracked_params.push_back(
+						    TypeCaster::CastValue( context,
+						                           func_spec,
+						                           param_value,
+						                           FullType::TySpecFloat ) );
+					} else if ( param_type.IsVector() ) {
+						CrackVector( context, param_value, cracked_params );
+					} else {
+						FIRTREE_LLVM_ERROR( context, func_spec,
+						                    "Invalid type for parameter in "
+						                    "constructor." );
+					}
+				}
+
+				if ( cracked_params.size() != required_dimension ) {
+					FIRTREE_LLVM_ERROR( context, func_spec,
+					                    "Incorrect parameter count "
+					                    "for constructor." );
+				}
+
+				return_value = CreateVector( context, cracked_params );
+
+				// Free the cracked parameter list.
+				while ( cracked_params.size() > 0 ) {
+					FIRTREE_SAFE_RELEASE( cracked_params.back() );
+					cracked_params.pop_back();
+				}
+			} catch ( CompileErrorException e ) {
+				// Free the cracked parameter list.
+				while ( cracked_params.size() > 0 ) {
+					FIRTREE_SAFE_RELEASE( cracked_params.back() );
+					cracked_params.pop_back();
+				}
+				throw e;
+			}
+
+			if ( return_value == NULL ) {
+				FIRTREE_LLVM_ERROR( context, func_spec,
+				                    "No constructor for type." );
+			}
+
+			return return_value;
 		}
 
 		/// Emit the passed expression term returning a pointer to
@@ -121,13 +181,13 @@ class FunctionCallEmitter : ExpressionEmitter
 				if ( firtreeFunctionSpecifier_constructorfor(
 				            func_spec, NULL ) ) {
 					return_value =  EmitConstructorFor(
-					                    context, func_spec, 
-										parameter_values );
+					                    context, func_spec,
+					                    parameter_values );
 				} else if ( firtreeFunctionSpecifier_functionnamed(
 				                func_spec, NULL ) ) {
 					return_value =  EmitFunctionCall(
 					                    context, func_spec,
-										parameter_values );
+					                    parameter_values );
 				} else {
 					FIRTREE_LLVM_ICE( context, expression,
 					                  "Unknown function term." );

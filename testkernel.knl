@@ -6,6 +6,7 @@ int blobble(int a, in int b, out int c, inout vec4 d)
 kernel vec4 kernel_a()
 {
 	return vec4(1.0,2.0,vec2(3.0,4.0));
+	//return vec4(1.0,2.0,3.0,4.0);
 }
 
 /*

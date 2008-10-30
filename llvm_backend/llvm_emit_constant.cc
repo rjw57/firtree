@@ -9,6 +9,7 @@
 #include "llvm_emit_constant.h"
 
 #include <llvm/Instructions.h>
+#include <llvm/DerivedTypes.h>
 
 using namespace llvm;
 
@@ -62,11 +63,150 @@ FullType ConstantExpressionValue::GetType() const
 			FIRTREE_LLVM_ICE( GetContext(), NULL,
 			                  "unknown integer type." );
 		}
+	} else if ( llvm::isa<llvm::VectorType>( type ) ) {
+		const llvm::VectorType* vec_type =
+		    llvm::cast<llvm::VectorType>( type );
+		switch ( vec_type->getNumElements() ) {
+			case 2:
+				return_value.Specifier = FullType::TySpecVec2;
+				break;
+			case 3:
+				return_value.Specifier = FullType::TySpecVec3;
+				break;
+			case 4:
+				return_value.Specifier = FullType::TySpecVec4;
+				break;
+			default:
+				FIRTREE_LLVM_ICE( GetContext(), NULL,
+				                  "unknown vector type." );
+		}
 	} else {
 		FIRTREE_LLVM_ICE( GetContext(), NULL, "unknown type." );
 	}
 
 	return return_value;
+}
+
+//===========================================================================
+//===========================================================================
+
+//===========================================================================
+/// Utilitiy function to create a floating point immediate value.
+ExpressionValue* CreateFloat( LLVMContext* context, float float_val )
+{
+	llvm::Value* val = ConstantFP::get( Type::FloatTy,
+	                                    APFloat( float_val ) );
+	return ConstantExpressionValue::Create( context, val );
+}
+
+//===========================================================================
+/// Utilitiy function to create an integer immediate value.
+ExpressionValue* CreateInt( LLVMContext* context, int int_val )
+{
+	llvm::Value* val = ConstantInt::get( Type::Int32Ty, int_val );
+	return ConstantExpressionValue::Create( context, val );
+}
+
+//===========================================================================
+/// Utilitiy function to create a boolean immediate value.
+ExpressionValue* CreateBool( LLVMContext* context, bool bool_val )
+{
+	llvm::Value* val = ConstantInt::get( Type::Int1Ty, ( int )bool_val );
+	return ConstantExpressionValue::Create( context, val );
+}
+
+//===========================================================================
+/// Utilitiy function to create a vector immediate value.
+ExpressionValue* CreateVector( LLVMContext* context, const float* params,
+                               int param_count )
+{
+	if (( param_count < 2 ) || ( param_count > 4 ) ) {
+		FIRTREE_ERROR( "Invalid dimension for constant vector." );
+	}
+
+	std::vector<Constant*> elements;
+
+	for ( int i=0; i<param_count; i++ ) {
+		elements.push_back( ConstantFP::get( Type::FloatTy,
+		                                     APFloat( params[i] ) ) );
+	}
+
+
+	llvm::Value* val = ConstantVector::get( elements );
+	return ConstantExpressionValue::Create( context, val );
+}
+
+//===========================================================================
+ExpressionValue* CreateVector( LLVMContext* context,  float x,
+                               float y )
+{
+	float p[] = {x, y};
+	return CreateVector( context, p, 2 );
+}
+
+//===========================================================================
+ExpressionValue* CreateVector( LLVMContext* context, float x,
+                               float y, float z )
+{
+	float p[] = {x, y, z};
+	return CreateVector( context, p, 3 );
+}
+
+//===========================================================================
+ExpressionValue* CreateVector( LLVMContext* context, float x,
+                               float y, float z, float w )
+{
+	float p[] = {x, y, z, w};
+	return CreateVector( context, p, 4 );
+}
+
+//===========================================================================
+ExpressionValue* CreateVector( LLVMContext* context,
+                               std::vector<ExpressionValue*> values )
+{
+	if (( values.size() < 2 ) || ( values.size() > 4 ) ) {
+		FIRTREE_LLVM_ICE( context, NULL, "Invalid vector size." );
+	}
+
+	static const float zeros[] = {0.f, 0.f, 0.f, 0.f};
+
+	ExpressionValue* zero_vec = CreateVector( context,
+	                            zeros, values.size() );
+
+	llvm::Value* vec_val = zero_vec->GetLLVMValue();
+
+	for ( unsigned int i=0; i<values.size(); ++i ) {
+		vec_val = LLVM_CREATE( InsertElementInst, vec_val,
+		                       values[i]->GetLLVMValue(), i,
+		                       "tmpins", context->BB );
+	}
+
+	FIRTREE_SAFE_RELEASE( zero_vec );
+
+	return ConstantExpressionValue::Create( context, vec_val );
+}
+
+//===========================================================================
+/// Utility function to create a set of ExpressionValues by cracking a
+/// vector.
+void CrackVector( LLVMContext* context, ExpressionValue* vector,
+                  std::vector<ExpressionValue*>& output_values )
+{
+	FullType vec_type = vector->GetType();
+	if ( !vec_type.IsVector() ) {
+		FIRTREE_LLVM_ICE( context, NULL, "Cannot crack non-vector value." );
+	}
+
+	// Get the llvm vector value associated with the vector
+	llvm::Value* vec_val = vector->GetLLVMValue();
+
+	for ( unsigned int i=0; i<vec_type.GetArity(); i++ ) {
+		llvm::Value* ext_val = LLVM_CREATE( ExtractElementInst,
+		                                    vec_val, i, "tmpext",
+		                                    context->BB );
+		output_values.push_back(
+		    ConstantExpressionValue::Create( context, ext_val ) );
+	}
 }
 
 //===========================================================================

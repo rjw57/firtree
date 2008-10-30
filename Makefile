@@ -62,9 +62,11 @@ all: kernelparse kernelcompile
 beautify:
 	for file in $(filter %.cc, $(KERNELCOMPILE_FILES)); do \
 		astyle -s4 -t4 -l -C -S -w -U -D "$$file"; \
+		rm -f "$${file}.orig"; \
 	done
 	for file in $(filter %.h, $(KERNELCOMPILE_FILES)); do \
 		astyle -s4 -t4 -l -C -S -w -U -D "$$file"; \
+		rm -f "$${file}.orig"; \
 	done
 
 compiletest: kernelcompile

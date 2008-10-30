@@ -236,7 +236,7 @@ class ConstantEmitter : ExpressionEmitter
 			const char* tok_str = GLS_Tok_string( token );
 
 			// Parse integer
-			ival = strtol(tok_str, (char **)NULL, 0);
+			ival = strtol( tok_str, ( char ** )NULL, 0 );
 
 			llvm::Value* val = ConstantInt::get( Type::Int32Ty, ival );
 			return ConstantExpressionValue::Create( context, val );

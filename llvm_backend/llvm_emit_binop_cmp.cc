@@ -116,8 +116,6 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 			ExpressionValue* right_val = NULL;
 			ExpressionValue* return_val = NULL;
 
-			Instruction::BinaryOps op = Instruction::BinaryOpsEnd;
-
 			// Work out which comparison we want and set the predicate
 			// appropriately. Note that each instruction (fcmp/icmp) has
 			// different predicates for the same comparison.

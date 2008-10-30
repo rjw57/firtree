@@ -232,10 +232,12 @@ class ConstantEmitter : ExpressionEmitter
 		ExpressionValue* EmitInt( LLVMContext* context,
 		                          firtreeExpression expression,
 		                          GLS_Tok token ) {
-			FIRTREE_LLVM_WARNING( context, expression,
-			                      "FIXME: Hex and octal integer constants "
-			                      "not supported." );
-			int ival = atoi( GLS_Tok_string( token ) );
+			int ival = 0;
+			const char* tok_str = GLS_Tok_string( token );
+
+			// Parse integer
+			ival = strtol(tok_str, (char **)NULL, 0);
+
 			llvm::Value* val = ConstantInt::get( Type::Int32Ty, ival );
 			return ConstantExpressionValue::Create( context, val );
 		}

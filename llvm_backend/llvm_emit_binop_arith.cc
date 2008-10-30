@@ -86,8 +86,8 @@ class BinaryOpArithEmitter : ExpressionEmitter
 					gcd_type = FullType::TySpecBool;
 				}
 
-				ExpressionValue* left_cast;
-				ExpressionValue* right_cast;
+				ExpressionValue* left_cast = NULL;
+				ExpressionValue* right_cast = NULL;
 				try {
 					// Attempt to cast both sides.
 					left_cast = TypeCaster::CastValue( context,

@@ -3,11 +3,12 @@ int blobble(int a, in int b, out int c, inout vec4 d)
 	return 1.0;
 }
 
-kernel vec4 kernel_a(float param1, vec3 param2)
+kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
 {
 	const float a = 4.0;
 	float b = a, c = 3.0;
-	return vec4(a, param1, c, 1.0) * 2;
+	bool d = true, e = false;
+	return vec4(a, param2);
 	//return vec4(1.0,2.0,vec2(3.0,4.0));
 	//return vec4(1.0,2.0,3.0,4.0);
 }

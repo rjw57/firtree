@@ -82,7 +82,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					           context, llvm_new_value );
 				}
 				break;
-				case FullType::TySpecInt: {
+				case FullType::TySpecBool: {
 					// Only support implicityle casting bool -> int since
 					// this does not lose bits.
 					Value* llvm_new_value = LLVM_CREATE( SExtInst,

@@ -63,9 +63,9 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			// variable.
 			VariableDeclaration var_decl_s;
 			var_decl_s.value = LLVM_CREATE( AllocaInst,
-			                              var_type.ToLLVMType( context ),
-			                              GLS_Tok_string( identifier_tok ),
-			                              context->BB );
+			                                var_type.ToLLVMType( context ),
+			                                GLS_Tok_string( identifier_tok ),
+			                                context->BB );
 			var_decl_s.name = GLS_Tok_symbol( identifier_tok );
 			var_decl_s.type = var_type;
 			var_decl_s.initialised = false;

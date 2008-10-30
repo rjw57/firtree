@@ -6,8 +6,8 @@ int blobble(int a, in int b, out int c, inout vec4 d)
 kernel vec4 kernel_a(float param1, vec3 param2)
 {
 	const float a = 4.0;
-	float b, c = 3.0;
-	return vec4(param2, 1.0);
+	float b = a, c = 3.0;
+	return vec4(a, b, c, 1.0);
 	//return vec4(1.0,2.0,vec2(3.0,4.0));
 	//return vec4(1.0,2.0,3.0,4.0);
 }

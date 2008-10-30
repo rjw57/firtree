@@ -45,6 +45,7 @@ KERNELCOMPILE_FILES=$(GENERATED_FILES)\
 	llvm_backend/llvm_emit_variable.cc \
 	llvm_backend/llvm_emit_binop_arith.cc \
 	llvm_backend/llvm_emit_binop_logic.cc \
+	llvm_backend/llvm_emit_binop_cmp.cc \
 	llvm_backend/symbol_table.cc
 #	llvmout.h llvmout.cc \
 #	llvmutil.h llvmutil.cc \

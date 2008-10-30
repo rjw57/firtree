@@ -47,11 +47,11 @@ class BinaryOpLogicEmitter : ExpressionEmitter
 			try {
 				// Attempt to cast both sides.
 				left_cast = TypeCaster::CastValue( context,
-						binopexpr,
-						left_in, FullType::TySpecBool );
+				                                   binopexpr,
+				                                   left_in, FullType::TySpecBool );
 				right_cast = TypeCaster::CastValue( context,
-						binopexpr,
-						right_in, FullType::TySpecBool );
+				                                    binopexpr,
+				                                    right_in, FullType::TySpecBool );
 			} catch ( CompileErrorException e ) {
 				FIRTREE_SAFE_RELEASE( left_cast );
 				FIRTREE_SAFE_RELEASE( right_cast );

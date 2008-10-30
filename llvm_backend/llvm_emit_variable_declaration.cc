@@ -71,22 +71,36 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			var_decl_s.initialised = false;
 
 			// Attempt to emit the initialiser
-			ExpressionValue* initialiser_val =
-			    ExpressionEmitterRegistry::GetRegistry()->Emit(
-			        context, initialiser );
+			ExpressionValue* initialiser_val = NULL;
+			ExpressionValue* initialiser_cast_val = NULL;
 
-			// If the initialiser is non void (i.e. not a NOP), assign
-			// the value.
-			if ( initialiser_val->GetType().Specifier !=
-			        FullType::TySpecVoid ) {
-				var_decl_s.initialised = true;
-				LLVM_CREATE( StoreInst, initialiser_val->GetLLVMValue(),
-				             var_decl_s.value, context->BB );
+			try {
+				initialiser_val = ExpressionEmitterRegistry::
+				                  GetRegistry()->Emit( context, initialiser );
+
+				initialiser_cast_val = TypeCaster::CastValue( context,
+				                       var_decl, initialiser_val, 
+									   var_type.Specifier );
+
+				// If the initialiser is non void (i.e. not a NOP), assign
+				// the value.
+				if ( initialiser_val->GetType().Specifier !=
+				        FullType::TySpecVoid ) {
+					var_decl_s.initialised = true;
+					LLVM_CREATE( StoreInst,
+					             initialiser_cast_val->GetLLVMValue(),
+					             var_decl_s.value, context->BB );
+				}
+
+				// Release the initialiser since we have no more use
+				// for it
+				FIRTREE_SAFE_RELEASE( initialiser_val );
+				FIRTREE_SAFE_RELEASE( initialiser_cast_val );
+			} catch ( CompileErrorException e ) {
+				FIRTREE_SAFE_RELEASE( initialiser_val );
+				FIRTREE_SAFE_RELEASE( initialiser_cast_val );
 			}
 
-			// Release the initialiser since we have no more use
-			// for it
-			FIRTREE_SAFE_RELEASE( initialiser_val );
 
 			// Record this declaration
 			sym_table->AddDeclaration( var_decl_s );

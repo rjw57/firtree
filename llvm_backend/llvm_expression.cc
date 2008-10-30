@@ -132,6 +132,42 @@ ExpressionValue* ExpressionEmitterRegistry::Emit( LLVMContext* context,
 	return NULL;
 }
 
+//===========================================================================
+//===========================================================================
+
+//===========================================================================
+/// \brief Class to emit a nop
+class NopEmitter : ExpressionEmitter
+{
+	public:
+		NopEmitter()
+				: ExpressionEmitter() {
+		}
+
+		virtual ~NopEmitter() {
+		}
+
+		/// Create an instance of this emitter.
+		static ExpressionEmitter* Create() {
+			return new NopEmitter();
+		}
+
+		/// Emit the passed expression term returning a pointer to
+		/// a ExpressionValue containing it's value. It is the
+		/// responsibility of the caller to Release() this value.
+		virtual ExpressionValue* Emit( LLVMContext* context,
+		                               firtreeExpression expression ) {
+			if ( !firtreeExpression_nop( expression ) ) {
+				FIRTREE_LLVM_ICE( context, expression, "Invalid nop." );
+			}
+
+			return VoidExpressionValue::Create( context );
+		}
+};
+
+//===========================================================================
+RegisterEmitter<NopEmitter> g_NopEmitterReg( "nop" );
+
 }
 
 // vim:sw=4:ts=4:cindent:noet

@@ -36,17 +36,30 @@ class ExprListEmitter : ExpressionEmitter
 		/// responsibility of the caller to Release() this value.
 		virtual ExpressionValue* Emit( LLVMContext* context,
 		                               firtreeExpression expression ) {
-			firtreeExpression head;
+			bool need_new_scope = false;
+			firtreeExpression head = NULL;
 			GLS_Lst( firtreeExpression ) tail;
-			if ( !firtreeExpression_expression( expression, &head, &tail ) ) {
+			if ( firtreeExpression_expression( expression, &head, &tail ) ) {
+				need_new_scope = false;
+			} else if ( firtreeExpression_compound( expression, &tail ) ) {
+				need_new_scope = true;
+			} else {
 				FIRTREE_LLVM_ICE( context, expression,
-				                  "Invalid expression list." );
+				                  "Invalid expression list/compound." );
 			}
 
-			// Emit head expression.
-			ExpressionValue* expression_value =
-			    ExpressionEmitterRegistry::GetRegistry()->Emit(
-			        context, head );
+			if ( need_new_scope ) {
+				context->Variables->PushScope();
+			}
+
+			// Emit head expression (if present).
+			ExpressionValue* expression_value = NULL;
+
+			if ( head != NULL ) {
+				expression_value =
+				    ExpressionEmitterRegistry::GetRegistry()->Emit(
+				        context, head );
+			}
 
 			// Emit remaining expressions.
 			GLS_Lst( firtreeExpression ) it;
@@ -58,6 +71,10 @@ class ExprListEmitter : ExpressionEmitter
 				                   GetRegistry()->Emit( context, e );
 			}
 
+			if ( need_new_scope ) {
+				context->Variables->PopScope();
+			}
+
 			return expression_value;
 		}
 };
@@ -65,6 +82,7 @@ class ExprListEmitter : ExpressionEmitter
 //===========================================================================
 // Register the emitter.
 RegisterEmitter<ExprListEmitter> g_ExprListEmitterReg( "expression" );
+RegisterEmitter<ExprListEmitter> g_CompoundEmitterReg( "compound" );
 
 }
 

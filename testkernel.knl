@@ -4,6 +4,13 @@ kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
 	float b = 1;
 	a.zx = vec2(1,2);
 
+	{
+		int c = 3;
+		b = 4;
+	}
+
+	int c = 4;
+
 	//return vec4(a.xy, a.yx);
 	//return vec4(1.0,2.0,vec2(3.0,4.0));
 	return vec4(a.wzyx);

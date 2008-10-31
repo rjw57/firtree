@@ -37,7 +37,7 @@ struct LLVMContext;
 struct FullType {
 	//=======================================================================
 	/// \brief The possible type qualifiers.
-	enum TypeQualfier {
+	enum TypeQualifier {
 		TyQualNone,           ///< The 'default' qualifier.
 		TyQualConstant,       ///< The value is const (i.e. non-assignable).
 		TyQualInvalid = -1,   ///< An 'invalid' qualifier.
@@ -61,13 +61,13 @@ struct FullType {
 		TySpecInvalid = -1,   ///< An 'invalid' type.
 	};
 
-	TypeQualfier    Qualifier;
+	TypeQualifier    Qualifier;
 	TypeSpecifier   Specifier;
 
 	/// The constructor defines the default values.
 	inline FullType()
 			: Qualifier( TyQualInvalid ), Specifier( TySpecInvalid ) { }
-	inline FullType( TypeQualfier q, TypeSpecifier s )
+	inline FullType( TypeQualifier q, TypeSpecifier s )
 			: Qualifier( q ), Specifier( s ) { }
 
 	/// Return a flag indicating the validity of the passed type.

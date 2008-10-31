@@ -75,22 +75,21 @@ class BinaryOpAssignEmitter : ExpressionEmitter
 				// The 'value' of the assignment expression is the right hand
 				// value.
 				return_val = TypeCaster::CastValue( context,
-				                                        expression,
-				                                        right_val,
-				                                        left_val->GetType().Specifier );
+				                                    expression,
+				                                    right_val,
+				                                    left_val->GetType().Specifier );
 
 				// If the assignment involves an arithmetic instruction,
 				// emit it.
-				if(op != Instruction::BinaryOpsEnd)
-				{
+				if ( op != Instruction::BinaryOpsEnd ) {
 					llvm::Value* result_val = BinaryOperator::create( op,
-				                          left_val->GetLLVMValue(),
-				                          return_val->GetLLVMValue(),
-				                          "tmpbinop", context->BB );
+					                          left_val->GetLLVMValue(),
+					                          return_val->GetLLVMValue(),
+					                          "tmpbinop", context->BB );
 
 					FIRTREE_SAFE_RELEASE( return_val );
 					return_val = ConstantExpressionValue::
-		  				Create( context, result_val );
+					             Create( context, result_val );
 				}
 
 				// Now check that the left_value is mutable.
@@ -101,7 +100,7 @@ class BinaryOpAssignEmitter : ExpressionEmitter
 				}
 
 				// Perform assignment
-				left_val->AssignFrom(*return_val);
+				left_val->AssignFrom( *return_val );
 
 				FIRTREE_SAFE_RELEASE( left_val );
 				FIRTREE_SAFE_RELEASE( right_val );

@@ -24,7 +24,7 @@ namespace Firtree
 /// returned ExpressionValue.
 ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
                                         PT_Term term,
-                                        ExpressionValue* source,
+                                        const ExpressionValue* source,
                                         FullType::TypeSpecifier dest_ty_spec )
 {
 	FullType source_type = source->GetType();

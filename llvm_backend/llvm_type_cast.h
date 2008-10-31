@@ -25,7 +25,7 @@ class TypeCaster
 		/// returned ExpressionValue.
 		static ExpressionValue* CastValue( LLVMContext* context,
 		                                   PT_Term term,
-		                                   ExpressionValue* source,
+		                                   const ExpressionValue* source,
 		                                   FullType::TypeSpecifier type );
 };
 

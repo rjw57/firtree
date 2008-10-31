@@ -1,13 +1,12 @@
 kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
 {
-	float a = 4;
-	const float b = 3;
+	vec4 a = vec4(3,4,5,6);
+	float b = 1;
+	a.zx = vec2(1,2);
 
-	a = param1 + 1;
-
-	return vec4(0,0,0,a);
+	//return vec4(a.xy, a.yx);
 	//return vec4(1.0,2.0,vec2(3.0,4.0));
-	//return vec4(1.0,2.0,3.0,4.0);
+	return vec4(a.wzyx);
 }
 
 /*

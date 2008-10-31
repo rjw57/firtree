@@ -79,8 +79,8 @@ class VariableDeclarationEmitter : ExpressionEmitter
 				                  GetRegistry()->Emit( context, initialiser );
 
 				initialiser_cast_val = TypeCaster::CastValue( context,
-				                       var_decl, initialiser_val, 
-									   var_type.Specifier );
+				                       var_decl, initialiser_val,
+				                       var_type.Specifier );
 
 				// If the initialiser is non void (i.e. not a NOP), assign
 				// the value.

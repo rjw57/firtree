@@ -2,7 +2,7 @@ kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
 {
 	vec4 a = vec4(3,4,5,6);
 	float b = 1;
-	a.zx = vec2(1,2);
+	a.zx = vec2(-1,2);
 
 	{
 		int c = 3;
@@ -13,7 +13,7 @@ kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
 
 	//return vec4(a.xy, a.yx);
 	//return vec4(1.0,2.0,vec2(3.0,4.0));
-	return vec4(a.wzyx);
+	return vec4(a.xy, -a.zw);
 }
 
 /*

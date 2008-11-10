@@ -779,6 +779,7 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
         case EOpMod:
         case EOpMin:
         case EOpMax:
+        case EOpAtan:
         case EOpStep:
         case EOpDot:
         case EOpCross:
@@ -861,6 +862,9 @@ bool GLSLBackend::VisitAggregate(bool preVisit, TIntermAggregate* n)
                             break;
                         case EOpPow:
                             funcname = "pow";
+                            break;
+                        case EOpAtan:
+                            funcname = "atan";
                             break;
                         case EOpSmoothStep:
                             funcname = "smoothstep";

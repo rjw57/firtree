@@ -17,6 +17,63 @@ namespace Firtree
 {
 
 //===========================================================================
+std::string FunctionPrototype::GetMangledName( LLVMContext* ctx ) const
+{
+	std::string namestr(symbolToString(Name));
+
+	// If no parameters, leave it as that
+	if(Parameters.size() == 0)
+	{
+		return namestr;
+	}
+
+	namestr += "_";
+
+	std::vector<FunctionParameter>::const_iterator it =
+		Parameters.begin();
+	for( ; it != Parameters.end(); ++it)
+	{
+		// Depending on the type of the parameter, append a
+		// type code.
+		switch(it->Type.Specifier)
+		{
+			case FullType::TySpecFloat:
+				namestr += "f";
+				break;
+			case FullType::TySpecInt:
+				namestr += "i";
+				break;
+			case FullType::TySpecBool:
+				namestr += "b";
+				break;
+			case FullType::TySpecVec2:
+				namestr += "v2";
+				break;
+			case FullType::TySpecVec3:
+				namestr += "v3";
+				break;
+			case FullType::TySpecVec4:
+				namestr += "b4";
+				break;
+			case FullType::TySpecSampler:
+				namestr += "s";
+				break;
+			case FullType::TySpecColor:
+				namestr += "c";
+				break;
+			case FullType::TySpecVoid:
+				namestr += "v";
+				break;
+			default:
+				FIRTREE_LLVM_ICE( ctx, NULL, "Invalid type.");
+				break;
+		}
+	}
+
+	return namestr;
+}
+
+//===========================================================================
 EmitDeclarations::EmitDeclarations( LLVMContext* ctx )
 {
 	m_Context = ctx;
@@ -88,7 +145,7 @@ void EmitDeclarations::emitPrototype( firtreeFunctionPrototype proto_term )
 	}
 
 	// Insert this prototype into the function table.
-	m_FuncTable.insert(
+	m_Context->FuncTable.insert(
 	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 }
 
@@ -140,12 +197,12 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		}
 
 		// Erase the old prototype.
-		m_FuncTable.erase( existing_proto_it );
+		m_Context->FuncTable.erase( existing_proto_it );
 	}
 
 	// This function does not yet exist in the function table, since
 	// we erase it above if it did so. Insert it.
-	m_FuncTable.insert(
+	m_Context->FuncTable.insert(
 	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 
 	// Create a LLVM function object corresponding to this definition.
@@ -175,17 +232,21 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	                       param_llvm_types, false );
 	Function* F = NULL;
 
+	std::string func_name = prototype.GetMangledName( m_Context );
+
 	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
 		F = LLVM_CREATE( Function, FT,
 		                 Function::ExternalLinkage,
-		                 symbolToString( prototype.Name ),
+		                 func_name.c_str(),
 		                 m_Context->Module );
 	} else {
 		F = LLVM_CREATE( Function, FT,
 		                 Function::InternalLinkage,
-		                 symbolToString( prototype.Name ),
+		                 func_name.c_str(),
 		                 m_Context->Module );
 	}
+
+	// FIXME: Assert the function's name is what we think it is.
 
 	prototype.LLVMFunction = F;
 
@@ -319,9 +380,9 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 void EmitDeclarations::checkEmittedDeclarations()
 {
 	std::multimap<symbol, FunctionPrototype>::const_iterator it =
-	    m_FuncTable.begin();
+	    m_Context->FuncTable.begin();
 
-	while ( it != m_FuncTable.end() ) {
+	while ( it != m_Context->FuncTable.end() ) {
 		if (( it->second.DefinitionTerm == NULL ) &&
 		        ( it->second.Qualifier !=
 		          FunctionPrototype::FuncQualIntrinsic ) ) {
@@ -346,7 +407,7 @@ void EmitDeclarations::checkEmittedDeclarations()
 ///
 /// Optionally, if matched_proto_iter_ptr is non-NULL, write an
 /// iterator pointing to the matched prototype into it. If no prototype
-/// is matched, matched_proto_iter_ptr has m_FuncTable.end() written
+/// is matched, matched_proto_iter_ptr has m_Context->FuncTable.end() written
 /// into it.
 bool EmitDeclarations::existsConflictingPrototype(
     const FunctionPrototype& proto,
@@ -355,12 +416,12 @@ bool EmitDeclarations::existsConflictingPrototype(
 {
 	// Initially, assume no matching prototype.
 	if ( matched_proto_iter_ptr != NULL ) {
-		*matched_proto_iter_ptr = m_FuncTable.end();
+		*matched_proto_iter_ptr = m_Context->FuncTable.end();
 	}
 
 	// First test: does there exist at least one prototype with a matching
 	// name.
-	if ( m_FuncTable.count( proto.Name ) == 0 ) {
+	if ( m_Context->FuncTable.count( proto.Name ) == 0 ) {
 		// No match, return false.
 		return false;
 	}
@@ -368,9 +429,9 @@ bool EmitDeclarations::existsConflictingPrototype(
 	// If we got this far, there a potential conflict. Iterate over all of
 	// them.
 	std::multimap<symbol, FunctionPrototype>::
-	iterator it = m_FuncTable.begin();
+	iterator it = m_Context->FuncTable.begin();
 
-	for ( ; it != m_FuncTable.end(); it ++ ) {
+	for ( ; it != m_Context->FuncTable.end(); it ++ ) {
 		if ( it->first != proto.Name )
 			continue;
 

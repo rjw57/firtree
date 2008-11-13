@@ -33,6 +33,7 @@ class FunctionCallEmitter : ExpressionEmitter
 			return new FunctionCallEmitter();
 		}
 
+        //===================================================================
 		ExpressionValue* EmitFunctionCall(
 		    LLVMContext* context,
 		    firtreeFunctionSpecifier func_spec,
@@ -46,10 +47,26 @@ class FunctionCallEmitter : ExpressionEmitter
 				return NULL;
 			}
 
-			FIRTREE_LLVM_ICE( context, func_spec, "FIXME: unimplemented." );
+			// Scan the function table looking for a matching function
+			// and emit a call to it. If this loop finishes, no
+			// matching function was found.
+			std::multimap<symbol, FunctionPrototype>::const_iterator it =
+				context->FuncTable.begin();
+
+			for( ; it != context->FuncTable.end(); ++it)
+			{
+				if(it->first == GLS_Tok_symbol(identifier))
+				{
+				}
+			}
+
+			FIRTREE_LLVM_ERROR( context, func_spec, 
+					"No function found to match call to '%s'.",
+					GLS_Tok_string(identifier));
 			return NULL;
 		}
 
+        //===================================================================
 		ExpressionValue* EmitConstructorFor(
 		    LLVMContext* context,
 		    firtreeFunctionSpecifier func_spec,

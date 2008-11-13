@@ -1,28 +1,32 @@
-kernel vec4 kernel_a(float param1, vec3 param2, sampler h)
+float increment(float a)
 {
-	vec4 a = vec4(3,4,5,6);
-	float b = 1;
-	a.zx = vec2(-1,2);
+  return a + 1;
+}
 
-	{
-		int c = 3;
-		b = 4;
-	}
+vec2 increment(vec2 a)
+{
+  return a + vec2(1,1);
+}
 
-	int c = 4;
-
-	//return vec4(a.xy, a.yx);
-	//return vec4(1.0,2.0,vec2(3.0,4.0));
-	return vec4(--a.x, a.x, a.x--, a.x);
+kernel vec4 simpleKernel()
+{
+	return vec4(1,0,0,1);
 }
 
 /*
-vec4 foo(vec4 b)
+kernel vec4 filterKernel(sampler start, sampler end, 
+	vec2 direction, float offset, float oneOverRadius)
 {
-	vec4 a = vec4(3.0,4.0,5.0,6.0);
-	a.yx = vec2(1.0,2.0);
-	return a;
+	float diagCoord = 1.0;//dot(destCoord(), direction) - offset;
+	vec4 sCol = vec4(1,2,3,4);//sample(start, samplerCoord(start));
+	vec4 eCol = vec4(5,6,7,8);//sample(end, samplerCoord(end));
+	diagCoord = 0.0;//max(0.0, diagCoord);
+	diagCoord *= oneOverRadius;
+	diagCoord *= diagCoord;
+	diagCoord = 1.0 - diagCoord;
+	float lambda = 0.0;//max(0.0, diagCoord);
+	return lambda * eCol + (1.0 - lambda) * sCol;
 }
 */
 
-// vim:sw=4:ts=4:cindent:filetype=c
+// vim:filetype=c

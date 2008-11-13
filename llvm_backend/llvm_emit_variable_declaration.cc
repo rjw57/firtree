@@ -99,6 +99,7 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			} catch ( CompileErrorException e ) {
 				FIRTREE_SAFE_RELEASE( initialiser_val );
 				FIRTREE_SAFE_RELEASE( initialiser_cast_val );
+				throw e;
 			}
 
 

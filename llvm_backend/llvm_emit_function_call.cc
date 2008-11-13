@@ -118,13 +118,8 @@ class FunctionCallEmitter : ExpressionEmitter
 							func_params.pop_back();
 						}
 
-						if(is_void)
-						{
-							return VoidExpressionValue::Create(context);
-						} else {
-							return ConstantExpressionValue::Create(context,
-									func_call);
-						}
+						return ConstantExpressionValue::Create(context,
+								func_call);
 					} catch (CompileErrorException e) {
 						while(func_params.size() != 0) {
 							FIRTREE_SAFE_RELEASE(func_params.back());

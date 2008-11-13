@@ -50,7 +50,9 @@ FullType ConstantExpressionValue::GetType() const
 
 	const llvm::Type* type = GetLLVMValue()->getType();
 
-	if ( type->getTypeID() == llvm::Type::FloatTyID ) {
+	if ( type->getTypeID() == llvm::Type::VoidTyID ) {
+		return_value.Specifier = FullType::TySpecVoid;
+	} else if ( type->getTypeID() == llvm::Type::FloatTyID ) {
 		return_value.Specifier = FullType::TySpecFloat;
 	} else if ( llvm::isa<llvm::IntegerType>( type ) ) {
 		const llvm::IntegerType* int_type =

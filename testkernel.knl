@@ -8,6 +8,8 @@ __builtin__ vec2 max(vec2, vec2);
 __builtin__ vec3 max(vec3, vec3);
 __builtin__ vec4 max(vec4, vec4);
 
+__builtin__ void putc(int);
+
 kernel vec4 simpleKernel()
 {
   float a = max(0.0, 1.0);
@@ -15,8 +17,6 @@ kernel vec4 simpleKernel()
   vec2 c = vec2(3,b);
   return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));
 }
-
-__builtin__ void putc(int);
 
 __builtin__ int main()
 {

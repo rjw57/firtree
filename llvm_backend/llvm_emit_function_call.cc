@@ -105,18 +105,26 @@ class FunctionCallEmitter : ExpressionEmitter
 						}
 
 						// If we get this far then a match has been found.
+						bool is_void =
+							proto.ReturnType.Specifier == FullType::TySpecVoid;
 						llvm::Value* func_call = LLVM_CREATE(CallInst,
 								proto.LLVMFunction,
 								llvm_params.begin(), llvm_params.end(),
-								"tmpfunccall", context->BB);
+								is_void ? "" : "tmpfuncretval",
+								context->BB);
 
 						while(func_params.size() != 0) {
 							FIRTREE_SAFE_RELEASE(func_params.back());
 							func_params.pop_back();
 						}
 
-						return ConstantExpressionValue::Create(context,
-								func_call);
+						if(is_void)
+						{
+							return VoidExpressionValue::Create(context);
+						} else {
+							return ConstantExpressionValue::Create(context,
+									func_call);
+						}
 					} catch (CompileErrorException e) {
 						while(func_params.size() != 0) {
 							FIRTREE_SAFE_RELEASE(func_params.back());

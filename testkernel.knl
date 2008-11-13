@@ -3,14 +3,25 @@ float increment(float a, float by);
 vec2 increment(vec2 a);
 vec2 increment(vec2 a, float by);
 
-__builtin__ float max(float a, float b);
+__builtin__ float max(float, float);
+__builtin__ vec2 max(vec2, vec2);
+__builtin__ vec3 max(vec3, vec3);
+__builtin__ vec4 max(vec4, vec4);
 
 kernel vec4 simpleKernel()
 {
   float a = max(0.0, 1.0);
   float b = increment(a);
-  vec2 c = vec2(3,4);
+  vec2 c = vec2(3,b);
   return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));
+}
+
+__builtin__ void putc(int);
+
+__builtin__ int main()
+{
+  putc(65);
+  return 0;
 }
 
 float increment(float a)
@@ -30,23 +41,8 @@ vec2 increment(vec2 a)
 
 vec2 increment(vec2 a, float by)
 {
-  return a + vec2(by,by);
+  // Auto broadcast of vector/floating point operations.
+  return a + by;
 }
-
-/*
-kernel vec4 filterKernel(sampler start, sampler end, 
-	vec2 direction, float offset, float oneOverRadius)
-{
-	float diagCoord = 1.0;//dot(destCoord(), direction) - offset;
-	vec4 sCol = vec4(1,2,3,4);//sample(start, samplerCoord(start));
-	vec4 eCol = vec4(5,6,7,8);//sample(end, samplerCoord(end));
-	diagCoord = 0.0;//max(0.0, diagCoord);
-	diagCoord *= oneOverRadius;
-	diagCoord *= diagCoord;
-	diagCoord = 1.0 - diagCoord;
-	float lambda = 0.0;//max(0.0, diagCoord);
-	return lambda * eCol + (1.0 - lambda) * sCol;
-}
-*/
 
 // vim:filetype=c

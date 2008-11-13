@@ -27,6 +27,10 @@ class TypeCaster
 		                                   PT_Term term,
 		                                   const ExpressionValue* source,
 		                                   FullType::TypeSpecifier type );
+
+		/// Return true if the FullType source can be implicitly cast to
+		/// dest.
+		static bool CanImplicitlyCast(FullType source, FullType dest);
 };
 
 } // namespace Firtree

@@ -144,67 +144,19 @@ void EmitDeclarations::emitPrototype( firtreeFunctionPrototype proto_term )
 		                    "function.", symbolToString( prototype.Name ) );
 	}
 
+	prototype.LLVMFunction = ConstructFunction(prototype);
+
 	// Insert this prototype into the function table.
 	m_Context->FuncTable.insert(
 	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 }
 
 //===========================================================================
-/// Emit a function definition.
-void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
+/// Construct an LLVM function object corresponding to a particular
+/// prototype.
+llvm::Function* EmitDeclarations::ConstructFunction(
+		const FunctionPrototype& prototype)
 {
-	firtreeFunctionPrototype function_prototype;
-	GLS_Lst( firtreeExpression ) function_body;
-
-	if ( !firtreeFunctionDefinition_functiondefinition( func,
-	        &function_prototype, &function_body ) ) {
-		FIRTREE_LLVM_ICE( m_Context, func, "Invalid function definition." );
-	}
-
-	// Form prototype struct from parse tree term.
-	FunctionPrototype prototype;
-
-	constructPrototypeStruct( prototype, function_prototype );
-
-	prototype.DefinitionTerm = func;
-
-	// Do we have an existing prototype for this function?
-	std::multimap<symbol, FunctionPrototype>::iterator existing_proto_it;
-
-	if ( existsConflictingPrototype( prototype, &existing_proto_it ) ) {
-		// Check that the existing prototype does not have a definition
-		// already.
-		if ( existing_proto_it->second.DefinitionTerm != NULL ) {
-			FIRTREE_LLVM_ERROR( m_Context, func, "Multiple defintions of "
-			                    "function '%s'.",
-			                    symbolToString( prototype.Name ) );
-		}
-
-		// Check the function qualifiers
-		if ( existing_proto_it->second.Qualifier != prototype.Qualifier ) {
-			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting function "
-			                    "qualifiers between definition and "
-			                    "declaration of function '%s'.",
-			                    symbolToString( prototype.Name ) );
-		}
-
-		// Check the return types are compatible.
-		if ( existing_proto_it->second.ReturnType != prototype.ReturnType ) {
-			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting return types "
-			                    "between definition and declaration of "
-			                    "function '%s'.",
-			                    symbolToString( prototype.Name ) );
-		}
-
-		// Erase the old prototype.
-		m_Context->FuncTable.erase( existing_proto_it );
-	}
-
-	// This function does not yet exist in the function table, since
-	// we erase it above if it did so. Insert it.
-	m_Context->FuncTable.insert(
-	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
-
 	// Create a LLVM function object corresponding to this definition.
 
 	std::vector<const Type*> param_llvm_types;
@@ -246,9 +198,81 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		                 m_Context->Module );
 	}
 
-	// FIXME: Assert the function's name is what we think it is.
+	// Check that the name we've asked for is available.
+	std::string llvm_name = F->getName();
+	if(func_name != llvm_name)
+	{
+		FIRTREE_LLVM_ICE( m_Context, NULL, 
+				"LLVM wouldn't name function '%s', got "
+				"'%s' instead.",
+				func_name.c_str(),
+				llvm_name.c_str());
+	}
+	
+	return F;
+}
 
-	prototype.LLVMFunction = F;
+//===========================================================================
+/// Emit a function definition.
+void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
+{
+	firtreeFunctionPrototype function_prototype;
+	GLS_Lst( firtreeExpression ) function_body;
+
+	if ( !firtreeFunctionDefinition_functiondefinition( func,
+	        &function_prototype, &function_body ) ) {
+		FIRTREE_LLVM_ICE( m_Context, func, "Invalid function definition." );
+	}
+
+	// Form prototype struct from parse tree term.
+	FunctionPrototype prototype;
+
+	constructPrototypeStruct( prototype, function_prototype );
+
+	// Do we have an existing prototype for this function?
+	std::multimap<symbol, FunctionPrototype>::iterator existing_proto_it;
+
+	if ( existsConflictingPrototype( prototype, &existing_proto_it ) ) {
+		// Check that the existing prototype does not have a definition
+		// already.
+		if ( existing_proto_it->second.DefinitionTerm != NULL ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Multiple defintions of "
+			                    "function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
+
+		// Check the function qualifiers
+		if ( existing_proto_it->second.Qualifier != prototype.Qualifier ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting function "
+			                    "qualifiers between definition and "
+			                    "declaration of function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
+
+		// Check the return types are compatible.
+		if ( existing_proto_it->second.ReturnType != prototype.ReturnType ) {
+			FIRTREE_LLVM_ERROR( m_Context, func, "Conflicting return types "
+			                    "between definition and declaration of "
+			                    "function '%s'.",
+			                    symbolToString( prototype.Name ) );
+		}
+
+		// Copy and erase the old prototype.
+		prototype = existing_proto_it->second;
+		m_Context->FuncTable.erase( existing_proto_it );
+	} else {
+		// If there was no existing prototype, construct a
+		// LLVM function
+		prototype.LLVMFunction = ConstructFunction(prototype);
+	}
+
+	prototype.DefinitionTerm = func;
+	llvm::Function* F = prototype.LLVMFunction;
+
+	// This function does not yet exist in the function table, since
+	// we erase it above if it did so. Insert it.
+	m_Context->FuncTable.insert(
+	    std::pair<symbol, FunctionPrototype>( prototype.Name, prototype ) );
 
 	m_Context->Function = F;
 	m_Context->CurrentPrototype = &prototype;
@@ -261,7 +285,8 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	m_Context->Variables = new SymbolTable();
 
 	// Set names for all arguments.
-	it = prototype.Parameters.begin();
+	std::vector<FunctionParameter>::const_iterator it = 
+		prototype.Parameters.begin();
 	Function::arg_iterator AI = F->arg_begin();
 
 	while ( it != prototype.Parameters.end() ) {

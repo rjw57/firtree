@@ -1,6 +1,24 @@
+float increment(float a);
+float increment(float a, float by);
+vec2 increment(vec2 a);
+vec2 increment(vec2 a, float by);
+
+kernel vec4 simpleKernel()
+{
+  float a = 1.0;
+  float b = increment(a);
+  vec2 c = vec2(3,4);
+  return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));
+}
+
 float increment(float a)
 {
   return a + 1;
+}
+
+float increment(float a, float by)
+{
+  return a + by;
 }
 
 vec2 increment(vec2 a)
@@ -8,9 +26,9 @@ vec2 increment(vec2 a)
   return a + vec2(1,1);
 }
 
-kernel vec4 simpleKernel()
+vec2 increment(vec2 a, float by)
 {
-	return vec4(1,0,0,1);
+  return a + vec2(by,by);
 }
 
 /*

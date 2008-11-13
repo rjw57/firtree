@@ -111,6 +111,50 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 	return NULL;
 }
 
+//===========================================================================
+bool TypeCaster::CanImplicitlyCast(FullType source, FullType dest)
+{
+	// Can always cast equivalent types.
+	if(source.Specifier == dest.Specifier)
+	{
+		return true;
+	}
+
+	// Can cast color <-> vec4
+	if((source.Specifier == FullType::TySpecColor) &&
+	  (dest.Specifier == FullType::TySpecVec4))
+	{
+		return true;
+	}
+	if((source.Specifier == FullType::TySpecVec4) &&
+	  (dest.Specifier == FullType::TySpecColor))
+	{
+		return true;
+	}
+	
+	// Can cast float <-> int
+	if((source.Specifier == FullType::TySpecFloat) &&
+	  (dest.Specifier == FullType::TySpecInt))
+	{
+		return true;
+	}
+	if((source.Specifier == FullType::TySpecInt) &&
+	  (dest.Specifier == FullType::TySpecFloat))
+	{
+		return true;
+	}
+
+	// Can cast bool -> int
+	if((source.Specifier == FullType::TySpecBool) &&
+	  (dest.Specifier == FullType::TySpecInt))
+	{
+		return true;
+	}
+
+	// By default, casting is not supported.
+	return false;
+}
+
 }
 
 // vim:sw=4:ts=4:cindent:noet

@@ -57,12 +57,80 @@ class FunctionCallEmitter : ExpressionEmitter
 			{
 				if(it->first == GLS_Tok_symbol(identifier))
 				{
+					const FunctionPrototype& proto = it->second;
+
+					//FIRTREE_LLVM_WARNING( context, func_spec, 
+					//		"Examine: %s",
+					//		it->second.GetMangledName(context).c_str());
+
+					// Check parameter count matches.
+					if(parameters.size() != proto.Parameters.size())
+					{
+						continue;
+					}
+
+					//FIRTREE_LLVM_WARNING( context, func_spec, 
+					//		"Correct param count: %s",
+					//		it->second.GetMangledName(context).c_str());
+
+					// Check parameter types match.
+					bool params_match = true;
+					for(unsigned int i=0; i<parameters.size(); i++)
+					{
+						params_match &= TypeCaster::CanImplicitlyCast(
+								parameters[i]->GetType(),
+								proto.Parameters[i].Type);
+					}
+
+					if(!params_match)
+					{
+						continue;
+					}
+
+					//FIRTREE_LLVM_WARNING( context, func_spec, 
+					//		"Possible match: %s",
+					//		it->second.GetMangledName(context).c_str());
+
+					std::vector<ExpressionValue*> func_params;
+					std::vector<llvm::Value*> llvm_params;
+					try {
+						for(unsigned int i=0; i<parameters.size(); ++i)
+						{
+							func_params.push_back(TypeCaster::CastValue(
+										context, func_spec,
+										parameters[i],
+										proto.Parameters[i].Type.Specifier));
+							llvm_params.push_back(
+									func_params.back()->GetLLVMValue());
+						}
+
+						// If we get this far then a match has been found.
+						llvm::Value* func_call = LLVM_CREATE(CallInst,
+								proto.LLVMFunction,
+								llvm_params.begin(), llvm_params.end(),
+								"tmpfunccall", context->BB);
+
+						while(func_params.size() != 0) {
+							FIRTREE_SAFE_RELEASE(func_params.back());
+							func_params.pop_back();
+						}
+
+						return ConstantExpressionValue::Create(context,
+								func_call);
+					} catch (CompileErrorException e) {
+						while(func_params.size() != 0) {
+							FIRTREE_SAFE_RELEASE(func_params.back());
+							func_params.pop_back();
+						}
+						throw e;
+					}
 				}
 			}
 
 			FIRTREE_LLVM_ERROR( context, func_spec, 
 					"No function found to match call to '%s'.",
 					GLS_Tok_string(identifier));
+
 			return NULL;
 		}
 

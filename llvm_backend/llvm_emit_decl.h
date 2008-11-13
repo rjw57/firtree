@@ -7,6 +7,10 @@
 #include "llvm_backend.h"
 #include "llvm_private.h"
 
+namespace llvm {
+	class Function;
+}
+
 namespace Firtree
 {
 
@@ -56,6 +60,11 @@ class EmitDeclarations
 		/// firtreeFunctionPrototype parse-tree term.
 		void constructPrototypeStruct( FunctionPrototype& to_construct,
 		                               firtreeFunctionPrototype proto );
+
+		/// Construct an LLVM function object corresponding to a particular
+		/// prototype.
+		llvm::Function* ConstructFunction(
+				const FunctionPrototype& prototype);
 
 	private:
 		/// The current LLVM context.

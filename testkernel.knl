@@ -3,9 +3,11 @@ float increment(float a, float by);
 vec2 increment(vec2 a);
 vec2 increment(vec2 a, float by);
 
+__builtin__ float max(float a, float b);
+
 kernel vec4 simpleKernel()
 {
-  float a = 1.0;
+  float a = max(0.0, 1.0);
   float b = increment(a);
   vec2 c = vec2(3,4);
   return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));

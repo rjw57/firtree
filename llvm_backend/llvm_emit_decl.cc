@@ -186,17 +186,27 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 
 	std::string func_name = prototype.GetMangledName( m_Context );
 
-	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
-		F = LLVM_CREATE( Function, FT,
-		                 Function::ExternalLinkage,
-		                 func_name.c_str(),
-		                 m_Context->Module );
-	} else {
-		F = LLVM_CREATE( Function, FT,
-		                 Function::InternalLinkage,
-		                 func_name.c_str(),
-		                 m_Context->Module );
+	llvm::Function::LinkageTypes linkage;
+	switch( prototype.Qualifier )
+	{
+		case FunctionPrototype::FuncQualKernel:
+			linkage = Function::ExternalLinkage;
+			break;
+		case FunctionPrototype::FuncQualFunction:
+			linkage = Function::InternalLinkage;
+			break;
+		case FunctionPrototype::FuncQualIntrinsic:
+			linkage = Function::ExternalLinkage;
+			break;
+		default:
+			FIRTREE_LLVM_ICE( m_Context, NULL, "Invalid linkage.");
+			break;
 	}
+
+	F = LLVM_CREATE( Function, FT,
+			linkage,
+			func_name.c_str(),
+			m_Context->Module );
 
 	// Check that the name we've asked for is available.
 	std::string llvm_name = F->getName();
@@ -531,6 +541,8 @@ void EmitDeclarations::constructPrototypeStruct(
 		prototype.Qualifier = FunctionPrototype::FuncQualFunction;
 	} else if ( firtreeFunctionQualifier_kernel( qual ) ) {
 		prototype.Qualifier = FunctionPrototype::FuncQualKernel;
+	} else if ( firtreeFunctionQualifier_builtin( qual ) ) {
+		prototype.Qualifier = FunctionPrototype::FuncQualIntrinsic;
 	} else {
 		FIRTREE_LLVM_ICE( m_Context, qual, "Invalid function qualifier." );
 	}

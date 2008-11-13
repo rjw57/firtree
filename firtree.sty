@@ -50,6 +50,7 @@ Regular Grammar
     tok Vec4            = "vec4"
     tok Sampler         = "sampler"
     tok Color           = "__color"
+    tok Builtin         = "__builtin__"
 
     ;;;; Static constants
     tok IntConst        = "0" 'xX' HexDigit+
@@ -63,7 +64,7 @@ Regular Grammar
     let ReservedWord    = True | False | Const | Do | For | While | If 
                         | Else | In | Out | InOut | Kernel | Float | Int
                         | Void | Bool | Return | Vec2 | Vec3 | Vec4 | Sampler
-                        | Color
+                        | Color | Builtin
 
     ;;;; Assignment operators
     tok AddAssign       = "+="
@@ -136,6 +137,7 @@ let FunctionPrototype
 let FunctionQualifier
     :function:
     :kernel:                "kernel"
+    :builtin:               "__builtin__"
 
 let FullySpecifiedType
     :unqualifiedtype:       TypeSpecifier

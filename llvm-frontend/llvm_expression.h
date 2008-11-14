@@ -152,6 +152,8 @@ class ExpressionEmitterRegistry
 class EmitterFactory
 {
 	public:
+		EmitterFactory() { }
+		virtual ~EmitterFactory() { }
 		virtual ExpressionEmitter* Create() const = 0;
 };
 

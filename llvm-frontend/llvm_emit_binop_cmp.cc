@@ -163,14 +163,14 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				llvm::Value* result_val = NULL;
 
 				if ( left_val->GetType().Specifier == FullType::TySpecFloat ) {
-					result_val = LLVM_CREATE( FCmpInst, fcmp,
+					result_val = LLVM_NEW_2_3( FCmpInst, fcmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmpcmp",
 					                          context->BB );
 				} else if (( left_val->GetType().Specifier == FullType::TySpecInt ) ||
 				           ( left_val->GetType().Specifier == FullType::TySpecBool ) ) {
-					result_val = LLVM_CREATE( ICmpInst, icmp,
+					result_val = LLVM_NEW_2_3( ICmpInst, icmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmpcmp",

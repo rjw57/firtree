@@ -187,6 +187,22 @@ struct LLVMContext {
 	LLVMContext() : Module( NULL ), Function( NULL ), BB( NULL ) { }
 };
 
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 2))
+#  define LLVM_AT_LEAST_2_2 1
+#else
+#  define LLVM_AT_LEAST_2_2 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 3))
+#  define LLVM_AT_LEAST_2_3 1
+#else
+#  define LLVM_AT_LEAST_2_3 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 4))
+#  define LLVM_AT_LEAST_2_4 1
+#else
+#  define LLVM_AT_LEAST_2_4 0
+#endif
+
 //===========================================================================
 /// \brief A macro to create a LLVM object.
 ///
@@ -202,6 +218,13 @@ struct LLVMContext {
 # define LLVM_CREATE(type, ...) ( type::Create(__VA_ARGS__) )
 #else
 # define LLVM_CREATE(type, ...) ( new type(__VA_ARGS__) )
+#endif
+
+/// Use new Foo() idiom for versions of LLVM <= 2.3
+#if LLVM_AT_LEAST_2_4
+# define LLVM_NEW_2_3(type, ...) ( type::Create(__VA_ARGS__) )
+#else
+# define LLVM_NEW_2_3(type, ...) ( new type(__VA_ARGS__) )
 #endif
 
 } // namespace Firtree

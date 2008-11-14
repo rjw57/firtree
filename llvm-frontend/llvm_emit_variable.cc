@@ -28,7 +28,7 @@ class VariableExpressionValue : public ExpressionValue
 				, m_VarDeclaration( decl )
 				, m_Context( ctx ) {
 			// Get the value at time of creation.
-			m_VarValue = LLVM_CREATE( LoadInst, decl->value,
+			m_VarValue = LLVM_NEW_2_3( LoadInst, decl->value,
 			                          "tmpload", m_Context->BB );
 		}
 		virtual ~VariableExpressionValue() { }
@@ -73,7 +73,7 @@ class VariableExpressionValue : public ExpressionValue
 			    m_VarDeclaration )->initialised = true;
 
 			// Store the value.
-			LLVM_CREATE( StoreInst, val.GetLLVMValue(),
+			LLVM_NEW_2_3( StoreInst, val.GetLLVMValue(),
 			             m_VarDeclaration->value,
 			             m_Context->BB );
 		}

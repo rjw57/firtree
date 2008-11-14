@@ -96,8 +96,12 @@ FullType ConstantExpressionValue::GetType() const
 /// Utilitiy function to create a floating point immediate value.
 ExpressionValue* CreateFloat( LLVMContext* context, float float_val )
 {
+#if LLVM_AT_LEAST_2_3
+	llvm::Value* val = ConstantFP::get( Type::FloatTy, (double)(float_val) );
+#else
 	llvm::Value* val = ConstantFP::get( Type::FloatTy,
 	                                    APFloat( float_val ) );
+#endif
 	return ConstantExpressionValue::Create( context, val );
 }
 
@@ -129,8 +133,13 @@ ExpressionValue* CreateVector( LLVMContext* context, const float* params,
 	std::vector<Constant*> elements;
 
 	for ( int i=0; i<param_count; i++ ) {
+#if LLVM_AT_LEAST_2_3
+		elements.push_back( ConstantFP::get( Type::FloatTy, 
+					(double)(params[i])));
+#else
 		elements.push_back( ConstantFP::get( Type::FloatTy,
 		                                     APFloat( params[i] ) ) );
+#endif
 	}
 
 
@@ -203,7 +212,7 @@ void CrackVector( LLVMContext* context, ExpressionValue* vector,
 	llvm::Value* vec_val = vector->GetLLVMValue();
 
 	for ( unsigned int i=0; i<vec_type.GetArity(); i++ ) {
-		llvm::Value* ext_val = LLVM_CREATE( ExtractElementInst,
+		llvm::Value* ext_val = LLVM_NEW_2_3( ExtractElementInst,
 		                                    vec_val, i, "tmpext",
 		                                    context->BB );
 		output_values.push_back(
@@ -249,8 +258,12 @@ class ConstantEmitter : ExpressionEmitter
 		                            GLS_Tok token ) {
 			float fval = static_cast<float>( atof( GLS_Tok_string(
 			                                           token ) ) );
+#if LLVM_AT_LEAST_2_3
+			llvm::Value* val = ConstantFP::get( Type::FloatTy, (double)(fval) );
+#else
 			llvm::Value* val = ConstantFP::get( Type::FloatTy,
 			                                    APFloat( fval ) );
+#endif
 			return ConstantExpressionValue::Create( context, val );
 		}
 

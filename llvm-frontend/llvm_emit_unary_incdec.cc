@@ -77,9 +77,14 @@ class IncDecEmitter : ExpressionEmitter
 				if ( req_type.IsScalar() ) {
 					switch ( req_type.Specifier ) {
 						case FullType::TySpecFloat:
+#if LLVM_AT_LEAST_2_3
+							one = ConstantFP::
+							      get( Type::FloatTy, 1.0 );
+#else
 							one = ConstantFP::
 							      get( Type::FloatTy,
 							           APFloat( 1.f ) );
+#endif
 							break;
 						case FullType::TySpecInt:
 							one = ConstantInt::

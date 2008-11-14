@@ -59,17 +59,27 @@ class NegateEmitter : ExpressionEmitter
 				if ( req_type.IsVector() ) {
 					std::vector<Constant*> neg_ones;
 					for ( unsigned int i=0; i<req_type.GetArity(); ++i ) {
+#if LLVM_AT_LEAST_2_3
+						neg_ones.push_back( ConstantFP::
+						                    get( Type::FloatTy, -1.0 ) );
+#else
 						neg_ones.push_back( ConstantFP::
 						                    get( Type::FloatTy,
 						                         APFloat( -1.f ) ) );
+#endif
 					}
 					negative_one = ConstantVector::get( neg_ones );
 				} else if ( req_type.IsScalar() ) {
 					switch ( req_type.Specifier ) {
 						case FullType::TySpecFloat:
+#if LLVM_AT_LEAST_2_3
+							negative_one = ConstantFP::
+							               get( Type::FloatTy, -1.0 );
+#else
 							negative_one = ConstantFP::
 							               get( Type::FloatTy,
 							                    APFloat( -1.f ) );
+#endif
 							break;
 						case FullType::TySpecInt:
 							negative_one = ConstantInt::

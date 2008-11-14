@@ -62,7 +62,7 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			// Create a VariableDeclaration structure for this
 			// variable.
 			VariableDeclaration var_decl_s;
-			var_decl_s.value = LLVM_CREATE( AllocaInst,
+			var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
 			                                var_type.ToLLVMType( context ),
 			                                GLS_Tok_string( identifier_tok ),
 			                                context->BB );
@@ -87,7 +87,7 @@ class VariableDeclarationEmitter : ExpressionEmitter
 				if ( initialiser_val->GetType().Specifier !=
 				        FullType::TySpecVoid ) {
 					var_decl_s.initialised = true;
-					LLVM_CREATE( StoreInst,
+					LLVM_NEW_2_3( StoreInst,
 					             initialiser_cast_val->GetLLVMValue(),
 					             var_decl_s.value, context->BB );
 				}

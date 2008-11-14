@@ -1,9 +1,9 @@
 //===========================================================================
-/// \file llvm_binop_cmp.cc
+/// \file llvm_binop_arith.cc
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -18,24 +18,24 @@ namespace Firtree
 {
 
 //===========================================================================
-/// \brief Class to emit an comparison binary operator.
-class BinaryOpCmpEmitter : ExpressionEmitter
+/// \brief Class to emit an arithmetic binary operator.
+class BinaryOpArithEmitter : ExpressionEmitter
 {
 	public:
-		BinaryOpCmpEmitter()
+		BinaryOpArithEmitter()
 				: ExpressionEmitter() {
 		}
 
-		virtual ~BinaryOpCmpEmitter() {
+		virtual ~BinaryOpArithEmitter() {
 		}
 
 		/// Create an instance of this emitter.
 		static ExpressionEmitter* Create() {
-			return new BinaryOpCmpEmitter();
+			return new BinaryOpArithEmitter();
 		}
 
 		/// Massage the values passed to have identical types using
-		/// the type promotion rules for binary comparison operators.
+		/// the type promotion rules for binary arithmetic operators.
 		/// If the massaging fails, return false.
 		///
 		/// This method takes care of releasing left and right if their
@@ -52,6 +52,18 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 
 			FullType left_in_type = left_in->GetType();
 			FullType right_in_type = right_in->GetType();
+
+			// If both sides are vectors, they must have the same
+			// -arity.
+			if ( left_in_type.IsVector() && right_in_type.IsVector() ) {
+				if ( left_in_type.GetArity() == right_in_type.GetArity() ) {
+					// Everything is hunky-dory.
+					return true;
+				} else {
+					// This cannot be massaged.
+					return false;
+				}
+			}
 
 			if ( left_in_type.IsScalar() && right_in_type.IsScalar() ) {
 				// If both sides are scalars, short cut the 'nothing needs
@@ -100,6 +112,70 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				return false;
 			}
 
+			// Now we wish to handle the case where one side is a scalar
+			// which needs to be 'auto broadcast' into a vector.
+			if ( left_in_type.IsScalar() && right_in_type.IsVector() ) {
+				ExpressionValue* left_cast;
+				ExpressionValue* left_vec;
+
+				try {
+					left_cast = TypeCaster::CastValue( context,
+					                                   binopexpr,
+					                                   left_in,
+					                                   FullType::TySpecFloat );
+
+					std::vector<ExpressionValue*> vec_elements;
+					for ( unsigned int i=0; i<right_in_type.GetArity(); ++i ) {
+						vec_elements.push_back( left_cast );
+					}
+
+					left_vec = CreateVector( context, vec_elements );
+
+					FIRTREE_SAFE_RELEASE( left_cast );
+					FIRTREE_SAFE_RELEASE( left_in );
+					*left_out = left_vec;
+
+					return true;
+				} catch ( CompileErrorException e ) {
+					FIRTREE_SAFE_RELEASE( left_cast );
+					FIRTREE_SAFE_RELEASE( left_vec );
+					throw e;
+				}
+
+				return false;
+			}
+
+			if ( right_in_type.IsScalar() && left_in_type.IsVector() ) {
+				ExpressionValue* right_cast;
+				ExpressionValue* right_vec;
+
+				try {
+					right_cast = TypeCaster::CastValue( context,
+					                                    binopexpr,
+					                                    right_in,
+					                                    FullType::TySpecFloat );
+
+					std::vector<ExpressionValue*> vec_elements;
+					for ( unsigned int i=0; i<left_in_type.GetArity(); ++i ) {
+						vec_elements.push_back( right_cast );
+					}
+
+					right_vec = CreateVector( context, vec_elements );
+
+					FIRTREE_SAFE_RELEASE( right_cast );
+					FIRTREE_SAFE_RELEASE( right_in );
+					*right_out = right_vec;
+
+					return true;
+				} catch ( CompileErrorException e ) {
+					FIRTREE_SAFE_RELEASE( right_cast );
+					FIRTREE_SAFE_RELEASE( right_vec );
+					throw e;
+				}
+
+				return false;
+			}
+
 			// If we get here, no massaging will help.
 			return false;
 		}
@@ -116,33 +192,19 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 			ExpressionValue* right_val = NULL;
 			ExpressionValue* return_val = NULL;
 
-			// Work out which comparison we want and set the predicate
-			// appropriately. Note that each instruction (fcmp/icmp) has
-			// different predicates for the same comparison.
-			ICmpInst::Predicate icmp;
-			FCmpInst::Predicate fcmp;
+			Instruction::BinaryOps op = Instruction::BinaryOpsEnd;
 
-			if ( firtreeExpression_greater( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_SGT;
-				fcmp = FCmpInst::FCMP_OGT;
-			} else if ( firtreeExpression_greaterequal( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_SGE;
-				fcmp = FCmpInst::FCMP_OGE;
-			} else if ( firtreeExpression_less( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_SLT;
-				fcmp = FCmpInst::FCMP_OLT;
-			} else if ( firtreeExpression_lessequal( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_SLE;
-				fcmp = FCmpInst::FCMP_OLE;
-			} else if ( firtreeExpression_equal( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_EQ;
-				fcmp = FCmpInst::FCMP_OEQ;
-			} else if ( firtreeExpression_notequal( expression, &left, &right ) ) {
-				icmp = ICmpInst::ICMP_NE;
-				fcmp = FCmpInst::FCMP_ONE;
+			if ( firtreeExpression_add( expression, &left, &right ) ) {
+				op = Instruction::Add;
+			} else if ( firtreeExpression_sub( expression, &left, &right ) ) {
+				op = Instruction::Sub;
+			} else if ( firtreeExpression_mul( expression, &left, &right ) ) {
+				op = Instruction::Mul;
+			} else if ( firtreeExpression_div( expression, &left, &right ) ) {
+				op = Instruction::FDiv;
 			} else {
 				FIRTREE_LLVM_ICE( context, expression,
-				                  "Unknown comparison operator." );
+				                  "Unknown arithmetic operator." );
 			}
 
 			try {
@@ -156,31 +218,13 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				                          &left_val, &right_val ) ) {
 					FIRTREE_LLVM_ERROR( context, expression,
 					                    "Incompatible types for binary "
-					                    "comparison operator." );
+					                    "operator." );
 				}
 
-
-				llvm::Value* result_val = NULL;
-
-				if ( left_val->GetType().Specifier == FullType::TySpecFloat ) {
-					result_val = LLVM_CREATE( FCmpInst, fcmp,
-					                          left_val->GetLLVMValue(),
-					                          right_val->GetLLVMValue(),
-					                          "tmpcmp",
-					                          context->BB );
-				} else if (( left_val->GetType().Specifier == FullType::TySpecInt ) ||
-				           ( left_val->GetType().Specifier == FullType::TySpecBool ) ) {
-					result_val = LLVM_CREATE( ICmpInst, icmp,
-					                          left_val->GetLLVMValue(),
-					                          right_val->GetLLVMValue(),
-					                          "tmpcmp",
-					                          context->BB );
-				} else {
-					FIRTREE_LLVM_ERROR( context, expression,
-					                    "Incompatible types for binary "
-					                    "comparison operator." );
-				}
-
+				llvm::Value* result_val = BinaryOperator::create( op,
+				                          left_val->GetLLVMValue(),
+				                          right_val->GetLLVMValue(),
+				                          "tmpbinop", context->BB );
 				return_val =  ConstantExpressionValue::
 				              Create( context, result_val );
 
@@ -198,12 +242,21 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpEqReg( "equal" );
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpNeReg( "notequal" );
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpGtReg( "greater" );
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpGteReg( "greaterequal" );
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpLtReg( "less" );
-RegisterEmitter<BinaryOpCmpEmitter> g_BinaryOpLteReg( "lessequal" );
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, add)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, sub)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, mul)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, div)
+/*
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, logicalor)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, logicaland)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, logicalxor)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, equal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, notequal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, greater)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, greaterequal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, less)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpArithEmitter, lessequal)
+*/
 
 }
 

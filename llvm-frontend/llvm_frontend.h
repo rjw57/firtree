@@ -1,5 +1,5 @@
 //===========================================================================
-/// \file llvm_backend.h LLVM output backend for the firtree kernel language.
+/// \file llvm_frontend.h LLVM output backend for the firtree kernel language.
 ///
 /// This file defines the interface to the LLVM output backend. The backend
 /// also takes care of checking the well-formedness of the passed abstract
@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
-#include "../gen/firtree_int.h"
+#include "styx/firtree_int.h"
 
 // STL templates
 #include <vector>
@@ -221,15 +221,15 @@ class SymbolTable
 /// This class defines the interface to the LLVM output backend. A compiler
 /// constructs an instance of this class with a Styx abstract depth grammer
 /// and can query the LLVM module genereated therefrom.
-class LLVMBackend
+class LLVMFrontend
 {
 
 	public:
 		/// Construct the backend by passing it the top-level translation
 		/// unit node.
-		LLVMBackend( firtree top_level_term );
+		LLVMFrontend( firtree top_level_term );
 
-		virtual ~LLVMBackend();
+		virtual ~LLVMFrontend();
 
 		/// Retrieve the LLVM module which was constructed.
 		const llvm::Module* GetCompiledModule() const;

@@ -12,13 +12,11 @@
 #include "hmap.h"    // Datatype: Finite Maps
 #include "symbols.h" // Datatype: Symbols
 
-#include "gen/firtree_int.h" // grammar interface
-#include "gen/firtree_lim.h" // scanner table
-#include "gen/firtree_pim.h" // parser  table
+#include "../styx/firtree_int.h" // grammar interface
+#include "../styx/firtree_lim.h" // scanner table
+#include "../styx/firtree_pim.h" // parser  table
 
-#include "llvmout.h"
-
-#include "llvm_backend/llvm_backend.h"
+#include "../llvm_frontend.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include <iostream>
@@ -61,38 +59,23 @@ int compile_kernel( const char* fileid )
 	int return_value = 0;
 
 	if ( PT_errorCnt() == 0 ) {
-#if 1
-		Firtree::LLVMBackend llvm_backend(( firtree )srcterm );
+		Firtree::LLVMFrontend llvm_frontend(( firtree )srcterm );
 
-		if ( llvm_backend.GetCompilationSucceeded() ) {
+		if ( llvm_frontend.GetCompilationSucceeded() ) {
 			// Output the bitcode file to stdout
-			WriteBitcodeToFile( llvm_backend.GetCompiledModule(), std::cout );
+			WriteBitcodeToFile( llvm_frontend.GetCompiledModule(), std::cout );
 		} else {
 			return_value = 1;
 		}
 
 		// Write the log (if any).
-		const std::vector<std::string>& log = llvm_backend.GetLog();
+		const std::vector<std::string>& log = llvm_frontend.GetLog();
 
 		std::vector<std::string>::const_iterator i = log.begin();
 
 		for ( ; i != log.end(); i++ ) {
 			fprintf( stderr, "%s\n", i->c_str() );
 		}
-
-#else
-		GLS_Lst( firtreeExternalDeclaration ) decls;
-
-		// get tree for start symbol
-		bug0( firtree_Start_TranslationUnit(( firtree )srcterm,&decls ),
-		      "Program expected" );
-
-		// check & execute program
-		emitDeclList( decls );
-
-		//StaticSemantic(src);
-		//if (PT_errorCnt() == 0) DynamicSemantic(src);
-#endif
 	}
 
 	if ( PT_errorCnt() > 0 ) {

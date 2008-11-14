@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -126,16 +126,16 @@ class BinaryOpLogicEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpOrReg( "logicalor" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpAndReg( "logicaland" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpXorReg( "logicalxor" );
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, logicalor)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, logicaland)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, logicalxor)
 /*
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpEqReg( "equal" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpNeReg( "notequal" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpGtReg( "greater" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpGteReg( "greaterequal" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpLtReg( "less" );
-RegisterEmitter<BinaryOpLogicEmitter> g_BinaryOpLteReg( "lessequal" );
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, equal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, notequal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, greater)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, greaterequal)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, less)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpLogicEmitter, lessequal)
 */
 
 }

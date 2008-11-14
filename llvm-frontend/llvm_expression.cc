@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
 
@@ -64,9 +64,22 @@ void VoidExpressionValue::AssignFrom( const ExpressionValue& val ) const
 //===========================================================================
 //===========================================================================
 
+// Declare all the factory accessor functions
+extern "C" {
+#define FIRTREE_LLVM_EXPR_PRODUCTION(prodname) \
+	extern const EmitterFactory* get_##prodname##_factory(); 
+#include "prodnames.incl"
+#undef FIRTREE_LLVM_EXPR_PRODUCTION
+}
+
 //===========================================================================
 ExpressionEmitterRegistry::ExpressionEmitterRegistry()
 {
+	// Register the various factories.
+#define FIRTREE_LLVM_EXPR_PRODUCTION(prodname) \
+ 	RegisterFactory(#prodname, get_##prodname##_factory());
+#include "prodnames.incl"
+#undef FIRTREE_LLVM_EXPR_PRODUCTION
 }
 
 //===========================================================================
@@ -103,7 +116,7 @@ ExpressionEmitter* ExpressionEmitterRegistry::CreateEmitterForTerm(
 {
 	const char* expr_product = symbolToString(
 	                               PT_product(( PT_Term )expr ) );
-	std::map<std::string, EmitterFactory*>::iterator it =
+	std::map<std::string, const EmitterFactory*>::iterator it =
 	    m_RegisteredEmitters.find( expr_product );
 	if ( it == m_RegisteredEmitters.end() ) {
 		FIRTREE_LLVM_ICE( context, expr, "Unknown expression type '%s'.",
@@ -166,7 +179,7 @@ class NopEmitter : ExpressionEmitter
 };
 
 //===========================================================================
-RegisterEmitter<NopEmitter> g_NopEmitterReg( "nop" );
+FIRTREE_LLVM_DECLARE_EMITTER(NopEmitter, nop)
 
 }
 

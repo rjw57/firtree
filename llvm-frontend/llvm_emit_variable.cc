@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -126,7 +126,7 @@ class VariableEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<VariableEmitter> g_VariableEmitterReg( "variablenamed" );
+FIRTREE_LLVM_DECLARE_EMITTER(VariableEmitter, variablenamed)
 
 }
 

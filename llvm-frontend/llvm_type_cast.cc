@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_type_cast.h"
 #include "llvm_emit_constant.h"

@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -112,7 +112,7 @@ class NegateEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<NegateEmitter> g_NegateEmitterReg( "negate" );
+FIRTREE_LLVM_DECLARE_EMITTER(NegateEmitter, negate)
 
 }
 

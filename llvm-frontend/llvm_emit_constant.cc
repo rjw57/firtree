@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
 #include "llvm_emit_constant.h"
@@ -285,9 +285,9 @@ class ConstantEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<ConstantEmitter> g_ConstantEmitterIntReg( "int" );
-RegisterEmitter<ConstantEmitter> g_ConstantEmitterFloatReg( "float" );
-RegisterEmitter<ConstantEmitter> g_ConstantEmitterBoolReg( "bool" );
+FIRTREE_LLVM_DECLARE_EMITTER(ConstantEmitter, int)
+FIRTREE_LLVM_DECLARE_EMITTER(ConstantEmitter, float)
+FIRTREE_LLVM_DECLARE_EMITTER(ConstantEmitter, bool)
 
 }
 

@@ -1,7 +1,7 @@
 //===========================================================================
 /// \file symbol_table.cc Implementation of Firtree::SymbolTable.
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 
 #include <firtree/main.h>
 

@@ -4,7 +4,7 @@
 #ifndef __LLVM_EMIT_DECL_H
 #define __LLVM_EMIT_DECL_H
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 
 namespace llvm {

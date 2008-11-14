@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -117,11 +117,11 @@ class BinaryOpAssignEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<BinaryOpAssignEmitter> g_BinaryOpAssignReg( "assign" );
-RegisterEmitter<BinaryOpAssignEmitter> g_BinaryOpAddAssignReg( "addassign" );
-RegisterEmitter<BinaryOpAssignEmitter> g_BinaryOpSubAssignReg( "subassign" );
-RegisterEmitter<BinaryOpAssignEmitter> g_BinaryOpMulAssignReg( "mulassign" );
-RegisterEmitter<BinaryOpAssignEmitter> g_BinaryOpDivAssignReg( "divassign" );
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpAssignEmitter, assign)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpAssignEmitter, addassign)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpAssignEmitter, subassign)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpAssignEmitter, mulassign)
+FIRTREE_LLVM_DECLARE_EMITTER(BinaryOpAssignEmitter, divassign)
 
 }
 

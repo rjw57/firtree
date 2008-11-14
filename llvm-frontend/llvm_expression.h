@@ -12,7 +12,7 @@
 
 #include "llvm/DerivedTypes.h"
 
-#include "../gen/firtree_int.h"
+#include "styx/firtree_int.h"
 
 namespace Firtree
 {
@@ -135,15 +135,15 @@ class ExpressionEmitterRegistry
 		/// Internal method to register an emitter factory with a
 		/// particular production name.
 		inline void RegisterFactory( std::string product,
-		                             EmitterFactory* factory ) {
+		                             const EmitterFactory* factory ) {
 			m_RegisteredEmitters.insert(
-			    std::pair<std::string, EmitterFactory*>(
+			    std::pair<std::string, const EmitterFactory*>(
 			        product, factory ) );
 			FIRTREE_DEBUG( "Registered emitter for '%s'.", product.c_str() );
 		}
 
 	private:
-		std::map<std::string, EmitterFactory*>	m_RegisteredEmitters;
+		std::map<std::string, const EmitterFactory*>	m_RegisteredEmitters;
 
 		template<typename Emitter>
 		friend class RegisterEmitter;
@@ -152,7 +152,7 @@ class ExpressionEmitterRegistry
 class EmitterFactory
 {
 	public:
-		virtual ExpressionEmitter* Create() = 0;
+		virtual ExpressionEmitter* Create() const = 0;
 };
 
 template<typename EmitterT>
@@ -162,7 +162,7 @@ class RegisterEmitter
 		class Factory : public EmitterFactory
 		{
 			public:
-				virtual ExpressionEmitter* Create() {
+				virtual ExpressionEmitter* Create() const {
 					return EmitterT::Create();
 				}
 		};
@@ -171,10 +171,27 @@ class RegisterEmitter
 
 	public:
 		RegisterEmitter( const char *name ) {
-			ExpressionEmitterRegistry::GetRegistry()->RegisterFactory(
-			    name, &m_Factory );
 		}
+
+		const EmitterFactory* GetFactory() const { return &m_Factory; }
 };
+
+// All emitters need to both call FIRTREE_LLVM_DECLARE_EMITTER()
+// in the file where the emitter class is defined and make sure they
+// also have an entry in prodnames.incl
+//
+// This is ugly but we cannot use a register pattern here since we need
+// to get around the problem that static library initializers may not get
+// called in other files unless explicitly linked in.
+#define FIRTREE_LLVM_DECLARE_EMITTER(classname, prodname) \
+	RegisterEmitter<classname> \
+        g_Static_##classname##_##prodname##_emitter(#prodname); \
+extern "C" { \
+    extern const EmitterFactory* get_##prodname##_factory(); \
+    const EmitterFactory* get_##prodname##_factory() { \
+		return g_Static_##classname##_##prodname##_emitter.GetFactory(); \
+ 	}  \
+}
 
 } // namespace Firtree
 

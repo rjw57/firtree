@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
 
@@ -81,8 +81,8 @@ class ExprListEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<ExprListEmitter> g_ExprListEmitterReg( "expression" );
-RegisterEmitter<ExprListEmitter> g_CompoundEmitterReg( "compound" );
+FIRTREE_LLVM_DECLARE_EMITTER(ExprListEmitter, expression)
+FIRTREE_LLVM_DECLARE_EMITTER(ExprListEmitter, compound)
 
 }
 

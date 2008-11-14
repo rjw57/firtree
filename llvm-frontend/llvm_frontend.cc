@@ -1,7 +1,7 @@
 //===========================================================================
-/// \file llvm_backend.cc
+/// \file llvm_frontend.cc
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 
 #include <firtree/main.h>
@@ -121,7 +121,7 @@ CompileErrorException::~CompileErrorException()
 }
 
 //===========================================================================
-LLVMBackend::LLVMBackend( firtree top_level_term )
+LLVMFrontend::LLVMFrontend( firtree top_level_term )
 		: m_Status( true )
 {
 	// Create the context
@@ -152,7 +152,7 @@ LLVMBackend::LLVMBackend( firtree top_level_term )
 }
 
 //===========================================================================
-LLVMBackend::~LLVMBackend()
+LLVMFrontend::~LLVMFrontend()
 {
 	// Commented out because throwing an error inside the Function
 	// emission will trigger this too.
@@ -178,7 +178,7 @@ LLVMBackend::~LLVMBackend()
 
 //===========================================================================
 /// Retrieve the LLVM module constructed from compilation.
-const llvm::Module* LLVMBackend::GetCompiledModule() const
+const llvm::Module* LLVMFrontend::GetCompiledModule() const
 {
 	return m_LLVMContext->Module;
 }
@@ -186,14 +186,14 @@ const llvm::Module* LLVMBackend::GetCompiledModule() const
 //===========================================================================
 /// Retrieve the compilation success flag: true on success, false
 /// otherwise.
-bool LLVMBackend::GetCompilationSucceeded() const
+bool LLVMFrontend::GetCompilationSucceeded() const
 {
 	return m_Status;
 }
 
 //===========================================================================
 /// Throw a compiler exception.
-void LLVMBackend::ThrowCompileErrorException(
+void LLVMFrontend::ThrowCompileErrorException(
     const char* file, int line, const char* func,
     bool is_ice, PT_Term term,
     const char* format, ... )
@@ -226,7 +226,7 @@ void LLVMBackend::ThrowCompileErrorException(
 //===========================================================================
 /// Handle a compiler error exception by recording it in the error
 /// log.
-void LLVMBackend::HandleCompilerError(
+void LLVMFrontend::HandleCompilerError(
     const CompileErrorException& error_exception )
 {
 	if ( error_exception.IsIce() ) {
@@ -245,7 +245,7 @@ void LLVMBackend::HandleCompilerError(
 
 //===========================================================================
 /// Record an error or warning in the log.
-void LLVMBackend::RecordWarning( PT_Term term, const char* format, ... )
+void LLVMFrontend::RecordWarning( PT_Term term, const char* format, ... )
 {
 	va_list args;
 
@@ -269,7 +269,7 @@ void LLVMBackend::RecordWarning( PT_Term term, const char* format, ... )
 
 //===========================================================================
 /// Record an error or warning in the log.
-void LLVMBackend::RecordMessage( PT_Term term, bool is_error,
+void LLVMFrontend::RecordMessage( PT_Term term, bool is_error,
                                  const char* format, ... )
 {
 	va_list args;

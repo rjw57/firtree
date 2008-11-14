@@ -1,7 +1,7 @@
 //===========================================================================
 /// \file llvm_emit_decl.cc Implementation of Firtree::EmitDeclarations.
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 
 #include <firtree/main.h>

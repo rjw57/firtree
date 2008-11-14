@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -143,10 +143,10 @@ class IncDecEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<IncDecEmitter> g_IncEmitterReg( "inc" );
-RegisterEmitter<IncDecEmitter> g_DecEmitterReg( "dec" );
-RegisterEmitter<IncDecEmitter> g_PostIncEmitterReg( "postinc" );
-RegisterEmitter<IncDecEmitter> g_PostDecEmitterReg( "postdec" );
+FIRTREE_LLVM_DECLARE_EMITTER(IncDecEmitter, inc)
+FIRTREE_LLVM_DECLARE_EMITTER(IncDecEmitter, dec)
+FIRTREE_LLVM_DECLARE_EMITTER(IncDecEmitter, postinc)
+FIRTREE_LLVM_DECLARE_EMITTER(IncDecEmitter, postdec)
 
 }
 

@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -287,7 +287,7 @@ class SwizzleEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<SwizzleEmitter> g_SwizzleEmitterReg( "fieldselect" );
+FIRTREE_LLVM_DECLARE_EMITTER(SwizzleEmitter, fieldselect)
 
 }
 

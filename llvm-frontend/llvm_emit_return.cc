@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_emit_decl.h"
 #include "llvm_expression.h"
@@ -18,7 +18,7 @@ namespace Firtree
 
 //===========================================================================
 /// \brief Class to emit a return instruction.
-class ReturnEmitter : ExpressionEmitter
+class ReturnEmitter : public ExpressionEmitter
 {
 	public:
 		ReturnEmitter()
@@ -80,7 +80,7 @@ class ReturnEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<ReturnEmitter> g_ReturnEmitterReg( "return" );
+FIRTREE_LLVM_DECLARE_EMITTER(ReturnEmitter, return)
 
 }
 

@@ -3,7 +3,7 @@
 
 #include <firtree/main.h>
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 #include "llvm_private.h"
 #include "llvm_expression.h"
 #include "llvm_emit_constant.h"
@@ -303,8 +303,7 @@ class FunctionCallEmitter : ExpressionEmitter
 
 //===========================================================================
 // Register the emitter.
-RegisterEmitter<FunctionCallEmitter> g_FunctionCallEmitterReg(
-    "functioncall" );
+FIRTREE_LLVM_DECLARE_EMITTER(FunctionCallEmitter, functioncall)
 
 }
 

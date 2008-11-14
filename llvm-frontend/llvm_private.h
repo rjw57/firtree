@@ -5,7 +5,7 @@
 #ifndef __LLVM_PRIVATE_H
 #define __LLVM_PRIVATE_H
 
-#include "llvm_backend.h"
+#include "llvm_frontend.h"
 
 #include <firtree/main.h>
 
@@ -81,7 +81,7 @@ class CompileErrorException : public Exception
 		        __PRETTY_FUNCTION__, true, term, __VA_ARGS__); \
 	} while(0)
 
-class LLVMBackend;
+class LLVMFrontend;
 struct LLVMContext;
 
 //===========================================================================
@@ -169,7 +169,7 @@ struct LLVMContext {
 	llvm::BasicBlock*     BB;
 
 	///                   The backend which is generating the code.
-	LLVMBackend*          Backend;
+	LLVMFrontend*          Backend;
 
 	///                   The current symbol table for the function.
 	SymbolTable*          Variables;

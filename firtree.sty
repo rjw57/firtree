@@ -1,0 +1,416 @@
+; firtree.sty - Firtree grammar
+
+Language firtree
+
+Regular Grammar
+
+    ;;;; Some standard definitions for character classes
+    let Byte            = '\00' .. '\ff'    ; All of 8-bit ASCII
+    let Control         = '\00' .. '\1f'    ; Control characters.
+    let Printable       = Byte - Control    ; Printable characters.
+    let Digit           = '0' .. '9'
+    let Letter          = 'a' .. 'z' | 'A' .. 'Z' | '_'
+    let AlphaNum        = Letter | Digit
+    let HexDigit        = 'a' .. 'f' | 'A' .. 'F' | Digit
+    let OctalDigit      = '0' .. '7'
+    let Exponent        = 'Ee' [ '+-' ] Digit+
+
+    ;;;; Ignore whitespace
+    ign Whitespace      = ' \n\r\t'    
+
+    ;;;; Process single and multi-line comments
+    com SinglLnComment  = "//" {Printable}    ; The '\n' will implicitly
+                                              ; end this rule.
+    com MultiLnComment  = "/*" ({Byte}-({Byte}"*/"{Byte})) "*/"
+
+    ;;;; Identifier and keywords
+    tok Identifier      = ( Letter { AlphaNum } ) - ReservedWord
+
+    ;;;; Reserved words
+    let True            = "true"
+    let False           = "false"
+
+    tok Const           = "const"
+    tok Do              = "do"
+    tok For             = "for"
+    tok While           = "while"
+    tok If              = "if"
+    tok Else            = "else"
+    tok In              = "in"
+    tok Out             = "out"
+    tok InOut           = "inout"
+    tok Kernel          = "kernel"
+    tok Float           = "float"
+    tok Int             = "int"
+    tok Void            = "void"
+    tok Bool            = "bool"
+    tok Return          = "return"
+    tok Vec2            = "vec2"
+    tok Vec3            = "vec3"
+    tok Vec4            = "vec4"
+    tok Sampler         = "sampler"
+    tok Color           = "__color"
+    tok Builtin         = "__builtin__"
+
+    ;;;; Static constants
+    tok IntConst        = "0" 'xX' HexDigit+
+                        | "0" OctalDigit+
+                        | Digit+
+    tok FloatConst      = Digit+ Exponent
+                        | Digit+ "." { Digit } [ Exponent ]
+
+    tok BoolConst       = True | False
+
+    let ReservedWord    = True | False | Const | Do | For | While | If 
+                        | Else | In | Out | InOut | Kernel | Float | Int
+                        | Void | Bool | Return | Vec2 | Vec3 | Vec4 | Sampler
+                        | Color | Builtin
+
+    ;;;; Assignment operators
+    tok AddAssign       = "+="
+    tok SubAssign       = "-="
+    tok MulAssign       = "*="
+    tok DivAssign       = "/="
+
+    ;;;; Increment/decrement operators
+    tok IncOp           = "++"
+    tok DecOp           = "--"
+
+    ;;;; Binary logical operators
+    tok AndOp           = "&&"
+    tok OrOp            = "||"
+    tok XorOp           = "^^"
+    tok LEOp            = "<="
+    tok GEOp            = ">="
+    tok EqOp            = "=="
+    tok NEOp            = "!="
+
+    ;;;; Statement termination
+    tok Semicolon       = ";"
+
+    ;;;; Braces, brackets and parens, oh my!
+    tok LeftBrace       = "{"
+    tok RightBrace      = "}"
+    tok LeftParen       = "("
+    tok RightParen      = ")"
+    tok LeftBracket     = "["
+    tok RightBracket    = "]"
+    tok LeftAngle       = "<"
+    tok RightAngle      = ">"
+
+    ;;;; Misc punctuation
+    tok Equal           = "="
+    tok Dot             = "."
+    tok Comma           = ","
+    tok Bang            = "!"
+    tok Dash            = "-"
+    tok Plus            = "+"
+    tok Star            = "*"
+    tok Slash           = "/"
+    tok Question        = "?"
+    tok Colon           = ":"
+
+Context Free Grammar
+
+; The basic unit of a firtree kernel specifier is the TranslationUnit.
+; It contains zero or more external declarations.
+start [err] TranslationUnit
+    :nil:
+    :cons:                  ExternalDeclaration 
+                            TranslationUnit
+
+; An external declaration is a function or kernel definition or prototype.
+let ExternalDeclaration
+    :definefuntion:         FunctionDefinition
+    :declarefunction:       FunctionPrototype ";"
+
+; A function prototype consistes of a function header describing the
+; name and type of the function followed by a list of function
+; parameters in parentheses.
+; There are two sorts of functions available in Firtree, plain-ol'-simple
+; functions which are inlined and kernel functions which are our
+; entry points. Each is parameterised by a fully specified type and an
+; identifier.
+let FunctionPrototype
+    :functionprototype:     FunctionQualifier FullySpecifiedType Identifier "(" FunctionParameterDeclarationList ")"
+
+let FunctionQualifier
+    :function:
+    :kernel:                "kernel"
+    :builtin:               "__builtin__"
+
+let FullySpecifiedType
+    :unqualifiedtype:       TypeSpecifier
+    :qualifiedtype:         TypeQualifier TypeSpecifier
+
+let TypeSpecifier
+    :void:                  "void"
+    :float:                 "float"
+    :int:                   "int"
+    :bool:                  "bool"
+    :vec2:                  "vec2"
+    :vec3:                  "vec3"
+    :vec4:                  "vec4"
+    :sampler:               "sampler"
+    :color:                 "__color"
+
+; A function parameter list consists of zero or more ParameterDeclarations
+; separated by commas.
+let FunctionParameterDeclarationList
+    :nil:
+    :cons:                  ParameterDeclaration FunctionParameterDeclarationListTail
+
+let FunctionParameterDeclarationListTail
+    :nil:
+    :cons:                  "," ParameterDeclaration FunctionParameterDeclarationListTail
+
+; A parameter declaration includes an (optional) type qualifier,
+; an (optional) parameter, a type specifier and an (optional)
+; name
+let ParameterDeclaration
+    :parameterdeclaration:  TypeQualifierOpt ParameterQualifierOpt TypeSpecifier ParameterIdentifierOpt
+
+; The only type qualifier supported by Firtree is the 'const' qualifier
+; for declaring constants.
+let TypeQualifier
+    :const:                 "const"
+
+let TypeQualifierOpt
+    :ign0:                  TypeQualifier
+    :none:  
+
+; Parameters can have an 'in', 'out', or 'inout' qualifier depending
+; on whether they are function inputs, outputs or inputs and outputs.
+
+;; Commented out because all parameter qualifiers are optional.
+let ParameterQualifier
+     :in:                    "in"
+     :out:                   "out"
+     :inout:                 "inout"
+
+let ParameterQualifierOpt
+    :ign0:                  ParameterQualifier
+    :in:
+
+; Parameters can possess an optional identifier when in function
+; prototypes.
+let ParameterIdentifierOpt
+    :anonymous:      
+    :named:                 Identifier
+
+; A function definition is much like a function prototype except that
+; it posesses a compound statement defining the function after its
+; declaration. It is grammatically correct for the parameters to be
+; unnamed but in Firtree, this generates an error in practice.
+let FunctionDefinition
+    :functiondefinition:    FunctionPrototype
+                            StatementCompoundNoScope
+
+; A statement can either be a simple statement on its own or a compound
+; statement. It can also cause a a new scope to be created. We firstly 
+; define the concept of a statement list consisting of zero or more
+; statements.
+let StatementList
+    :nil:
+    :cons:                  Statement 
+                            StatementList
+
+; Each statement is one of a class of possible statements.
+let [err] Statement
+    :ign0:                  StatementCompound
+    :ign1:                  StatementDeclaration
+    :ign2:                  StatementExpression
+    :ign3:                  StatementSelection
+    :ign4:                  StatementIteration
+    :ign5:                  StatementJump
+
+; Statements are also where we resume for error recovery.
+let StatementNoScope
+    :ign0:                  Statement
+
+; A compound statement is simply a list of statements surrounded by
+; braces.
+let StatementCompoundNoScope
+    :ign0:                  "{"
+                                StatementList
+                            "}"
+
+let StatementCompound
+    :compound:              "{"
+                                StatementList
+                            "}"
+
+; A Declaration statement declares a set of variables, their type and
+; (optionally) their initial values.
+let StatementDeclaration
+    :declare:               FullySpecifiedType SingleDeclaration InitDeclaratorListTail ";"
+
+let InitDeclaratorListTail
+    :nil:
+    :cons:                  "," SingleDeclaration InitDeclaratorListTail
+
+; A single declaration is a variable identifier followed by an
+; (optional) initializer.
+let SingleDeclaration
+    :variableinitializer:  Identifier OptionalInitializer
+
+; An initializer is simply an expression.
+let Initializer
+    :ign0:                  "=" ExpressionAssignment
+
+let OptionalInitializer
+    :nop:
+    :ign0:                  Initializer
+
+; An expression statement is either an expression followed by a semicolon
+; or a semicolon on its own indicating a NOP.
+let StatementExpression
+    :nop:                   ";"
+    :ign0:                  Expression ";"
+
+; A selection statement is an if() statement followed by an optional
+; 'else' clause.
+let StatementSelection
+    :selection:             "if" "(" Expression ")" 
+                            Statement OptionalElse
+
+let OptionalElse
+    :nop:
+    :ign0:                  "else" Statement
+
+; An iteration statement is a loop construct.
+let StatementIteration
+    :while:                 "while" "(" Expression ")" 
+                            StatementNoScope
+    :do:                    "do"
+                            Statement
+                            "while" "(" Expression ")" ";"
+    :for:                   "for" "(" ForStatementInit ExpressionOptional ";" ExpressionOptional ")" 
+                            StatementNoScope
+
+; The initialization statement in a for loop is either an expression or
+; the declaration of a new variable.
+let ForStatementInit
+    :ign0:                  StatementExpression
+    :ign1:                  StatementDeclaration
+
+let ExpressionOptional
+    :nop:
+    :ign0:                  Expression
+
+; A jump statement is 'return', optionally followed by an expression.
+let StatementJump
+    :return:                "return" ExpressionOptional ";"
+ 
+; An expression is one or more assignment expressions chained together
+; via commas.
+let Expression
+    :expression:            ExpressionAssignment ExpressionTail
+
+let ExpressionTail
+    :nil:
+    :cons:                  "," ExpressionAssignment ExpressionTail
+
+; An assignment expression is either the assignment to a unary expression
+; (assuming it is an lvalue) or a conditional.
+let ExpressionAssignment
+    :ign0:                  ExpressionConditional
+    :assign:                ExpressionUnary "=" ExpressionAssignment
+    :addassign:             ExpressionUnary "+=" ExpressionAssignment
+    :subassign:             ExpressionUnary "-=" ExpressionAssignment
+    :mulassign:             ExpressionUnary "*=" ExpressionAssignment
+    :divassign:             ExpressionUnary "/=" ExpressionAssignment
+
+; A Conditional expression is either the result of a ternary operator or
+; an logical or expression.
+let ExpressionConditional
+    :ign0:                  LogicalExpressionOr      
+    :ternary:               LogicalExpressionOr "?" Expression ":" ExpressionAssignment
+
+let LogicalExpressionOr      
+    :ign0:                  LogicalExpressionXor      
+    :logicalor:             LogicalExpressionOr "||" LogicalExpressionXor      
+
+let LogicalExpressionXor      
+    :ign0:                  LogicalExpressionAnd      
+    :logicalxor:            LogicalExpressionXor "^^" LogicalExpressionAnd      
+
+let LogicalExpressionAnd      
+    :ign0:                  ExpressionEquality      
+    :logicaland:            LogicalExpressionAnd "&&" ExpressionEquality      
+
+let ExpressionEquality      
+    :ign0:                  ExpressionRelational      
+    :equal:                 ExpressionEquality "==" ExpressionRelational      
+    :notequal:              ExpressionEquality "!=" ExpressionRelational      
+
+let ExpressionRelational      
+    :ign0:                  ExpressionAdditive      
+    :less:                  ExpressionRelational "<" ExpressionAdditive      
+    :greater:               ExpressionRelational ">" ExpressionAdditive      
+    :lessequal:             ExpressionRelational "<=" ExpressionAdditive      
+    :greaterequal:          ExpressionRelational ">=" ExpressionAdditive      
+
+let ExpressionAdditive      
+    :ign0:                  ExpressionMultiplicative      
+    :add:                   ExpressionAdditive "+" ExpressionMultiplicative      
+    :sub:                   ExpressionAdditive "-" ExpressionMultiplicative      
+
+let ExpressionMultiplicative      
+    :ign0:                  ExpressionUnary      
+    :mul:                   ExpressionMultiplicative "*" ExpressionUnary      
+    :div:                   ExpressionMultiplicative "/" ExpressionUnary      
+
+let ExpressionUnary
+    :ign0:                  ExpressionPostfix      
+    :inc:                   "++" ExpressionUnary
+    :dec:                   "--" ExpressionUnary
+    :ign1:                  "+" ExpressionUnary
+    :negate:                "-" ExpressionUnary
+
+; A postfix expression is nearly the lowest level in our tree of 
+; expressions. It is either a primary expression (i.e. constant or
+; variable), function call, swizzle operation or post inc/decrement.
+let ExpressionPostfix
+    :ign0:                  ExpressionPrimary
+    :ign1:                  FunctionCall
+    :fieldselect:           ExpressionPostfix "." Identifier
+    :postinc:               ExpressionPostfix "++"
+    :postdec:               ExpressionPostfix "--"
+
+; A function call is a function name followed by a parameter list in
+; parentheses.
+let FunctionCall
+    :functioncall:          FunctionSpecifier "("  FunctionCallParameterList ")"
+
+; There are two sorts of functions, those which are user defined and those
+; which are 'constructors' for basic types.
+let FunctionSpecifier
+    :constructorfor:        TypeSpecifier
+    :functionnamed:         Identifier
+
+; Zero or more parameters separated by commas.
+let FunctionCallParameterList
+    :nil:                   
+    :cons:                  FunctionParameter FunctionCallParameterListTail
+
+let FunctionCallParameterListTail
+    :nil:                   
+    :cons:                  "," FunctionParameter FunctionCallParameterListTail
+
+; Function parameters are simply assignment expressions.
+let FunctionParameter
+    :ign0:                  ExpressionAssignment
+
+; A primary expression is a constant, bracketed expression or variable.
+let ExpressionPrimary
+    :ign0:                  VariableIdentifier
+    :int:                   IntConst
+    :float:                 FloatConst
+    :bool:                  BoolConst
+    :ign1:                  "(" Expression ")"
+
+let VariableIdentifier
+    :variablenamed:         Identifier
+
+; vim:sw=4:ts=4:et:autoindent

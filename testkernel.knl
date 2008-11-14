@@ -1,0 +1,48 @@
+float increment(float a);
+float increment(float a, float by);
+vec2 increment(vec2 a);
+vec2 increment(vec2 a, float by);
+
+__builtin__ float max(float, float);
+__builtin__ vec2 max(vec2, vec2);
+__builtin__ vec3 max(vec3, vec3);
+__builtin__ vec4 max(vec4, vec4);
+
+__builtin__ void putc(int);
+
+kernel vec4 simpleKernel()
+{
+  float a = max(0.0, 1.0);
+  float b = increment(a);
+  vec2 c = vec2(3,b);
+  return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));
+}
+
+__builtin__ int main()
+{
+  putc(65);
+  return 0;
+}
+
+float increment(float a)
+{
+  return a + 1;
+}
+
+float increment(float a, float by)
+{
+  return a + by;
+}
+
+vec2 increment(vec2 a)
+{
+  return a + vec2(1,1);
+}
+
+vec2 increment(vec2 a, float by)
+{
+  // Auto broadcast of vector/floating point operations.
+  return a + by;
+}
+
+// vim:filetype=c

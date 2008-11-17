@@ -205,6 +205,13 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		{
 			if(I.use_empty()) { return; }
 
+			const VectorType* vec_type = cast<VectorType>(I.getType());
+			if(vec_type == NULL)
+			{
+				FIRTREE_ERROR("Insert element must have vector type");
+			}
+			unsigned int output_arity = vec_type->getNumElements();
+
 			// The third operand *must* be a constant integer
 			// in range 0..3
 			const Value* idx_val = I.getOperand(2);
@@ -221,19 +228,88 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 
 			static char idx_char[] = "xyzw";
+			const Value* left_side = I.getOperand(0);
 
-			writeIndent();
-			writeValueDecl(I);
-			writeOperand(I.getOperand(0), m_OutputStream);
-			m_OutputStream << ";\n";
+			if(!I.hasOneUse())
+			{
+				// If we have one use, fall back to default implementation
+				// FIXME: Remove duplication here
+				writeIndent();
+				writeValueDecl(I);
+				writeOperand(left_side, m_OutputStream);
+				m_OutputStream << ";\n";
 
-			writeIndent();
-			m_OutputStream << varNameSanitize(I.getName());
-			m_OutputStream << "." << idx_char[idx] << " = ";
-			writeOperand(I.getOperand(1), m_OutputStream);
-			m_OutputStream << ";\n";
+				writeIndent();
+				m_OutputStream << varNameSanitize(I.getName());
+				m_OutputStream << "." << idx_char[idx] << " = ";
+				writeOperand(I.getOperand(1), m_OutputStream);
+				m_OutputStream << ";\n";
 
-			SetValueToVariable(&I);
+				SetValueToVariable(&I);
+			} else if(isa<ConstantVector>(left_side)) {
+				// If the left operand is a constant vector, inline the
+				// insertion.
+				const ConstantVector* cv = cast<ConstantVector>(left_side);
+				std::vector<std::string> vector_glsl_reps;
+				for(unsigned int i=0; i<output_arity; ++i)
+				{
+					std::ostringstream element_rep;
+					if(i == idx) {
+						writeOperand(I.getOperand(1), element_rep);
+					} else {
+						writeOperand(cv->getOperand(i), element_rep);
+					}
+					vector_glsl_reps.push_back(element_rep.str());
+				}
+
+				SetValueToGLSLVector(&I, vector_glsl_reps);
+			} else if(isa<ConstantAggregateZero>(left_side)) {
+				// If the left operand is a constant zero, inline the
+				// insertion.
+				std::vector<std::string> vector_glsl_reps;
+				for(unsigned int i=0; i<output_arity; ++i)
+				{
+					std::ostringstream element_rep;
+					if(i == idx) {
+						writeOperand(I.getOperand(1), element_rep);
+					} else {
+						element_rep << "0.0";
+					}
+					vector_glsl_reps.push_back(element_rep.str());
+				}
+
+				SetValueToGLSLVector(&I, vector_glsl_reps);
+			} else if(m_VectorValueMap.count(left_side) != 0) {
+				// If the left operand is a GLSL vector, inline the
+				// insertion.
+				std::vector<std::string> vector_glsl_reps;
+				for(unsigned int i=0; i<output_arity; ++i)
+				{
+					std::ostringstream element_rep;
+					if(i == idx) {
+						writeOperand(I.getOperand(1), element_rep);
+					} else {
+						element_rep << m_VectorValueMap[left_side][i];
+					}
+					vector_glsl_reps.push_back(element_rep.str());
+				}
+
+				SetValueToGLSLVector(&I, vector_glsl_reps);
+			} else {
+				// FIXME: Remove duplication here
+				writeIndent();
+				writeValueDecl(I);
+				writeOperand(left_side, m_OutputStream);
+				m_OutputStream << ";\n";
+
+				writeIndent();
+				m_OutputStream << varNameSanitize(I.getName());
+				m_OutputStream << "." << idx_char[idx] << " = ";
+				writeOperand(I.getOperand(1), m_OutputStream);
+				m_OutputStream << ";\n";
+
+				SetValueToVariable(&I);
+			}
 		}
 
 		void visitShuffleVectorInst(ShuffleVectorInst &I)
@@ -393,6 +469,10 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		// This stores the mapping between a value and it's GLSL representation
 		hash_map<const Value*, std::string> m_ValueMap;
 
+		// This stores the mapping between a value and it's vector of GLSL 
+		// representations,
+		hash_map<const Value*, std::vector<std::string> > m_VectorValueMap;
+
 		// This stores a flag indicating if the value is stored in a variable.
 		// i.e. whether the m_ValueMap entry contains a variable name.
 		hash_map<const Value*, bool> m_InVariable;
@@ -401,6 +481,31 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		{
 			m_ValueMap[v] = glsl;
 			m_InVariable[v] = false;
+		}
+
+		void SetValueToGLSLVector(const Value* v, 
+				const std::vector<std::string>& glsl_vec)
+		{
+			// Form a GLSL reprentation from this vector
+			if((glsl_vec.size() < 2) || (glsl_vec.size() > 4)) {
+				FIRTREE_ERROR("Invalid GLSL vector size: %u.", glsl_vec.size());
+			}
+
+			std::ostringstream glsl_rep;
+			writeType(v->getType(), glsl_rep);
+			glsl_rep << "(";
+			for(unsigned int i=0; i<glsl_vec.size(); ++i)
+			{
+				if(i != 0)
+				{
+					glsl_rep << ",";
+				}
+				glsl_rep << glsl_vec[i];
+			}
+			glsl_rep << ")";
+
+			SetValueToGLSL(v, glsl_rep.str());
+			m_VectorValueMap[v] = glsl_vec;
 		}
 
 		void SetValueToVariable(const Value* v)

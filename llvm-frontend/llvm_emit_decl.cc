@@ -53,7 +53,7 @@ std::string FunctionPrototype::GetMangledName( LLVMContext* ctx ) const
 				namestr += "v3";
 				break;
 			case FullType::TySpecVec4:
-				namestr += "b4";
+				namestr += "v4";
 				break;
 			case FullType::TySpecSampler:
 				namestr += "s";
@@ -62,7 +62,7 @@ std::string FunctionPrototype::GetMangledName( LLVMContext* ctx ) const
 				namestr += "c";
 				break;
 			case FullType::TySpecVoid:
-				namestr += "v";
+				namestr += "x";
 				break;
 			default:
 				FIRTREE_LLVM_ICE( ctx, NULL, "Invalid type.");

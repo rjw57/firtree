@@ -29,7 +29,7 @@ class VariableExpressionValue : public ExpressionValue
 				, m_Context( ctx ) {
 			// Get the value at time of creation.
 			m_VarValue = LLVM_NEW_2_3( LoadInst, decl->value,
-			                          "tmpload", m_Context->BB );
+			                          "tmp", m_Context->BB );
 		}
 		virtual ~VariableExpressionValue() { }
 

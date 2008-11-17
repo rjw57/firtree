@@ -166,14 +166,14 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 					result_val = LLVM_NEW_2_3( FCmpInst, fcmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
-					                          "tmpcmp",
+					                          "tmp",
 					                          context->BB );
 				} else if (( left_val->GetType().Specifier == FullType::TySpecInt ) ||
 				           ( left_val->GetType().Specifier == FullType::TySpecBool ) ) {
 					result_val = LLVM_NEW_2_3( ICmpInst, icmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
-					                          "tmpcmp",
+					                          "tmp",
 					                          context->BB );
 				} else {
 					FIRTREE_LLVM_ERROR( context, expression,

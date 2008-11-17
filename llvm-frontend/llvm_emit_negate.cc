@@ -105,7 +105,7 @@ class NegateEmitter : ExpressionEmitter
 				                           Instruction::Mul,
 				                           negative_one,
 				                           negate_value->GetLLVMValue(),
-				                           "tmpnegate", context->BB );
+				                           "tmp", context->BB );
 				return_value = ConstantExpressionValue::
 				               Create( context, new_val );
 

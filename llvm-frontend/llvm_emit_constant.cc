@@ -189,7 +189,7 @@ ExpressionValue* CreateVector( LLVMContext* context,
 	for ( unsigned int i=0; i<values.size(); ++i ) {
 		vec_val = LLVM_CREATE( InsertElementInst, vec_val,
 		                       values[i]->GetLLVMValue(), i,
-		                       "tmpins", context->BB );
+		                       "tmp", context->BB );
 	}
 
 	FIRTREE_SAFE_RELEASE( zero_vec );
@@ -213,7 +213,7 @@ void CrackVector( LLVMContext* context, ExpressionValue* vector,
 
 	for ( unsigned int i=0; i<vec_type.GetArity(); i++ ) {
 		llvm::Value* ext_val = LLVM_NEW_2_3( ExtractElementInst,
-		                                    vec_val, i, "tmpext",
+		                                    vec_val, i, "tmp",
 		                                    context->BB );
 		output_values.push_back(
 		    ConstantExpressionValue::Create( context, ext_val ) );

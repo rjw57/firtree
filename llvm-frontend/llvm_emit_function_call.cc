@@ -110,7 +110,7 @@ class FunctionCallEmitter : ExpressionEmitter
 						llvm::Value* func_call = LLVM_CREATE(CallInst,
 								proto.LLVMFunction,
 								llvm_params.begin(), llvm_params.end(),
-								is_void ? "" : "tmpfuncretval",
+								is_void ? "" : "tmp",
 								context->BB);
 
 						while(func_params.size() != 0) {

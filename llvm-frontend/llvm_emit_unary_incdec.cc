@@ -113,7 +113,7 @@ class IncDecEmitter : ExpressionEmitter
 				                           llvm_op,
 				                           operand_value->GetLLVMValue(),
 				                           one,
-				                           "tmpincdec", context->BB );
+				                           "tmp", context->BB );
 
 				new_value = ConstantExpressionValue::
 				            Create( context, new_val );

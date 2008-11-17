@@ -108,7 +108,7 @@ class BinaryOpLogicEmitter : ExpressionEmitter
 				llvm::Value* result_val = BinaryOperator::create( op,
 				                          left_val->GetLLVMValue(),
 				                          right_val->GetLLVMValue(),
-				                          "tmpbinop", context->BB );
+				                          "tmp", context->BB );
 				return_val =  ConstantExpressionValue::
 				              Create( context, result_val );
 

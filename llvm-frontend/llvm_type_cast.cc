@@ -69,7 +69,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					Value* llvm_new_value = LLVM_NEW_2_3( SIToFPInst,
 					                                     llvm_value,
 					                                     Type::FloatTy,
-					                                     "tmpcast",
+					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value );
@@ -94,7 +94,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					Value* llvm_new_value = LLVM_NEW_2_3( FPToSIInst,
 					                                     llvm_value,
 					                                     dest_llvm_type,
-					                                     "tmpcast",
+					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value );
@@ -106,7 +106,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					Value* llvm_new_value = LLVM_NEW_2_3( SExtInst,
 					                                     llvm_value,
 					                                     Type::Int32Ty,
-					                                     "tmpcast",
+					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value );

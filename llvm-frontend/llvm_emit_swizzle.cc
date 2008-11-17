@@ -52,7 +52,7 @@ class SwizzleExpressionValue : public ExpressionValue
 				    LLVM_NEW_2_3( ExtractElementInst,
 				                 m_Swizzlee->GetLLVMValue(),
 				                 m_SwizzleIndices.front(),
-				                 "tmpswizzle",
+				                 "tmp",
 				                 m_Context->BB );
 				return element_value;
 			}
@@ -77,12 +77,12 @@ class SwizzleExpressionValue : public ExpressionValue
 				    LLVM_NEW_2_3( ExtractElementInst,
 				                 swizlee_val,
 				                 m_SwizzleIndices[i],
-				                 "tmpswizzlextract",m_Context->BB );
+				                 "tmp",m_Context->BB );
 				return_value =
 				    LLVM_CREATE( InsertElementInst,
 				                 return_value,
 				                 swizzlee_element, i,
-				                 "tmpswixxleinsert",
+				                 "tmp",
 				                 m_Context->BB );
 			}
 
@@ -146,7 +146,7 @@ class SwizzleExpressionValue : public ExpressionValue
 					                       swizzlee,
 					                       assignment,
 					                       m_SwizzleIndices.front(),
-					                       "tmpinsertswizzle",
+					                       "tmp",
 					                       m_Context->BB );
 				} else {
 					// Need to build value to assign from swizzlee.
@@ -155,13 +155,13 @@ class SwizzleExpressionValue : public ExpressionValue
 						llvm::Value* assign_val =
 						    LLVM_NEW_2_3( ExtractElementInst,
 						                 assignment,
-						                 i, "tmpswizzlextract",
+						                 i, "tmp",
 						                 m_Context->BB );
 						new_val =
 						    LLVM_CREATE( InsertElementInst,
 						                 new_val, assign_val,
 						                 m_SwizzleIndices[i],
-						                 "tmpswizzleinsert",
+						                 "tmp",
 						                 m_Context->BB );
 					}
 				}

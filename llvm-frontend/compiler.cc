@@ -112,7 +112,8 @@ static uint32_t g_ModuleInitCount = 0;
 
 //===========================================================================
 Compiler::Compiler()
-	:	m_CurrentFrontend(NULL)
+	:	ReferenceCounted()
+	,	m_CurrentFrontend(NULL)
 	,	m_Log(NULL)
 	,	m_LogSize(0)
 	,	m_OptimiseLLVM(true)

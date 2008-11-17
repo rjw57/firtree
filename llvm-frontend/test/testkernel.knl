@@ -12,33 +12,17 @@ float increment(float a, float by);
 vec2 increment(vec2 a);
 vec2 increment(vec2 a, float by);
 
+__builtin__ vec2 samplerCoord(sampler);
+__builtin__ vec4 sample(sampler, vec2);
+
 /* Our actual kernel. */
-kernel vec4 simpleKernel()
+kernel vec4 simpleKernel(sampler src)
 {
-  float a = max(2.0, 1.0);
+  vec3 no = vec3(0,0,1);
+  float a = max(no.z, 3.0);
   float b = increment(a);
-  vec2 c = vec2(3,b);
-  return vec4(increment(vec2( increment(a, 3), b ), 2), increment(c));
-}
-
-/* Output a vector to stdout */
-void putvec(vec4 v)
-{
-  const int comma = 44;
-  putfloat(v.x); putchar(comma);
-  putfloat(v.y); putchar(comma);
-  putfloat(v.z); putchar(comma);
-  putfloat(v.w); 
-}
-
-// HACK: __builtin__ also defines external linkage meaning this
-// becomes our program's 'main' function.
-__builtin__ int main()
-{
-  int newline = 10;
-  vec4 kernel_output = simpleKernel();
-  putvec(kernel_output); putchar(newline);
-  return 0;
+  vec2 c = max(vec2(3,b), vec2(1,1));
+  return sample(src, samplerCoord(src)) + vec4(a,b,c);
 }
 
 float increment(float a)

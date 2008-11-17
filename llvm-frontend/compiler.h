@@ -55,9 +55,11 @@ class Compiler : public ReferenceCounted
 		void SetDoOptimization(bool flag);
 		bool GetDoOptimization() const;
 
+		/// Get the compiled LLVM module.
+		llvm::Module* GetCompiledModule() const;
+
 	private:
 		void RunOptimiser();
-		llvm::Module* GetCompiledModule() const;
 
 		LLVMFrontend*			m_CurrentFrontend;
 		const char**			m_Log;

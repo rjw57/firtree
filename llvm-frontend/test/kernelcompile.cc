@@ -6,6 +6,7 @@
 /* ------------------------------------------------------------------------ */
 
 #include "../compiler.h"
+#include "../glsl-target/glsl-target.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include <iostream>
@@ -48,6 +49,13 @@ int compile_kernel( const char* fileid )
   {
     std::cerr << "LLVM:\n";
     compiler->DumpInitialLLVM();
+//    WriteBitcodeToFile( compiler->GetCompiledModule(), std::cout );
+
+    Firtree::GLSLTarget* glsl_target = Firtree::GLSLTarget::Create();
+
+    glsl_target->ProcessModule( compiler->GetCompiledModule() );
+
+    FIRTREE_SAFE_RELEASE(glsl_target);
   }
 
   FIRTREE_SAFE_RELEASE(compiler);

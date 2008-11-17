@@ -55,7 +55,9 @@ INCLUDE_DIRECTORIES(${LLVM_INCLUDE_DIR})
 ADD_LIBRARY(llvm-frontend ${LLVM_FRONTEND_SOURCES})
 TARGET_LINK_LIBRARIES(llvm-frontend styx-parser ${LLVM_LIBRARIES})
 
+ADD_SUBDIRECTORY(glsl-target)
+
 ADD_EXECUTABLE(compiletest test/kernelcompile.cc)
-TARGET_LINK_LIBRARIES(compiletest llvm-frontend firtree)
+TARGET_LINK_LIBRARIES(compiletest llvm-frontend glsl-target firtree)
 
 # vim:sw=2:ts=2:et

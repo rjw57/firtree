@@ -377,35 +377,43 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			} else {
 				// Write left and right into variables if necessary
 				std::string left_var_name, right_var_name;
+				const Value* left_value = I.getOperand(0);
+				const Value* right_value = I.getOperand(1);
 
-				if(IsInVariable(I.getOperand(0)))
-				{
-					left_var_name = m_ValueMap[I.getOperand(0)];
-				} else {
-					std::ostringstream left_var_name_stream;
-					left_var_name_stream << " _left_" << varNameSanitize(I.getName());
-					left_var_name = left_var_name_stream.str();
-				
-					writeIndent();
-					writeType(I.getOperand(0)->getType(), m_OutputStream);
-					m_OutputStream << left_var_name << " = ";
-					writeOperand(I.getOperand(0), m_OutputStream);
-					m_OutputStream << ";\n";
+				if(!IsVectorValue(left_value)) {
+					if(IsInVariable(left_value))
+					{
+						left_var_name = m_ValueMap[left_value];
+					} else {
+						std::ostringstream left_var_name_stream;
+						left_var_name_stream << " _left_" <<
+							varNameSanitize(I.getName());
+						left_var_name = left_var_name_stream.str();
+
+						writeIndent();
+						writeType(left_value->getType(), m_OutputStream);
+						m_OutputStream << left_var_name << " = ";
+						writeOperand(left_value, m_OutputStream);
+						m_OutputStream << ";\n";
+					}
 				}
 
-				if(IsInVariable(I.getOperand(1)))
-				{
-					right_var_name = m_ValueMap[I.getOperand(1)];
-				} else {
-					std::ostringstream right_var_name_stream;
-					right_var_name_stream << " _right_" << varNameSanitize(I.getName());
-					right_var_name = right_var_name_stream.str();
+				if(!IsVectorValue(right_value)) {
+					if(IsInVariable(right_value))
+					{
+						right_var_name = m_ValueMap[right_value];
+					} else {
+						std::ostringstream right_var_name_stream;
+						right_var_name_stream << " _right_" << 
+							varNameSanitize(I.getName());
+						right_var_name = right_var_name_stream.str();
 
-					writeIndent();
-					writeType(I.getOperand(1)->getType(), m_OutputStream);
-					m_OutputStream << right_var_name << " = ";
-					writeOperand(I.getOperand(1), m_OutputStream);
-					m_OutputStream << ";\n";
+						writeIndent();
+						writeType(right_value->getType(), m_OutputStream);
+						m_OutputStream << right_var_name << " = ";
+						writeOperand(right_value, m_OutputStream);
+						m_OutputStream << ";\n";
+					}
 				}
 
 				writeType(I.getType(), glsl_rep);
@@ -418,11 +426,22 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 					}
 
 					if(out_indices[i] < output_arity) {
-						glsl_rep << left_var_name << "."; 
-						glsl_rep << idx_string[out_indices[i]];
+						if(IsVectorValue(left_value))
+						{
+							glsl_rep << m_VectorValueMap[left_value][out_indices[i]];
+						} else {
+							glsl_rep << left_var_name << "."; 
+							glsl_rep << idx_string[out_indices[i]];
+						}
 					} else {
-						glsl_rep << right_var_name << "."; 
-						glsl_rep << idx_string[out_indices[i] - output_arity];
+						if(IsVectorValue(right_value))
+						{
+							glsl_rep << m_VectorValueMap[left_value]
+								[out_indices[i] - output_arity];
+						} else {
+							glsl_rep << right_var_name << "."; 
+							glsl_rep << idx_string[out_indices[i] - output_arity];
+						}
 					}
 				}
 				glsl_rep << " )";
@@ -537,6 +556,12 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		bool IsInVariable(const Value* v)
 		{
 			return KnowAboutValue(v) && m_InVariable[v];
+		}
+
+		bool IsVectorValue(const Value* v)
+		{
+			return KnowAboutValue(v) && !m_InVariable[v] && 
+				(m_VectorValueMap.count(v) != 0);
 		}
 
 		/*

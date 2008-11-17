@@ -38,6 +38,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			:	m_VisitingBasicBlock(false)
 			,	m_VisitingFunctionDefinition(false)
 			,	m_WaitingForEntryBasicBlock(false)
+			,	m_DoInlining(true)
 		{
 		}
 
@@ -48,6 +49,16 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		{
 			visit(M);
 			transitionToEnd();
+		}
+
+		bool GetDoInlining() const 
+		{
+			return m_DoInlining;
+		}
+
+		void SetDoInlining(bool flag) 
+		{
+			m_DoInlining = flag;
 		}
 
 		const std::ostringstream& getOutputStream() const
@@ -129,7 +140,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 			glsl_rep << " )";
 
-			if(I.hasOneUse()) {
+			if(m_DoInlining && I.hasOneUse()) {
 				SetValueToGLSL(&I, glsl_rep.str());
 			} else {
 				writeIndent();
@@ -181,7 +192,97 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			writeOperand(I.getOperand(1), glsl_rep);
 			glsl_rep << ")";
 
-			if(I.hasOneUse()) {
+			if(m_DoInlining && I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
+		}
+
+		void visitAllocaInst(AllocaInst &I)
+		{
+			if(I.use_empty()) { return; }
+
+			const Type* deref_type = I.getType()->getElementType();
+
+			writeIndent();
+			writeType(deref_type, m_OutputStream);
+			m_OutputStream << " " << varNameSanitize(I.getName()) << ";\n";
+			SetValueToVariable(&I);
+		}
+
+		void visitStoreInst(StoreInst &I)
+		{
+			// FIXME: Function parameters...
+			
+			if(!IsInVariable(I.getOperand(1)))
+			{
+				FIRTREE_ERROR("Attempt to store to non variable.");
+			}
+
+			writeIndent();
+			writeOperand(I.getOperand(1), m_OutputStream);
+			m_OutputStream << " = ";
+			writeOperand(I.getOperand(0), m_OutputStream);
+			m_OutputStream << ";\n";
+		}
+
+		void visitLoadInst(LoadInst &I)
+		{
+			if(I.use_empty()) { return; }
+
+			if(!IsInVariable(I.getOperand(0)))
+			{
+				FIRTREE_ERROR("Attempt to store to non variable.");
+			}
+
+			std::ostringstream glsl_rep;
+			writeOperand(I.getOperand(0), glsl_rep);
+
+			if(m_DoInlining && I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
+		}
+
+		void visitSIToFP(SIToFPInst &I)
+		{
+			if(I.use_empty()) { return; }
+
+			std::ostringstream glsl_rep;
+			writeType(I.getType(), glsl_rep);
+			glsl_rep << "( ";
+			writeOperand(I.getOperand(0), glsl_rep);
+			glsl_rep << " )";
+
+			if(m_DoInlining && I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
+		}
+
+		void visitFPToSI(FPToSIInst &I)
+		{
+			if(I.use_empty()) { return; }
+
+			std::ostringstream glsl_rep;
+			writeType(I.getType(), glsl_rep);
+			glsl_rep << "( ";
+			writeOperand(I.getOperand(0), glsl_rep);
+			glsl_rep << " )";
+
+			if(m_DoInlining && I.hasOneUse()) {
 				SetValueToGLSL(&I, glsl_rep.str());
 			} else {
 				writeIndent();
@@ -230,7 +331,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			static char idx_char[] = "xyzw";
 			const Value* left_side = I.getOperand(0);
 
-			if(!I.hasOneUse())
+			if(!m_DoInlining || !I.hasOneUse())
 			{
 				// If we have one use, fall back to default implementation
 				// FIXME: Remove duplication here
@@ -360,14 +461,14 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 			std::ostringstream glsl_rep;
 
-			if(only_left) { 
+			if(m_DoInlining && only_left) { 
 				glsl_rep << "(";
 				writeOperand(I.getOperand(0), glsl_rep);
 				glsl_rep << ").";
 				for(unsigned int i=0; i<output_arity; ++i) {
 					glsl_rep << idx_string[out_indices[i]];
 				}
-			} else if(only_right) {
+			} else if(m_DoInlining && only_right) {
 				glsl_rep << "(";
 				writeOperand(I.getOperand(1), glsl_rep);
 				glsl_rep << ").";
@@ -380,12 +481,13 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				const Value* left_value = I.getOperand(0);
 				const Value* right_value = I.getOperand(1);
 
-				if(!IsVectorValue(left_value)) {
+				if(!m_DoInlining || !IsVectorValue(left_value)) {
+					std::ostringstream left_var_name_stream;
 					if(IsInVariable(left_value))
 					{
-						left_var_name = m_ValueMap[left_value];
+						writeOperand(left_value, left_var_name_stream);
+						left_var_name = left_var_name_stream.str();
 					} else {
-						std::ostringstream left_var_name_stream;
 						left_var_name_stream << " _left_" <<
 							varNameSanitize(I.getName());
 						left_var_name = left_var_name_stream.str();
@@ -398,12 +500,13 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 					}
 				}
 
-				if(!IsVectorValue(right_value)) {
+				if(!m_DoInlining || !IsVectorValue(right_value)) {
+					std::ostringstream right_var_name_stream;
 					if(IsInVariable(right_value))
 					{
-						right_var_name = m_ValueMap[right_value];
+						writeOperand(right_value, right_var_name_stream);
+						right_var_name = right_var_name_stream.str();
 					} else {
-						std::ostringstream right_var_name_stream;
 						right_var_name_stream << " _right_" << 
 							varNameSanitize(I.getName());
 						right_var_name = right_var_name_stream.str();
@@ -447,7 +550,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				glsl_rep << " )";
 			}
 			
-			if(I.hasOneUse()) {
+			if(m_DoInlining && I.hasOneUse()) {
 				SetValueToGLSL(&I, glsl_rep.str());
 			} else {
 				writeIndent();
@@ -483,7 +586,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			writeOperand(I.getOperand(0), glsl_rep);
 			glsl_rep << "." << idx_char[idx];
 
-			if(I.hasOneUse()) { 
+			if(m_DoInlining && I.hasOneUse()) { 
 				SetValueToGLSL(&I, glsl_rep.str());
 			} else {
 				writeIndent();
@@ -510,6 +613,9 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		// This stores a flag indicating if the value is stored in a variable.
 		// i.e. whether the m_ValueMap entry contains a variable name.
 		hash_map<const Value*, bool> m_InVariable;
+
+		// A flag indicating whether inlining optimisations should be performed
+		bool m_DoInlining;
 
 		void SetValueToGLSL(const Value* v, const std::string& glsl)
 		{
@@ -563,18 +669,6 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			return KnowAboutValue(v) && !m_InVariable[v] && 
 				(m_VectorValueMap.count(v) != 0);
 		}
-
-		/*
-		void EnsureValueIsVariable(const Value* v)
-		{
-			if(!m_InVariable[v]) {
-				writeIndent();
-				writeValueDecl(*v);
-				m_OutputStream << m_ValueMap[v] << ";\n";
-				SetValueToVariable(v);
-			}
-		}
-		*/
 
 		// Using the current state, handle transitioning between
 		// different elements
@@ -895,9 +989,12 @@ GLSLTarget* GLSLTarget::Create()
 }
 
 //===========================================================================
-const std::string& GLSLTarget::ProcessModule(llvm::Module* module)
+const std::string& GLSLTarget::ProcessModule(llvm::Module* module, 
+		bool optimize)
 {
 	GLSLVisitor visitor;
+
+	visitor.SetDoInlining(optimize);
 	visitor.runOnModule(*module);
 
 	m_CompiledGLSL = visitor.getOutputStream().str();

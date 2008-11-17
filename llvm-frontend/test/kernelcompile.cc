@@ -9,10 +9,25 @@
 #include "../glsl-target/glsl-target.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/PassManager.h"
+#include "llvm/Support/Streams.h"
+#include "llvm/Assembly/PrintModulePass.h"
+
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+
+bool g_OptimizeLLVM = true;
+bool g_OptimizeGLSL = true;
+
+enum PrintOpt {
+  PrintGLSL,
+  PrintLLVM,
+};
+PrintOpt g_WhatToPrint = PrintGLSL;
 
 /* Main Program ------------------------------------------------------------ */
 
@@ -48,32 +63,39 @@ int compile_kernel( const char* fileid )
 #endif
 
   Firtree::Compiler* compiler = Firtree::Compiler::Create();
+  compiler->SetDoOptimization(g_OptimizeLLVM);
 
   bool status = compiler->Compile(&file_contents, 1);
-  std::cerr << "Status: " << status << "\n";
 
-  std::cerr << "Log:\n";
-  const char* const * log = compiler->GetCompileLog();
-  while((log != NULL) && (*log != NULL))
+  unsigned int log_length;
+  const char* const * log = compiler->GetCompileLog(&log_length);
+  if(log_length > 0)
   {
-    std::cerr << *log << '\n';
-    log++;
+    std::cerr << "Log messages:\n";
+    while((log != NULL) && (*log != NULL))
+    {
+      std::cerr << *log << '\n';
+      log++;
+    }
   }
 
   if(status)
   {
-    std::cerr << "LLVM:\n";
-    compiler->DumpInitialLLVM();
-//    WriteBitcodeToFile( compiler->GetCompiledModule(), std::cout );
+    if(g_WhatToPrint == PrintLLVM) {
+      llvm::PassManager Passes;
+      Passes.add( new llvm::PrintModulePass(&llvm::cout) );
+      Passes.run( *(compiler->GetCompiledModule()) );
+    }
 
-    Firtree::GLSLTarget* glsl_target = Firtree::GLSLTarget::Create();
+    if(g_WhatToPrint == PrintGLSL) {
+      Firtree::GLSLTarget* glsl_target = Firtree::GLSLTarget::Create();
 
-    glsl_target->ProcessModule( compiler->GetCompiledModule() );
+      glsl_target->ProcessModule( compiler->GetCompiledModule(), g_OptimizeGLSL );
 
-    std::cerr << "GLSL:\n";
-    std::cerr << glsl_target->GetCompiledGLSL();
+      std::cout << glsl_target->GetCompiledGLSL();
 
-    FIRTREE_SAFE_RELEASE(glsl_target);
+      FIRTREE_SAFE_RELEASE(glsl_target);
+    }
   }
 
   FIRTREE_SAFE_RELEASE(compiler);
@@ -110,12 +132,73 @@ int compile_kernel( const char* fileid )
 	return 0;
 }
 
+void print_usage(const char* progname, FILE* f)
+{
+  fprintf(f, "Usage: %s [options] filename\n\n", progname);
+  fprintf(f, "Where [options] are one or more of:\n\n");
+  fprintf(f, "\t-[no-]opt-llvm \tActivate [deactivate] LLVM optimisation.\n");
+  fprintf(f, "\t-[no-]opt-glsl \tActivate [deactivate] GLSL optimisation.\n");
+  fprintf(f, "\t-print \t\tSelect what output to print (Default = GLSL).\n");
+  fprintf(f, "\t\t=glsl \tPrint GLSL.\n");
+  fprintf(f, "\t\t=llvm \tPrint LLVM.\n");
+}
+
+const char *get_arg_string(const char* opt_orig)
+{
+  const char* opt = opt_orig;
+  while(*opt != '\0')
+  {
+    if(*opt == '=') { return opt + 1 ; }
+    ++opt;
+  }
+
+  fprintf(stderr, "Option %s requires an argument.\n", opt_orig);
+  exit(1);
+}
+
 int main( int argc, const char* argv[] )
 {
 	int rv = 1;
-	if ( argc > 1 ) {
-		rv = compile_kernel( argv[1] );
-	}	else {
+
+  int filenameidx = 1;
+  while((filenameidx < argc) && (argv[filenameidx][0] == '-'))
+  {
+    const char* opt = argv[filenameidx];
+    if(strcmp(opt, "-help") == 0) {
+      print_usage(argv[0], stdout);
+      return 0;
+    } else if(strcmp(opt, "-opt-llvm") == 0) {
+      g_OptimizeLLVM = true;
+    } else if(strcmp(opt, "-no-opt-llvm") == 0) {
+      g_OptimizeLLVM = false;
+    } else if(strcmp(opt, "-opt-glsl") == 0) {
+      g_OptimizeGLSL = true;
+    } else if(strcmp(opt, "-no-opt-glsl") == 0) {
+      g_OptimizeGLSL = false;
+    } else if(strncmp(opt, "-print", 6) == 0) {
+      const char* arg_str = get_arg_string(opt);
+      if(strcmp(arg_str, "glsl") == 0) {
+        g_WhatToPrint = PrintGLSL;
+      } else if(strcmp(arg_str, "llvm") == 0) {
+        g_WhatToPrint = PrintLLVM;
+      } else {
+        fprintf(stderr, "Unknown output type: %s.\n", arg_str);
+        print_usage(argv[0], stderr);
+        return 1;
+      }
+    } else {
+      fprintf(stderr, "Unknown option: %s\n", opt);
+      print_usage(argv[0], stderr);
+      return 1;
+    }
+
+    ++filenameidx;
+  }
+
+  if(filenameidx == argc - 1) {
+    rv = compile_kernel( argv[filenameidx] );
+  }	else {
+    print_usage(argv[0], stderr);
 		fprintf( stderr,"missing source\n" );
 	}
 

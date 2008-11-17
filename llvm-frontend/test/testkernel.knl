@@ -23,14 +23,16 @@ __builtin__ vec2 cossin(float);
 __builtin__ float dot(vec2,vec2);
 __builtin__ float dot(vec3,vec3);
 __builtin__ float dot(vec4,vec4);
+__builtin__ vec4 unpremultiply(vec4);
+__builtin__ vec4 premultiply(vec4);
 
 /* Our actual kernel. */
 kernel vec4 deaturateKernel(sampler src)
 {
-  vec4 a = sample(src, samplerCoord(src));
+  __color a = sample(src, samplerCoord(src));
   vec4 rgb2int = vec4(0.299, 0.587, 0.114, 0.0);
-  float intensity = dot(rgb2int, a);
-  return vec4(intensity * vec3(1,1,1), a.a);
+  float intensity = dot(rgb2int, unpremultiply(a));
+  return premultiply(vec4(intensity * vec3(1,1,1), a.a));
 }
 
 // vim:filetype=c:cindent:sw=2:ts=2:et

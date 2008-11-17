@@ -232,7 +232,7 @@ class LLVMFrontend
 		virtual ~LLVMFrontend();
 
 		/// Retrieve the LLVM module which was constructed.
-		const llvm::Module* GetCompiledModule() const;
+		llvm::Module* GetCompiledModule() const;
 
 		/// Retrieve the compilation success flag: true on success, false
 		/// otherwise.

@@ -178,7 +178,7 @@ LLVMFrontend::~LLVMFrontend()
 
 //===========================================================================
 /// Retrieve the LLVM module constructed from compilation.
-const llvm::Module* LLVMFrontend::GetCompiledModule() const
+llvm::Module* LLVMFrontend::GetCompiledModule() const
 {
 	return m_LLVMContext->Module;
 }

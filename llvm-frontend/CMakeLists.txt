@@ -30,6 +30,8 @@ SET(LLVM_FRONTEND_HEADERS
   prodnames.incl
   llvm_frontend.h       llvm_emit_decl.h  llvm_type_cast.h
   llvm_emit_constant.h  llvm_private.h
+
+  compiler.h
 )
 
 SET(LLVM_FRONTEND_SOURCES
@@ -44,6 +46,8 @@ SET(LLVM_FRONTEND_SOURCES
   llvm_emit_expr_list.cc      llvm_frontend.cc
   llvm_emit_function_call.cc  llvm_type_cast.cc
   llvm_emit_negate.cc         symbol_table.cc
+
+  compiler.cc
 )
 
 ADD_DEFINITIONS(-D__STDC_LIMIT_MACROS -DLLVM_MAJOR_VER=${LLVM_MAJOR} -DLLVM_MINOR_VER=${LLVM_MINOR})

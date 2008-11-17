@@ -136,6 +136,7 @@ void print_usage(const char* progname, FILE* f)
 {
   fprintf(f, "Usage: %s [options] filename\n\n", progname);
   fprintf(f, "Where [options] are one or more of:\n\n");
+  fprintf(f, "\t-help \t\tPrint brief usage information.\n");
   fprintf(f, "\t-[no-]opt-llvm \tActivate [deactivate] LLVM optimisation.\n");
   fprintf(f, "\t-[no-]opt-glsl \tActivate [deactivate] GLSL optimisation.\n");
   fprintf(f, "\t-print \t\tSelect what output to print (Default = GLSL).\n");

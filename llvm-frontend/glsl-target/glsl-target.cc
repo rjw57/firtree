@@ -375,23 +375,38 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 					glsl_rep << idx_string[out_indices[i]-output_arity];
 				}
 			} else {
-				// Write left and right into variables.
-				std::ostringstream left_var_name;
-				left_var_name << " _left_" << varNameSanitize(I.getName());
-				std::ostringstream right_var_name;
-				right_var_name << " _right_" << varNameSanitize(I.getName());
-				
-				writeIndent();
-				writeType(I.getOperand(0)->getType(), m_OutputStream);
-				m_OutputStream << left_var_name.str() << " = ";
-				writeOperand(I.getOperand(0), m_OutputStream);
-				m_OutputStream << ";\n";
+				// Write left and right into variables if necessary
+				std::string left_var_name, right_var_name;
 
-				writeIndent();
-				writeType(I.getOperand(1)->getType(), m_OutputStream);
-				m_OutputStream << right_var_name.str() << " = ";
-				writeOperand(I.getOperand(1), m_OutputStream);
-				m_OutputStream << ";\n";
+				if(IsInVariable(I.getOperand(0)))
+				{
+					left_var_name = m_ValueMap[I.getOperand(0)];
+				} else {
+					std::ostringstream left_var_name_stream;
+					left_var_name_stream << " _left_" << varNameSanitize(I.getName());
+					left_var_name = left_var_name_stream.str();
+				
+					writeIndent();
+					writeType(I.getOperand(0)->getType(), m_OutputStream);
+					m_OutputStream << left_var_name << " = ";
+					writeOperand(I.getOperand(0), m_OutputStream);
+					m_OutputStream << ";\n";
+				}
+
+				if(IsInVariable(I.getOperand(1)))
+				{
+					right_var_name = m_ValueMap[I.getOperand(1)];
+				} else {
+					std::ostringstream right_var_name_stream;
+					right_var_name_stream << " _right_" << varNameSanitize(I.getName());
+					right_var_name = right_var_name_stream.str();
+
+					writeIndent();
+					writeType(I.getOperand(1)->getType(), m_OutputStream);
+					m_OutputStream << right_var_name << " = ";
+					writeOperand(I.getOperand(1), m_OutputStream);
+					m_OutputStream << ";\n";
+				}
 
 				writeType(I.getType(), glsl_rep);
 				glsl_rep << "(";
@@ -403,10 +418,10 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 					}
 
 					if(out_indices[i] < output_arity) {
-						glsl_rep << left_var_name.str() << "."; 
+						glsl_rep << left_var_name << "."; 
 						glsl_rep << idx_string[out_indices[i]];
 					} else {
-						glsl_rep << right_var_name.str() << "."; 
+						glsl_rep << right_var_name << "."; 
 						glsl_rep << idx_string[out_indices[i] - output_arity];
 					}
 				}
@@ -517,6 +532,11 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		bool KnowAboutValue(const Value* v)
 		{
 			return m_ValueMap.count(v) != 0;
+		}
+
+		bool IsInVariable(const Value* v)
+		{
+			return KnowAboutValue(v) && m_InVariable[v];
 		}
 
 		/*

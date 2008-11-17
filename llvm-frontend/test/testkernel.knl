@@ -7,7 +7,7 @@ __builtin__ void putchar(int);
 __builtin__ void putfloat(float);
 
 /* Prototype for functions defined below. */
-float increment(float a);
+float increment(float src);
 float increment(float a, float by);
 vec2 increment(vec2 a);
 vec2 increment(vec2 a, float by);

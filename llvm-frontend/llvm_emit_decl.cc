@@ -268,8 +268,8 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		}
 
 		// Copy and erase the old prototype.
-		prototype = existing_proto_it->second;
 		m_Context->FuncTable.erase( existing_proto_it );
+		prototype.LLVMFunction = existing_proto_it->second.LLVMFunction;
 	} else {
 		// If there was no existing prototype, construct a
 		// LLVM function

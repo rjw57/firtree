@@ -23,6 +23,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		GLSLVisitor() 
 			:	m_VisitingBasicBlock(false)
 			,	m_VisitingFunctionDefinition(false)
+			,	m_WaitingForEntryBasicBlock(false)
 		{
 		}
 
@@ -57,6 +58,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				std::cout << ";\n\n";
 			} else {
 				std::cout << "\n{\n";
+				m_WaitingForEntryBasicBlock = true;
 			}
 		}
 
@@ -64,7 +66,14 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		{
 			transitionToBasicBlock();
 
-			std::cout << "  {\n";
+			if(m_WaitingForEntryBasicBlock)
+			{
+				m_WaitingForEntryBasicBlock = false;
+				m_VisitingBasicBlock = false;
+			} else {
+				writeIndent();
+				std::cout << "{\n";
+			}
 		}
 
 		void visitInstruction(Instruction& I)
@@ -89,12 +98,14 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			{
 				if(it != I.op_begin()+1) {
 					std::cout << ", ";
+				} else {
+					std::cout << " ";
 				}
 
 				writeOperand(*it);
 			}
 
-			std::cout << ");\n";
+			std::cout << " );\n";
 		}
 
 		void visitBinaryOperator(BinaryOperator &I)
@@ -178,8 +189,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			static char idx_char[] = "xyzw";
 
 			writeIndent();
-			writeType(I.getType());
-			std::cout << " " << varNameSanitize(I.getName());
+			std::cout << varNameSanitize(I.getName());
 			std::cout << "." << idx_char[idx] << " = ";
 			writeOperand(I.getOperand(1));
 			std::cout << ";\n";
@@ -214,6 +224,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		// These flags store the current state
 		bool	m_VisitingBasicBlock;
 		bool	m_VisitingFunctionDefinition;
+		bool	m_WaitingForEntryBasicBlock;
 
 		// Using the current state, handle transitioning between
 		// different elements
@@ -222,7 +233,8 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			// If we're already visiting a basic block,
 			// close it.
 			if(m_VisitingBasicBlock) {
-				std::cout << "  }\n";
+				writeIndent();
+				std::cout << "}\n";
 				m_VisitingBasicBlock = false;
 			}
 
@@ -297,13 +309,14 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 					{
 						std::cout << ", ";
 					} else {
+						std::cout << " ";
 						is_start = false;
 					}
 
 					writeOperand(*it);
 				}
 
-				std::cout << ")";
+				std::cout << " )";
 			} else if(isa<ConstantFP>(c)) {
 				const ConstantFP* fpval = cast<ConstantFP>(c);
 				std::cout << fpval->getValueAPF().convertToFloat();

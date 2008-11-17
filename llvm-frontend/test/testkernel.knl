@@ -25,11 +25,13 @@ __builtin__ float dot(vec3,vec3);
 __builtin__ float dot(vec4,vec4);
 
 /* Our actual kernel. */
-kernel vec4 simpleKernel(sampler src)
+kernel vec4 deaturateKernel(sampler src)
 {
-  vec2 offset = sincos(dot(destCoord(), vec2(1,1)));
-  __color outputColor = sample(src, samplerTransform(src, destCoord() + offset));
-  return outputColor;
+  vec4 a = sample(src, samplerCoord(src));
+  vec4 rgb2int = vec4(0.299, 0.587, 0.114, 0.0);
+  float intensity = dot(rgb2int, a);
+  return vec4(intensity * vec3(1,1,1), a.a);
 }
 
-// vim:filetype=c
+// vim:filetype=c:cindent:sw=2:ts=2:et
+

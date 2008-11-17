@@ -5,10 +5,14 @@
 
 #include "../llvm_frontend.h"
 
+#include "llvm/ADT/hash_map"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
 
 #include <iostream>
+#include <sstream>
+
+#include <hash_map>
 
 using namespace llvm;
 
@@ -17,6 +21,16 @@ namespace Firtree
 	
 //===========================================================================
 // Visitor class for GLSL.
+// 
+// When we visit each instruction, we immediately skip if it has zero
+// uses. This is because all the firtree functions are 'pure', i.e. they
+// have no side effect.
+//
+// We similarly skip immediately writing instructions with one use since their
+// value will be 'inlined' into their use.
+// 
+// This is except for instructions which clearly have side effects such
+// as return statements.
 class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 {
 	public:
@@ -36,6 +50,11 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			transitionToEnd();
 		}
 
+		const std::ostringstream& getOutputStream() const
+		{
+			return m_OutputStream;
+		}
+
 		void visitFunction(Function& F)
 		{
 			bool is_declaration = (F.size() == 0);
@@ -44,20 +63,20 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			if(is_declaration)
 			{
 				// Function declaration
-				std::cout << "// Declaration of " << F.getName() << ".\n";
+				m_OutputStream << "// Declaration of " << F.getName() << ".\n";
 			} else {
 				// Function definition
-				std::cout << "// Definition of " << F.getName() << ".\n";
+				m_OutputStream << "// Definition of " << F.getName() << ".\n";
 			}
 
 			// Write the function prototype
-			writePrototype(F);
+			writePrototype(F, m_OutputStream);
 
 			if(is_declaration)
 			{
-				std::cout << ";\n\n";
+				m_OutputStream << ";\n\n";
 			} else {
-				std::cout << "\n{\n";
+				m_OutputStream << "\n{\n";
 				m_WaitingForEntryBasicBlock = true;
 			}
 		}
@@ -72,105 +91,119 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				m_VisitingBasicBlock = false;
 			} else {
 				writeIndent();
-				std::cout << "{\n";
+				m_OutputStream << "{\n";
 			}
 		}
 
 		void visitInstruction(Instruction& I)
 		{
-			std::cout << "// ??? => " << I;
+			SetValueToGLSL(&I, "/* ??? */");
+			m_OutputStream << "// ??? => " << I;
 			FIRTREE_ERROR("Unknown instruction.");
 		}
 
 		void visitCallInst(CallInst &I)
 		{
-			writeIndent();
-			writeValueDecl(I);
+			if(I.use_empty()) { return; }
 
 			Function* F = I.getCalledFunction();
 			if((F == NULL) || !(F->hasName()))
 			{
 				FIRTREE_ERROR("NULL function call");
 			}
-			std::cout << F->getName() << "(";
+
+			std::ostringstream glsl_rep;
+			glsl_rep << F->getName() << "(";
 
 			CallSite::arg_iterator it = I.op_begin()+1;
 			for( ; it != I.op_end(); ++it)
 			{
 				if(it != I.op_begin()+1) {
-					std::cout << ", ";
+					glsl_rep << ", ";
 				} else {
-					std::cout << " ";
+					glsl_rep << " ";
 				}
 
-				writeOperand(*it);
+				writeOperand(*it, glsl_rep);
 			}
 
-			std::cout << " );\n";
+			glsl_rep << " )";
+
+			if(I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
 		}
 
 		void visitBinaryOperator(BinaryOperator &I)
 		{
-			writeIndent();
-			writeValueDecl(I);
+			if(I.use_empty()) { return; }
 
-			std::string opstring;
+			std::ostringstream glsl_rep;
+
+			glsl_rep << "(";
+			writeOperand(I.getOperand(0), glsl_rep);
+			glsl_rep << ") ";
 
 			switch(I.getOpcode())
 			{
 				case Instruction::Add:
-					opstring = "+";
+					glsl_rep << "+";
 					break;
 				case Instruction::Sub:
-					opstring = "-";
+					glsl_rep << "-";
 					break;
 				case Instruction::Mul:
-					opstring = "*";
+					glsl_rep << "*";
 					break;
 				case Instruction::FDiv:
-					opstring = "/";
+					glsl_rep << "/";
 					break;
 				case Instruction::And:
-					opstring = "&&";
+					glsl_rep << "&&";
 					break;
 				case Instruction::Or:
-					opstring = "||";
+					glsl_rep << "||";
 					break;
 				case Instruction::Xor:
-					opstring = "^^";
+					glsl_rep << "^^";
 					break;
 				default:
 					FIRTREE_ERROR("Unknown binary op (%i)", I.getOpcode());
 					break;
 			}
 
-			writeOperand(I.getOperand(0));
-			std::cout << " " << opstring << " ";
-			writeOperand(I.getOperand(1));
+			glsl_rep << " (";
+			writeOperand(I.getOperand(1), glsl_rep);
+			glsl_rep << ")";
 
-			std::cout << ";\n";
+			if(I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
 		}
 
 		void visitReturnInst(ReturnInst &I)
 		{
+			std::ostringstream glsl_rep;
+			glsl_rep << "return ";
+			writeOperand(I.getOperand(0), glsl_rep);
+
 			writeIndent();
-			std::cout << "return ";
-			writeOperand(I.getOperand(0));
-			std::cout << ";\n";
+			m_OutputStream << glsl_rep.str() << ";\n";
 		}
 
 		void visitInsertElementInst(InsertElementInst &I)
 		{
-			if(!I.hasName())
-			{
-				// Skip, it has no effect
-				return;
-			}
-
-			writeIndent();
-			writeValueDecl(I);
-			writeOperand(I.getOperand(0));
-			std::cout << ";\n";
+			if(I.use_empty()) { return; }
 
 			// The third operand *must* be a constant integer
 			// in range 0..3
@@ -190,17 +223,135 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			static char idx_char[] = "xyzw";
 
 			writeIndent();
-			std::cout << varNameSanitize(I.getName());
-			std::cout << "." << idx_char[idx] << " = ";
-			writeOperand(I.getOperand(1));
-			std::cout << ";\n";
+			writeValueDecl(I);
+			writeOperand(I.getOperand(0), m_OutputStream);
+			m_OutputStream << ";\n";
+
+			writeIndent();
+			m_OutputStream << varNameSanitize(I.getName());
+			m_OutputStream << "." << idx_char[idx] << " = ";
+			writeOperand(I.getOperand(1), m_OutputStream);
+			m_OutputStream << ";\n";
+
+			SetValueToVariable(&I);
+		}
+
+		void visitShuffleVectorInst(ShuffleVectorInst &I)
+		{
+			// A shuffle instruction has only left-hand
+			// indices, only right-hand indices or a mixture of
+			// both. Work out which we are.
+			
+			const VectorType* val_vec_type = cast<VectorType>(I.getType());
+			if(val_vec_type == NULL) {
+				FIRTREE_ERROR("Shuffle instruction must return vector.");
+			}
+
+			Value* shuffle_indices = I.getOperand(2);
+			const ConstantVector* vec_val =
+				cast<ConstantVector>(shuffle_indices);
+			if(vec_val == NULL)
+			{
+				FIRTREE_ERROR("Shuffle indices vector must be constant vector.");
+			}
+
+			unsigned int output_arity = val_vec_type->getNumElements();
+
+			bool only_left = true;
+			bool only_right = true;
+			std::vector<uint64_t> out_indices;
+			for(unsigned int i=0; i<output_arity; i++)
+			{
+				const Constant* element = vec_val->getOperand(i);
+				if(!isa<ConstantInt>(element)) {
+					FIRTREE_ERROR("Shuffle indices must be constant integer.");
+				}
+				const ConstantInt* ci_element = cast<ConstantInt>(element);
+				uint64_t element_val = ci_element->getValue().getZExtValue();
+
+				if(element_val < output_arity) {
+					only_right = false;
+				}
+
+				if(element_val >= output_arity) {
+					only_left = false;
+				}
+
+				out_indices.push_back(element_val);
+			}
+
+			static char idx_string[] = "xyzw";
+
+			std::ostringstream glsl_rep;
+
+			if(only_left) { 
+				glsl_rep << "(";
+				writeOperand(I.getOperand(0), glsl_rep);
+				glsl_rep << ").";
+				for(unsigned int i=0; i<output_arity; ++i) {
+					glsl_rep << idx_string[out_indices[i]];
+				}
+			} else if(only_right) {
+				glsl_rep << "(";
+				writeOperand(I.getOperand(1), glsl_rep);
+				glsl_rep << ").";
+				for(unsigned int i=0; i<output_arity; ++i) {
+					glsl_rep << idx_string[out_indices[i]-output_arity];
+				}
+			} else {
+				// Write left and right into variables.
+				std::ostringstream left_var_name;
+				left_var_name << " _left_" << varNameSanitize(I.getName());
+				std::ostringstream right_var_name;
+				right_var_name << " _right_" << varNameSanitize(I.getName());
+				
+				writeIndent();
+				writeType(I.getOperand(0)->getType(), m_OutputStream);
+				m_OutputStream << left_var_name.str() << " = ";
+				writeOperand(I.getOperand(0), m_OutputStream);
+				m_OutputStream << ";\n";
+
+				writeIndent();
+				writeType(I.getOperand(1)->getType(), m_OutputStream);
+				m_OutputStream << right_var_name.str() << " = ";
+				writeOperand(I.getOperand(1), m_OutputStream);
+				m_OutputStream << ";\n";
+
+				writeType(I.getType(), glsl_rep);
+				glsl_rep << "(";
+				for(unsigned int i=0; i<output_arity; ++i) {
+					if(i == 0) {
+						glsl_rep << " ";
+					} else {
+						glsl_rep << ", ";
+					}
+
+					if(out_indices[i] < output_arity) {
+						glsl_rep << left_var_name.str() << "."; 
+						glsl_rep << idx_string[out_indices[i]];
+					} else {
+						glsl_rep << right_var_name.str() << "."; 
+						glsl_rep << idx_string[out_indices[i] - output_arity];
+					}
+				}
+				glsl_rep << " )";
+			}
+			
+			if(I.hasOneUse()) {
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
 		}
 
 		void visitExtractElementInst(ExtractElementInst &I)
 		{
-			writeIndent();
-			writeValueDecl(I);
-			writeOperand(I.getOperand(0));
+			if(I.use_empty()) { return; }
+
+			std::ostringstream glsl_rep;
 
 			// The second operand *must* be a constant integer
 			// in range 0..3
@@ -218,7 +369,18 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 
 			static char idx_char[] = "xyzw";
-			std::cout << "." << idx_char[idx] << ";\n";
+
+			writeOperand(I.getOperand(0), glsl_rep);
+			glsl_rep << "." << idx_char[idx];
+
+			if(I.hasOneUse()) { 
+				SetValueToGLSL(&I, glsl_rep.str());
+			} else {
+				writeIndent();
+				writeValueDecl(I);
+				m_OutputStream << glsl_rep.str() << ";\n";
+				SetValueToVariable(&I);
+			}
 		}
 
 	protected:
@@ -226,6 +388,43 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		bool	m_VisitingBasicBlock;
 		bool	m_VisitingFunctionDefinition;
 		bool	m_WaitingForEntryBasicBlock;
+		std::ostringstream m_OutputStream;
+
+		// This stores the mapping between a value and it's GLSL representation
+		hash_map<const Value*, std::string> m_ValueMap;
+
+		// This stores a flag indicating if the value is stored in a variable.
+		// i.e. whether the m_ValueMap entry contains a variable name.
+		hash_map<const Value*, bool> m_InVariable;
+
+		void SetValueToGLSL(const Value* v, const std::string& glsl)
+		{
+			m_ValueMap[v] = glsl;
+			m_InVariable[v] = false;
+		}
+
+		void SetValueToVariable(const Value* v)
+		{
+			m_ValueMap[v] = varNameSanitize(v->getName());
+			m_InVariable[v] = true;
+		}
+
+		bool KnowAboutValue(const Value* v)
+		{
+			return m_ValueMap.count(v) != 0;
+		}
+
+		/*
+		void EnsureValueIsVariable(const Value* v)
+		{
+			if(!m_InVariable[v]) {
+				writeIndent();
+				writeValueDecl(*v);
+				m_OutputStream << m_ValueMap[v] << ";\n";
+				SetValueToVariable(v);
+			}
+		}
+		*/
 
 		// Using the current state, handle transitioning between
 		// different elements
@@ -235,7 +434,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			// close it.
 			if(m_VisitingBasicBlock) {
 				writeIndent();
-				std::cout << "}\n";
+				m_OutputStream << "}\n";
 				m_VisitingBasicBlock = false;
 			}
 
@@ -247,14 +446,14 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			// If we're already visiting a basic block,
 			// close it.
 			if(m_VisitingBasicBlock) {
-				std::cout << "  }\n";
+				m_OutputStream << "  }\n";
 				m_VisitingBasicBlock = false;
 			}
 
 			// If we're already visiting a function, close it
 			if(m_VisitingFunctionDefinition)
 			{
-				std::cout << "}\n\n";
+				m_OutputStream << "}\n\n";
 				m_VisitingFunctionDefinition = false;
 			}
 
@@ -266,24 +465,24 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			// If we're already visiting a basic block,
 			// close it.
 			if(m_VisitingBasicBlock) {
-				std::cout << "  }\n";
+				m_OutputStream << "  }\n";
 				m_VisitingBasicBlock = false;
 			}
 
 			// If we're already visiting a function, close it
 			if(m_VisitingFunctionDefinition)
 			{
-				std::cout << "}\n\n";
+				m_OutputStream << "}\n\n";
 				m_VisitingFunctionDefinition = false;
 			}	
 		}
 
 		void writeIndent()
 		{
-			std::cout << "    ";
+			m_OutputStream << "    ";
 		}
 
-		void writeConstant(const Constant* c)
+		void writeConstant(const Constant* c, std::ostream& dest)
 		{
 			if(isa<ConstantVector>(c))
 			{
@@ -299,8 +498,8 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 							vt->getNumElements());
 				}
 
-				writeType(vt);
-				std::cout << "(";
+				writeType(vt, dest);
+				dest << "(";
 
 				User::const_op_iterator it = c->op_begin();
 				bool is_start = true;
@@ -308,28 +507,28 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				{
 					if(!is_start)
 					{
-						std::cout << ", ";
+						dest << ", ";
 					} else {
-						std::cout << " ";
+						dest << " ";
 						is_start = false;
 					}
 
-					writeOperand(*it);
+					writeOperand(*it, dest);
 				}
 
-				std::cout << " )";
+				dest << " )";
 			} else if(isa<ConstantFP>(c)) {
 				const ConstantFP* fpval = cast<ConstantFP>(c);
-				std::cout << fpval->getValueAPF().convertToFloat();
+				dest << fpval->getValueAPF().convertToFloat();
 			} else if(isa<ConstantInt>(c)) {
 				const ConstantInt* intval = cast<ConstantInt>(c);
 				switch(intval->getBitWidth())
 				{
 					case 32:
-						std::cout << intval->getValue().getSExtValue();
+						dest << intval->getValue().getSExtValue();
 						break;
 					case 1:
-						std::cout << 
+						dest << 
 							((intval->getValue().getZExtValue()) ? 
 							"true" : "false");
 						break;
@@ -341,7 +540,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				switch(c->getType()->getTypeID())
 				{
 					case Type::FloatTyID:
-						std::cout << "0.0";
+						dest << "0.0";
 						break;
 					case Type::IntegerTyID:
 						{
@@ -350,10 +549,10 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 							switch(int_type->getBitWidth())
 							{
 								case 32:
-									std::cout << "0";
+									dest << "0";
 									break;
 								case 1:
-									std::cout << "false";
+									dest << "false";
 									break;
 								default:
 									FIRTREE_ERROR("Invalid zero integer.");
@@ -363,16 +562,16 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 						break;
 					case Type::VectorTyID:
 						{
-							writeType(c->getType());
-							std::cout << "(";
+							writeType(c->getType(), dest);
+							dest << "(";
 							const VectorType* vt = 
 								cast<VectorType>(c->getType());
 							for(unsigned int i=0; i<vt->getNumElements(); i++)
 							{
-								if(i != 0) { std::cout << ","; }
-								std::cout << "0.0";
+								if(i != 0) { dest << ","; }
+								dest << "0.0";
 							}
-							std::cout << ")";
+							dest << ")";
 						}
 						break;
 					default:
@@ -383,15 +582,18 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 		}
 
-		void writeOperand(const Value* v)
+		void writeOperand(const Value* v, std::ostream& dest)
 		{
 			if(isa<Constant>(v))
 			{
-				writeConstant(cast<Constant>(v));
+				writeConstant(cast<Constant>(v), dest);
 			} else if((isa<Instruction>(v)) || (isa<Argument>(v))) {
-				if(v->hasName())
+				// Should hopefully be in hash map
+				if(KnowAboutValue(v))
 				{
-					std::cout << varNameSanitize(v->getName());
+					dest << m_ValueMap[v];
+				} else if(v->hasName()) {
+					dest << varNameSanitize(v->getName());
 				} else {
 					FIRTREE_ERROR("Anonymous value.");
 				}
@@ -400,26 +602,27 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 		}
 
-		void writeValueDecl(Value& v)
+		void writeValueDecl(const Value& v)
 		{
+			// m_OutputStream << "/* uses = " << v.getNumUses() << " */ ";
 			if(!v.hasName())
 			{
 				return;
 			}
 
-			writeType(v.getType());
-			std::cout << " " << varNameSanitize(v.getName()) << " = ";
+			writeType(v.getType(), m_OutputStream);
+			m_OutputStream << " " << varNameSanitize(v.getName()) << " = ";
 		}
 
-		void writeType(const Type* type)
+		void writeType(const Type* type, std::ostream& dest)
 		{
 			switch(type->getTypeID())
 			{
 				case Type::VoidTyID:
-					std::cout << "void";
+					dest << "void";
 					break;
 				case Type::FloatTyID:
-					std::cout << "float";
+					dest << "float";
 					break;
 				case Type::IntegerTyID:
 					{
@@ -427,10 +630,10 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 						switch(int_type->getBitWidth())
 						{
 							case 32:
-								std::cout << "int";
+								dest << "int";
 								break;
 							case 1:
-								std::cout << "bool";
+								dest << "bool";
 								break;
 							default:
 								FIRTREE_ERROR("Unknown integer type.");
@@ -449,13 +652,13 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 						switch(vec_type->getNumElements())
 						{
 							case 2:
-								std::cout << "vec2";
+								dest << "vec2";
 								break;
 							case 3:
-								std::cout << "vec3";
+								dest << "vec3";
 								break;
 							case 4:
-								std::cout << "vec4";
+								dest << "vec4";
 								break;
 							default:
 								FIRTREE_ERROR("Unknown vector arity.");
@@ -469,31 +672,31 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 		}
 
-		void writePrototype(Function& F)
+		void writePrototype(Function& F, std::ostream& dest)
 		{
 			// Write the return type.
-			writeType(F.getReturnType());
-			std::cout << " ";
+			writeType(F.getReturnType(), dest);
+			dest << " ";
 
 			// Write the function name
-			std::cout << F.getName() << " ( ";
+			dest << F.getName() << " ( ";
 
 			Function::arg_iterator it = F.arg_begin();
 			for( ; it != F.arg_end(); ++it)
 			{
 				if(it != F.arg_begin()) {
-					std::cout << ", ";
+					dest << ", ";
 				}
 
-				writeType(it->getType());
+				writeType(it->getType(), dest);
 
 				if(it->hasName())
 				{
-					std::cout << " " << it->getName();
+					dest << " " << it->getName();
 				}
 			}
 
-			std::cout << " )";
+			dest << " )";
 		}
 
 		std::string varNameSanitize(std::string s)
@@ -542,15 +745,20 @@ GLSLTarget* GLSLTarget::Create()
 }
 
 //===========================================================================
-void GLSLTarget::ProcessModule(llvm::Module* module)
+const std::string& GLSLTarget::ProcessModule(llvm::Module* module)
 {
-	if(module == NULL)
-	{
-		return;
-	}
-
 	GLSLVisitor visitor;
 	visitor.runOnModule(*module);
+
+	m_CompiledGLSL = visitor.getOutputStream().str();
+
+	return GetCompiledGLSL();
+}
+
+//===========================================================================
+const std::string& GLSLTarget::GetCompiledGLSL() const
+{
+	return m_CompiledGLSL;
 }
 
 } // namespace Firtree

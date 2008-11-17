@@ -24,8 +24,13 @@ class GLSLTarget : public ReferenceCounted
 		static GLSLTarget* Create();
 
 		/// Process the LLVM module passed.
-		void ProcessModule(llvm::Module* module);
+		const std::string& ProcessModule(llvm::Module* module);
+
+		/// Return a reference to the compiled GLSL
+		const std::string& GetCompiledGLSL() const;
+
 	private:
+		std::string m_CompiledGLSL;
 };
 
 } // namespace Firtree

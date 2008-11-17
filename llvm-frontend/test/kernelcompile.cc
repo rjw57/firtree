@@ -70,6 +70,9 @@ int compile_kernel( const char* fileid )
 
     glsl_target->ProcessModule( compiler->GetCompiledModule() );
 
+    std::cerr << "GLSL:\n";
+    std::cerr << glsl_target->GetCompiledGLSL();
+
     FIRTREE_SAFE_RELEASE(glsl_target);
   }
 

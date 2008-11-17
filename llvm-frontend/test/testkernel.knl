@@ -3,47 +3,33 @@ __builtin__ float max(float, float);
 __builtin__ vec2 max(vec2, vec2);
 __builtin__ vec3 max(vec3, vec3);
 __builtin__ vec4 max(vec4, vec4);
-__builtin__ void putchar(int);
-__builtin__ void putfloat(float);
-
-/* Prototype for functions defined below. */
-float increment(float src);
-float increment(float a, float by);
-vec2 increment(vec2 a);
-vec2 increment(vec2 a, float by);
-
+__builtin__ vec2 destCoord();
 __builtin__ vec2 samplerCoord(sampler);
-__builtin__ vec4 sample(sampler, vec2);
+__builtin__ vec2 samplerTransform(sampler,vec2);
+__builtin__ vec2 samplerOrigin(sampler);
+__builtin__ vec2 samplerSize(sampler);
+__builtin__ vec4 samplerExtend(sampler);
+__builtin__ vec4 sample(sampler,vec2);
+__builtin__ float sin(float);
+__builtin__ vec2 sin(vec2);
+__builtin__ vec3 sin(vec3);
+__builtin__ vec4 sin(vec4);
+__builtin__ float cos(float);
+__builtin__ vec2 cos(vec2);
+__builtin__ vec3 cos(vec3);
+__builtin__ vec4 cos(vec4);
+__builtin__ vec2 sincos(float);
+__builtin__ vec2 cossin(float);
+__builtin__ float dot(vec2,vec2);
+__builtin__ float dot(vec3,vec3);
+__builtin__ float dot(vec4,vec4);
 
 /* Our actual kernel. */
 kernel vec4 simpleKernel(sampler src)
 {
-  vec3 no = vec3(0,0,1);
-  float a = max(no.z, 3.0);
-  float b = increment(a);
-  vec2 c = max(vec2(3,b), vec2(1,1));
-  return sample(src, samplerCoord(src)) + vec4(a,b,c);
-}
-
-float increment(float a)
-{
-  return a + 1;
-}
-
-float increment(float a, float by)
-{
-  return a + by;
-}
-
-vec2 increment(vec2 a)
-{
-  return a + vec2(1,1);
-}
-
-vec2 increment(vec2 a, float by)
-{
-  // Auto broadcast of vector/floating point operations.
-  return a + by;
+  vec2 offset = sincos(dot(destCoord(), vec2(1,1)));
+  __color outputColor = sample(src, samplerTransform(src, destCoord() + offset));
+  return outputColor;
 }
 
 // vim:filetype=c

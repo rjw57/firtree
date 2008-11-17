@@ -32,6 +32,21 @@ int compile_kernel( const char* fileid )
   read(fd, file_contents, file_size);
   close(fd);
 
+#if 0
+  Firtree::Compiler* time_compiler = Firtree::Compiler::Create();
+  Firtree::GLSLTarget* time_glsl_target = Firtree::GLSLTarget::Create();
+  for(int i=0; i<1000; i++)
+  {
+    bool status = time_compiler->Compile(&file_contents, 1);
+    if(status)
+    {
+      time_glsl_target->ProcessModule( time_compiler->GetCompiledModule() );
+    }
+  }
+  FIRTREE_SAFE_RELEASE(time_compiler);
+  FIRTREE_SAFE_RELEASE(time_glsl_target);
+#endif
+
   Firtree::Compiler* compiler = Firtree::Compiler::Create();
 
   bool status = compiler->Compile(&file_contents, 1);

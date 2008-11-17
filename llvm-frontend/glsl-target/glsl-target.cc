@@ -79,6 +79,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		void visitInstruction(Instruction& I)
 		{
 			std::cout << "// ??? => " << I;
+			FIRTREE_ERROR("Unknown instruction.");
 		}
 
 		void visitCallInst(CallInst &I)

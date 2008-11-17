@@ -37,6 +37,24 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 	}
 
 	switch ( dest_ty_spec ) {
+		case FullType::TySpecColor: 
+			{
+				if( source_type.Specifier == FullType::TySpecVec4 )
+				{
+					return ConstantExpressionValue::Create( 
+							context, llvm_value );
+				}
+			}
+			break;
+		case FullType::TySpecVec4: 
+			{
+				if( source_type.Specifier == FullType::TySpecColor )
+				{
+					return ConstantExpressionValue::Create( 
+							context, llvm_value );
+				}
+			}
+			break;
 		case FullType::TySpecFloat: {
 			// We want a floating point value.
 			switch ( source_type.Specifier ) {

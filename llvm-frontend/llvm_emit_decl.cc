@@ -568,7 +568,7 @@ void EmitDeclarations::constructPrototypeStruct(
 		    GLS_FIRST( firtreeParameterDeclaration, params_tail );
 
 		firtreeTypeQualifier param_type_qual;
-		firtreeParameterQualifier param_qual;
+		firtreeParameterDirectionQualifier param_qual;
 		firtreeTypeSpecifier param_type_spec;
 		firtreeParameterIdentifierOpt param_identifier;
 
@@ -602,24 +602,41 @@ void EmitDeclarations::constructPrototypeStruct(
 			}
 
 			// Get the parameter direction
-			if ( firtreeParameterQualifier_in( param_qual ) ) {
+			if ( firtreeParameterDirectionQualifier_in( param_qual ) ) {
 				new_param.Direction = FunctionParameter::FuncParamIn;
-			} else if ( firtreeParameterQualifier_out( param_qual ) ) {
+			} else if ( firtreeParameterDirectionQualifier_out( param_qual ) ) {
 				new_param.Direction = FunctionParameter::FuncParamOut;
-			} else if ( firtreeParameterQualifier_inout( param_qual ) ) {
+			} else if ( firtreeParameterDirectionQualifier_inout( param_qual ) ) {
 				new_param.Direction = FunctionParameter::FuncParamInOut;
 			} else {
 				FIRTREE_LLVM_ICE( m_Context, param_qual,
 				                  "Invalid parameter qualifier." );
 			}
 
+			// Samplers must be static.
+			if ( ( new_param.Type.Specifier == FullType::TySpecSampler ) &&
+			   ( new_param.Type.Qualifier != FullType::TyQualStatic ) ) {
+				// Auto promote parameters
+				new_param.Type.Qualifier = FullType::TyQualStatic;
+				FIRTREE_LLVM_WARNING( m_Context, param_decl,
+						"Automatically making sampler parameter static.");
+			}
+
+			// Static parameters must be 'in'
+			if( ( new_param.Type.Qualifier == FullType::TyQualStatic ) &&
+					(new_param.Direction != FunctionParameter::FuncParamIn) )
+			{
+					FIRTREE_LLVM_ERROR( m_Context, param_decl,
+							"Static parameters must be 'in'.");
+			}
+
 			// Kernels must have 'in' parameters only.
-			if ( !firtreeParameterQualifier_in( param_qual ) &&
-			        ( prototype.Qualifier ==
-			          FunctionPrototype::FuncQualKernel ) ) {
-				FIRTREE_LLVM_ERROR( m_Context, param_decl,
-				                    "Kernel functions must "
-				                    "only have 'in' parameters." );
+			if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
+				if(new_param.Direction != FunctionParameter::FuncParamIn) {
+					FIRTREE_LLVM_ERROR( m_Context, param_decl,
+							"Kernel functions must "
+							"only have 'in' parameters." );
+				}
 			}
 
 			prototype.Parameters.push_back( new_param );

@@ -78,18 +78,37 @@ class VariableDeclarationEmitter : ExpressionEmitter
 				initialiser_val = ExpressionEmitterRegistry::
 				                  GetRegistry()->Emit( context, initialiser );
 
-				initialiser_cast_val = TypeCaster::CastValue( context,
-				                       var_decl, initialiser_val,
-				                       var_type.Specifier );
-
 				// If the initialiser is non void (i.e. not a NOP), assign
 				// the value.
 				if ( initialiser_val->GetType().Specifier !=
 				        FullType::TySpecVoid ) {
+					initialiser_cast_val = TypeCaster::CastValue( context,
+			 				var_decl, initialiser_val,
+ 							var_type.Specifier );
+
 					var_decl_s.initialised = true;
 					LLVM_NEW_2_3( StoreInst,
 					             initialiser_cast_val->GetLLVMValue(),
 					             var_decl_s.value, context->BB );
+					
+					// Enforce static correctness.
+					if(var_type.IsStatic())
+					{
+						if(!(initialiser_cast_val->GetType().IsStatic())) {
+							FIRTREE_LLVM_ERROR( context, var_decl,
+									"Cannot initialise static variable with "
+									"non-static value.");
+						}
+					}
+				} else {
+					if(var_type.IsStatic() || var_type.IsConst())
+					{
+						// Const and static variable *must* have an 
+						// initialiser
+						FIRTREE_LLVM_ERROR( context, var_decl,
+								"Variables with const or static types "
+								"must have an initializer.");
+					}
 				}
 
 				// Release the initialiser since we have no more use

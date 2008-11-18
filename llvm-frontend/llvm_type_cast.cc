@@ -33,7 +33,8 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 	// Trivial case where the cast is a nop. The cast does implicitly
 	// make the result a constant however.
 	if ( source_type.Specifier == dest_ty_spec ) {
-		return ConstantExpressionValue::Create( context, llvm_value );
+		return ConstantExpressionValue::Create( context, llvm_value,
+				source_type.IsStatic() );
 	}
 
 	switch ( dest_ty_spec ) {
@@ -42,7 +43,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				if( source_type.Specifier == FullType::TySpecVec4 )
 				{
 					return ConstantExpressionValue::Create( 
-							context, llvm_value );
+							context, llvm_value, source_type.IsStatic() );
 				}
 			}
 			break;
@@ -51,7 +52,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				if( source_type.Specifier == FullType::TySpecColor )
 				{
 					return ConstantExpressionValue::Create( 
-							context, llvm_value );
+							context, llvm_value, source_type.IsStatic() );
 				}
 			}
 			break;
@@ -72,7 +73,8 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
-					           context, llvm_new_value );
+					           context, llvm_new_value,
+							   source_type.IsStatic() );
 				}
 				break;
 				default:
@@ -97,7 +99,8 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
-					           context, llvm_new_value );
+					           context, llvm_new_value, 
+							   source_type.IsStatic() );
 				}
 				break;
 				case FullType::TySpecBool: {
@@ -109,7 +112,8 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
-					           context, llvm_new_value );
+					           context, llvm_new_value, 
+							   source_type.IsStatic() );
 				}
 				default:
 					// Do nothing, the call to FIRTREE_LLVM_ERROR at the
@@ -132,6 +136,11 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 //===========================================================================
 bool TypeCaster::CanImplicitlyCast(FullType source, FullType dest)
 {
+	// Enforce static correctness.
+	if(dest.IsStatic() && !source.IsStatic()) {
+		return false;
+	}
+
 	// Can always cast equivalent types.
 	if(source.Specifier == dest.Specifier)
 	{

@@ -51,6 +51,8 @@ Regular Grammar
     tok Sampler         = "sampler"
     tok Color           = "__color"
     tok Builtin         = "__builtin__"
+    tok Static          = "static"
+    tok Dynamic         = "dynamic"
 
     ;;;; Static constants
     tok IntConst        = "0" 'xX' HexDigit+
@@ -64,7 +66,7 @@ Regular Grammar
     let ReservedWord    = True | False | Const | Do | For | While | If 
                         | Else | In | Out | InOut | Kernel | Float | Int
                         | Void | Bool | Return | Vec2 | Vec3 | Vec4 | Sampler
-                        | Color | Builtin
+                        | Color | Builtin | Static | Dynamic
 
     ;;;; Assignment operators
     tok AddAssign       = "+="
@@ -168,12 +170,14 @@ let FunctionParameterDeclarationListTail
 ; an (optional) parameter, a type specifier and an (optional)
 ; name
 let ParameterDeclaration
-    :parameterdeclaration:  TypeQualifierOpt ParameterQualifierOpt TypeSpecifier ParameterIdentifierOpt
+    :parameterdeclaration:  TypeQualifierOpt ParameterDirectionQualifierOpt TypeSpecifier ParameterIdentifierOpt
 
-; The only type qualifier supported by Firtree is the 'const' qualifier
-; for declaring constants.
+; The only type qualifiers supported by Firtree are the 'const' qualifier
+; for declaring constants and the static qualifier for noting values which
+; should be available at link time.
 let TypeQualifier
     :const:                 "const"
+    :static:                "static"
 
 let TypeQualifierOpt
     :ign0:                  TypeQualifier
@@ -181,15 +185,17 @@ let TypeQualifierOpt
 
 ; Parameters can have an 'in', 'out', or 'inout' qualifier depending
 ; on whether they are function inputs, outputs or inputs and outputs.
+; In addition they can have a 'dynamic' qualifier which is just syntactic
+; sugar for 'in' or 'static' which indicates that the value must be
+; available at link time.
+let ParameterDirectionQualifier
+     :in:                   "in"
+     :out:                  "out"
+     :inout:                "inout"
+     :static:               "static"
 
-;; Commented out because all parameter qualifiers are optional.
-let ParameterQualifier
-     :in:                    "in"
-     :out:                   "out"
-     :inout:                 "inout"
-
-let ParameterQualifierOpt
-    :ign0:                  ParameterQualifier
+let ParameterDirectionQualifierOpt
+    :ign0:                  ParameterDirectionQualifier
     :in:
 
 ; Parameters can possess an optional identifier when in function

@@ -119,7 +119,7 @@ class FunctionCallEmitter : ExpressionEmitter
 						}
 
 						return ConstantExpressionValue::Create(context,
-								func_call);
+								func_call, proto.ReturnType.IsStatic());
 					} catch (CompileErrorException e) {
 						while(func_params.size() != 0) {
 							FIRTREE_SAFE_RELEASE(func_params.back());
@@ -184,6 +184,10 @@ class FunctionCallEmitter : ExpressionEmitter
 			ExpressionValue* return_value = NULL;
 
 			try {
+				// A flag recording if the overall value is static
+				// (i.e. if each component is static).
+				bool is_static = true;
+
 				std::vector<ExpressionValue*>::iterator param_it =
 				    parameters.begin();
 				for ( ; param_it != parameters.end(); ++param_it ) {
@@ -204,6 +208,10 @@ class FunctionCallEmitter : ExpressionEmitter
 						                    "Invalid type for parameter in "
 						                    "constructor." );
 					}
+
+					if(!param_type.IsStatic()) {
+						is_static = false;
+					}
 				}
 
 				if ( cracked_params.size() != required_dimension ) {
@@ -212,7 +220,8 @@ class FunctionCallEmitter : ExpressionEmitter
 					                    "for constructor." );
 				}
 
-				return_value = CreateVector( context, cracked_params );
+				return_value = CreateVector( context, cracked_params,
+						is_static );
 
 				// Free the cracked parameter list.
 				while ( cracked_params.size() > 0 ) {

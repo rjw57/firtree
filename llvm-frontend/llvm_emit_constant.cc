@@ -18,9 +18,10 @@ namespace Firtree
 
 //===========================================================================
 ConstantExpressionValue::ConstantExpressionValue( LLVMContext* ctx,
-        Value* val )
+        Value* val, bool is_static )
 		: VoidExpressionValue( ctx )
 		, m_WrappedValue( val )
+		, m_IsStatic( is_static )
 {
 }
 
@@ -31,9 +32,9 @@ ConstantExpressionValue::~ConstantExpressionValue()
 
 //===========================================================================
 ExpressionValue* ConstantExpressionValue::Create( LLVMContext* ctx,
-        llvm::Value* val )
+        llvm::Value* val, bool is_static )
 {
-	return new ConstantExpressionValue( ctx, val );
+	return new ConstantExpressionValue( ctx, val, is_static );
 }
 
 //===========================================================================
@@ -46,7 +47,8 @@ llvm::Value* ConstantExpressionValue::GetLLVMValue() const
 FullType ConstantExpressionValue::GetType() const
 {
 	FullType return_value;
-	return_value.Qualifier = FullType::TyQualConstant;
+	return_value.Qualifier = 
+		m_IsStatic ? FullType::TyQualStatic : FullType::TyQualConstant;
 
 	const llvm::Type* type = GetLLVMValue()->getType();
 
@@ -102,7 +104,7 @@ ExpressionValue* CreateFloat( LLVMContext* context, float float_val )
 	llvm::Value* val = ConstantFP::get( Type::FloatTy,
 	                                    APFloat( float_val ) );
 #endif
-	return ConstantExpressionValue::Create( context, val );
+	return ConstantExpressionValue::Create( context, val, true );
 }
 
 //===========================================================================
@@ -110,7 +112,7 @@ ExpressionValue* CreateFloat( LLVMContext* context, float float_val )
 ExpressionValue* CreateInt( LLVMContext* context, int int_val )
 {
 	llvm::Value* val = ConstantInt::get( Type::Int32Ty, int_val );
-	return ConstantExpressionValue::Create( context, val );
+	return ConstantExpressionValue::Create( context, val, true );
 }
 
 //===========================================================================
@@ -118,7 +120,7 @@ ExpressionValue* CreateInt( LLVMContext* context, int int_val )
 ExpressionValue* CreateBool( LLVMContext* context, bool bool_val )
 {
 	llvm::Value* val = ConstantInt::get( Type::Int1Ty, ( int )bool_val );
-	return ConstantExpressionValue::Create( context, val );
+	return ConstantExpressionValue::Create( context, val, true );
 }
 
 //===========================================================================
@@ -144,7 +146,7 @@ ExpressionValue* CreateVector( LLVMContext* context, const float* params,
 
 
 	llvm::Value* val = ConstantVector::get( elements );
-	return ConstantExpressionValue::Create( context, val );
+	return ConstantExpressionValue::Create( context, val, true );
 }
 
 //===========================================================================
@@ -173,7 +175,8 @@ ExpressionValue* CreateVector( LLVMContext* context, float x,
 
 //===========================================================================
 ExpressionValue* CreateVector( LLVMContext* context,
-                               std::vector<ExpressionValue*> values )
+                               std::vector<ExpressionValue*> values,
+							   bool is_static)
 {
 	if (( values.size() < 2 ) || ( values.size() > 4 ) ) {
 		FIRTREE_LLVM_ICE( context, NULL, "Invalid vector size." );
@@ -194,7 +197,7 @@ ExpressionValue* CreateVector( LLVMContext* context,
 
 	FIRTREE_SAFE_RELEASE( zero_vec );
 
-	return ConstantExpressionValue::Create( context, vec_val );
+	return ConstantExpressionValue::Create( context, vec_val, is_static );
 }
 
 //===========================================================================
@@ -249,8 +252,7 @@ class ConstantEmitter : ExpressionEmitter
 			// Parse integer
 			ival = strtol( tok_str, ( char ** )NULL, 0 );
 
-			llvm::Value* val = ConstantInt::get( Type::Int32Ty, ival );
-			return ConstantExpressionValue::Create( context, val );
+			return CreateInt(context, ival);
 		}
 
 		ExpressionValue* EmitFloat( LLVMContext* context,
@@ -258,13 +260,8 @@ class ConstantEmitter : ExpressionEmitter
 		                            GLS_Tok token ) {
 			float fval = static_cast<float>( atof( GLS_Tok_string(
 			                                           token ) ) );
-#if LLVM_AT_LEAST_2_3
-			llvm::Value* val = ConstantFP::get( Type::FloatTy, (double)(fval) );
-#else
-			llvm::Value* val = ConstantFP::get( Type::FloatTy,
-			                                    APFloat( fval ) );
-#endif
-			return ConstantExpressionValue::Create( context, val );
+
+			return CreateFloat(context, fval);
 		}
 
 		ExpressionValue* EmitBool( LLVMContext* context,
@@ -272,8 +269,8 @@ class ConstantEmitter : ExpressionEmitter
 		                           GLS_Tok token ) {
 			int bval = ( strcmp( GLS_Tok_string( token ), "true" ) == 0 ) ?
 			           1 : 0;
-			llvm::Value* val = ConstantInt::get( Type::Int1Ty, bval );
-			return ConstantExpressionValue::Create( context, val );
+
+			return CreateBool(context, bval);
 		}
 
 		/// Emit the passed expression term returning a pointer to

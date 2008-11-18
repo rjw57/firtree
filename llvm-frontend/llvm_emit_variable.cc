@@ -57,8 +57,8 @@ class VariableExpressionValue : public ExpressionValue
 
 		/// Return a flag which is true iff this value is a lvalue.
 		virtual bool			IsMutable() const {
-			return m_VarDeclaration->type.Qualifier !=
-			       FullType::TyQualConstant;
+			return (!m_VarDeclaration->type.IsConst()) && 
+				(!m_VarDeclaration->type.IsStatic());
 		}
 
 		/// Assign the value from the passed ExpressionValue.

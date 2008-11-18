@@ -25,6 +25,8 @@ FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
 		rv.Qualifier = FullType::TyQualNone;
 	} else if ( firtreeTypeQualifier_const( qual ) ) {
 		rv.Qualifier = FullType::TyQualConstant;
+	} else if ( firtreeTypeQualifier_static( qual ) ) {
+		rv.Qualifier = FullType::TyQualStatic;
 	}
 
 	if ( firtreeTypeSpecifier_float( spec ) ) {

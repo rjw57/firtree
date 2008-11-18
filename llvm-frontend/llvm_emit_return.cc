@@ -67,6 +67,15 @@ class ReturnEmitter : public ExpressionEmitter
 				}
 				LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );
 
+				// Ensure static correctness.
+				if(context->CurrentPrototype->ReturnType.IsStatic())
+				{
+					if(!(cast_return_value->GetType().IsStatic())) {
+						FIRTREE_LLVM_ERROR( context, expression,
+								"Return value must be static." );
+					}
+				}
+
 				return cast_return_value;
 			} catch ( CompileErrorException e ) {
 				FIRTREE_SAFE_RELEASE( return_value );

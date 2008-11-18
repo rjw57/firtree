@@ -17,11 +17,13 @@ namespace Firtree
 class ConstantExpressionValue : public VoidExpressionValue
 {
 	protected:
-		ConstantExpressionValue( LLVMContext* ctx, llvm::Value* val );
+		ConstantExpressionValue( LLVMContext* ctx, llvm::Value* val,
+				bool is_static );
 		virtual ~ConstantExpressionValue();
 
 	public:
-		static ExpressionValue* Create( LLVMContext* ctx, llvm::Value* val );
+		static ExpressionValue* Create( LLVMContext* ctx, llvm::Value* val,
+				bool is_static = false);
 
 		virtual llvm::Value*	GetLLVMValue() const;
 
@@ -29,6 +31,7 @@ class ConstantExpressionValue : public VoidExpressionValue
 
 	private:
 		llvm::Value*			m_WrappedValue;
+		bool					m_IsStatic;
 };
 
 //===========================================================================
@@ -57,7 +60,8 @@ ExpressionValue* CreateVector( LLVMContext* context,
 //===========================================================================
 /// Utility function to create a vector from a set of ExpressionValues.
 ExpressionValue* CreateVector( LLVMContext* context,
-                               std::vector<ExpressionValue*> values );
+                               std::vector<ExpressionValue*> values,
+							   bool is_static = false);
 
 //===========================================================================
 /// Utility function to extend a vector of ExpressionValues by cracking a

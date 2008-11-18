@@ -40,6 +40,8 @@ struct FullType {
 	enum TypeQualifier {
 		TyQualNone,           ///< The 'default' qualifier.
 		TyQualConstant,       ///< The value is const (i.e. non-assignable).
+		TyQualStatic,         ///< The value is static (i.e. it's 
+						      ///< value should be available at link.
 		TyQualInvalid = -1,   ///< An 'invalid' qualifier.
 	};
 
@@ -87,6 +89,16 @@ struct FullType {
 	/// Convert this type to the matching LLVM type. Pass a LLVM context
 	/// which can be used for error reporting.
 	const llvm::Type* ToLLVMType( LLVMContext* ctx ) const;
+
+	/// Return true if this type is static.
+	inline bool IsStatic() const {
+		return Qualifier == TyQualStatic;
+	}
+
+	/// Return true if this type is const.
+	inline bool IsConst() const {
+		return Qualifier == TyQualConstant;
+	}
 
 	/// Return true if this type can be promoted to type t by simply removing
 	/// a const qualifier.

@@ -28,7 +28,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
                                         TypeSpecifier dest_ty_spec )
 {
 	FullType source_type = source->GetType();
-	Value* llvm_value = source->GetLLVMValue();
+	llvm::Value* llvm_value = source->GetLLVMValue();
 
 	// Trivial case where the cast is a nop. The cast does implicitly
 	// make the result a constant however.
@@ -67,7 +67,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                     isa<IntegerType>( llvm_value->getType() ) );
 
 					// Add a conversion instruction
-					Value* llvm_new_value = LLVM_NEW_2_3( SIToFPInst,
+					llvm::Value* llvm_new_value = LLVM_NEW_2_3( SIToFPInst,
 					                                     llvm_value,
 					                                     Type::FloatTy,
 					                                     "tmp",
@@ -93,7 +93,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					const Type* dest_llvm_type =
 					    ( dest_ty_spec == Firtree::TySpecInt ) ?
 					    Type::Int32Ty : Type::Int1Ty;
-					Value* llvm_new_value = LLVM_NEW_2_3( FPToSIInst,
+					llvm::Value* llvm_new_value = LLVM_NEW_2_3( FPToSIInst,
 					                                     llvm_value,
 					                                     dest_llvm_type,
 					                                     "tmp",
@@ -106,7 +106,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				case Firtree::TySpecBool: {
 					// Only support implicityle casting bool -> int since
 					// this does not lose bits.
-					Value* llvm_new_value = LLVM_NEW_2_3( SExtInst,
+  	 			    llvm::Value* llvm_new_value = LLVM_NEW_2_3( SExtInst,
 					                                     llvm_value,
 					                                     Type::Int32Ty,
 					                                     "tmp",

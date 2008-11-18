@@ -106,6 +106,7 @@ SET(FIRTREE_SOURCES
 	kernel.cpp		image.cpp
 
 	image-int.cpp		render-to-texture.cpp	pbuffer.cpp
+	value.cpp
 )
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})

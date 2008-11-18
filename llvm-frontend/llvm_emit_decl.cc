@@ -314,12 +314,12 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 					// the underlying value. Since we pass 'in' parameters by
 					// value, allocate a temporary variable on the stack to
 					// hold the value.
-					Value* paramLoc = LLVM_NEW_2_3(
+			        llvm::Value* paramLoc = LLVM_NEW_2_3(
 					                      AllocaInst,
 					                      it->Type.ToLLVMType( m_Context ),
 					                      "paramtmp", m_Context->BB
 					                  );
-					Value* argValue = cast<Value>( AI );
+					llvm::Value* argValue = cast<llvm::Value>( AI );
 					LLVM_NEW_2_3( StoreInst, argValue, paramLoc,
 					             m_Context->BB );
 
@@ -344,7 +344,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 					// parameter value directly as a pointer to the variable.
 
 					VariableDeclaration var_decl;
-					var_decl.value = cast<Value>( AI );
+					var_decl.value = cast<llvm::Value>( AI );
 					var_decl.name = it->Name;
 					var_decl.type = it->Type;
 

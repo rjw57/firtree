@@ -44,6 +44,52 @@ enum TypeSpecifier {
     TySpecVoid,           ///< A 'void' type.
     TySpecInvalid = -1,   ///< An 'invalid' type.
 };
+    
+//=============================================================================
+/// \brief A value which can be passed to a Firtree kernel.
+class Value : public ReferenceCounted 
+{
+    protected:
+        Value();
+        virtual ~Value();
+
+    public:
+        static Value* Create();
+        static Value* CreateFloatValue(float v);
+        static Value* CreateIntValue(int v);
+        static Value* CreateBoolValue(bool v);
+        static Value* CreateVectorValue(float x, float y);
+        static Value* CreateVectorValue(float x, float y, float z);
+        static Value* CreateVectorValue(float x, float y, float z, float w);
+        static Value* CreateVectorValue(float* v, int num_components);
+
+        inline TypeSpecifier GetType() const { return m_Type; }
+
+        void SetFloatValue(float v);
+        void SetIntValue(int v);
+        void SetBoolValue(bool v);
+
+        inline float GetFloatValue() const {
+            return m_FloatingPointComponents[0]; 
+        }
+        inline int GetIntValue() const { return m_IntegerValue; }
+        inline bool GetBoolValue() const { return m_IntegerValue != 0; }
+
+        void SetVectorValue(float x, float y);
+        void SetVectorValue(float x, float y, float z);
+        void SetVectorValue(float x, float y, float z, float w);
+        void SetVectorValue(float* v, int num_components);
+
+        void GetVectorValue(float* px, float* py,
+                float* pz=NULL, float* pw=NULL) const;
+        void GetVectorValue(float* dest, int expected_components) const;
+        const float* GetVectorValue(uint32_t index) const;
+
+    private:
+        float               m_FloatingPointComponents[4];
+        int                 m_IntegerValue;
+        TypeSpecifier       m_Type;
+};
 
 }
 

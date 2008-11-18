@@ -12,8 +12,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <hash_map>
-
 using namespace llvm;
 
 namespace Firtree
@@ -319,7 +317,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 			// The third operand *must* be a constant integer
 			// in range 0..3
-			const Value* idx_val = I.getOperand(2);
+			const llvm::Value* idx_val = I.getOperand(2);
 			if(!isa<ConstantInt>(idx_val)) {
 				FIRTREE_ERROR("Insert element instruction's third "
 						"operand must be constant integer.");
@@ -333,7 +331,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 
 			static char idx_char[] = "xyzw";
-			const Value* left_side = I.getOperand(0);
+			const llvm::Value* left_side = I.getOperand(0);
 
 			if(!m_DoInlining || !I.hasOneUse())
 			{
@@ -428,7 +426,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				FIRTREE_ERROR("Shuffle instruction must return vector.");
 			}
 
-			Value* shuffle_indices = I.getOperand(2);
+			llvm::Value* shuffle_indices = I.getOperand(2);
 			const ConstantVector* vec_val =
 				cast<ConstantVector>(shuffle_indices);
 			if(vec_val == NULL)
@@ -482,8 +480,8 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			} else {
 				// Write left and right into variables if necessary
 				std::string left_var_name, right_var_name;
-				const Value* left_value = I.getOperand(0);
-				const Value* right_value = I.getOperand(1);
+				const llvm::Value* left_value = I.getOperand(0);
+				const llvm::Value* right_value = I.getOperand(1);
 
 				if(!m_DoInlining || !IsVectorValue(left_value)) {
 					std::ostringstream left_var_name_stream;
@@ -572,7 +570,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 			// The second operand *must* be a constant integer
 			// in range 0..3
-			const Value* idx_val = I.getOperand(1);
+			const llvm::Value* idx_val = I.getOperand(1);
 			if(!isa<ConstantInt>(idx_val)) {
 				FIRTREE_ERROR("Extract element instruction's second "
 						"operand must be constant integer.");
@@ -608,26 +606,26 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		std::ostringstream m_OutputStream;
 
 		// This stores the mapping between a value and it's GLSL representation
-		hash_map<const Value*, std::string> m_ValueMap;
+		hash_map<const llvm::Value*, std::string> m_ValueMap;
 
 		// This stores the mapping between a value and it's vector of GLSL 
 		// representations,
-		hash_map<const Value*, std::vector<std::string> > m_VectorValueMap;
+		hash_map<const llvm::Value*, std::vector<std::string> > m_VectorValueMap;
 
 		// This stores a flag indicating if the value is stored in a variable.
 		// i.e. whether the m_ValueMap entry contains a variable name.
-		hash_map<const Value*, bool> m_InVariable;
+		hash_map<const llvm::Value*, bool> m_InVariable;
 
 		// A flag indicating whether inlining optimisations should be performed
 		bool m_DoInlining;
 
-		void SetValueToGLSL(const Value* v, const std::string& glsl)
+		void SetValueToGLSL(const llvm::Value* v, const std::string& glsl)
 		{
 			m_ValueMap[v] = glsl;
 			m_InVariable[v] = false;
 		}
 
-		void SetValueToGLSLVector(const Value* v, 
+		void SetValueToGLSLVector(const llvm::Value* v, 
 				const std::vector<std::string>& glsl_vec)
 		{
 			// Form a GLSL reprentation from this vector
@@ -652,23 +650,23 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			m_VectorValueMap[v] = glsl_vec;
 		}
 
-		void SetValueToVariable(const Value* v)
+		void SetValueToVariable(const llvm::Value* v)
 		{
 			m_ValueMap[v] = varNameSanitize(v->getName());
 			m_InVariable[v] = true;
 		}
 
-		bool KnowAboutValue(const Value* v)
+		bool KnowAboutValue(const llvm::Value* v)
 		{
 			return m_ValueMap.count(v) != 0;
 		}
 
-		bool IsInVariable(const Value* v)
+		bool IsInVariable(const llvm::Value* v)
 		{
 			return KnowAboutValue(v) && m_InVariable[v];
 		}
 
-		bool IsVectorValue(const Value* v)
+		bool IsVectorValue(const llvm::Value* v)
 		{
 			return KnowAboutValue(v) && !m_InVariable[v] && 
 				(m_VectorValueMap.count(v) != 0);
@@ -830,7 +828,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 		}
 
-		void writeOperand(const Value* v, std::ostream& dest)
+		void writeOperand(const llvm::Value* v, std::ostream& dest)
 		{
 			if(isa<Constant>(v))
 			{
@@ -850,7 +848,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 		}
 
-		void writeValueDecl(const Value& v)
+		void writeValueDecl(const llvm::Value& v)
 		{
 			// m_OutputStream << "/* uses = " << v.getNumUses() << " */ ";
 			if(!v.hasName())

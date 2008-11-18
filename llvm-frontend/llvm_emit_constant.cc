@@ -18,7 +18,7 @@ namespace Firtree
 
 //===========================================================================
 ConstantExpressionValue::ConstantExpressionValue( LLVMContext* ctx,
-        Value* val, bool is_static )
+        llvm::Value* val, bool is_static )
 		: VoidExpressionValue( ctx )
 		, m_WrappedValue( val )
 		, m_IsStatic( is_static )

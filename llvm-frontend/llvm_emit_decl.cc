@@ -37,31 +37,31 @@ std::string FunctionPrototype::GetMangledName( LLVMContext* ctx ) const
 		// type code.
 		switch(it->Type.Specifier)
 		{
-			case FullType::TySpecFloat:
+			case Firtree::TySpecFloat:
 				namestr += "f";
 				break;
-			case FullType::TySpecInt:
+			case Firtree::TySpecInt:
 				namestr += "i";
 				break;
-			case FullType::TySpecBool:
+			case Firtree::TySpecBool:
 				namestr += "b";
 				break;
-			case FullType::TySpecVec2:
+			case Firtree::TySpecVec2:
 				namestr += "v2";
 				break;
-			case FullType::TySpecVec3:
+			case Firtree::TySpecVec3:
 				namestr += "v3";
 				break;
-			case FullType::TySpecVec4:
+			case Firtree::TySpecVec4:
 				namestr += "v4";
 				break;
-			case FullType::TySpecSampler:
+			case Firtree::TySpecSampler:
 				namestr += "s";
 				break;
-			case FullType::TySpecColor:
+			case Firtree::TySpecColor:
 				namestr += "c";
 				break;
-			case FullType::TySpecVoid:
+			case Firtree::TySpecVoid:
 				namestr += "x";
 				break;
 			default:
@@ -393,7 +393,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	// Create a default return inst if there was no terminator.
 	if ( m_Context->BB->getTerminator() == NULL ) {
 		// Check function return type is void.
-		if ( prototype.ReturnType.Specifier != FullType::TySpecVoid ) {
+		if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
 			FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
 			                    "of non-void function." );
 		}
@@ -614,7 +614,7 @@ void EmitDeclarations::constructPrototypeStruct(
 			}
 
 			// Samplers must be static.
-			if ( ( new_param.Type.Specifier == FullType::TySpecSampler ) &&
+			if ( ( new_param.Type.Specifier == Firtree::TySpecSampler ) &&
 			   ( new_param.Type.Qualifier != FullType::TyQualStatic ) ) {
 				// Auto promote parameters
 				new_param.Type.Qualifier = FullType::TyQualStatic;
@@ -648,7 +648,7 @@ void EmitDeclarations::constructPrototypeStruct(
 
 	// Kernels must return vec4
 	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
-		if ( prototype.ReturnType.Specifier != FullType::TySpecVec4 ) {
+		if ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) {
 			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Kernel functions "
 			                    "must have a return type of vec4." );
 		}

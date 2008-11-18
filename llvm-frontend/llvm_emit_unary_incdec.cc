@@ -76,7 +76,7 @@ class IncDecEmitter : ExpressionEmitter
 				FullType req_type = operand_value->GetType();
 				if ( req_type.IsScalar() ) {
 					switch ( req_type.Specifier ) {
-						case FullType::TySpecFloat:
+						case Firtree::TySpecFloat:
 #if LLVM_AT_LEAST_2_3
 							one = ConstantFP::
 							      get( Type::FloatTy, 1.0 );
@@ -86,11 +86,11 @@ class IncDecEmitter : ExpressionEmitter
 							           APFloat( 1.f ) );
 #endif
 							break;
-						case FullType::TySpecInt:
+						case Firtree::TySpecInt:
 							one = ConstantInt::
 							      get( Type::Int32Ty, 1 );
 							break;
-						case FullType::TySpecBool:
+						case Firtree::TySpecBool:
 							one = ConstantInt::
 							      get( Type::Int1Ty, 1 );
 							break;

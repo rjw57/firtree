@@ -25,7 +25,7 @@ namespace Firtree
 ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
                                         PT_Term term,
                                         const ExpressionValue* source,
-                                        FullType::TypeSpecifier dest_ty_spec )
+                                        TypeSpecifier dest_ty_spec )
 {
 	FullType source_type = source->GetType();
 	Value* llvm_value = source->GetLLVMValue();
@@ -38,29 +38,29 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 	}
 
 	switch ( dest_ty_spec ) {
-		case FullType::TySpecColor: 
+		case Firtree::TySpecColor: 
 			{
-				if( source_type.Specifier == FullType::TySpecVec4 )
+				if( source_type.Specifier == Firtree::TySpecVec4 )
 				{
 					return ConstantExpressionValue::Create( 
 							context, llvm_value, source_type.IsStatic() );
 				}
 			}
 			break;
-		case FullType::TySpecVec4: 
+		case Firtree::TySpecVec4: 
 			{
-				if( source_type.Specifier == FullType::TySpecColor )
+				if( source_type.Specifier == Firtree::TySpecColor )
 				{
 					return ConstantExpressionValue::Create( 
 							context, llvm_value, source_type.IsStatic() );
 				}
 			}
 			break;
-		case FullType::TySpecFloat: {
+		case Firtree::TySpecFloat: {
 			// We want a floating point value.
 			switch ( source_type.Specifier ) {
-				case FullType::TySpecInt:
-				case FullType::TySpecBool: {
+				case Firtree::TySpecInt:
+				case Firtree::TySpecBool: {
 					// Ensure that the corresponding LLVM value is
 					// indeed an integer
 					FIRTREE_LLVM_ASSERT( context, term,
@@ -85,13 +85,13 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 		}
 		break;
 
-		case FullType::TySpecInt:
-		case FullType::TySpecBool: {
+		case Firtree::TySpecInt:
+		case Firtree::TySpecBool: {
 			// We want an integer value.
 			switch ( source_type.Specifier ) {
-				case FullType::TySpecFloat: {
+				case Firtree::TySpecFloat: {
 					const Type* dest_llvm_type =
-					    ( dest_ty_spec == FullType::TySpecInt ) ?
+					    ( dest_ty_spec == Firtree::TySpecInt ) ?
 					    Type::Int32Ty : Type::Int1Ty;
 					Value* llvm_new_value = LLVM_NEW_2_3( FPToSIInst,
 					                                     llvm_value,
@@ -103,7 +103,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 							   source_type.IsStatic() );
 				}
 				break;
-				case FullType::TySpecBool: {
+				case Firtree::TySpecBool: {
 					// Only support implicityle casting bool -> int since
 					// this does not lose bits.
 					Value* llvm_new_value = LLVM_NEW_2_3( SExtInst,
@@ -148,32 +148,32 @@ bool TypeCaster::CanImplicitlyCast(FullType source, FullType dest)
 	}
 
 	// Can cast color <-> vec4
-	if((source.Specifier == FullType::TySpecColor) &&
-	  (dest.Specifier == FullType::TySpecVec4))
+	if((source.Specifier == Firtree::TySpecColor) &&
+	  (dest.Specifier == Firtree::TySpecVec4))
 	{
 		return true;
 	}
-	if((source.Specifier == FullType::TySpecVec4) &&
-	  (dest.Specifier == FullType::TySpecColor))
+	if((source.Specifier == Firtree::TySpecVec4) &&
+	  (dest.Specifier == Firtree::TySpecColor))
 	{
 		return true;
 	}
 	
 	// Can cast float <-> int
-	if((source.Specifier == FullType::TySpecFloat) &&
-	  (dest.Specifier == FullType::TySpecInt))
+	if((source.Specifier == Firtree::TySpecFloat) &&
+	  (dest.Specifier == Firtree::TySpecInt))
 	{
 		return true;
 	}
-	if((source.Specifier == FullType::TySpecInt) &&
-	  (dest.Specifier == FullType::TySpecFloat))
+	if((source.Specifier == Firtree::TySpecInt) &&
+	  (dest.Specifier == Firtree::TySpecFloat))
 	{
 		return true;
 	}
 
 	// Can cast bool -> int
-	if((source.Specifier == FullType::TySpecBool) &&
-	  (dest.Specifier == FullType::TySpecInt))
+	if((source.Specifier == Firtree::TySpecBool) &&
+	  (dest.Specifier == Firtree::TySpecInt))
 	{
 		return true;
 	}

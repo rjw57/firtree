@@ -23,6 +23,8 @@
 #include <vector>
 #include <map>
 
+#include <firtree/value.h>
+
 namespace Firtree
 {
 
@@ -43,24 +45,6 @@ struct FullType {
 		TyQualStatic,         ///< The value is static (i.e. it's 
 						      ///< value should be available at link.
 		TyQualInvalid = -1,   ///< An 'invalid' qualifier.
-	};
-
-	//=======================================================================
-	/// \brief The possible types in the Firtree kernel language.
-	///
-	/// Note that during code generation, the '__color' type is aliased to
-	/// vec4 and the sampler type is aliased to const int.
-	enum TypeSpecifier {
-		TySpecFloat,          ///< A 32-bit floating point.
-		TySpecInt,            ///< A 32-bit signed integet.
-		TySpecBool,           ///< A 1-bit boolean.
-		TySpecVec2,           ///< A 2 component floating point vector.
-		TySpecVec3,           ///< A 3 component floating point vector.
-		TySpecVec4,           ///< A 4 component floating point vector.
-		TySpecSampler,        ///< An image sampler.
-		TySpecColor,          ///< A colour.
-		TySpecVoid,           ///< A 'void' type.
-		TySpecInvalid = -1,   ///< An 'invalid' type.
 	};
 
 	TypeQualifier    Qualifier;

@@ -62,16 +62,16 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 
 				// If both sides are scalars then decide on the
 				// greatest common denominator type
-				FullType::TypeSpecifier gcd_type;
+				TypeSpecifier gcd_type;
 
-				if (( left_in_type.Specifier == FullType::TySpecFloat ) ||
-				        ( right_in_type.Specifier == FullType::TySpecFloat ) ) {
-					gcd_type = FullType::TySpecFloat;
-				} else if (( left_in_type.Specifier == FullType::TySpecInt ) ||
-				           ( right_in_type.Specifier == FullType::TySpecInt ) ) {
-					gcd_type = FullType::TySpecInt;
+				if (( left_in_type.Specifier == Firtree::TySpecFloat ) ||
+				        ( right_in_type.Specifier == Firtree::TySpecFloat ) ) {
+					gcd_type = Firtree::TySpecFloat;
+				} else if (( left_in_type.Specifier == Firtree::TySpecInt ) ||
+				           ( right_in_type.Specifier == Firtree::TySpecInt ) ) {
+					gcd_type = Firtree::TySpecInt;
 				} else {
-					gcd_type = FullType::TySpecBool;
+					gcd_type = Firtree::TySpecBool;
 				}
 
 				ExpressionValue* left_cast = NULL;
@@ -162,14 +162,14 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 
 				llvm::Value* result_val = NULL;
 
-				if ( left_val->GetType().Specifier == FullType::TySpecFloat ) {
+				if ( left_val->GetType().Specifier == Firtree::TySpecFloat ) {
 					result_val = LLVM_NEW_2_3( FCmpInst, fcmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmp",
 					                          context->BB );
-				} else if (( left_val->GetType().Specifier == FullType::TySpecInt ) ||
-				           ( left_val->GetType().Specifier == FullType::TySpecBool ) ) {
+				} else if (( left_val->GetType().Specifier == Firtree::TySpecInt ) ||
+				           ( left_val->GetType().Specifier == Firtree::TySpecBool ) ) {
 					result_val = LLVM_NEW_2_3( ICmpInst, icmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),

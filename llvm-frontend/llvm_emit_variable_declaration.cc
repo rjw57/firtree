@@ -81,7 +81,7 @@ class VariableDeclarationEmitter : ExpressionEmitter
 				// If the initialiser is non void (i.e. not a NOP), assign
 				// the value.
 				if ( initialiser_val->GetType().Specifier !=
-				        FullType::TySpecVoid ) {
+				        Firtree::TySpecVoid ) {
 					initialiser_cast_val = TypeCaster::CastValue( context,
 			 				var_decl, initialiser_val,
  							var_type.Specifier );

@@ -43,7 +43,7 @@ FullType VoidExpressionValue::GetType() const
 {
 	FullType type;
 	type.Qualifier = FullType::TyQualNone;
-	type.Specifier = FullType::TySpecVoid;
+	type.Specifier = Firtree::TySpecVoid;
 	return type;
 }
 

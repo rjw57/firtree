@@ -106,7 +106,7 @@ class FunctionCallEmitter : ExpressionEmitter
 
 						// If we get this far then a match has been found.
 						bool is_void =
-							proto.ReturnType.Specifier == FullType::TySpecVoid;
+							proto.ReturnType.Specifier == Firtree::TySpecVoid;
 						llvm::Value* func_call = LLVM_CREATE(CallInst,
 								proto.LLVMFunction,
 								llvm_params.begin(), llvm_params.end(),
@@ -154,9 +154,9 @@ class FunctionCallEmitter : ExpressionEmitter
 			    FullType::FromQualiferAndSpecifier( NULL, type_spec );
 
 			switch ( required_type.Specifier ) {
-				case FullType::TySpecInt:
-				case FullType::TySpecFloat:
-				case FullType::TySpecBool:
+				case Firtree::TySpecInt:
+				case Firtree::TySpecFloat:
+				case Firtree::TySpecBool:
 					if ( parameters.size() != 1 ) {
 						FIRTREE_LLVM_ERROR( context, func_spec,
 						                    "Constructor for expects "
@@ -200,7 +200,7 @@ class FunctionCallEmitter : ExpressionEmitter
 						    TypeCaster::CastValue( context,
 						                           func_spec,
 						                           param_value,
-						                           FullType::TySpecFloat ) );
+						                           Firtree::TySpecFloat ) );
 					} else if ( param_type.IsVector() ) {
 						CrackVector( context, param_value, cracked_params );
 					} else {

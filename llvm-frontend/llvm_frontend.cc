@@ -30,23 +30,23 @@ FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
 	}
 
 	if ( firtreeTypeSpecifier_float( spec ) ) {
-		rv.Specifier = FullType::TySpecFloat;
+		rv.Specifier = Firtree::TySpecFloat;
 	} else if ( firtreeTypeSpecifier_int( spec ) ) {
-		rv.Specifier = FullType::TySpecInt;
+		rv.Specifier = Firtree::TySpecInt;
 	} else if ( firtreeTypeSpecifier_bool( spec ) ) {
-		rv.Specifier = FullType::TySpecBool;
+		rv.Specifier = Firtree::TySpecBool;
 	} else if ( firtreeTypeSpecifier_vec2( spec ) ) {
-		rv.Specifier = FullType::TySpecVec2;
+		rv.Specifier = Firtree::TySpecVec2;
 	} else if ( firtreeTypeSpecifier_vec3( spec ) ) {
-		rv.Specifier = FullType::TySpecVec3;
+		rv.Specifier = Firtree::TySpecVec3;
 	} else if ( firtreeTypeSpecifier_vec4( spec ) ) {
-		rv.Specifier = FullType::TySpecVec4;
+		rv.Specifier = Firtree::TySpecVec4;
 	} else if ( firtreeTypeSpecifier_sampler( spec ) ) {
-		rv.Specifier = FullType::TySpecSampler;
+		rv.Specifier = Firtree::TySpecSampler;
 	} else if ( firtreeTypeSpecifier_color( spec ) ) {
-		rv.Specifier = FullType::TySpecColor;
+		rv.Specifier = Firtree::TySpecColor;
 	} else if ( firtreeTypeSpecifier_void( spec ) ) {
-		rv.Specifier = FullType::TySpecVoid;
+		rv.Specifier = Firtree::TySpecVoid;
 	}
 
 	return rv;

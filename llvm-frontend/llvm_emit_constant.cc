@@ -53,16 +53,16 @@ FullType ConstantExpressionValue::GetType() const
 	const llvm::Type* type = GetLLVMValue()->getType();
 
 	if ( type->getTypeID() == llvm::Type::VoidTyID ) {
-		return_value.Specifier = FullType::TySpecVoid;
+		return_value.Specifier = Firtree::TySpecVoid;
 	} else if ( type->getTypeID() == llvm::Type::FloatTyID ) {
-		return_value.Specifier = FullType::TySpecFloat;
+		return_value.Specifier = Firtree::TySpecFloat;
 	} else if ( llvm::isa<llvm::IntegerType>( type ) ) {
 		const llvm::IntegerType* int_type =
 		    llvm::cast<llvm::IntegerType>( type );
 		if ( int_type->getBitWidth() == 32 ) {
-			return_value.Specifier = FullType::TySpecInt;
+			return_value.Specifier = Firtree::TySpecInt;
 		} else if ( int_type->getBitWidth() == 1 ) {
-			return_value.Specifier = FullType::TySpecBool;
+			return_value.Specifier = Firtree::TySpecBool;
 		} else {
 			FIRTREE_LLVM_ICE( GetContext(), NULL,
 			                  "unknown integer type." );
@@ -72,13 +72,13 @@ FullType ConstantExpressionValue::GetType() const
 		    llvm::cast<llvm::VectorType>( type );
 		switch ( vec_type->getNumElements() ) {
 			case 2:
-				return_value.Specifier = FullType::TySpecVec2;
+				return_value.Specifier = Firtree::TySpecVec2;
 				break;
 			case 3:
-				return_value.Specifier = FullType::TySpecVec3;
+				return_value.Specifier = Firtree::TySpecVec3;
 				break;
 			case 4:
-				return_value.Specifier = FullType::TySpecVec4;
+				return_value.Specifier = Firtree::TySpecVec4;
 				break;
 			default:
 				FIRTREE_LLVM_ICE( GetContext(), NULL,

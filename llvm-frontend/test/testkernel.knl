@@ -6,9 +6,9 @@ __builtin__ vec4 max(vec4, vec4);
 __builtin__ vec2 destCoord();
 __builtin__ vec2 samplerCoord(static sampler);
 __builtin__ vec2 samplerTransform(static sampler,vec2);
-__builtin__ vec2 samplerOrigin(static sampler);
-__builtin__ vec2 samplerSize(static sampler);
-__builtin__ vec4 samplerExtend(static sampler);
+__builtin__ static vec2 samplerOrigin(static sampler);
+__builtin__ static vec2 samplerSize(static sampler);
+__builtin__ static vec4 samplerExtent(static sampler);
 __builtin__ vec4 sample(static sampler,vec2);
 __builtin__ float sin(float);
 __builtin__ vec2 sin(vec2);
@@ -22,28 +22,22 @@ __builtin__ vec2 sincos(float);
 __builtin__ vec2 cossin(float);
 __builtin__ float dot(vec2,vec2);
 __builtin__ float dot(vec3,vec3);
-__builtin__ float dot(static vec4,vec4);
+__builtin__ float dot(vec4,vec4);
 __builtin__ vec4 unpremultiply(vec4);
 __builtin__ vec4 premultiply(vec4);
 
-static vec4 rgb2int()
-{
-  static float f = 5.0;
-  return vec4(0.299, 0.587, 0.114, f);
-}
-
 /* Our actual kernel. */
-kernel vec4 desaturateKernel(static sampler src, static int foo)
+kernel vec4 desaturateKernel(sampler src)
 {
+  static vec4 rgb2int = vec4(0.299, 0.587, 0.114, 0.0);
   __color a = sample(src, samplerCoord(src));
-  float intensity = dot(rgb2int(), unpremultiply(a));
+  float intensity = dot(rgb2int, unpremultiply(a));
   return premultiply(vec4(intensity * vec3(1,1,1), a.a));
 }
 
 __builtin__ void runKernel(static sampler s)
 {
-  static int g = 3;
-  vec4 rv = desaturateKernel(s, g);
+  vec4 rv = desaturateKernel(s);
 }
 
 // vim:filetype=c:cindent:sw=2:ts=2:et

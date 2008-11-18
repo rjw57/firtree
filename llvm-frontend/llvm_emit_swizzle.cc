@@ -95,16 +95,16 @@ class SwizzleExpressionValue : public ExpressionValue
 			    IsMutable() ? FullType::TyQualNone : FullType::TyQualConstant;
 			switch ( m_SwizzleIndices.size() ) {
 				case 1:
-					return FullType( type_qual, FullType::TySpecFloat );
+					return FullType( type_qual, Firtree::TySpecFloat );
 					break;
 				case 2:
-					return FullType( type_qual, FullType::TySpecVec2 );
+					return FullType( type_qual, Firtree::TySpecVec2 );
 					break;
 				case 3:
-					return FullType( type_qual, FullType::TySpecVec3 );
+					return FullType( type_qual, Firtree::TySpecVec3 );
 					break;
 				case 4:
-					return FullType( type_qual, FullType::TySpecVec4 );
+					return FullType( type_qual, Firtree::TySpecVec4 );
 					break;
 				default:
 					// Handled by fall-through to returning an

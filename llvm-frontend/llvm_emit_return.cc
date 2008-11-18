@@ -62,7 +62,7 @@ class ReturnEmitter : public ExpressionEmitter
 				// Create the return statement.
 				llvm::Value* llvm_ret_val = NULL;
 				if ( cast_return_value->GetType().Specifier !=
-				        FullType::TySpecVoid ) {
+				        Firtree::TySpecVoid ) {
 					llvm_ret_val = cast_return_value->GetLLVMValue();
 				}
 				LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );

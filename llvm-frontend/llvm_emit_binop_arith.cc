@@ -74,16 +74,16 @@ class BinaryOpArithEmitter : ExpressionEmitter
 
 				// If both sides are scalars then decide on the
 				// greatest common denominator type
-				FullType::TypeSpecifier gcd_type;
+				TypeSpecifier gcd_type;
 
-				if (( left_in_type.Specifier == FullType::TySpecFloat ) ||
-				        ( right_in_type.Specifier == FullType::TySpecFloat ) ) {
-					gcd_type = FullType::TySpecFloat;
-				} else if (( left_in_type.Specifier == FullType::TySpecInt ) ||
-				           ( right_in_type.Specifier == FullType::TySpecInt ) ) {
-					gcd_type = FullType::TySpecInt;
+				if (( left_in_type.Specifier == Firtree::TySpecFloat ) ||
+				        ( right_in_type.Specifier == Firtree::TySpecFloat ) ) {
+					gcd_type = Firtree::TySpecFloat;
+				} else if (( left_in_type.Specifier == Firtree::TySpecInt ) ||
+				           ( right_in_type.Specifier == Firtree::TySpecInt ) ) {
+					gcd_type = Firtree::TySpecInt;
 				} else {
-					gcd_type = FullType::TySpecBool;
+					gcd_type = Firtree::TySpecBool;
 				}
 
 				ExpressionValue* left_cast = NULL;
@@ -122,7 +122,7 @@ class BinaryOpArithEmitter : ExpressionEmitter
 					left_cast = TypeCaster::CastValue( context,
 					                                   binopexpr,
 					                                   left_in,
-					                                   FullType::TySpecFloat );
+					                                   Firtree::TySpecFloat );
 
 					std::vector<ExpressionValue*> vec_elements;
 					for ( unsigned int i=0; i<right_in_type.GetArity(); ++i ) {
@@ -153,7 +153,7 @@ class BinaryOpArithEmitter : ExpressionEmitter
 					right_cast = TypeCaster::CastValue( context,
 					                                    binopexpr,
 					                                    right_in,
-					                                    FullType::TySpecFloat );
+					                                    Firtree::TySpecFloat );
 
 					std::vector<ExpressionValue*> vec_elements;
 					for ( unsigned int i=0; i<left_in_type.GetArity(); ++i ) {

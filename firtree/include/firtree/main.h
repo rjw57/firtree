@@ -183,7 +183,24 @@ void    Debug(const char* file, int line, const char* func, const char* format, 
 #define FIRTREE_TRACE(...) do {Firtree::Trace(__FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__);} while(0)
 void    Trace(const char* file, int line, const char* func, const char* format, ...);
 ///@}
-
+    
+//=============================================================================
+/// \brief The possible types in the Firtree kernel language.
+///
+/// Note that during code generation, the '__color' type is aliased to
+/// vec4 and the sampler type is aliased to const int.
+enum TypeSpecifier {
+    TySpecFloat,          ///< A 32-bit floating point.
+    TySpecInt,            ///< A 32-bit signed integet.
+    TySpecBool,           ///< A 1-bit boolean.
+    TySpecVec2,           ///< A 2 component floating point vector.
+    TySpecVec3,           ///< A 3 component floating point vector.
+    TySpecVec4,           ///< A 4 component floating point vector.
+    TySpecSampler,        ///< An image sampler.
+    TySpecColor,          ///< A colour.
+    TySpecVoid,           ///< A 'void' type.
+    TySpecInvalid = -1,   ///< An 'invalid' type.
+};
 
 // ============================================================================
 } // namespace Firtree 

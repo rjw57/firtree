@@ -295,8 +295,12 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		void visitReturnInst(ReturnInst &I)
 		{
 			std::ostringstream glsl_rep;
-			glsl_rep << "return ";
-			writeOperand(I.getOperand(0), glsl_rep);
+			glsl_rep << "return";
+
+			if(I.getNumOperands() > 0) {
+				glsl_rep << " ";
+				writeOperand(I.getOperand(0), glsl_rep);
+			}
 
 			writeIndent();
 			m_OutputStream << glsl_rep.str() << ";\n";

@@ -42,7 +42,7 @@ llvm::Value* VoidExpressionValue::GetLLVMValue() const
 FullType VoidExpressionValue::GetType() const
 {
 	FullType type;
-	type.Qualifier = FullType::TyQualNone;
+	type.Qualifier = Firtree::TyQualNone;
 	type.Specifier = Firtree::TySpecVoid;
 	return type;
 }

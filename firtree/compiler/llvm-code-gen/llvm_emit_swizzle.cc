@@ -91,8 +91,8 @@ class SwizzleExpressionValue : public ExpressionValue
 
 		/// Return the Firtree type associated with this value.
 		virtual FullType		GetType() const {
-			FullType::TypeQualifier type_qual =
-			    IsMutable() ? FullType::TyQualNone : FullType::TyQualConstant;
+			Firtree::KernelTypeQualifier type_qual =
+			    IsMutable() ? Firtree::TyQualNone : Firtree::TyQualConstant;
 			switch ( m_SwizzleIndices.size() ) {
 				case 1:
 					return FullType( type_qual, Firtree::TySpecFloat );

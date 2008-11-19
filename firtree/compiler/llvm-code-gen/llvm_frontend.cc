@@ -20,13 +20,13 @@ FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
 	FullType rv;
 
 	if ( qual == NULL ) {
-		rv.Qualifier = FullType::TyQualNone;
+		rv.Qualifier = Firtree::TyQualNone;
 	} else if ( firtreeTypeQualifier_none( qual ) ) {
-		rv.Qualifier = FullType::TyQualNone;
+		rv.Qualifier = Firtree::TyQualNone;
 	} else if ( firtreeTypeQualifier_const( qual ) ) {
-		rv.Qualifier = FullType::TyQualConstant;
+		rv.Qualifier = Firtree::TyQualConstant;
 	} else if ( firtreeTypeQualifier_static( qual ) ) {
-		rv.Qualifier = FullType::TyQualStatic;
+		rv.Qualifier = Firtree::TyQualStatic;
 	}
 
 	if ( firtreeTypeSpecifier_float( spec ) ) {

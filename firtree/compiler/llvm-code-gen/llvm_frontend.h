@@ -34,26 +34,27 @@ class CompileErrorException;
 /// between code-generators.
 struct LLVMContext;
 
+//=======================================================================
+/// \brief The possible type qualifiers.
+enum KernelTypeQualifier {
+	TyQualNone,           ///< The 'default' qualifier.
+	TyQualConstant,       ///< The value is const (i.e. non-assignable).
+	TyQualStatic,         ///< The value is static (i.e. it's 
+	///< value should be available at link.
+	TyQualInvalid = -1,   ///< An 'invalid' qualifier.
+};
+
 //===========================================================================
 /// \brief A structure defining a fully specified type.
 struct FullType {
-	//=======================================================================
-	/// \brief The possible type qualifiers.
-	enum TypeQualifier {
-		TyQualNone,           ///< The 'default' qualifier.
-		TyQualConstant,       ///< The value is const (i.e. non-assignable).
-		TyQualStatic,         ///< The value is static (i.e. it's 
-						      ///< value should be available at link.
-		TyQualInvalid = -1,   ///< An 'invalid' qualifier.
-	};
 
-	TypeQualifier    Qualifier;
+	KernelTypeQualifier    Qualifier;
 	KernelTypeSpecifier   Specifier;
 
 	/// The constructor defines the default values.
 	inline FullType()
 			: Qualifier( TyQualInvalid ), Specifier( TySpecInvalid ) { }
-	inline FullType( TypeQualifier q, KernelTypeSpecifier s )
+	inline FullType( KernelTypeQualifier q, KernelTypeSpecifier s )
 			: Qualifier( q ), Specifier( s ) { }
 
 	/// Return a flag indicating the validity of the passed type.
@@ -91,7 +92,7 @@ struct FullType {
 			return true;
 		}
 
-		if ( Qualifier == FullType::TyQualConstant ) {
+		if ( Qualifier == Firtree::TyQualConstant ) {
 			if ( t.Specifier == Specifier ) {
 				return true;
 			}

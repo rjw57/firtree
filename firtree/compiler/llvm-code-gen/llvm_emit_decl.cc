@@ -615,15 +615,15 @@ void EmitDeclarations::constructPrototypeStruct(
 
 			// Samplers must be static.
 			if ( ( new_param.Type.Specifier == Firtree::TySpecSampler ) &&
-			   ( new_param.Type.Qualifier != FullType::TyQualStatic ) ) {
+			   ( new_param.Type.Qualifier != Firtree::TyQualStatic ) ) {
 				// Auto promote parameters
-				new_param.Type.Qualifier = FullType::TyQualStatic;
+				new_param.Type.Qualifier = Firtree::TyQualStatic;
 				FIRTREE_LLVM_WARNING( m_Context, param_decl,
 						"Automatically making sampler parameter static.");
 			}
 
 			// Static parameters must be 'in'
-			if( ( new_param.Type.Qualifier == FullType::TyQualStatic ) &&
+			if( ( new_param.Type.Qualifier == Firtree::TyQualStatic ) &&
 					(new_param.Direction != FunctionParameter::FuncParamIn) )
 			{
 					FIRTREE_LLVM_ERROR( m_Context, param_decl,

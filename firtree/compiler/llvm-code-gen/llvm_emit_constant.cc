@@ -48,7 +48,7 @@ FullType ConstantExpressionValue::GetType() const
 {
 	FullType return_value;
 	return_value.Qualifier = 
-		m_IsStatic ? FullType::TyQualStatic : FullType::TyQualConstant;
+		m_IsStatic ? Firtree::TyQualStatic : Firtree::TyQualConstant;
 
 	const llvm::Type* type = GetLLVMValue()->getType();
 

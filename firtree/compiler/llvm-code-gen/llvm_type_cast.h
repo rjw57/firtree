@@ -26,7 +26,7 @@ class TypeCaster
 		static ExpressionValue* CastValue( LLVMContext* context,
 		                                   PT_Term term,
 		                                   const ExpressionValue* source,
-		                                   TypeSpecifier type );
+		                                   KernelTypeSpecifier type );
 
 		/// Return true if the FullType source can be implicitly cast to
 		/// dest.

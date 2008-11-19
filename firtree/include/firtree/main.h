@@ -189,7 +189,7 @@ void    Trace(const char* file, int line, const char* func, const char* format, 
 ///
 /// Note that during code generation, the '__color' type is aliased to
 /// vec4 and the sampler type is aliased to const int.
-enum TypeSpecifier {
+enum KernelTypeSpecifier {
     TySpecFloat,          ///< A 32-bit floating point.
     TySpecInt,            ///< A 32-bit signed integet.
     TySpecBool,           ///< A 1-bit boolean.

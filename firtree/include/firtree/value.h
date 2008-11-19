@@ -45,7 +45,7 @@ class Value : public ReferenceCounted
         static Value* CreateVectorValue(float x, float y, float z, float w);
         static Value* CreateVectorValue(float* v, int num_components);
 
-        inline TypeSpecifier GetType() const { return m_Type; }
+        inline KernelTypeSpecifier GetType() const { return m_Type; }
 
         void SetFloatValue(float v);
         void SetIntValue(int v);
@@ -70,7 +70,7 @@ class Value : public ReferenceCounted
     private:
         float               m_FloatingPointComponents[4];
         int                 m_IntegerValue;
-        TypeSpecifier       m_Type;
+        KernelTypeSpecifier       m_Type;
 };
 
 }

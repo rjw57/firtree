@@ -62,7 +62,7 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 
 				// If both sides are scalars then decide on the
 				// greatest common denominator type
-				TypeSpecifier gcd_type;
+				KernelTypeSpecifier gcd_type;
 
 				if (( left_in_type.Specifier == Firtree::TySpecFloat ) ||
 				        ( right_in_type.Specifier == Firtree::TySpecFloat ) ) {

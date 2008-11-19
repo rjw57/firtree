@@ -48,12 +48,12 @@ struct FullType {
 	};
 
 	TypeQualifier    Qualifier;
-	TypeSpecifier   Specifier;
+	KernelTypeSpecifier   Specifier;
 
 	/// The constructor defines the default values.
 	inline FullType()
 			: Qualifier( TyQualInvalid ), Specifier( TySpecInvalid ) { }
-	inline FullType( TypeQualifier q, TypeSpecifier s )
+	inline FullType( TypeQualifier q, KernelTypeSpecifier s )
 			: Qualifier( q ), Specifier( s ) { }
 
 	/// Return a flag indicating the validity of the passed type.
@@ -65,7 +65,7 @@ struct FullType {
 	/// Static initialiser from a perse tree qualifier and specifier. If
 	/// the qualifier is NULL, it is assumed to be TyQualNone.
 	static FullType FromQualiferAndSpecifier( firtreeTypeQualifier qual,
-	        firtreeTypeSpecifier spec );
+	        firtreeKernelTypeSpecifier spec );
 
 	/// Static initialiser from a perse tree fully specified type.
 	static FullType FromFullySpecifiedType( firtreeFullySpecifiedType t );

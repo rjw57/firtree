@@ -33,6 +33,8 @@ namespace Firtree {
 
 // We have our own glext.h - style function defs here so we don't have to rely
 // on them being provided.
+///@{
+/// A set of types representing various OpenGL entry points.
 typedef void (*PFNGLBINDTEXTUREPROC) (GLenum, GLuint);
 typedef void (*PFNGLGETTEXLEVELPARAMETERIVPROC) (GLenum, GLint, GLenum, GLint*);
 typedef void (*PFNGLGETTEXIMAGEPROC) (GLenum, GLint, GLenum, GLenum, GLvoid*);
@@ -124,6 +126,7 @@ typedef void (*PFNGLGETACTIVEUNIFORMARBPROC) (GLhandleARB, GLuint index, GLsizei
 typedef void (*PFNGLGETUNIFORMFVARBPROC) (GLhandleARB, GLint, GLfloat *);
 typedef void (*PFNGLGETUNIFORMIVARBPROC) (GLhandleARB, GLint, GLint *);
 typedef void (*PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
+/// @}
 
 namespace Internal { 
     template<typename Key> class LRUCache;
@@ -159,6 +162,9 @@ class OpenGLContext : public ReferenceCounted
         // ====================================================================
         // PUBLIC FUNCTION POINTER METHODS
 
+        ///
+        /// @{
+        /// Function pointers to OpenGL API entry points for this context.
         PFNGLBINDTEXTUREPROC                glBindTexture;
         PFNGLGETTEXLEVELPARAMETERIVPROC     glGetTexLevelParameteriv;
         PFNGLGETTEXIMAGEPROC                glGetTexImage;
@@ -218,6 +224,7 @@ class OpenGLContext : public ReferenceCounted
         PFNGLUNIFORM3FARBPROC               glUniform3fARB;
         PFNGLUNIFORM4FARBPROC               glUniform4fARB;
         PFNGLDELETEOBJECTARBPROC            glDeleteObjectARB;
+        /// @}
 
     public:
         virtual ~OpenGLContext();

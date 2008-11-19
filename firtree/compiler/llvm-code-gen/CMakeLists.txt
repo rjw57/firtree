@@ -16,8 +16,6 @@ SET(LLVM_CODE_GEN_HEADERS
   prodnames.incl
   llvm_frontend.h       llvm_emit_decl.h  llvm_type_cast.h
   llvm_emit_constant.h  llvm_private.h
-
-  compiler.h
 )
 
 SET(LLVM_CODE_GEN_SOURCES
@@ -33,7 +31,7 @@ SET(LLVM_CODE_GEN_SOURCES
   llvm_emit_function_call.cc  llvm_type_cast.cc
   llvm_emit_negate.cc         symbol_table.cc
 
-  compiler.cc
+  llvm_compiled_kernel.cc
 )
 
 INCLUDE_DIRECTORIES(${STYX_INCLUDE_DIR})

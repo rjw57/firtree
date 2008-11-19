@@ -1,7 +1,7 @@
 //===========================================================================
 /// \file compiler.cpp Interface to LLVM-based compiler.
 
-#include "compiler.h"
+#include <firtree/compiler/llvm_compiled_kernel.h>
 
 #include "stdosx.h"  // General Definitions (for gcc)
 #include "ptm_gen.h" // General Parsing Routines
@@ -30,8 +30,7 @@
 
 using namespace llvm;
 
-namespace Firtree
-{
+namespace Firtree { namespace LLVM {
 	
 //===========================================================================
 // A class to take a set of source lines and return one character at a 
@@ -111,7 +110,7 @@ static int GetNextChar(void* reader)
 static uint32_t g_ModuleInitCount = 0;
 
 //===========================================================================
-LLVMCompiledKernel::LLVMCompiledKernel()
+CompiledKernel::CompiledKernel()
 	:	ReferenceCounted()
 	,	m_CurrentFrontend(NULL)
 	,	m_Log(NULL)
@@ -129,7 +128,7 @@ LLVMCompiledKernel::LLVMCompiledKernel()
 }
 
 //===========================================================================
-LLVMCompiledKernel::~LLVMCompiledKernel()
+CompiledKernel::~CompiledKernel()
 {
 	if(m_Log != NULL)
 	{
@@ -152,13 +151,13 @@ LLVMCompiledKernel::~LLVMCompiledKernel()
 }
 
 //===========================================================================
-LLVMCompiledKernel* LLVMCompiledKernel::Create()
+CompiledKernel* CompiledKernel::Create()
 {
-	return new LLVMCompiledKernel();
+	return new CompiledKernel();
 }
 
 //===========================================================================
-bool LLVMCompiledKernel::Compile(const char* const* source_lines, 
+bool CompiledKernel::Compile(const char* const* source_lines, 
 		int source_line_count)
 {
 	// Free any existing frontend.
@@ -240,7 +239,7 @@ bool LLVMCompiledKernel::Compile(const char* const* source_lines,
 }
 
 //===========================================================================
-bool LLVMCompiledKernel::GetCompileStatus() const
+bool CompiledKernel::GetCompileStatus() const
 {
 	if(m_CurrentFrontend == NULL)
 	{
@@ -251,7 +250,7 @@ bool LLVMCompiledKernel::GetCompileStatus() const
 }
 
 //===========================================================================
-const char* const* LLVMCompiledKernel::GetCompileLog(uint32_t* log_line_count)
+const char* const* CompiledKernel::GetCompileLog(uint32_t* log_line_count)
 {
 	if(log_line_count != NULL)
 	{
@@ -261,7 +260,7 @@ const char* const* LLVMCompiledKernel::GetCompileLog(uint32_t* log_line_count)
 }
 
 //===========================================================================
-void LLVMCompiledKernel::DumpInitialLLVM() const
+void CompiledKernel::DumpInitialLLVM() const
 {
 	llvm::Module* m = GetCompiledModule();
 	if(m == NULL)
@@ -273,7 +272,7 @@ void LLVMCompiledKernel::DumpInitialLLVM() const
 }
 
 //===========================================================================
-llvm::Module* LLVMCompiledKernel::GetCompiledModule() const
+llvm::Module* CompiledKernel::GetCompiledModule() const
 {
 	if(m_CurrentFrontend == NULL)
 	{
@@ -290,19 +289,19 @@ llvm::Module* LLVMCompiledKernel::GetCompiledModule() const
 }
 
 //===========================================================================
-void LLVMCompiledKernel::SetDoOptimization(bool flag) 
+void CompiledKernel::SetDoOptimization(bool flag) 
 {
 	m_OptimiseLLVM = flag;
 }
 
 //===========================================================================
-bool LLVMCompiledKernel::GetDoOptimization() const
+bool CompiledKernel::GetDoOptimization() const
 {
 	return m_OptimiseLLVM;
 }
 
 //===========================================================================
-void LLVMCompiledKernel::RunOptimiser() 
+void CompiledKernel::RunOptimiser() 
 {
 	llvm::Module* m = m_CurrentFrontend->GetCompiledModule();
 	if(m == NULL)
@@ -368,6 +367,6 @@ void LLVMCompiledKernel::RunOptimiser()
 	PM.run(*m);
 }
 
-} // namespace Firtree
+} } // namespace Firtree::LLVM
 
 // vim:sw=4:ts=4:cindent:noet

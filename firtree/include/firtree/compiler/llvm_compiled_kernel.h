@@ -1,29 +1,29 @@
 //===========================================================================
 /// \file compiler.h Interface to LLVM-based compiler.
 
-#ifndef __FIRTREE_COMPILER_H
-#define __FIRTREE_COMPILER_H
+#ifndef __FIRTREE_LLVM_COMPILED_KERNEL_H
+#define __FIRTREE_LLVM_COMPILED_KERNEL_H
 
 #include <firtree/main.h>
 
 namespace llvm { class Module; }
 
-namespace Firtree
-{
+namespace Firtree { class LLVMFrontend; }
 
-class LLVMFrontend;
+namespace Firtree { namespace LLVM {
 
 //===========================================================================
 /// \brief Main LLVM-based compiler interface.
-class LLVMCompiledKernel : public ReferenceCounted
+class CompiledKernel : public ReferenceCounted
 {
 	protected:
-		LLVMCompiledKernel();
-		virtual ~LLVMCompiledKernel();
+		CompiledKernel();
+		virtual ~CompiledKernel();
 
 	public:
-		/// Create a new LLVMCompiledKernelFrontend. Call Release() to free it.
-		static LLVMCompiledKernel* Create();
+		/// Create a new CompiledKernelFrontend. Call Release() to free
+		/// it.
+		static CompiledKernel* Create();
 
 		/// \brief Attempt to compile source code. 
 		/// The source code consists of one or more lines pointed to 
@@ -49,11 +49,13 @@ class LLVMCompiledKernel : public ReferenceCounted
 		/// \brief Dump the compiled LLVM
 		void DumpInitialLLVM() const;
 
+		/// @{
 		/// \brief Control whether optimisation is performed.
 		/// By default an optimisation pass over the compiled LLVM
 		/// is performed.
 		void SetDoOptimization(bool flag);
 		bool GetDoOptimization() const;
+		/// @}
 
 		/// Get the compiled LLVM module.
 		llvm::Module* GetCompiledModule() const;
@@ -68,8 +70,8 @@ class LLVMCompiledKernel : public ReferenceCounted
 		bool					m_OptimiseLLVM;
 };
 
-} // namespace Firtree
+} } // namespace Firtree::LLVM
 
-#endif // __FIRTREE_COMPILER_H 
+#endif // __FIRTREE_LLVM_COMPILED_KERNEL_H 
 
 // vim:sw=4:ts=4:cindent:noet

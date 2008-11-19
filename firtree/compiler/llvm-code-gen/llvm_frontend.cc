@@ -15,7 +15,7 @@ namespace Firtree
 
 //===========================================================================
 FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
-        firtreeKernelTypeSpecifier spec )
+        firtreeTypeSpecifier spec )
 {
 	FullType rv;
 
@@ -29,23 +29,23 @@ FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
 		rv.Qualifier = FullType::TyQualStatic;
 	}
 
-	if ( firtreeKernelTypeSpecifier_float( spec ) ) {
+	if ( firtreeTypeSpecifier_float( spec ) ) {
 		rv.Specifier = Firtree::TySpecFloat;
-	} else if ( firtreeKernelTypeSpecifier_int( spec ) ) {
+	} else if ( firtreeTypeSpecifier_int( spec ) ) {
 		rv.Specifier = Firtree::TySpecInt;
-	} else if ( firtreeKernelTypeSpecifier_bool( spec ) ) {
+	} else if ( firtreeTypeSpecifier_bool( spec ) ) {
 		rv.Specifier = Firtree::TySpecBool;
-	} else if ( firtreeKernelTypeSpecifier_vec2( spec ) ) {
+	} else if ( firtreeTypeSpecifier_vec2( spec ) ) {
 		rv.Specifier = Firtree::TySpecVec2;
-	} else if ( firtreeKernelTypeSpecifier_vec3( spec ) ) {
+	} else if ( firtreeTypeSpecifier_vec3( spec ) ) {
 		rv.Specifier = Firtree::TySpecVec3;
-	} else if ( firtreeKernelTypeSpecifier_vec4( spec ) ) {
+	} else if ( firtreeTypeSpecifier_vec4( spec ) ) {
 		rv.Specifier = Firtree::TySpecVec4;
-	} else if ( firtreeKernelTypeSpecifier_sampler( spec ) ) {
+	} else if ( firtreeTypeSpecifier_sampler( spec ) ) {
 		rv.Specifier = Firtree::TySpecSampler;
-	} else if ( firtreeKernelTypeSpecifier_color( spec ) ) {
+	} else if ( firtreeTypeSpecifier_color( spec ) ) {
 		rv.Specifier = Firtree::TySpecColor;
-	} else if ( firtreeKernelTypeSpecifier_void( spec ) ) {
+	} else if ( firtreeTypeSpecifier_void( spec ) ) {
 		rv.Specifier = Firtree::TySpecVoid;
 	}
 
@@ -56,7 +56,7 @@ FullType FullType::FromQualiferAndSpecifier( firtreeTypeQualifier qual,
 FullType FullType::FromFullySpecifiedType( firtreeFullySpecifiedType t )
 {
 	firtreeTypeQualifier qual = NULL;
-	firtreeKernelTypeSpecifier spec = NULL;
+	firtreeTypeSpecifier spec = NULL;
 
 	if ( firtreeFullySpecifiedType_unqualifiedtype( t, &spec ) ) {
 		/* nop */

@@ -569,7 +569,7 @@ void EmitDeclarations::constructPrototypeStruct(
 
 		firtreeTypeQualifier param_type_qual;
 		firtreeParameterDirectionQualifier param_qual;
-		firtreeKernelTypeSpecifier param_type_spec;
+		firtreeTypeSpecifier param_type_spec;
 		firtreeParameterIdentifierOpt param_identifier;
 
 		if ( firtreeParameterDeclaration_parameterdeclaration( param_decl,

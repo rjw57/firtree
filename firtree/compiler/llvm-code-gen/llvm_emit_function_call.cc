@@ -143,7 +143,7 @@ class FunctionCallEmitter : ExpressionEmitter
 		    firtreeFunctionSpecifier func_spec,
 		    std::vector<ExpressionValue*>& parameters ) {
 
-			firtreeKernelTypeSpecifier type_spec;
+			firtreeTypeSpecifier type_spec;
 			if ( !firtreeFunctionSpecifier_constructorfor(
 			            func_spec, &type_spec ) ) {
 				FIRTREE_LLVM_ICE( context, func_spec, "not a constructor." );

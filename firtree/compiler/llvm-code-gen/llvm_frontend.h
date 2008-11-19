@@ -65,7 +65,7 @@ struct FullType {
 	/// Static initialiser from a perse tree qualifier and specifier. If
 	/// the qualifier is NULL, it is assumed to be TyQualNone.
 	static FullType FromQualiferAndSpecifier( firtreeTypeQualifier qual,
-	        firtreeKernelTypeSpecifier spec );
+	        firtreeTypeSpecifier spec );
 
 	/// Static initialiser from a perse tree fully specified type.
 	static FullType FromFullySpecifiedType( firtreeFullySpecifiedType t );

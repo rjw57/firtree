@@ -83,7 +83,9 @@ RenderTextureContext::RenderTextureContext(uint32_t width, uint32_t height,
 
     // HACK: This should really be GL_RGBA32F_ARB but on older cards,
     // only the 8-bit version is supported.
-    CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width,
+    //CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width,
+    //            height, 0, GL_RGBA, GL_FLOAT, NULL) );
+    CHECK_GL( m_ParentContext, glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, width,
                 height, 0, GL_RGBA, GL_FLOAT, NULL) );
 
     CHECK_GL( m_ParentContext, glGenerateMipmapEXT(GL_TEXTURE_2D) );

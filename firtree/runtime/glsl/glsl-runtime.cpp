@@ -21,6 +21,8 @@
 #include "glsl-runtime-priv.h"
 #include "sha1.h"
 
+#include <algorithm>
+
 // For the Apple implementation of GetProcAddress...
 #if defined(FIRTREE_APPLE)
 #include <mach-o/dyld.h>
@@ -1947,6 +1949,7 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
             renderRect.Size.Width, renderRect.Size.Height);
 
 #if 1
+    
     // We don't use CHECK_GL here because calling glGetError() between
     // glBegin()/glEnd() itself is an error.
     m_OpenGLContext->glBegin(GL_QUADS);
@@ -1970,14 +1973,14 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     // HACK: display render rectangle
 #if 0
-    CHECK_GL( glColor3f(1,1,0) );
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(renderRect.MinX(), renderRect.MinY());
-    glVertex2f(renderRect.MinX(), renderRect.MaxY());
-    glVertex2f(renderRect.MaxX(), renderRect.MaxY());
-    glVertex2f(renderRect.MaxX(), renderRect.MinY());
-    glVertex2f(renderRect.MinX(), renderRect.MinY());
-    CHECK_GL( glEnd() );
+    //CHECK_GL( m_OpenGLContext, glColor3f(1,1,0) );
+    m_OpenGLContext->glBegin(GL_LINE_STRIP);
+    m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MinY());
+    m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MinY());
+    m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MinY());
+    CHECK_GL( m_OpenGLContext, glEnd() );
 #endif
 
     m_OpenGLContext->End();

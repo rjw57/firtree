@@ -20,3 +20,9 @@ examples/simple-glsl/simple-glsl
 ./doc/latex
 testing/output/*
 testing/results.html
+bindings/python/firtree-pythonPYTHON_wrap.h
+firtree/compiler/compiletest
+firtree/compiler/parser/ctoh.cth
+firtree/compiler/parser/firtree.abs
+firtree/compiler/parser/*.c
+firtree/compiler/parser/*.h

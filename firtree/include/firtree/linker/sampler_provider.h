@@ -9,9 +9,8 @@
 
 #include <firtree/main.h>
 
-#include "../compiler/llvm-code-gen/llvm_frontend.h"
-
-#include <map>
+#include <vector>
+#include <string>
 
 namespace llvm { class Function; }
 
@@ -78,7 +77,11 @@ class SamplerProvider : public ReferenceCounted
 
 		/// Return the type of the named parameter. Throws an error if
 		/// the parameter doesn't exist. 
-		virtual FullType GetParameterType(const char* name) const = 0;
+		virtual KernelTypeSpecifier GetParameterType(
+				const char* name) const = 0;
+
+		/// Return a flag which is true if the named parameter is static.
+		virtual bool IsParameterStatic(const char* name) const = 0;
 
 		/// Return a reference to a vector of parameter names.
 		virtual const std::vector<std::string>& GetParameterNames() 

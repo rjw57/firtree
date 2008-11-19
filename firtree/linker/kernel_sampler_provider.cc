@@ -21,6 +21,8 @@
 #include <firtree/main.h>
 #include <firtree/linker/sampler_provider.h>
 
+#include "../compiler/llvm-code-gen/llvm_frontend.h"
+
 namespace llvm { class Module; }
 
 namespace Firtree { class LLVMFrontend; }

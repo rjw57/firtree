@@ -10,9 +10,9 @@
 #include "hmap.h"    // Datatype: Finite Maps
 #include "symbols.h" // Datatype: Symbols
 
-#include "styx/firtree_int.h" // grammar interface
-#include "styx/firtree_lim.h" // scanner table
-#include "styx/firtree_pim.h" // parser  table
+#include "../parser/firtree_int.h" // grammar interface
+#include "../parser/firtree_lim.h" // scanner table
+#include "../parser/firtree_pim.h" // parser  table
 
 #include "llvm_frontend.h"
 
@@ -111,7 +111,7 @@ static int GetNextChar(void* reader)
 static uint32_t g_ModuleInitCount = 0;
 
 //===========================================================================
-Compiler::Compiler()
+LLVMCompiledKernel::LLVMCompiledKernel()
 	:	ReferenceCounted()
 	,	m_CurrentFrontend(NULL)
 	,	m_Log(NULL)
@@ -129,7 +129,7 @@ Compiler::Compiler()
 }
 
 //===========================================================================
-Compiler::~Compiler()
+LLVMCompiledKernel::~LLVMCompiledKernel()
 {
 	if(m_Log != NULL)
 	{
@@ -152,13 +152,13 @@ Compiler::~Compiler()
 }
 
 //===========================================================================
-Compiler* Compiler::Create()
+LLVMCompiledKernel* LLVMCompiledKernel::Create()
 {
-	return new Compiler();
+	return new LLVMCompiledKernel();
 }
 
 //===========================================================================
-bool Compiler::Compile(const char* const* source_lines, 
+bool LLVMCompiledKernel::Compile(const char* const* source_lines, 
 		int source_line_count)
 {
 	// Free any existing frontend.
@@ -240,7 +240,7 @@ bool Compiler::Compile(const char* const* source_lines,
 }
 
 //===========================================================================
-bool Compiler::GetCompileStatus() const
+bool LLVMCompiledKernel::GetCompileStatus() const
 {
 	if(m_CurrentFrontend == NULL)
 	{
@@ -251,7 +251,7 @@ bool Compiler::GetCompileStatus() const
 }
 
 //===========================================================================
-const char* const* Compiler::GetCompileLog(uint32_t* log_line_count)
+const char* const* LLVMCompiledKernel::GetCompileLog(uint32_t* log_line_count)
 {
 	if(log_line_count != NULL)
 	{
@@ -261,7 +261,7 @@ const char* const* Compiler::GetCompileLog(uint32_t* log_line_count)
 }
 
 //===========================================================================
-void Compiler::DumpInitialLLVM() const
+void LLVMCompiledKernel::DumpInitialLLVM() const
 {
 	llvm::Module* m = GetCompiledModule();
 	if(m == NULL)
@@ -273,7 +273,7 @@ void Compiler::DumpInitialLLVM() const
 }
 
 //===========================================================================
-llvm::Module* Compiler::GetCompiledModule() const
+llvm::Module* LLVMCompiledKernel::GetCompiledModule() const
 {
 	if(m_CurrentFrontend == NULL)
 	{
@@ -290,19 +290,19 @@ llvm::Module* Compiler::GetCompiledModule() const
 }
 
 //===========================================================================
-void Compiler::SetDoOptimization(bool flag) 
+void LLVMCompiledKernel::SetDoOptimization(bool flag) 
 {
 	m_OptimiseLLVM = flag;
 }
 
 //===========================================================================
-bool Compiler::GetDoOptimization() const
+bool LLVMCompiledKernel::GetDoOptimization() const
 {
 	return m_OptimiseLLVM;
 }
 
 //===========================================================================
-void Compiler::RunOptimiser() 
+void LLVMCompiledKernel::RunOptimiser() 
 {
 	llvm::Module* m = m_CurrentFrontend->GetCompiledModule();
 	if(m == NULL)

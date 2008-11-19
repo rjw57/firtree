@@ -5,8 +5,8 @@
 /* Copyright (c) 2000 by Doelle, Manns                                      */
 /* ------------------------------------------------------------------------ */
 
-#include "../compiler.h"
-#include "../glsl-target/glsl-target.h"
+#include <compiler.h>
+#include "../targets/glsl/glsl-target.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/PassManager.h"
@@ -48,7 +48,7 @@ int compile_kernel( const char* fileid )
   close(fd);
 
 #if 0
-  Firtree::Compiler* time_compiler = Firtree::Compiler::Create();
+  Firtree::LLVMCompiledKernel* time_compiler = Firtree::LLVMCompiledKernel::Create();
   Firtree::GLSLTarget* time_glsl_target = Firtree::GLSLTarget::Create();
   for(int i=0; i<1000; i++)
   {
@@ -62,7 +62,7 @@ int compile_kernel( const char* fileid )
   FIRTREE_SAFE_RELEASE(time_glsl_target);
 #endif
 
-  Firtree::Compiler* compiler = Firtree::Compiler::Create();
+  Firtree::LLVMCompiledKernel* compiler = Firtree::LLVMCompiledKernel::Create();
   compiler->SetDoOptimization(g_OptimizeLLVM);
 
   bool status = compiler->Compile(&file_contents, 1);

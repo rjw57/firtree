@@ -15,15 +15,15 @@ class LLVMFrontend;
 
 //===========================================================================
 /// \brief Main LLVM-based compiler interface.
-class Compiler : public ReferenceCounted
+class LLVMCompiledKernel : public ReferenceCounted
 {
 	protected:
-		Compiler();
-		virtual ~Compiler();
+		LLVMCompiledKernel();
+		virtual ~LLVMCompiledKernel();
 
 	public:
-		/// Create a new CompilerFrontend. Call Release() to free it.
-		static Compiler* Create();
+		/// Create a new LLVMCompiledKernelFrontend. Call Release() to free it.
+		static LLVMCompiledKernel* Create();
 
 		/// \brief Attempt to compile source code. 
 		/// The source code consists of one or more lines pointed to 

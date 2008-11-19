@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
-#include "styx/firtree_int.h"
+#include <firtree_int.h>
 
 // STL templates
 #include <vector>

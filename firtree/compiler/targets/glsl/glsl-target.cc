@@ -3,7 +3,7 @@
 
 #include "glsl-target.h"
 
-#include "../llvm_frontend.h"
+#include <llvm_frontend.h>
 
 #include "llvm/ADT/hash_map"
 #include "llvm/Support/InstVisitor.h"

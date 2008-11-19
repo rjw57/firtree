@@ -1,4 +1,8 @@
 # - Find LLVM
+# Set the following variables on entry
+#
+#  LLVM_CONFIG_COMPONENTS (optional) - list of components to use.
+#
 # This module finds an installed LLVM. It sets the following variables:
 #  LLVM_FOUND - set to true if LLVM is found
 #  LLVM_VERSION - set to the LLVM version.
@@ -13,7 +17,7 @@
 FIND_PROGRAM(LLVM_CONFIG_EXECUTABLE llvm-config)
 
 MACRO(LLVM_RUN_CONFIG arg outvar)
-  EXECUTE_PROCESS(COMMAND "${LLVM_CONFIG_EXECUTABLE}" "${arg}"
+  EXECUTE_PROCESS(COMMAND "${LLVM_CONFIG_EXECUTABLE}" ${LLVM_CONFIG_COMPONENTS} "${arg}"
     OUTPUT_VARIABLE ${outvar}
     ERROR_VARIABLE LLVM_llvm_config_error
     RESULT_VARIABLE LLVM_llvm_config_result)

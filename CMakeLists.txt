@@ -55,9 +55,6 @@ ADD_SUBDIRECTORY(testing)
 # The third partuy frameworks
 ADD_SUBDIRECTORY(third-party)
 
-# The llvm-based kernel language frontend
-ADD_SUBDIRECTORY(llvm-frontend)
-
 # The kernel language frontend
 ADD_SUBDIRECTORY(glsl-frontend)
 

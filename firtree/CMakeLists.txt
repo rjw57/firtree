@@ -6,6 +6,9 @@
 
 # This file builds the main Firtree library.
 
+# Build the compiler
+ADD_SUBDIRECTORY(compiler)
+
 # Find required libraries.
 FIND_PACKAGE(OpenGL)
 FIND_PACKAGE(OSMesa)
@@ -114,6 +117,7 @@ ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 TARGET_LINK_LIBRARIES(firtree 
 	selog
 	${FIRTREE_TARGET_LIBRARIES}
+	llvm-code-gen glsl-target
 	compiler glslang frontend irbackend glslbackend)
 
 # Set the version and soversion properties for Firtree

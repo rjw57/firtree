@@ -12,7 +12,7 @@
 
 #include "llvm/DerivedTypes.h"
 
-#include "styx/firtree_int.h"
+#include "../parser/firtree_int.h"
 
 namespace Firtree
 {

@@ -24,6 +24,7 @@
 #include <map>
 
 #include <firtree/main.h>
+#include <firtree/compiler/llvm_compiled_kernel.h>
 
 namespace Firtree
 {
@@ -224,7 +225,8 @@ class LLVMFrontend
 	public:
 		/// Construct the backend by passing it the top-level translation
 		/// unit node.
-		LLVMFrontend( firtree top_level_term );
+		LLVMFrontend( firtree top_level_term,
+				std::vector<LLVM::KernelFunction>* kernel_vector = NULL );
 
 		virtual ~LLVMFrontend();
 

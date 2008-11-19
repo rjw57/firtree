@@ -287,6 +287,33 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	m_Context->Function = F;
 	m_Context->CurrentPrototype = &prototype;
 
+	// If this prototype happens to be a kernel, and the context's
+	// KernelVector field is non-NULL, record details of this kernel.
+	if((m_Context->KernelVector != NULL) && 
+			(prototype.Qualifier == FunctionPrototype::FuncQualKernel))
+	{
+		LLVM::KernelFunction kernel_record;
+
+		kernel_record.Name = symbolToString(prototype.Name);
+		kernel_record.Function = prototype.LLVMFunction;
+	
+		// Add parameters
+		std::vector<FunctionParameter>::const_iterator it =
+			prototype.Parameters.begin();
+		for( ; it != prototype.Parameters.end(); ++it)
+		{
+			LLVM::KernelParameter kernel_param_record;
+
+			kernel_param_record.Name = symbolToString(it->Name);
+			kernel_param_record.Type = it->Type.Specifier;
+			kernel_param_record.IsStatic = it->Type.IsStatic();
+
+			kernel_record.Parameters.push_back(kernel_param_record);
+		}
+
+		m_Context->KernelVector->push_back(kernel_record);
+	}
+
 	// Create a basic block for this function
 	BasicBlock *BB = LLVM_CREATE( BasicBlock, "entry", F );
 	m_Context->BB = BB;

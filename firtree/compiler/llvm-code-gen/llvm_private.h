@@ -169,7 +169,7 @@ struct LLVMContext {
 	llvm::BasicBlock*     BB;
 
 	///                   The backend which is generating the code.
-	LLVMFrontend*          Backend;
+	LLVMFrontend*         Backend;
 
 	///                   The current symbol table for the function.
 	SymbolTable*          Variables;
@@ -177,6 +177,12 @@ struct LLVMContext {
 	///					  A pointer to the FunctionPrototype structure
 	///					  associated with the current function.
 	FunctionPrototype*	  CurrentPrototype;
+
+	///					  A pointer to a vector of KernelFunction structs
+	///					  which should be populated with information on
+	///                   the passed kernels. This can be NULL in which
+	///                   case it is ignored.
+	std::vector<LLVM::KernelFunction>* KernelVector;
 
 	/// A multimap between function identifier (as a symbol) and it's
 	/// prototype. We use a multimap because we can have overloaded

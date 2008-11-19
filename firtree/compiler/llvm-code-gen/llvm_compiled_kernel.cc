@@ -171,6 +171,8 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 		delete m_CurrentFrontend;
 	}
 
+	m_Kernels.clear();
+
 	SourceReader source_reader(source_lines, source_line_count);
 
 	Scn_T scn;
@@ -202,7 +204,8 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	bool return_value = false;
 
 	if ( PT_errorCnt() == 0 ) {
-		m_CurrentFrontend = new Firtree::LLVMFrontend(( firtree )srcterm );
+		m_CurrentFrontend = new Firtree::LLVMFrontend(( firtree )srcterm,
+				&m_Kernels );
 
 		return_value = m_CurrentFrontend->GetCompilationSucceeded();
 
@@ -298,6 +301,12 @@ void CompiledKernel::SetDoOptimization(bool flag)
 bool CompiledKernel::GetDoOptimization() const
 {
 	return m_OptimiseLLVM;
+}
+
+//===========================================================================
+const std::vector<KernelFunction>& CompiledKernel::GetKernels() const
+{
+	return m_Kernels;
 }
 
 //===========================================================================

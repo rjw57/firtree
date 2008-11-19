@@ -123,13 +123,19 @@ CompileErrorException::~CompileErrorException()
 }
 
 //===========================================================================
-LLVMFrontend::LLVMFrontend( firtree top_level_term )
+LLVMFrontend::LLVMFrontend( firtree top_level_term,
+		std::vector<LLVM::KernelFunction>* kernel_vector)
 		: m_Status( true )
 {
 	// Create the context
 	m_LLVMContext = new LLVMContext();
 
 	m_LLVMContext->Backend = this;
+	m_LLVMContext->KernelVector = kernel_vector;
+	if(m_LLVMContext->KernelVector != NULL)
+	{
+		m_LLVMContext->KernelVector->clear();
+	}
 
 	// Create the LLVM module.
 	m_LLVMContext->Module = new Module( "kernel_module" );

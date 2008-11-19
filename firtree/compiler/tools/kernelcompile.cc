@@ -5,6 +5,7 @@
 /* Copyright (c) 2000 by Doelle, Manns                                      */
 /* ------------------------------------------------------------------------ */
 
+#include <firtree/main.h>
 #include <firtree/compiler/llvm_compiled_kernel.h>
 #include "../targets/glsl/glsl-target.h"
 
@@ -28,6 +29,42 @@ enum PrintOpt {
   PrintLLVM,
 };
 PrintOpt g_WhatToPrint = PrintGLSL;
+
+void printtype(std::ostream& output, Firtree::KernelTypeSpecifier type)
+{
+  switch(type) {
+    case Firtree::TySpecFloat:
+      output << "float";
+      break;
+    case Firtree::TySpecInt:
+      output << "int";
+      break;
+    case Firtree::TySpecBool:
+      output << "bool";
+      break;
+    case Firtree::TySpecVec2:
+      output << "vec2";
+      break;
+    case Firtree::TySpecVec3:
+      output << "vec3";
+      break;
+    case Firtree::TySpecVec4:
+      output << "vec4";
+      break;
+    case Firtree::TySpecSampler:
+      output << "sampler";
+      break;
+    case Firtree::TySpecColor:
+      output << "color";
+      break;
+    case Firtree::TySpecVoid:
+      output << "void";
+      break;
+    default:
+      output << "???";
+      break;
+  }
+}
 
 /* Main Program ------------------------------------------------------------ */
 
@@ -81,6 +118,24 @@ int compile_kernel( const char* fileid )
 
   if(status)
   {
+    std::vector<Firtree::LLVM::KernelFunction>::const_iterator it =
+      compiler->GetKernels().begin();
+    for( ; it != compiler->GetKernels().end(); ++it)
+    {
+      std::cerr << "Kernel '" << it->Name << "' - ";
+      std::cerr << it->Parameters.size() << " parameter(s)\n";
+
+      std::vector<Firtree::LLVM::KernelParameter>::const_iterator pit =
+        it->Parameters.begin();
+      for( ; pit != it->Parameters.end(); ++pit)
+      {
+        std::cerr << "  - Parameter '" << pit->Name << "' type: ";
+        printtype(std::cerr, pit->Type);
+        if(pit->IsStatic) { std::cerr << " (static)"; }
+        std::cerr << "\n";
+      }
+    }
+
     if(g_WhatToPrint == PrintLLVM) {
       llvm::PassManager Passes;
       Passes.add( new llvm::PrintModulePass(&llvm::cout) );

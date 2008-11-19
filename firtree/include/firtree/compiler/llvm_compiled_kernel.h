@@ -1,16 +1,48 @@
 //===========================================================================
-/// \file compiler.h Interface to LLVM-based compiler.
+/// \file llvm_compiled_kernel.h Interface to LLVM-based compiler.
 
 #ifndef __FIRTREE_LLVM_COMPILED_KERNEL_H
 #define __FIRTREE_LLVM_COMPILED_KERNEL_H
 
 #include <firtree/main.h>
+#include <vector>
+#include <string>
 
-namespace llvm { class Module; }
+namespace llvm { class Module; class Function; }
 
 namespace Firtree { class LLVMFrontend; }
 
 namespace Firtree { namespace LLVM {
+
+//===========================================================================
+/// \brief A structure decribing a kernel parameter.
+///
+/// A particular kernel function may take zero or more kernel parameters.
+/// This structure describes them.
+struct KernelParameter {
+	/// The name of this parameter.
+	std::string						Name;
+
+	/// The type of this parameter.
+	KernelTypeSpecifier				Type;
+
+	/// A flag indicating whether this parameter is static.
+	bool							IsStatic;
+};
+
+//===========================================================================
+/// \brief A structure describing a kernel.
+struct KernelFunction {
+	/// The name of this kernel.
+	std::string						Name;
+
+	/// The LLVM function which represents this kernel.
+	llvm::Function*					Function;
+
+	/// A vector of kernel parameters in the order they
+	/// should be passed to the kernel function.
+	std::vector<KernelParameter> 	Parameters;
+};
 
 //===========================================================================
 /// \brief Main LLVM-based compiler interface.
@@ -60,6 +92,10 @@ class CompiledKernel : public ReferenceCounted
 		/// Get the compiled LLVM module.
 		llvm::Module* GetCompiledModule() const;
 
+		/// Get a reference to a vector of kernels defined by the compiled
+		/// source.
+		const std::vector<KernelFunction>& GetKernels() const;
+
 	private:
 		void RunOptimiser();
 
@@ -68,6 +104,8 @@ class CompiledKernel : public ReferenceCounted
 		uint32_t				m_LogSize;
 
 		bool					m_OptimiseLLVM;
+
+		std::vector<KernelFunction>	m_Kernels;
 };
 
 } } // namespace Firtree::LLVM

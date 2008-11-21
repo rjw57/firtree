@@ -203,6 +203,22 @@ enum KernelTypeSpecifier {
 };
 
 // ============================================================================
+/// This class defines private copy and assignment constructors to make
+/// sure that certain classes are uncopiable.
+class Uncopiable {
+    protected:
+        Uncopiable() { }
+
+    private:
+        /// @{
+        /// Intentionally unimplemented so that attempts to copy
+        /// uncopiable classes cause at least linker errors.
+        Uncopiable(Uncopiable&);
+        const Uncopiable& operator = (Uncopiable&);
+        /// @}
+};
+
+// ============================================================================
 } // namespace Firtree 
 // ============================================================================
 

@@ -22,6 +22,7 @@
 #include <firtree/blob.h>
 #include <firtree/math.h>
 #include <firtree/kernel.h>
+#include <firtree/value.h>
 #include <firtree/glsl-runtime.h>
 
 using namespace Firtree;
@@ -117,6 +118,13 @@ using namespace Firtree;
 %newobject Firtree::ExtentProvider::CreateStandardExtentProvider;
 
 %newobject Firtree::RectComputeTransform;
+
+%newobject Firtree::Value::Create;
+%newobject Firtree::Value::CreateFloatValue;
+%newobject Firtree::Value::CreateIntValue;
+%newobject Firtree::Value::CreateBoolValue;
+%newobject Firtree::Value::CreateVectorValue;
+%newobject Firtree::Value::Clone;
 
 /* Some cleverness to allow us to wire up python callables
  * as an extent provider */

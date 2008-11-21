@@ -118,9 +118,9 @@ int compile_kernel( const char* fileid )
 
   if(status)
   {
-    std::vector<Firtree::LLVM::KernelFunction>::const_iterator it =
-      compiler->GetKernels().begin();
-    for( ; it != compiler->GetKernels().end(); ++it)
+    Firtree::LLVM::CompiledKernel::const_iterator it =
+      compiler->begin();
+    for( ; it != compiler->end(); ++it)
     {
       std::cerr << "Kernel '" << it->Name << "' - ";
       std::cerr << it->Parameters.size() << " parameter(s)\n";

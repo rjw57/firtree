@@ -171,7 +171,7 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 		delete m_CurrentFrontend;
 	}
 
-	m_Kernels.clear();
+	m_KernelList.clear();
 
 	SourceReader source_reader(source_lines, source_line_count);
 
@@ -205,7 +205,7 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 	if ( PT_errorCnt() == 0 ) {
 		m_CurrentFrontend = new Firtree::LLVMFrontend(( firtree )srcterm,
-				&m_Kernels );
+				&m_KernelList );
 
 		return_value = m_CurrentFrontend->GetCompilationSucceeded();
 
@@ -304,12 +304,6 @@ bool CompiledKernel::GetDoOptimization() const
 }
 
 //===========================================================================
-const std::vector<KernelFunction>& CompiledKernel::GetKernels() const
-{
-	return m_Kernels;
-}
-
-//===========================================================================
 void CompiledKernel::RunOptimiser() 
 {
 	llvm::Module* m = m_CurrentFrontend->GetCompiledModule();
@@ -328,16 +322,16 @@ void CompiledKernel::RunOptimiser()
 	PM.add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
 	PM.add(createCFGSimplificationPass());    // Clean up disgusting code
 	PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
-	PM.add(createGlobalOptimizerPass());      // Optimize out global vars
-	PM.add(createGlobalDCEPass());            // Remove unused fns and globs
+	//PM.add(createGlobalOptimizerPass());      // Optimize out global vars
+	//PM.add(createGlobalDCEPass());            // Remove unused fns and globs
 	PM.add(createIPConstantPropagationPass());// IP Constant Propagation
-	PM.add(createDeadArgEliminationPass());   // Dead argument elimination
+	//PM.add(createDeadArgEliminationPass());   // Dead argument elimination
 	PM.add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
 	PM.add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
 
 	PM.add(createPruneEHPass());              // Remove dead EH info
 
-	PM.add(createFunctionInliningPass());   // Inline small functions
+	//PM.add(createFunctionInliningPass());   // Inline small functions
 	PM.add(createArgumentPromotionPass());    // Scalarize uninlined fn args
 
 	PM.add(createTailDuplicationPass());      // Simplify cfg by copying code
@@ -358,7 +352,7 @@ void CompiledKernel::RunOptimiser()
 	PM.add(createIndVarSimplifyPass());       // Canonicalize indvars
 	PM.add(createLoopUnrollPass());           // Unroll small loops
 	PM.add(createInstructionCombiningPass()); // Clean up after the unroller
-	PM.add(createGVNPass());                  // Remove redundancies
+	//PM.add(createGVNPass());                  // Remove redundancies
 	PM.add(createSCCPPass());                 // Constant prop with SCCP
 
 	// Run instcombine after redundancy elimination to exploit opportunities

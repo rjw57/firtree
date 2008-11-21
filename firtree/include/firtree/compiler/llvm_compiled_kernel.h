@@ -7,6 +7,7 @@
 #include <firtree/main.h>
 #include <vector>
 #include <string>
+#include <map>
 
 namespace llvm { class Module; class Function; }
 
@@ -30,6 +31,9 @@ struct KernelParameter {
 	bool							IsStatic;
 };
 
+/// A vector of KernelParameters.
+typedef std::vector<KernelParameter> KernelParameterList;
+
 //===========================================================================
 /// \brief A structure describing a kernel.
 struct KernelFunction {
@@ -39,10 +43,22 @@ struct KernelFunction {
 	/// The LLVM function which represents this kernel.
 	llvm::Function*					Function;
 
-	/// A vector of kernel parameters in the order they
+	/// A list of kernel parameters in the order they
 	/// should be passed to the kernel function.
-	std::vector<KernelParameter> 	Parameters;
+	KernelParameterList 			Parameters;
+
+	/// Assignment operator (possibly overkill).
+	inline const KernelFunction& operator = (const KernelFunction& f)
+	{
+		Name = f.Name; 
+		Function = f.Function; 
+		Parameters = f.Parameters;
+		return *this;
+	}
 };
+
+/// A list of KernelFunctions.
+typedef std::vector<KernelFunction> KernelFunctionList;
 
 //===========================================================================
 /// \brief Main LLVM-based compiler interface.
@@ -53,6 +69,10 @@ class CompiledKernel : public ReferenceCounted
 		virtual ~CompiledKernel();
 
 	public:
+		/// A const iterator over the kernels. Each entry is a pair mapping
+		/// kernel name to kernel function structure.
+		typedef KernelFunctionList::const_iterator const_iterator;
+
 		/// Create a new CompiledKernelFrontend. Call Release() to free
 		/// it.
 		static CompiledKernel* Create();
@@ -94,7 +114,33 @@ class CompiledKernel : public ReferenceCounted
 
 		/// Get a reference to a vector of kernels defined by the compiled
 		/// source.
-		const std::vector<KernelFunction>& GetKernels() const;
+		inline const KernelFunctionList& GetKernels() const
+		{
+			return m_KernelList;
+		}
+
+		/// Return an iterator pointing to the start of the kernel 
+		/// function list.
+		inline const_iterator begin() const { 
+			return m_KernelList.begin();
+		}
+
+		/// Return an iterator pointing to the end of the kernel 
+		/// function list.
+		inline const_iterator end() const { 
+			return m_KernelList.end();
+		}
+
+		/// Return an iterator pointing to the kernel function map
+		/// entry with name 'name'. If no such function exists, returns
+		/// the same iterator as end().
+		inline const_iterator find(const std::string& name) const {
+			for(const_iterator i=begin(); i!=end(); ++i)
+			{
+				if(i->Name == name) { return i; }
+			}
+			return end();
+		}
 
 	private:
 		void RunOptimiser();
@@ -105,7 +151,7 @@ class CompiledKernel : public ReferenceCounted
 
 		bool					m_OptimiseLLVM;
 
-		std::vector<KernelFunction>	m_Kernels;
+		KernelFunctionList		m_KernelList;
 };
 
 } } // namespace Firtree::LLVM

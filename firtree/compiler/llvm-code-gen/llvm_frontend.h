@@ -226,7 +226,7 @@ class LLVMFrontend
 		/// Construct the backend by passing it the top-level translation
 		/// unit node.
 		LLVMFrontend( firtree top_level_term,
-				std::vector<LLVM::KernelFunction>* kernel_vector = NULL );
+				LLVM::KernelFunctionList* kernel_list = NULL );
 
 		virtual ~LLVMFrontend();
 

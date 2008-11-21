@@ -24,6 +24,7 @@
 //=============================================================================
 
 #include <firtree/main.h>
+#include <string.h>
 
 namespace Firtree {
     
@@ -57,6 +58,13 @@ class Value : public ReferenceCounted
 
         /// Create a 4D vector with specified components.
         static Value* CreateVectorValue(float x, float y, float z, float w);
+
+        /// Return a new Value with the same contents as this one.
+        inline Value* Clone() const {
+            Value* rv = Create();
+            memcpy(rv, this, sizeof(Value));
+            return rv;
+        }
 
         /// Create a nD vector with specified components. 'v' points to
         /// an array of component values and 'num_components' gives
@@ -107,6 +115,10 @@ class Value : public ReferenceCounted
         /// thrown.
         void SetVectorValue(float* v, int num_components);
 
+        /// Return the number of vector component values which are
+        /// defined.
+        unsigned GetArity() const;
+
         /// Return the vector component values via the passed pointers.
         /// If pz and/or pw are NULL, the z and/or w components are not
         /// returned.
@@ -119,8 +131,8 @@ class Value : public ReferenceCounted
         /// outside of the range (2,4).
         void GetVectorValue(float* dest, int expected_components) const;
 
-        /// Return a pointer to the internal array of vector components.
-        const float* GetVectorValue(uint32_t index) const;
+        /// Return a vector component value.
+        const float GetVectorValue(uint32_t index) const;
 
     private:
         float               m_FloatingPointComponents[4];

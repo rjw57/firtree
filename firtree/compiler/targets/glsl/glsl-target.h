@@ -24,7 +24,7 @@ class GLSLTarget : public ReferenceCounted
 		static GLSLTarget* Create();
 
 		/// Process the LLVM module passed.
-		const std::string& ProcessModule(llvm::Module* module,
+		const std::string& ProcessModule(const llvm::Module* module,
 				bool optimize = true);
 
 		/// Return a reference to the compiled GLSL

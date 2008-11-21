@@ -105,6 +105,26 @@ void Value::SetVectorValue(float* v, int num_components)
 }
 
 //===========================================================================
+unsigned Value::GetArity() const
+{
+    switch(m_Type) {
+        case Firtree::TySpecVec2:
+            return 2;
+            break;
+        case Firtree::TySpecVec3:
+            return 3;
+            break;
+        case Firtree::TySpecVec4:
+            return 3;
+            break;
+        default:
+            break;
+    }
+
+    return 1;
+}
+
+//===========================================================================
 void Value::GetVectorValue(float* px, float* py, float* pz, float* pw) const
 {
     if(px) { *px = m_FloatingPointComponents[0]; }
@@ -130,9 +150,13 @@ void Value::GetVectorValue(float* dest, int expected_components) const
 }
 
 //===========================================================================
-const float* Value::GetVectorValue(uint32_t index) const
+const float Value::GetVectorValue(uint32_t index) const
 {
-    return m_FloatingPointComponents;
+    if((index < 2) || (index > 4)) 
+    {
+        FIRTREE_ERROR("Invalid index for vector (%i).", index);
+    }
+    return m_FloatingPointComponents[index];
 }
 
 //===========================================================================

@@ -991,13 +991,15 @@ GLSLTarget* GLSLTarget::Create()
 }
 
 //===========================================================================
-const std::string& GLSLTarget::ProcessModule(llvm::Module* module, 
+const std::string& GLSLTarget::ProcessModule(const llvm::Module* module, 
 		bool optimize)
 {
 	GLSLVisitor visitor;
 
+	llvm::Module* non_const_module = const_cast<llvm::Module*>(module);
+
 	visitor.SetDoInlining(optimize);
-	visitor.runOnModule(*module);
+	visitor.runOnModule(*non_const_module);
 
 	m_CompiledGLSL = visitor.getOutputStream().str();
 

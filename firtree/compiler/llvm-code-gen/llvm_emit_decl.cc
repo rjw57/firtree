@@ -190,7 +190,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	switch( prototype.Qualifier )
 	{
 		case FunctionPrototype::FuncQualKernel:
-			linkage = Function::ExternalLinkage;
+			linkage = Function::InternalLinkage;
 			break;
 		case FunctionPrototype::FuncQualFunction:
 			linkage = Function::InternalLinkage;
@@ -289,7 +289,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// If this prototype happens to be a kernel, and the context's
 	// KernelVector field is non-NULL, record details of this kernel.
-	if((m_Context->KernelVector != NULL) && 
+	if((m_Context->KernelList != NULL) && 
 			(prototype.Qualifier == FunctionPrototype::FuncQualKernel))
 	{
 		LLVM::KernelFunction kernel_record;
@@ -311,7 +311,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 			kernel_record.Parameters.push_back(kernel_param_record);
 		}
 
-		m_Context->KernelVector->push_back(kernel_record);
+		m_Context->KernelList->push_back(kernel_record);
 	}
 
 	// Create a basic block for this function

@@ -178,11 +178,11 @@ struct LLVMContext {
 	///					  associated with the current function.
 	FunctionPrototype*	  CurrentPrototype;
 
-	///					  A pointer to a vector of KernelFunction structs
+	///					  A pointer to a list of KernelFunction structs
 	///					  which should be populated with information on
 	///                   the passed kernels. This can be NULL in which
 	///                   case it is ignored.
-	std::vector<LLVM::KernelFunction>* KernelVector;
+	LLVM::KernelFunctionList* KernelList;
 
 	/// A multimap between function identifier (as a symbol) and it's
 	/// prototype. We use a multimap because we can have overloaded

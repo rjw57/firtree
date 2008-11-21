@@ -124,17 +124,17 @@ CompileErrorException::~CompileErrorException()
 
 //===========================================================================
 LLVMFrontend::LLVMFrontend( firtree top_level_term,
-		std::vector<LLVM::KernelFunction>* kernel_vector)
+		LLVM::KernelFunctionList* kernel_list)
 		: m_Status( true )
 {
 	// Create the context
 	m_LLVMContext = new LLVMContext();
 
 	m_LLVMContext->Backend = this;
-	m_LLVMContext->KernelVector = kernel_vector;
-	if(m_LLVMContext->KernelVector != NULL)
+	m_LLVMContext->KernelList = kernel_list;
+	if(m_LLVMContext->KernelList != NULL)
 	{
-		m_LLVMContext->KernelVector->clear();
+		m_LLVMContext->KernelList->clear();
 	}
 
 	// Create the LLVM module.

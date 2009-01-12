@@ -178,6 +178,7 @@ static void EnsureContext(OpenGLContext* context)
 CompiledGLSLKernel::CompiledGLSLKernel(const char* source)
     :   Firtree::ReferenceCounted()
     ,   m_IsCompiled(false)
+    ,   m_CompileStatus(false)
 {
     this->SetSource(source);
 }
@@ -202,7 +203,7 @@ void CompiledGLSLKernel::SetSource(const char* source)
     m_Source = source;
     m_IsCompiled = false;
 
-    Compile();
+    m_CompileStatus = Compile();
 }
 
 //=============================================================================
@@ -217,7 +218,7 @@ Parameter* CompiledGLSLKernel::GetValueForKey(const char* key) const
 }
 
 //=============================================================================
-void CompiledGLSLKernel::Compile() 
+bool CompiledGLSLKernel::Compile() 
 {
     // Attempt to compile the kernel.
 
@@ -242,8 +243,8 @@ void CompiledGLSLKernel::Compile()
     m_InfoLog = c.GetInfoLog();
     if(!rv)
     {
-        FIRTREE_ERROR("Error compiling kernel:\n%s", m_InfoLog.c_str());
-        return;
+        // FIRTREE_ERROR("Error compiling kernel:\n%s", m_InfoLog.c_str());
+        return false;
     }
 
     m_CompiledGLSL = be.GetOutput();
@@ -307,6 +308,8 @@ void CompiledGLSLKernel::Compile()
     m_IsCompiled = true;
 
     UpdateBlockNameReplacedSourceCache();
+
+    return true;
 }
 
 //=============================================================================

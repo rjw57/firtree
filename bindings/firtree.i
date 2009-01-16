@@ -29,8 +29,14 @@ using namespace Firtree;
 %}
 
 %include "cdata.i" 
+%include "std_string.i" 
+%include "std_vector.i" 
 
 #ifdef SWIGPYTHON
+
+namespace std {
+  %template(stringList) vector<std::string>;
+}
 
 %apply unsigned int { uint32_t }
 %apply int { int32_t }

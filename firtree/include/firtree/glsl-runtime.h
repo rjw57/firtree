@@ -333,7 +333,9 @@ class GLRenderer : public ReferenceCounted {
         /// NULL if the image cannot be rendered (e.g. if it has
         /// infinite extent).
         /// The BitmapImageRep should be Release()-ed afterwards.
-        BitmapImageRep* CreateBitmapImageRepFromImage(Image* image);
+        BitmapImageRep* CreateBitmapImageRepFromImage(Image* image,
+                BitmapImageRep::PixelFormat format =
+                    BitmapImageRep::Float);
 
         /// Convenience wrapper which renders an image into a bitmap
         /// and writes it to a file. Returns false if the operation failed.

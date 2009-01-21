@@ -164,7 +164,8 @@ unsigned int TransformedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* TransformedImageImpl::CreateBitmapImageRep()
+Firtree::BitmapImageRep* TransformedImageImpl::CreateBitmapImageRep(
+        Firtree::BitmapImageRep::PixelFormat format)
 {
     // There are two cases here, a fast path where there is no addition
     // transform or cropping and we can simply return the base image's 
@@ -173,7 +174,7 @@ Firtree::BitmapImageRep* TransformedImageImpl::CreateBitmapImageRep()
 
     if(m_Transform->IsIdentity() && Rect2D::IsInfinite(m_CropRect))
     {
-        return m_BaseImage->CreateBitmapImageRep();
+        return m_BaseImage->CreateBitmapImageRep(format);
     }
 
     Firtree::Kernel* renderingKernel = Kernel::CreateFromSource(
@@ -189,7 +190,7 @@ Firtree::BitmapImageRep* TransformedImageImpl::CreateBitmapImageRep()
         FIRTREE_ERROR("Error creating rendering kernel for transformed image.");
     }
 
-    Firtree::BitmapImageRep* kir = ki->CreateBitmapImageRep();
+    Firtree::BitmapImageRep* kir = ki->CreateBitmapImageRep(format);
     Firtree::BitmapImageRep* retVal = 
         Firtree::BitmapImageRep::CreateFromBitmapImageRep(kir, false);
     FIRTREE_SAFE_RELEASE(kir);
@@ -227,9 +228,15 @@ TextureBackedImageImpl::GetPreferredRepresentation() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
+Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep(
+        Firtree::BitmapImageRep::PixelFormat format)
 {
     OpenGLContext* c = GetCurrentGLContext();
+
+    GLenum type = (format == Firtree::BitmapImageRep::Float) ?
+        GL_FLOAT : GL_UNSIGNED_BYTE;
+    size_t element_size = (format == Firtree::BitmapImageRep::Float) ?
+        sizeof(float) : 1;
 
     FIRTREE_DEBUG("Performance hint: copying GPU -> CPU.");
 
@@ -247,14 +254,14 @@ Firtree::BitmapImageRep* TextureBackedImageImpl::CreateBitmapImageRep()
     CHECK_GL( c, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w) );
     CHECK_GL( c, glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h) );
 
-    Blob* imageBlob = Blob::CreateWithLength(w*h*4*sizeof(float));
-    CHECK_GL( c, glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, 
+    Blob* imageBlob = Blob::CreateWithLength(w*h*4*element_size);
+    CHECK_GL( c, glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, type, 
                 (void*)(imageBlob->GetBytes())) );
     c->End();
 
     FIRTREE_SAFE_RELEASE(m_BitmapRep);
     m_BitmapRep = BitmapImageRep::Create(imageBlob,
-            w, h, w*4*sizeof(float), Firtree::BitmapImageRep::Float, false);
+            w, h, w*4*element_size, format, false);
     FIRTREE_SAFE_RELEASE(imageBlob);
 
     FIRTREE_SAFE_RETAIN(m_BitmapRep);
@@ -387,7 +394,8 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         InvalidateCache();
     }
 
-    Firtree::BitmapImageRep* bir = CreateBitmapImageRep();
+    Firtree::BitmapImageRep* bir = CreateBitmapImageRep(
+            Firtree::BitmapImageRep::Float);
 
     ctx->Begin();
 
@@ -633,8 +641,14 @@ AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep()
+Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep(
+        Firtree::BitmapImageRep::PixelFormat format)
 {
+    if(format != m_BitmapRep->Format)
+    {
+        FIRTREE_WARNING("Implicit bitmap format conversion not yet implemented.");
+    }
+
     return BitmapImageRep::CreateFromBitmapImageRep(m_BitmapRep, false);
 }
 
@@ -703,8 +717,16 @@ AffineTransform* ImageProviderImageImpl::GetTransformFromUnderlyingImage() const
 }
 
 //=============================================================================
-Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep()
+Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep(
+        Firtree::BitmapImageRep::PixelFormat format)
 {
+    // FIXME: Pass format down.
+    if(format != Firtree::BitmapImageRep::Float)
+    {
+        FIRTREE_ERROR("ImageProvider API needs updating to handle non-floating "
+                "point formats.");
+    }
+
     // TODO: Should probably make this method return a const BitmapImageRep.
     Firtree::BitmapImageRep* rv = 
         const_cast<Firtree::BitmapImageRep*>(m_ImageProvider->CreateImageRep());

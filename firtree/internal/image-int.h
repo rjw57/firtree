@@ -95,7 +95,8 @@ class ImageImpl : public Image
 
         /// Return a pointer to a BitmapImageRep structure containing this
         /// image.
-        virtual Firtree::BitmapImageRep* CreateBitmapImageRep() = 0;
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep(
+                Firtree::BitmapImageRep::PixelFormat format) = 0;
 
         ///@}
 
@@ -131,7 +132,8 @@ class TransformedImageImpl : public ImageImpl
         // MUTATING METHODS
 
         virtual unsigned int GetAsOpenGLTexture(OpenGLContext* ctx);
-        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep(
+                Firtree::BitmapImageRep::PixelFormat format);
 
     private:
         AffineTransform*        m_Transform;
@@ -158,7 +160,8 @@ class TextureBackedImageImpl : public ImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep(
+                Firtree::BitmapImageRep::PixelFormat format);
 
     private:
         Firtree::BitmapImageRep*     m_BitmapRep;
@@ -283,7 +286,8 @@ class BitmapImageImpl : public BitmapBackedImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep(
+                Firtree::BitmapImageRep::PixelFormat format);
 
     private:
         Firtree::BitmapImageRep*     m_BitmapRep;
@@ -311,7 +315,8 @@ class ImageProviderImageImpl : public BitmapBackedImageImpl
         // ====================================================================
         // MUTATING METHODS
 
-        virtual Firtree::BitmapImageRep* CreateBitmapImageRep();
+        virtual Firtree::BitmapImageRep* CreateBitmapImageRep(
+                Firtree::BitmapImageRep::PixelFormat format);
 
     private:
         ImageProvider*      m_ImageProvider;

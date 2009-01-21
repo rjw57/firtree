@@ -1791,6 +1791,34 @@ void GLRenderer::Clear(float r, float g, float b, float a)
 }
 
 //=============================================================================
+void GLRenderer::SetupMatrices()
+{
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->Begin();
+    }
+
+    float vp[4];
+    CHECK_GL( m_OpenGLContext, glGetFloatv(GL_VIEWPORT, vp) );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],
+                -1.0,1.0) );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->End();
+    }
+}
+
+//=============================================================================
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {

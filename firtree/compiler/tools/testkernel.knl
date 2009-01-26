@@ -1,30 +1,3 @@
-/* Builtins defined by library. */
-__builtin__ float max(float, float);
-__builtin__ vec2 max(vec2, vec2);
-__builtin__ vec3 max(vec3, vec3);
-__builtin__ vec4 max(vec4, vec4);
-__builtin__ vec2 destCoord();
-__builtin__ vec2 samplerCoord(static sampler);
-__builtin__ vec2 samplerTransform(static sampler,vec2);
-__builtin__ static vec2 samplerOrigin(static sampler);
-__builtin__ static vec2 samplerSize(static sampler);
-__builtin__ static vec4 samplerExtent(static sampler);
-__builtin__ vec4 sample(static sampler,vec2);
-__builtin__ float sin(float);
-__builtin__ vec2 sin(vec2);
-__builtin__ vec3 sin(vec3);
-__builtin__ vec4 sin(vec4);
-__builtin__ float cos(float);
-__builtin__ vec2 cos(vec2);
-__builtin__ vec3 cos(vec3);
-__builtin__ vec4 cos(vec4);
-__builtin__ vec2 sincos(float);
-__builtin__ vec2 cossin(float);
-__builtin__ float dot(vec2,vec2);
-__builtin__ float dot(vec3,vec3);
-__builtin__ float dot(vec4,vec4);
-__builtin__ vec4 unpremultiply(vec4);
-__builtin__ vec4 premultiply(vec4);
 
 kernel vec4 anotherKernel(static sampler src, vec2 offset)
 {
@@ -40,6 +13,4 @@ kernel vec4 desaturateKernel(static sampler src)
 }
 
 // vim:filetype=c:cindent:sw=2:ts=2:et
-
-
 

@@ -27,14 +27,18 @@
 #include "llvm/LinkAllPasses.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace llvm;
 
 namespace Firtree { namespace LLVM {
+
+#include "../builtins.h"
 	
 //===========================================================================
 // A class to take a set of source lines and return one character at a 
-// time.
+// time. Optionally it can concatenate it's output to that of one or more
+// SourceReader-s providing a 'header'.
 class SourceReader {
 	public:
 		SourceReader(const char* const* source_lines, 
@@ -43,6 +47,33 @@ class SourceReader {
 			,	m_CurrentCharIdx(0)
 			,	m_SourceLines(source_lines)
 			,	m_SourceLineCount(source_line_count)
+			,	m_HeaderVector()
+			,   m_CurrentHeaderIdx(0)
+		{
+		}
+
+		SourceReader(const char* const* source_lines, 
+				int source_line_count,
+				SourceReader* header)
+			:	m_CurrentLineIdx(0)
+			,	m_CurrentCharIdx(0)
+			,	m_SourceLines(source_lines)
+			,	m_SourceLineCount(source_line_count)
+			,	m_HeaderVector()
+			,   m_CurrentHeaderIdx(0)
+		{
+			m_HeaderVector.push_back(header);
+		}
+
+		SourceReader(const char* const* source_lines, 
+				int source_line_count, 
+				std::vector<SourceReader*>& headers)
+			:	m_CurrentLineIdx(0)
+			,	m_CurrentCharIdx(0)
+			,	m_SourceLines(source_lines)
+			,	m_SourceLineCount(source_line_count)
+			,	m_HeaderVector(headers)
+			,   m_CurrentHeaderIdx(0)
 		{
 		}
 
@@ -54,10 +85,24 @@ class SourceReader {
 		{
 			m_CurrentLineIdx = 0;
 			m_CurrentCharIdx = 0;
+			m_CurrentHeaderIdx = 0;
 		}
 
 		int GetNextChar()
 		{
+			// Are we still processing the headers?
+			if(m_CurrentHeaderIdx < m_HeaderVector.size()) {
+				int header_char = m_HeaderVector[m_CurrentHeaderIdx]->GetNextChar();
+
+				// If the header ahs run out, try moving to the next one.
+				if(header_char == EOF) {
+					m_CurrentHeaderIdx++;
+					return GetNextChar();
+				}
+
+				return header_char;
+			}
+			
 			// Handle being on final line.
 			if(m_SourceLineCount >= 0)
 			{
@@ -92,6 +137,9 @@ class SourceReader {
 
 		const char* const*	m_SourceLines;
 		int					m_SourceLineCount;
+
+		std::vector<SourceReader*> m_HeaderVector;
+		size_t	m_CurrentHeaderIdx;
 };
 
 //===========================================================================
@@ -173,7 +221,9 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 	m_KernelList.clear();
 
-	SourceReader source_reader(source_lines, source_line_count);
+	SourceReader builtin_reader(&_firtree_builtins, 1);
+
+	SourceReader source_reader(source_lines, source_line_count, &builtin_reader);
 
 	Scn_T scn;
 	Scn_Stream cstream; // scanner table & configuration

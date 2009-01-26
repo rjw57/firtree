@@ -229,6 +229,9 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
         void SetSource(const char* source);
         const char* GetSource() const { return m_Source.c_str(); }
 
+        bool GetStatus() const { return m_CompileStatus; }
+        const char* GetCompileLog() const { return m_InfoLog.c_str(); }
+
         Parameter* GetValueForKey(const char* key) const;
 
         void SetValueForKey(Parameter* param, const char* key);
@@ -239,7 +242,7 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
         const std::map<std::string, Parameter*>& GetParameters() const
             { return m_Parameters; }
 
-        void Compile();
+        bool Compile();
         bool GetIsCompiled() const { return m_IsCompiled; }
 
         void SetBlockName(const char* blockName);
@@ -270,6 +273,7 @@ class CompiledGLSLKernel : public Firtree::ReferenceCounted
         std::string                     m_BlockReplacedKernelName;
 
         bool                            m_IsCompiled;
+        bool                            m_CompileStatus;
 
         unsigned char                   m_GLSLDigest[20];
 

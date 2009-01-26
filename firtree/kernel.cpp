@@ -212,6 +212,18 @@ GLSL::CompiledGLSLKernel* Kernel::GetWrappedGLSLKernel() const
 }
 
 //=============================================================================
+bool Kernel::GetStatus() const
+{
+    return m_WrappedGLSLKernel->GetStatus();
+}
+
+//=============================================================================
+const char* Kernel::GetCompileLog() const
+{
+    return m_WrappedGLSLKernel->GetCompileLog();
+}
+
+//=============================================================================
 const char* Kernel::GetSource() const
 {
     return m_WrappedGLSLKernel->GetSource();

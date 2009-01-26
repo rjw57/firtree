@@ -250,7 +250,7 @@ class KernelSamplerProvider : public SamplerProvider
 #if LLVM_AT_LEAST_2_3
                             elements.push_back( 
                                     llvm::ConstantFP::get( 
-                                        llvm:Type::FloatTy, 
+                                        llvm::Type::FloatTy, 
                                         (double)(ft_val->GetVectorValue(i))));
 #else
                             elements.push_back( 

@@ -178,6 +178,7 @@ static void EnsureContext(OpenGLContext* context)
 CompiledGLSLKernel::CompiledGLSLKernel(const char* source)
     :   Firtree::ReferenceCounted()
     ,   m_IsCompiled(false)
+    ,   m_CompileStatus(false)
 {
     this->SetSource(source);
 }
@@ -202,7 +203,7 @@ void CompiledGLSLKernel::SetSource(const char* source)
     m_Source = source;
     m_IsCompiled = false;
 
-    Compile();
+    m_CompileStatus = Compile();
 }
 
 //=============================================================================
@@ -217,7 +218,7 @@ Parameter* CompiledGLSLKernel::GetValueForKey(const char* key) const
 }
 
 //=============================================================================
-void CompiledGLSLKernel::Compile() 
+bool CompiledGLSLKernel::Compile() 
 {
     // Attempt to compile the kernel.
 
@@ -242,8 +243,8 @@ void CompiledGLSLKernel::Compile()
     m_InfoLog = c.GetInfoLog();
     if(!rv)
     {
-        FIRTREE_ERROR("Error compiling kernel:\n%s", m_InfoLog.c_str());
-        return;
+        // FIRTREE_ERROR("Error compiling kernel:\n%s", m_InfoLog.c_str());
+        return false;
     }
 
     m_CompiledGLSL = be.GetOutput();
@@ -307,6 +308,8 @@ void CompiledGLSLKernel::Compile()
     m_IsCompiled = true;
 
     UpdateBlockNameReplacedSourceCache();
+
+    return true;
 }
 
 //=============================================================================
@@ -1743,11 +1746,12 @@ void GLRenderer::RenderAtPoint(Image* image, const Point2D& location,
 }
 
 //=============================================================================
-BitmapImageRep* GLRenderer::CreateBitmapImageRepFromImage(Image* image)
+BitmapImageRep* GLRenderer::CreateBitmapImageRepFromImage(Image* image,
+        Firtree::BitmapImageRep::PixelFormat format)
 {
     m_OpenGLContext->Begin();
     BitmapImageRep* rv = 
-        dynamic_cast<Internal::ImageImpl*>(image)->CreateBitmapImageRep();
+        dynamic_cast<Internal::ImageImpl*>(image)->CreateBitmapImageRep(format);
     m_OpenGLContext->End();
 
     return rv;
@@ -1787,6 +1791,34 @@ void GLRenderer::Clear(float r, float g, float b, float a)
 }
 
 //=============================================================================
+void GLRenderer::SetupMatrices()
+{
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->Begin();
+    }
+
+    float vp[4];
+    CHECK_GL( m_OpenGLContext, glGetFloatv(GL_VIEWPORT, vp) );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],
+                -1.0,1.0) );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+
+    if(m_OpenGLContext != NULL)
+    {
+        m_OpenGLContext->End();
+    }
+}
+
+//=============================================================================
 void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
@@ -1814,18 +1846,6 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
     FIRTREE_DEBUG("  vp rect: %f,%f+%f+%f.", 
             viewportRect.Origin.X, viewportRect.Origin.Y,
             viewportRect.Size.Width, viewportRect.Size.Height);
-
-    /*
-    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_PROJECTION) );
-    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
-    CHECK_GL( m_OpenGLContext, glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
-
-    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_MODELVIEW) );
-    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
-
-    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_TEXTURE) );
-    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
-    */
 
     GLRenderer* oldRenderer = GetCurrentGLRenderer();
 
@@ -1973,13 +1993,26 @@ void GLRenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     // HACK: display render rectangle
 #if 0
-    //CHECK_GL( m_OpenGLContext, glColor3f(1,1,0) );
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_PROJECTION) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    CHECK_GL( m_OpenGLContext, glOrtho(vp[0],vp[0]+vp[2],vp[1],vp[1]+vp[3],-1.0,1.0) );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_MODELVIEW) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+
+    CHECK_GL( m_OpenGLContext, glMatrixMode(GL_TEXTURE) );
+    CHECK_GL( m_OpenGLContext, glLoadIdentity() );
+    
+    //CHECK_GL( m_OpenGLContext, glColor3f(1,1,1) );
     m_OpenGLContext->glBegin(GL_LINE_STRIP);
     m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MinY());
     m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MaxY());
     m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MaxY());
     m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MinY());
     m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MinY());
+    m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MaxY());
+    m_OpenGLContext->glVertex2f(renderRect.MinX(), renderRect.MaxY());
+    m_OpenGLContext->glVertex2f(renderRect.MaxX(), renderRect.MinY());
     CHECK_GL( m_OpenGLContext, glEnd() );
 #endif
 

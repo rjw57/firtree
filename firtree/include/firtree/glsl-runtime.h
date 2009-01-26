@@ -329,11 +329,18 @@ class GLRenderer : public ReferenceCounted {
         /// Clear the context with the specified color
         void Clear(float r, float g, float b, float a);
 
+        /// Set up the OpenGL matrices so that the OpenGL co-ordinate
+        /// system corresponds to the Firtree pixel-based co-ordinate
+        /// system (useful for drawing overlays).
+        void SetupMatrices();
+
         /// Render the passed image into a BitmapImageRep, returning
         /// NULL if the image cannot be rendered (e.g. if it has
         /// infinite extent).
         /// The BitmapImageRep should be Release()-ed afterwards.
-        BitmapImageRep* CreateBitmapImageRepFromImage(Image* image);
+        BitmapImageRep* CreateBitmapImageRepFromImage(Image* image,
+                BitmapImageRep::PixelFormat format =
+                    BitmapImageRep::Float);
 
         /// Convenience wrapper which renders an image into a bitmap
         /// and writes it to a file. Returns false if the operation failed.

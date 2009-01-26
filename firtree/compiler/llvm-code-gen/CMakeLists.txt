@@ -5,8 +5,7 @@
 
 FIND_PACKAGE(Styx)
 
-SET(LLVM_CONFIG_COMPONENTS 
-  instrumentation bitwriter analysis system linker lto)
+SET(LLVM_CONFIG_COMPONENTS all)
 FIND_PACKAGE(LLVM)
 IF(NOT LLVM_FOUND)
   MESSAGE(SEND_ERROR "LLVM required for Firtree.")

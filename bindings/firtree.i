@@ -30,8 +30,23 @@ using namespace Firtree;
 %}
 
 %include "cdata.i" 
+%include "std_string.i" 
+%include "std_vector.i" 
 
 #ifdef SWIGPYTHON
+
+namespace std {
+  %template(stringList) vector<std::string>;
+}
+
+%inline %{
+/* Build void pointer */
+    namespace Firtree {
+        const void* IntToVoidPtr(const unsigned long ival) {
+            return reinterpret_cast<const void*>(ival);
+        }
+    }
+%}
 
 %apply unsigned int { uint32_t }
 %apply int { int32_t }
@@ -40,6 +55,7 @@ using namespace Firtree;
 // %feature("unref") Firtree::ReferenceCounted "printf(\"Unref: %p\\n\", $this); $this->Release();"
 
 %feature("director") Firtree::ImageProvider;
+%feature("director") Firtree::OpenGLContext;
 
 // Suppress "Warning(473): Returning a pointer or reference 
 //           in a director method is not recommended."

@@ -253,6 +253,14 @@ class Kernel : public ReferenceCounted
         // ====================================================================
         // CONST METHODS
 
+        /// Get the compile status flag. Returns true if compilation succeeded
+        /// and false otherwise.
+        bool GetStatus() const;
+
+        /// Get the compile log as a big string. The pointer is only valid
+        /// for the lifetime of the class.
+        const char* GetCompileLog() const;
+        
         /// Retrieve a pointer to the source for this kernel expressed in
         /// the FIRTREE kernel language.
         const char* GetSource() const;

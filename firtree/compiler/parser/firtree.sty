@@ -19,7 +19,7 @@ Regular Grammar
     ign Whitespace      = ' \n\r\t'    
 
     ;;;; Process single and multi-line comments
-    com SinglLnComment  = "//" {Printable}    ; The '\n' will implicitly
+    com SinglLnComment  = "//" {Byte - ('\n'|'\00')}    ; The '\n' will implicitly
                                               ; end this rule.
     com MultiLnComment  = "/*" ({Byte}-({Byte}"*/"{Byte})) "*/"
 

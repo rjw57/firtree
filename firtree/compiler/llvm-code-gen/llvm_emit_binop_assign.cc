@@ -70,26 +70,33 @@ class BinaryOpAssignEmitter : ExpressionEmitter
 				right_val = ExpressionEmitterRegistry::GetRegistry()->Emit(
 				                context, right );
 
-				// For assignment, the right value must have same type as
-				// left.
-				// The 'value' of the assignment expression is the right hand
-				// value.
-				return_val = TypeCaster::CastValue( context,
-				                                    expression,
-				                                    right_val,
-				                                    left_val->GetType().Specifier );
-
 				// If the assignment involves an arithmetic instruction,
 				// emit it.
 				if ( op != Instruction::BinaryOpsEnd ) {
+					if ( ! TypeCaster::MassageBinOpTypes(context, expression,
+							left_val, right_val, &left_val, &right_val) ) {
+						FIRTREE_LLVM_ERROR( context, expression,
+								"Incompatible types for binary "
+								"operator." );
+					}
+
 					llvm::Value* result_val = BinaryOperator::create( op,
 					                          left_val->GetLLVMValue(),
-					                          return_val->GetLLVMValue(),
+					                          right_val->GetLLVMValue(),
 					                          "tmpbinop", context->BB );
 
-					FIRTREE_SAFE_RELEASE( return_val );
+					//FIRTREE_SAFE_RELEASE( return_val );
 					return_val = ConstantExpressionValue::
 					             Create( context, result_val );
+				} else {
+					// For assignment, the right value must have same type as
+					// left.
+					// The 'value' of the assignment expression is the right hand
+					// value.
+					return_val = TypeCaster::CastValue( context,
+		 					expression,
+							right_val,
+							left_val->GetType().Specifier );
 				}
 
 				// Now check that the left_value is mutable.

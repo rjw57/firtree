@@ -31,6 +31,19 @@ class TypeCaster
 		/// Return true if the FullType source can be implicitly cast to
 		/// dest.
 		static bool CanImplicitlyCast(FullType source, FullType dest);
+	
+		/// Massage the values passed to have identical types using
+		/// the type promotion rules for binary arithmetic operators.
+		/// If the massaging fails, return false.
+		///
+		/// This method takes care of releasing left and right if their
+		/// values need to change.
+		static bool MassageBinOpTypes( LLVMContext* context,
+								firtreeExpression binopexpr,
+								ExpressionValue* left_in,
+								ExpressionValue* right_in,
+								ExpressionValue** left_out,
+								ExpressionValue** right_out );
 };
 
 } // namespace Firtree

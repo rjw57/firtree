@@ -6,6 +6,8 @@
 
 # This file builds the main Firtree library.
 
+SET(LLVM_CONFIG_COMPONENTS instrumentation bitwriter analysis system linker ipo)
+
 # Build the compiler and linker
 ADD_SUBDIRECTORY(compiler)
 ADD_SUBDIRECTORY(linker)

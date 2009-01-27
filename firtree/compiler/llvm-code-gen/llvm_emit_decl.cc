@@ -208,6 +208,16 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 			func_name.c_str(),
 			m_Context->Module );
 
+	// ALL firtree functions (including the intrinsics) are 'read none', i.e.
+	// if called with the same arguments, you will get the same result. There
+	// is no global state within one kernel call. Mark the function as such.
+	// This allows later optimisation stages to coelesce multiple calls to
+	// the same function.
+	PAListPtr attributes = F->getParamAttrs();
+	attributes = attributes.addAttr(0, ParamAttr::ReadNone);
+	attributes = attributes.addAttr(0, ParamAttr::NoUnwind);
+	F->setParamAttrs(attributes);
+
 	// Check that the name we've asked for is available.
 	std::string llvm_name = F->getName();
 	if(func_name != llvm_name)

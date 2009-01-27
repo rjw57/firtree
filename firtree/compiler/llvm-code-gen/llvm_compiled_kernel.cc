@@ -47,33 +47,6 @@ class SourceReader {
 			,	m_CurrentCharIdx(0)
 			,	m_SourceLines(source_lines)
 			,	m_SourceLineCount(source_line_count)
-			,	m_HeaderVector()
-			,   m_CurrentHeaderIdx(0)
-		{
-		}
-
-		SourceReader(const char* const* source_lines, 
-				int source_line_count,
-				SourceReader* header)
-			:	m_CurrentLineIdx(0)
-			,	m_CurrentCharIdx(0)
-			,	m_SourceLines(source_lines)
-			,	m_SourceLineCount(source_line_count)
-			,	m_HeaderVector()
-			,   m_CurrentHeaderIdx(0)
-		{
-			m_HeaderVector.push_back(header);
-		}
-
-		SourceReader(const char* const* source_lines, 
-				int source_line_count, 
-				std::vector<SourceReader*>& headers)
-			:	m_CurrentLineIdx(0)
-			,	m_CurrentCharIdx(0)
-			,	m_SourceLines(source_lines)
-			,	m_SourceLineCount(source_line_count)
-			,	m_HeaderVector(headers)
-			,   m_CurrentHeaderIdx(0)
 		{
 		}
 
@@ -85,24 +58,10 @@ class SourceReader {
 		{
 			m_CurrentLineIdx = 0;
 			m_CurrentCharIdx = 0;
-			m_CurrentHeaderIdx = 0;
 		}
 
 		int GetNextChar()
 		{
-			// Are we still processing the headers?
-			if(m_CurrentHeaderIdx < m_HeaderVector.size()) {
-				int header_char = m_HeaderVector[m_CurrentHeaderIdx]->GetNextChar();
-
-				// If the header ahs run out, try moving to the next one.
-				if(header_char == EOF) {
-					m_CurrentHeaderIdx++;
-					return GetNextChar();
-				}
-
-				return header_char;
-			}
-			
 			// Handle being on final line.
 			if(m_SourceLineCount >= 0)
 			{
@@ -137,9 +96,156 @@ class SourceReader {
 
 		const char* const*	m_SourceLines;
 		int					m_SourceLineCount;
+};
 
-		std::vector<SourceReader*> m_HeaderVector;
-		size_t	m_CurrentHeaderIdx;
+//===========================================================================
+/// A class whcih manages the magic required to concatenate multiple 
+/// scanners into one 'super' scanner.
+class Scanner {
+	private:
+		typedef	std::vector<Scn_Stream> StreamVector;
+		typedef	std::vector<Scn_Stream>::iterator StreamVectorIt;
+
+	public:
+		Scanner(StreamVector& scanners) 
+			:	m_AbsScanner(NULL)
+			,	m_Scanners(scanners)
+		{
+			m_AbsScanner = AS_init();
+			AS_setScanner(m_AbsScanner, this);
+
+			AS_setFunNextTok(m_AbsScanner, &Scanner::nextTok);
+			AS_setFunTokID(m_AbsScanner, &Scanner::tokID);
+			AS_setFunTokSym(m_AbsScanner, &Scanner::tokSym);
+			AS_setFunStreamSym(m_AbsScanner, &Scanner::streamSym);
+			AS_setFunTokRow(m_AbsScanner, &Scanner::tokRow);
+			AS_setFunTokCol(m_AbsScanner, &Scanner::tokCol);
+			AS_setFunUnicode(m_AbsScanner, &Scanner::unicode);
+			AS_setFunDefEofID(m_AbsScanner, &Scanner::defEofID);
+			AS_setFunDefErrID(m_AbsScanner, &Scanner::defErrID);
+			AS_setFunDefTokID(m_AbsScanner, &Scanner::defTokID);
+			AS_setFunDefKeyID(m_AbsScanner, &Scanner::defKeyID);
+			AS_setFunDefWCKeyID(m_AbsScanner, &Scanner::defWCKeyID);
+		}
+
+		~Scanner()
+		{
+			if(m_AbsScanner) {
+				AS_quit(m_AbsScanner);
+				m_AbsScanner = NULL;
+			}
+		}
+
+		AbsScn_T GetScannerObject() const 
+		{
+			return m_AbsScanner;
+		}
+
+	protected:
+		Scn_Stream CurrentStream() const { 
+			return m_Scanners.front();
+		}
+
+		static void nextTok(Abs_T scanner) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			Stream_next(self->CurrentStream());
+
+			// Are we at EOF of current stream?
+			if(Stream_ctnam(self->CurrentStream()) == NULL) {
+				// If we have another scanner to try, do so.
+				if(self->m_Scanners.size() > 1) {
+					self->m_Scanners.erase(self->m_Scanners.begin());
+					nextTok(scanner);
+				}
+			}
+		}
+
+		static short tokID(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_ctid(self->CurrentStream());
+		}
+
+		static symbol tokSym(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_csym(self->CurrentStream());
+		}
+
+		static symbol streamSym(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_cfil(self->CurrentStream());
+		}
+
+		static long tokRow(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_clin(self->CurrentStream());
+		}
+
+		static long tokCol(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_ccol(self->CurrentStream());
+		}
+
+		static c_bool unicode(Abs_T scanner)
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			return Stream_unicode(self->CurrentStream());
+		}
+
+		static void defEofID(Abs_T scanner, short id) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			for(StreamVectorIt i=self->m_Scanners.begin(); i!=self->m_Scanners.end(); ++i)
+			{
+				Stream_defEofId(*i, id);
+			}
+		}
+
+		static void defErrID(Abs_T scanner, short id) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			for(StreamVectorIt i=self->m_Scanners.begin(); i!=self->m_Scanners.end(); ++i)
+			{
+				Stream_defErrId(*i, id);
+			}
+		}
+
+		static void defTokID(Abs_T scanner, c_string text, short id) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			for(StreamVectorIt i=self->m_Scanners.begin(); i!=self->m_Scanners.end(); ++i)
+			{
+				Stream_defTokId(*i, text, id);
+			}
+		}
+
+		static void defKeyID(Abs_T scanner, c_string text, short id) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			for(StreamVectorIt i=self->m_Scanners.begin(); i!=self->m_Scanners.end(); ++i)
+			{
+				Stream_defKeyId(*i, text, id);
+			}
+		}
+
+		static void defWCKeyID(Abs_T scanner, wc_string text, short id) 
+		{ 
+			Scanner* self = reinterpret_cast<Scanner*>(scanner);
+			for(StreamVectorIt i=self->m_Scanners.begin(); i!=self->m_Scanners.end(); ++i)
+			{
+				Stream_defWCKeyId(*i, text, id);
+			}
+		}
+
+	private:
+
+		AbsScn_T 				m_AbsScanner;
+		StreamVector			m_Scanners;
 };
 
 //===========================================================================
@@ -223,10 +329,10 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 	SourceReader builtin_reader(&_firtree_builtins, 1);
 
-	SourceReader source_reader(source_lines, source_line_count, &builtin_reader);
+	SourceReader source_reader(source_lines, source_line_count);
 
 	Scn_T scn;
-	Scn_Stream cstream; // scanner table & configuration
+	Scn_Stream cstream, builtinstream; // scanner table & configuration
 	PLR_Tab plr;
 	PT_Cfg PCfg;      // parser  table & configuration
 	PT_Term srcterm;               // the source term
@@ -235,15 +341,27 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	// Parse the source file
 	//
 	Scn_get_firtree( &scn );                         // Get scanner table
+
+	builtinstream = Stream_line( scn, &builtin_reader, GetNextChar, "_builtins_");
+
 	// Open source file
-	cstream = Stream_line( scn, &source_reader, GetNextChar, "streamsource");
+	cstream = Stream_line( scn, &source_reader, GetNextChar, "input");
+
+	std::vector<Scn_Stream> streams;
+	streams.push_back(builtinstream);
+	streams.push_back(cstream);
+
+	Scanner total_scanner(streams);
+
 	plr     = PLR_get_firtree();                     // Get parser table
-	PCfg    = PT_init( plr,cstream );            // Create parser
+	PCfg    = PT_init_extscn( plr, total_scanner.GetScannerObject() );            // Create parser
 	srcterm = PT_PARSE( PCfg,"TranslationUnit" );        // Parse
 	PT_setErrorCnt( PT_synErrorCnt( PCfg ) );    // Save error count
 	PT_quit( PCfg );                             // Free parser
 	Stream_close( cstream );                     // Close source stream
 	Stream_free( cstream );                      // Free source stream
+	Stream_close( builtinstream );                     // Close source stream
+	Stream_free( builtinstream );                      // Free source stream
 	Scn_free( scn );                             // Free scanner table
 	PLR_delTab( plr );                           // Free parser table
 

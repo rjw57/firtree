@@ -56,17 +56,16 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 				const CompiledKernel* kernel,
 				const std::string& kernel_name = "");
 
-		/// Get the sample function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetSampleFunction() const = 0;
-
-		/// Get the transform function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetTransformFunction() const = 0;
-
-		/// Get the extent function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetExtentFunction() const = 0;
+		/// Create a LLVM module which *only* has three exported functions:
+		///
+		/// vec4 ${prefix}Sample(vec2 coord, ... /* free vars */)
+		/// vec2 ${prefix}Transform(vec2 coord)
+		/// vec4 ${prefix}Extent()
+		///
+		/// The caller now 'owns' the returned module and must call 'delete'
+		/// on it.
+		virtual llvm::Module* CreateSamplerModule(
+				const std::string& prefix) = 0;
 
 		/// Return a const iterator pointing to the parameter named
 		/// 'name'. If no such parameter exists, return the

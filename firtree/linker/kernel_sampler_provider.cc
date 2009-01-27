@@ -28,12 +28,22 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/ADT/hash_map>
 #include <llvm/Instructions.h>
+#include <llvm/Linker.h>
+
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/CallGraph.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/LinkAllPasses.h"
 
 namespace llvm { class Module; }
 
 namespace Firtree { class LLVMFrontend; }
 
 namespace Firtree { namespace LLVM {
+
+using namespace llvm;
 
 //===========================================================================
 /// Specialised kernel sampler provider class.
@@ -45,7 +55,6 @@ class KernelSamplerProvider : public SamplerProvider
 				const std::string& kernel_name)
             :   SamplerProvider()
             ,   m_ClonedKernelModule(NULL)
-            ,   m_SampleFunction(NULL)
         {
             if(kernel == NULL) {
                 FIRTREE_ERROR("Passed a NULL kernel.");
@@ -90,27 +99,114 @@ class KernelSamplerProvider : public SamplerProvider
         }
 
         //===================================================================
-		/// Get the sample function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetSampleFunction() const
+		/// Create a LLVM module which *only* has three exported functions:
+		///
+		/// vec4 ${prefix}Sample(vec2 coord)
+		/// vec2 ${prefix}Transform(vec2 coord)
+		/// vec4 ${prefix}Extent()
+        ///
+		/// The caller now 'owns' the returned module and must call 'delete'
+		/// on it.
+        virtual llvm::Module* CreateSamplerModule(const std::string& prefix)
         {
-            return m_SampleFunction;
-        }
+            if(!IsValid()) {
+                FIRTREE_WARNING("Cannot create sampler module for invalid "
+                        "sampler.");
+                return NULL;
+            }
 
-        //===================================================================
-		/// Get the transform function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetTransformFunction() const
-        {
-            return NULL;
-        }
+            // Clone the kernel module.
+            llvm::Module* new_module = 
+                llvm::CloneModule(m_ClonedKernelModule);
 
-        //===================================================================
-		/// Get the extent function. The returned value may be 
-		/// invalidated after a static parameter is set.
-		virtual const llvm::Function* GetExtentFunction() const
-        {
-            return NULL;
+            Function* kernel_function = new_module->getFunction(
+                    m_ClonedFunction.Function->getName());
+            if(!kernel_function) {
+                FIRTREE_ERROR("Internal error: no kernel function.");
+                return NULL;
+            }
+
+            // Start adding some functions.
+
+            // EXTENT function
+            std::vector<const Type*> extent_params;
+            FunctionType *extent_FT = FunctionType::get(
+                    VectorType::get( Type::FloatTy, 4 ),
+                    extent_params, false );
+            Function* extent_F = LLVM_CREATE( Function, extent_FT,
+                    Function::ExternalLinkage,
+                    prefix + "Extent",
+                    new_module );	
+            BasicBlock *extent_BB = LLVM_CREATE( BasicBlock, "entry", 
+                    extent_F );
+
+            llvm::Value* extent_val = ConstantVector(0,0,0,0);
+            LLVM_CREATE( ReturnInst, extent_val, extent_BB );
+
+            // TRANSFORM function
+            std::vector<const Type*> trans_params;
+            trans_params.push_back(VectorType::get( Type::FloatTy, 2 ));
+            FunctionType *trans_FT = FunctionType::get(
+                    VectorType::get( Type::FloatTy, 2 ),
+                    trans_params, false );
+            Function* trans_F = LLVM_CREATE( Function, trans_FT,
+                    Function::ExternalLinkage,
+                    prefix + "Transform",
+                    new_module );	
+            BasicBlock *trans_BB = LLVM_CREATE( BasicBlock, "entry", 
+                    trans_F );
+
+            LLVM_CREATE( ReturnInst, 
+                    llvm::cast<llvm::Value>(trans_F->arg_begin()),
+                    trans_BB );
+
+            // SAMPLE function
+            std::vector<const Type*> sample_params;
+
+            sample_params.push_back( VectorType::get( Type::FloatTy, 2 ) );
+            for(const_iterator param_it=begin(); param_it!=end(); ++param_it)
+            {
+                if(!param_it->IsStatic) {
+                    sample_params.push_back(
+                            KernelTypeToLLVM(param_it->Type));
+                }
+            }
+
+            FunctionType *sample_FT = FunctionType::get(
+                    VectorType::get( Type::FloatTy, 4 ),
+                    sample_params, false );
+            Function* sample_F = LLVM_CREATE( Function, sample_FT,
+                    Function::ExternalLinkage,
+                    prefix + "Sample",
+                    new_module );	
+            BasicBlock *sample_BB = LLVM_CREATE( BasicBlock, "entry", 
+                    sample_F );
+
+            std::vector<llvm::Value*> kernel_params;
+            Function::arg_iterator arg_it = sample_F->arg_begin();
+            ++arg_it; // To skip the initial vec2.
+            for(const_iterator param_it=begin(); param_it!=end(); ++param_it)
+            {
+                if(param_it->IsStatic) {
+                    kernel_params.push_back(
+                            GetParamAsLLVMConstant(param_it));
+                } else {
+                    kernel_params.push_back(
+                            llvm::cast<llvm::Value>(arg_it));
+                    ++arg_it;
+                }
+            }
+
+            llvm::Value* sample_val = LLVM_CREATE(CallInst,
+                    kernel_function,
+                    kernel_params.begin(), kernel_params.end(),
+                    "tmp", sample_BB);
+
+            LLVM_CREATE( ReturnInst, sample_val, sample_BB );
+
+            RunOptimiser(new_module);
+
+            return new_module;
         }
 
         //===================================================================
@@ -212,6 +308,133 @@ class KernelSamplerProvider : public SamplerProvider
 
     private:
         //===================================================================
+        void RunOptimiser(llvm::Module* m) 
+        {
+            if(m == NULL)
+            {
+                return;
+            }
+
+            PassManager PM;
+
+            PM.add(new TargetData(m));
+
+            PM.add(createVerifierPass());
+
+            PM.add(createStripSymbolsPass(true));
+            PM.add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+            PM.add(createCFGSimplificationPass());    // Clean up disgusting code
+            PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
+            PM.add(createGlobalOptimizerPass());      // Optimize out global vars
+            PM.add(createGlobalDCEPass());            // Remove unused fns and globs
+            PM.add(createIPConstantPropagationPass());// IP Constant Propagation
+            PM.add(createDeadArgEliminationPass());   // Dead argument elimination
+            PM.add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+            PM.add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+            PM.add(createPruneEHPass());              // Remove dead EH info
+
+            PM.add(createFunctionInliningPass());   // Inline small functions
+            PM.add(createArgumentPromotionPass());    // Scalarize uninlined fn args
+
+            PM.add(createTailDuplicationPass());      // Simplify cfg by copying code
+            PM.add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
+            PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+            PM.add(createScalarReplAggregatesPass()); // Break up aggregate allocas
+            PM.add(createInstructionCombiningPass()); // Combine silly seq's
+            PM.add(createCondPropagationPass());      // Propagate conditionals
+
+            PM.add(createTailCallEliminationPass());  // Eliminate tail calls
+            PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+            PM.add(createReassociatePass());          // Reassociate expressions
+            PM.add(createLoopRotatePass());
+            PM.add(createLICMPass());                 // Hoist loop invariants
+            PM.add(createLoopUnswitchPass());         // Unswitch loops.
+            PM.add(createLoopIndexSplitPass());       // Index split loops.
+            PM.add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
+            PM.add(createIndVarSimplifyPass());       // Canonicalize indvars
+            PM.add(createLoopUnrollPass());           // Unroll small loops
+            PM.add(createInstructionCombiningPass()); // Clean up after the unroller
+            PM.add(createGVNPass());                  // Remove redundancies
+            PM.add(createSCCPPass());                 // Constant prop with SCCP
+
+            // Run instcombine after redundancy elimination to exploit opportunities
+            // opened up by them.
+            PM.add(createInstructionCombiningPass());
+            PM.add(createCondPropagationPass());      // Propagate conditionals
+
+            PM.add(createDeadStoreEliminationPass()); // Delete dead stores
+            PM.add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+            PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+            PM.add(createSimplifyLibCallsPass());     // Library Call Optimizations
+            PM.add(createDeadTypeEliminationPass());  // Eliminate dead types
+            PM.add(createConstantMergePass());        // Merge dup global constants
+
+            PM.run(*m);
+        }
+
+        //===================================================================
+        const llvm::Type* KernelTypeToLLVM(KernelTypeSpecifier type)
+        {
+            switch(type) {
+                case TySpecFloat:
+                    return Type::FloatTy;
+
+                case TySpecInt:
+                case TySpecSampler:
+                    return Type::Int32Ty;
+
+                case TySpecBool:
+                    return Type::Int1Ty;
+
+                case TySpecVec2:
+                    return VectorType::get( Type::FloatTy, 2 );
+
+                case TySpecVec3:
+                    return VectorType::get( Type::FloatTy, 3 );
+
+                case TySpecVec4:
+                case TySpecColor:
+                    return VectorType::get( Type::FloatTy, 4 );
+
+                case TySpecVoid:
+                    return Type::VoidTy;
+
+                default:
+                    FIRTREE_ERROR("Unknown type: %i", type);
+                    break;
+            }
+
+            return NULL;
+        }
+
+        //===================================================================
+        llvm::Value* ConstantVector(float x, float y, float z, float w)
+        {
+            float v[] = {x,y,z,w};
+            return ConstantVector(v,4);
+        }
+  
+        //===================================================================
+        llvm::Value* ConstantVector(float* v, int n)
+        {
+            std::vector<Constant*> elements;
+
+            for ( int i=0; i<n; i++ ) {
+#if LLVM_AT_LEAST_2_3
+                elements.push_back( ConstantFP::get( Type::FloatTy, 
+                            (double)(v[i])));
+#else
+                elements.push_back( ConstantFP::get( Type::FloatTy,
+                            APFloat( v[i] ) ) );
+#endif
+            }
+
+            llvm::Value* val = ConstantVector::get( elements );
+            return val;
+        }
+
+        //===================================================================
         /// Returns the value of the specified parameter as a LLVM constant.
         llvm::Value* GetParamAsLLVMConstant(const const_iterator& param)
         {
@@ -275,70 +498,6 @@ class KernelSamplerProvider : public SamplerProvider
         /// Called when the sampler functions, etc need recompiling.
         void ReCompile()
         {
-            // Remove the sample function from it's parent if
-            // necessary
-            if(m_SampleFunction != NULL)
-            {
-                m_SampleFunction->removeFromParent();
-
-                // FIXME: Do we need to do this of will the module do it
-                // for us?
-                delete m_SampleFunction;
-            }
-
-            // ===== Build a function for sampling. =====
-            
-            // A vector which will hold the types of our non-static
-            // parameters.
-            std::vector<const llvm::Type*> param_llvm_types;
-            for(const_iterator it=begin(); it!=end(); ++it)
-            {
-                if(!it->IsStatic) {
-                    FullType ft(TyQualNone, it->Type);
-                    const llvm::Type* param_type = ft.ToLLVMType(NULL);
-                    param_llvm_types.push_back(param_type);
-                }
-            }
-
-            // Create a LLVM type for this function.
-            FullType return_type(TyQualNone, TySpecVec4);
-            llvm::FunctionType *FT = llvm::FunctionType::get(
-                    return_type.ToLLVMType( NULL ),
-                    param_llvm_types, false );
-
-            // Create the function proper.
-            m_SampleFunction = LLVM_CREATE( llvm::Function, FT,
-                    llvm::Function::ExternalLinkage,
-                    "FIXME-make-unique", m_ClonedKernelModule );
-
-            // Create a basic block to hold the function body.
-            llvm::BasicBlock *BB = LLVM_CREATE( llvm::BasicBlock, "entry",
-                    m_SampleFunction );
-
-            // Create a vector which will store LLVM values for the
-            // kernel arguments. On the way, set all the non-static
-            // parameters' names.
-            std::vector<llvm::Value*> kernel_args;
-            llvm::Function::arg_iterator ai = m_SampleFunction->arg_begin();
-            for(const_iterator pi=begin(); pi != end(); ++pi)
-            {
-                if(pi->IsStatic) {
-                    kernel_args.push_back(GetParamAsLLVMConstant(pi));
-                } else {
-                    ai->setName(pi->Name);
-                    kernel_args.push_back(llvm::cast<llvm::Value>(ai)); 
-                    ++ai;
-                }
-            }
-
-            // Emit a call instruction which calls the kernel itself.
-            llvm::Value* func_ret_val = LLVM_CREATE( llvm::CallInst,
-                    m_ClonedFunction.Function,
-                    kernel_args.begin(), kernel_args.end(),
-                    "returnvalue", BB);
-
-            // Emit a return instruction.
-            LLVM_CREATE( llvm::ReturnInst, func_ret_val, BB );
         }
 
         typedef HASH_NAMESPACE::hash_map<std::string, Value*> 
@@ -347,8 +506,6 @@ class KernelSamplerProvider : public SamplerProvider
         llvm::Module*       m_ClonedKernelModule;
         KernelFunction      m_ClonedFunction;
         ParameterValueMap   m_ParameterValues;
-
-        llvm::Function*     m_SampleFunction;
 };
 
 //===========================================================================

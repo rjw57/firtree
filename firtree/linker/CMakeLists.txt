@@ -32,4 +32,7 @@ ADD_DEPENDENCIES(llvm-linker styx-parser)
 
 TARGET_LINK_LIBRARIES(llvm-linker ${LLVM_LIBRARIES})
 
+ADD_EXECUTABLE(linkertest tools/linkertest.cc)
+TARGET_LINK_LIBRARIES(linkertest firtree)
+
 # vim:sw=2:ts=2:et

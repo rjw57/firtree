@@ -17,7 +17,4 @@ ADD_DEFINITIONS(-D__STDC_LIMIT_MACROS)
 ADD_EXECUTABLE(compiletest tools/kernelcompile.cc)
 TARGET_LINK_LIBRARIES(compiletest firtree)
 
-ADD_EXECUTABLE(linktest tools/linktest.cc)
-TARGET_LINK_LIBRARIES(linktest firtree)
-
 # vim:sw=2:ts=2:et

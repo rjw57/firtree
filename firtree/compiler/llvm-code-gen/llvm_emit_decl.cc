@@ -676,7 +676,11 @@ void EmitDeclarations::constructPrototypeStruct(
 				}
 			}
 
-			prototype.Parameters.push_back( new_param );
+			// Ignore 'void' parameters
+			if(new_param.Type.Specifier != Firtree::TySpecVoid)
+			{
+				prototype.Parameters.push_back( new_param );
+			}
 		} else {
 			FIRTREE_LLVM_ICE( m_Context, param_decl,
 			                  "Invalid parameter declaration." );

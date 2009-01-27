@@ -213,6 +213,10 @@ const char* _firtree_builtins =
 	/* Sampler functions */
 
 	"__builtin__ vec2 destCoord();\n"
+
+	/* These three functions are special in that they are implicitly
+	 * created by the linker. Then LLVM optimisation magic comes in
+	 * and makes them go away, inlining the kernels appropriately. */
 	"__builtin__ vec2 samplerTransform(static sampler,vec2);\n"
 	"__builtin__ static vec4 samplerExtent(static sampler);\n"
 	"__builtin__ vec4 sample(static sampler,vec2);\n"

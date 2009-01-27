@@ -213,12 +213,19 @@ const char* _firtree_builtins =
 	/* Sampler functions */
 
 	"__builtin__ vec2 destCoord();\n"
-	"__builtin__ vec2 samplerCoord(static sampler);\n"
 	"__builtin__ vec2 samplerTransform(static sampler,vec2);\n"
-	"__builtin__ static vec2 samplerOrigin(static sampler);\n"
-	"__builtin__ static vec2 samplerSize(static sampler);\n"
 	"__builtin__ static vec4 samplerExtent(static sampler);\n"
 	"__builtin__ vec4 sample(static sampler,vec2);\n"
+
+	"vec2 samplerCoord(static sampler s) {\n"
+	"    return samplerTransform(s, destCoord());\n"
+	"}\n"
+	"vec2 samplerOrigin(static sampler s) {\n"
+	"  return samplerExtent(s).zw;\n"
+	"}\n"
+	"vec2 samplerSize(static sampler s) {\n"
+	"  return samplerExtent(s).xy;\n"
+	"}\n"
 
 	"";
 

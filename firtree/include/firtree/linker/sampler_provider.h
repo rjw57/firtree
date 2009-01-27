@@ -155,6 +155,43 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// on it.
 		virtual llvm::Module* CreateSamplerModule(
 				const std::string& prefix) = 0;
+
+		friend class SamplerLinker;
+};
+
+//===========================================================================
+class SamplerLinker {
+	public:
+		SamplerLinker();
+		~SamplerLinker();
+
+		bool CanLinkSampler(SamplerProvider* sampler);
+
+		void LinkSampler(SamplerProvider* sampler);
+
+		inline llvm::Module* GetModule() const
+		{
+			return m_LinkedModule;
+		}
+
+		inline llvm::Module* ReleaseModule()
+		{
+			llvm::Module* tmp = m_LinkedModule;
+			m_LinkedModule = NULL;
+			Reset();
+			return tmp;
+		}
+
+	private:
+		void Reset();
+
+		typedef std::pair<SamplerProvider*, std::string> ParamSpec;
+		typedef std::vector<ParamSpec> ParamSpecList;
+		typedef std::vector<SamplerProvider*> SamplerList;
+
+		llvm::Module*   m_LinkedModule;
+		ParamSpecList   m_FreeParameters;
+		SamplerList		m_SamplerTable;
 };
 
 } } // namespace Firtree::LLVM

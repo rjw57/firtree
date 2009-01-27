@@ -58,15 +58,75 @@ SamplerProvider::~SamplerProvider()
 }
 
 //===========================================================================
-llvm::Module* SamplerProvider::LinkSamplerModule()
+//===========================================================================
+
+//===========================================================================
+SamplerLinker::SamplerLinker()
+    :   m_LinkedModule(NULL)
 {
+}
+
+//===========================================================================
+SamplerLinker::~SamplerLinker()
+{
+    if(m_LinkedModule) {
+        delete m_LinkedModule;
+        m_LinkedModule = NULL;
+    }
+}
+
+//===========================================================================
+bool SamplerLinker::CanLinkSampler(SamplerProvider* sampler)
+{
+    std::vector<SamplerProvider*> sampler_queue;
+    sampler_queue.push_back(sampler);
+    while(sampler_queue.size() > 0) {
+        SamplerProvider* next_provider = sampler_queue.back();
+        sampler_queue.pop_back();
+
+        if(!(next_provider->IsValid())) {
+            return false;
+        }
+
+        for(SamplerProvider::const_iterator i=next_provider->begin();
+                i!=next_provider->end(); ++i)
+        {
+            if(i->Type == Firtree::TySpecSampler) {
+                SamplerProvider* param_samp = 
+                    next_provider->GetParameterSampler(i);
+                sampler_queue.push_back(param_samp);
+            }
+        }
+    }
+
+    return true;
+}
+
+//===========================================================================
+void SamplerLinker::Reset()
+{
+    m_FreeParameters.clear();
+    m_SamplerTable.clear();
+
+    if(m_LinkedModule) {
+        delete m_LinkedModule;
+        m_LinkedModule = NULL;
+    }
+}
+
+//===========================================================================
+void SamplerLinker::LinkSampler(SamplerProvider* sampler)
+{
+    Reset();
+
+    m_SamplerTable.push_back(sampler);
+
     std::vector< std::pair<std::string,SamplerProvider*> > sampler_queue;
     sampler_queue.push_back(
-            std::pair<std::string,SamplerProvider*>("", this));
+            std::pair<std::string,SamplerProvider*>("sampler_0_", sampler));
 
     llvm::Linker* linker = new llvm::Linker("firtree", "module");
 
-    int sampler_idx = 0;
     while(sampler_queue.size() > 0) {
         std::pair<std::string,SamplerProvider*> next = sampler_queue.back();
         sampler_queue.pop_back();
@@ -75,27 +135,31 @@ llvm::Module* SamplerProvider::LinkSamplerModule()
 
         if(!(next_provider->IsValid())) {
             FIRTREE_ERROR("Not all samplers valid.");
-            return NULL;
+            return;
         }
 
-        for(const_iterator i=next_provider->begin();
+        for(SamplerProvider::const_iterator i=next_provider->begin();
                 i!=next_provider->end(); ++i)
         {
             if(i->Type == Firtree::TySpecSampler) {
                 std::ostringstream prefix(std::ostringstream::out);
-                prefix << "sampler_" << sampler_idx << "_";
-
-                sampler_queue.push_back(
-                        std::pair<std::string,SamplerProvider*>(
-                            prefix.str(),
-                            next_provider->GetParameterSampler(i)));
+                prefix << "sampler_" << m_SamplerTable.size() << "_";
 
                 Firtree::Value* val = Firtree::Value::
-                    CreateIntValue(sampler_idx);
+                    CreateIntValue(m_SamplerTable.size());
                 next_provider->SetParameterValue(i, val);
                 FIRTREE_SAFE_RELEASE(val);
 
-                ++sampler_idx;
+                SamplerProvider* param_samp = 
+                    next_provider->GetParameterSampler(i);
+                sampler_queue.push_back(
+                        std::pair<std::string,SamplerProvider*>(
+                            prefix.str(), param_samp));
+                m_SamplerTable.push_back(param_samp);
+            } else if(! i->IsStatic) {
+                // This is a free parameter
+                m_FreeParameters.push_back(ParamSpec(
+                            next_provider, i->Name));
             }
         }
 
@@ -104,14 +168,12 @@ llvm::Module* SamplerProvider::LinkSamplerModule()
         linker->LinkInModule(module, &err);
         if(!err.empty()) {
             FIRTREE_ERROR("Error linking samplers: %s", err.c_str());
-            return NULL;
+            return;
         }
     }
 
-    llvm::Module* ret_val = linker->releaseModule();
+    m_LinkedModule = linker->releaseModule();
     delete linker;
-
-    return ret_val;
 }
 
 } } // namespace Firtree::LLVM

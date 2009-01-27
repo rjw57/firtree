@@ -56,6 +56,11 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 				const CompiledKernel* kernel,
 				const std::string& kernel_name = "");
 
+		/// Create a LLVM module which is the result of linking all the
+		/// samplers into one large module.
+		/// The caller now 'owns' the returned module and must delete it.
+		llvm::Module* LinkSamplerModule();
+
 		/// Create a LLVM module which *only* has three exported functions:
 		///
 		/// vec4 ${prefix}Sample(vec2 coord, ... /* free vars */)
@@ -84,6 +89,26 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// Get{.*}Function() are undefined if this flag is false.
 		virtual bool IsValid() const = 0;
 
+		/// Set the parameter pointed to by a given iterator to be
+		/// associated with the sampler provider 'provider'. It is an 
+		/// error for the parameter iterator to point to a non-sampler
+		/// parameter.
+		///
+		/// The provider can be NULL in which case the semantic is to 'unset'
+		/// the parameter and release any references associated with it.
+		/// Throws an error is param == end().
+		virtual void SetParameterSampler(const const_iterator& param,
+				SamplerProvider* value) = 0;
+
+		/// Get the sampler associated with the referenced parameter. 
+		/// Returns NULL if the
+		/// parameter doesn't exist or is unset. Note that, therefore,
+		/// the return value *can* be NULL even if the parameter *does*
+		/// exist. If the caller is interested in keeping the value long 
+		/// term, it should be Retain()-ed.
+		virtual SamplerProvider* GetParameterSampler(
+				const const_iterator& param) const = 0;
+
 		/// Set the parameter pointed to by a given iterator to the passed
 		/// value. Static parameters can cause the value of 
 		/// Get{.*}Function() to change. As a convenience this should 
@@ -109,11 +134,25 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 			return this->SetParameterValue(this->find(param_name), value);
 		}
 
+		/// Convenience wrapper around GetParameterSampler().
+		inline void SetParameterSampler(const std::string& param_name,
+				SamplerProvider* value) 
+		{
+			this->SetParameterSampler(this->find(param_name), value);
+		}
+
 		/// Convenience wrapper around GetParameterValue().
 		inline const Value* GetParameterValue(
 				const std::string& param_name) const
 		{
 			return this->GetParameterValue(this->find(param_name));
+		}
+
+		/// Convenience wrapper around GetParameterSampler().
+		inline SamplerProvider* GetParameterSampler(
+				const std::string& param_name) const
+		{
+			return this->GetParameterSampler(this->find(param_name));
 		}
 
 	private:

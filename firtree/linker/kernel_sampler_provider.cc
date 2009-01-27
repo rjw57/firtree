@@ -90,10 +90,24 @@ class KernelSamplerProvider : public SamplerProvider
         virtual ~KernelSamplerProvider()
         {
             // Free any parameter values.
-            for(const_iterator i=begin(); i!=end(); ++i)
+            for(ParameterValueMap::iterator i=m_ParameterValues.begin();
+                    i!=m_ParameterValues.end(); ++i)
             {
-                SetParameterValue(i, NULL);
+                if(i->second) {
+                    i->second->Release();
+                }
             }
+            m_ParameterValues.clear();
+            
+            // Free any parameter samplers.
+            for(ParameterSamplerMap::iterator i=m_ParameterSamplers.begin();
+                    i!=m_ParameterSamplers.end(); ++i)
+            {
+                if(i->second) {
+                    i->second->Release();
+                }
+            }
+            m_ParameterSamplers.clear();
 
             delete m_ClonedKernelModule;
         }
@@ -128,7 +142,7 @@ class KernelSamplerProvider : public SamplerProvider
 
             // Start adding some functions.
 
-            // EXTENT function
+            // EXTENT function FIXME
             std::vector<const Type*> extent_params;
             FunctionType *extent_FT = FunctionType::get(
                     VectorType::get( Type::FloatTy, 4 ),
@@ -143,7 +157,7 @@ class KernelSamplerProvider : public SamplerProvider
             llvm::Value* extent_val = ConstantVector(0,0,0,0);
             LLVM_CREATE( ReturnInst, extent_val, extent_BB );
 
-            // TRANSFORM function
+            // TRANSFORM function FIXME
             std::vector<const Type*> trans_params;
             trans_params.push_back(VectorType::get( Type::FloatTy, 2 ));
             FunctionType *trans_FT = FunctionType::get(
@@ -249,10 +263,17 @@ class KernelSamplerProvider : public SamplerProvider
             // have non-NULL values.
             for(const_iterator i=begin(); i!=end(); ++i)
             {
-                if(i->IsStatic) {
-                    const Value* v = GetParameterValue(i);
-                    if(v == NULL) {
+                if(i->Type == Firtree::TySpecSampler) {
+                    assert(i->IsStatic);
+                    if(m_ParameterSamplers.count(i->Name) == 0) {
                         return false;
+                    }
+                } else {
+                    if(i->IsStatic) {
+                        const Value* v = GetParameterValue(i);
+                        if(v == NULL) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -301,6 +322,54 @@ class KernelSamplerProvider : public SamplerProvider
             ParameterValueMap::const_iterator i = m_ParameterValues.
                 find(param->Name);
             if(i == m_ParameterValues.end()) {
+                return NULL;
+            }
+            return i->second;
+        }
+
+        //===================================================================
+		/// Set the parameter pointed to by a given iterator to be
+		/// associated with the sampler provider 'provider'. It is an 
+		/// error for the parameter iterator to point to a non-sampler
+		/// parameter.
+		///
+		/// The provider can be NULL in which case the semantic is to 'unset'
+		/// the parameter and release any references associated with it.
+		/// Throws an error is param == end().
+		virtual void SetParameterSampler(const const_iterator& param,
+				SamplerProvider* value)
+        {
+            if(param == end()) {
+                FIRTREE_ERROR("Cannot set parameter value from invalid "
+                        "iterator.");
+            }
+
+            if(m_ParameterSamplers.count(param->Name) != 0)
+            {
+                FIRTREE_SAFE_RELEASE(m_ParameterSamplers[param->Name]);
+            }
+
+            if(value == NULL) {
+                m_ParameterSamplers[param->Name] = NULL;
+            } else {
+                m_ParameterSamplers[param->Name] = value;
+                FIRTREE_SAFE_RETAIN(value);
+            }
+
+            // If all the static parameters are set, re-compile.
+            if(IsValid()) {
+                ReCompile();
+            }
+        }
+
+        //===================================================================
+		/// Get the sampler for the referenced parameter.
+		virtual SamplerProvider* GetParameterSampler(
+                const const_iterator& param) const
+        {
+            ParameterSamplerMap::const_iterator i = m_ParameterSamplers.
+                find(param->Name);
+            if(i == m_ParameterSamplers.end()) {
                 return NULL;
             }
             return i->second;
@@ -502,10 +571,13 @@ class KernelSamplerProvider : public SamplerProvider
 
         typedef HASH_NAMESPACE::hash_map<std::string, Value*> 
             ParameterValueMap;
+        typedef HASH_NAMESPACE::hash_map<std::string, SamplerProvider*> 
+            ParameterSamplerMap;
 
         llvm::Module*       m_ClonedKernelModule;
         KernelFunction      m_ClonedFunction;
         ParameterValueMap   m_ParameterValues;
+        ParameterSamplerMap   m_ParameterSamplers;
 };
 
 //===========================================================================

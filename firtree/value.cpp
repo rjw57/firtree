@@ -115,7 +115,7 @@ unsigned Value::GetArity() const
             return 3;
             break;
         case Firtree::TySpecVec4:
-            return 3;
+            return 4;
             break;
         default:
             break;
@@ -152,7 +152,7 @@ void Value::GetVectorValue(float* dest, int expected_components) const
 //===========================================================================
 const float Value::GetVectorValue(uint32_t index) const
 {
-    if((index < 2) || (index > 4)) 
+    if(index > 4)
     {
         FIRTREE_ERROR("Invalid index for vector (%i).", index);
     }

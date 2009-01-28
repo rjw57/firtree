@@ -182,13 +182,25 @@ class SamplerLinker {
 			return tmp;
 		}
 
+		inline bool GetDoOptimization() const { return m_RunOptimiser; }
+		inline void SetDoOptimization(bool flag) {
+			m_RunOptimiser = flag;
+		}
+
 	private:
 		void Reset();
+
+		llvm::Function* WriteTransform();
+		llvm::Function* WriteExtent();
+		llvm::Function* WriteSample();
+		void WriteFreeParamFuncs();
+		void RunOptimiser();
 
 		typedef std::pair<SamplerProvider*, std::string> ParamSpec;
 		typedef std::vector<ParamSpec> ParamSpecList;
 		typedef std::vector<SamplerProvider*> SamplerList;
 
+		bool			m_RunOptimiser;
 		llvm::Module*   m_LinkedModule;
 		ParamSpecList   m_FreeParameters;
 		SamplerList		m_SamplerTable;

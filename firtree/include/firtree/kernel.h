@@ -37,6 +37,10 @@ namespace Firtree { namespace GLSL {
     class GLSLSamplerParameter; 
 } }
 
+namespace Firtree { namespace LLVM {
+    class CompiledKernel;
+} }
+
 namespace Firtree {
 
 class NumericParameter;
@@ -327,6 +331,13 @@ class Kernel : public ReferenceCounted
         /// A pointer to the compiled GLSL kernel 'wrapped'
         /// by this kernel.
         GLSL::CompiledGLSLKernel* m_WrappedGLSLKernel;
+
+        /// A pointer to the compiled LLVM kernel 'wrapped' by this 
+        /// kernel
+        LLVM::CompiledKernel*       m_WrappedLLVMKernel;
+
+        std::string                 m_CompileLog;
+        std::string                 m_CompiledSource;
 };
 
 }

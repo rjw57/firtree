@@ -28,6 +28,11 @@
 
 #include <compiler/include/compiler.h>
 
+// LLVM
+#include <firtree/compiler/llvm_compiled_kernel.h>
+
+#include <sstream>
+
 /// Kernels are implemented in Firtree by keeping an internal compiled 
 /// representation for all possible runtimes. This has the advantage of
 /// keeping all the kernel housekeeping within the kernel object itself
@@ -188,15 +193,31 @@ Parameter* NumericParameter::Create()
 Kernel::Kernel(const char* source)
     :   ReferenceCounted()
     ,   m_WrappedGLSLKernel(NULL)    
+    ,   m_WrappedLLVMKernel(NULL)
 {
     // Create a GLSL-based kernel and keep a reference to it.
     m_WrappedGLSLKernel = GLSL::CompiledGLSLKernel::CreateFromSource(source);
+
+    // Create a LLVM-based kernel and keep a reference.
+    m_WrappedLLVMKernel = LLVM::CompiledKernel::Create();
+    m_WrappedLLVMKernel->Compile(&source, 1);
+
+    std::ostringstream log_string(std::ostringstream::out);
+    const char *const * log = m_WrappedLLVMKernel->GetCompileLog();
+    while(*log) {
+        log_string << *log << "\n";
+        ++log;
+    }
+    m_CompileLog = log_string.str();
+
+    m_CompiledSource = source;
 }
 
 //=============================================================================
 Kernel::~Kernel()
 {
     FIRTREE_SAFE_RELEASE(m_WrappedGLSLKernel);
+    FIRTREE_SAFE_RELEASE(m_WrappedLLVMKernel);
 }
 
 //=============================================================================
@@ -214,19 +235,19 @@ GLSL::CompiledGLSLKernel* Kernel::GetWrappedGLSLKernel() const
 //=============================================================================
 bool Kernel::GetStatus() const
 {
-    return m_WrappedGLSLKernel->GetStatus();
+    return m_WrappedLLVMKernel->GetCompileStatus();
 }
 
 //=============================================================================
 const char* Kernel::GetCompileLog() const
 {
-    return m_WrappedGLSLKernel->GetCompileLog();
+    return m_CompileLog.c_str();
 }
 
 //=============================================================================
 const char* Kernel::GetSource() const
 {
-    return m_WrappedGLSLKernel->GetSource();
+    return m_CompiledSource.c_str();
 }
 
 //=============================================================================

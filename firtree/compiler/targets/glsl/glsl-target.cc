@@ -208,7 +208,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 			writeIndent();
 			writeType(deref_type, m_OutputStream);
-			m_OutputStream << " " << varNameSanitize(I.getName()) << ";\n";
+			m_OutputStream << " " << valueNameToVarName(I.getName()) << ";\n";
 			SetValueToVariable(&I);
 		}
 
@@ -343,7 +343,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				m_OutputStream << ";\n";
 
 				writeIndent();
-				m_OutputStream << varNameSanitize(I.getName());
+				m_OutputStream << valueNameToVarName(I.getName());
 				m_OutputStream << "." << idx_char[idx] << " = ";
 				writeOperand(I.getOperand(1), m_OutputStream);
 				m_OutputStream << ";\n";
@@ -406,7 +406,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				m_OutputStream << ";\n";
 
 				writeIndent();
-				m_OutputStream << varNameSanitize(I.getName());
+				m_OutputStream << valueNameToVarName(I.getName());
 				m_OutputStream << "." << idx_char[idx] << " = ";
 				writeOperand(I.getOperand(1), m_OutputStream);
 				m_OutputStream << ";\n";
@@ -491,7 +491,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 						left_var_name = left_var_name_stream.str();
 					} else {
 						left_var_name_stream << " _left_" <<
-							varNameSanitize(I.getName());
+							valueNameToVarName(I.getName());
 						left_var_name = left_var_name_stream.str();
 
 						writeIndent();
@@ -510,7 +510,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 						right_var_name = right_var_name_stream.str();
 					} else {
 						right_var_name_stream << " _right_" << 
-							varNameSanitize(I.getName());
+							valueNameToVarName(I.getName());
 						right_var_name = right_var_name_stream.str();
 
 						writeIndent();
@@ -616,6 +616,9 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 		// i.e. whether the m_ValueMap entry contains a variable name.
 		hash_map<const llvm::Value*, bool> m_InVariable;
 
+		// This stores a map between a value name and the variable name.
+		hash_map<std::string, std::string> m_VarNameMap;
+
 		// A flag indicating whether inlining optimisations should be performed
 		bool m_DoInlining;
 
@@ -652,7 +655,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 		void SetValueToVariable(const llvm::Value* v)
 		{
-			m_ValueMap[v] = varNameSanitize(v->getName());
+			m_ValueMap[v] = valueNameToVarName(v->getName());
 			m_InVariable[v] = true;
 		}
 
@@ -839,7 +842,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 				{
 					dest << m_ValueMap[v];
 				} else if(v->hasName()) {
-					dest << varNameSanitize(v->getName());
+					dest << valueNameToVarName(v->getName());
 				} else {
 					FIRTREE_ERROR("Anonymous value.");
 				}
@@ -857,7 +860,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			}
 
 			writeType(v.getType(), m_OutputStream);
-			m_OutputStream << " " << varNameSanitize(v.getName()) << " = ";
+			m_OutputStream << " " << valueNameToVarName(v.getName()) << " = ";
 		}
 
 		void writeType(const Type* type, std::ostream& dest)
@@ -945,31 +948,20 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 			dest << " )";
 		}
 
-		std::string varNameSanitize(std::string s)
+		std::string valueNameToVarName(std::string s)
 		{
-			return varNameSanitize(s.c_str());
+			return valueNameToVarName(s.c_str());
 		}
 
-		std::string varNameSanitize(const char* str)
+		std::string valueNameToVarName(const char* str)
 		{
-			std::string output;
-
-			for( ; *str != '\0'; ++str) {
-				const char c = *str;
-				if((c >= '0') && (c <= '9')) {
-					output += c;
-				} else if((c >= 'A') && (c <= 'Z')) {
-					output += c;
-				} else if((c >= 'a') && (c <= 'z')) {
-					output += c;
-				} else {
-					static char fstr[32];
-					snprintf(fstr, 32, "_%X_", c);
-					output += fstr;
-				}
+			if(m_VarNameMap.count(str) == 0) {
+				std::ostringstream new_name(std::ostringstream::out);
+				new_name << "var" << m_VarNameMap.size();
+				m_VarNameMap[str] = new_name.str();
 			}
 
-			return output;
+			return m_VarNameMap[str];
 		}
 };
 

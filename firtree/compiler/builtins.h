@@ -200,6 +200,11 @@ const char* _firtree_builtins =
     "__builtin__ vec3 normalize(vec3);\n"
 	"__builtin__ vec4 normalize(vec4);\n"
 
+    "__builtin__ float reflect(float,float);\n"
+    "__builtin__ vec2 reflect(vec2,vec2);\n"
+    "__builtin__ vec3 reflect(vec3,vec3);\n"
+    "__builtin__ vec4 reflect(vec4,vec4);\n"
+
 	/* Kernel functions */
 
 	"__builtin__ float compare(float,float,float);\n"

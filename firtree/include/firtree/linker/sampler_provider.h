@@ -160,20 +160,52 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 };
 
 //===========================================================================
+/// \brief Link multiple SamplerProviders into one module.
+///
+/// The linked module implements the linked sampler in one function
+/// called 'kernel' which takes a single 2-dimensional vector of floats
+/// to indicate which output pixel is required.
+///
+/// The module in addition has declarations for any intrinsic functions
+/// used by the kernel and a set of 'freeparam' functions.
+///
+/// The freeparam functions implement a target agnostic way of accessing
+/// the parameters of the kernel which may be set without recompiling the
+/// kernel. There is a function called freeparam_v4 for example which takes
+/// a parameter index and returns a 4-d vector of floats with the
+/// parameter value. 
+///
+/// Individual targets may implement these in whichever manner they
+/// see fit.
 class SamplerLinker {
 	public:
 		SamplerLinker();
 		~SamplerLinker();
 
+		/// Return true is the passed sampler provider is suitable for 
+		/// linking. A sampler is suitable if all of it's static
+		/// parameters are set, all samplers have been associated with
+		/// a sampler provider and each of the samplers is itself
+		/// suitable for linking.
 		bool CanLinkSampler(SamplerProvider* sampler);
 
+		/// Link the passed sampler. Throws an error if the sampler is
+		/// not suitable. Callers should check the sampler with
+		/// CanLinkSampler() beforehand.
 		void LinkSampler(SamplerProvider* sampler);
 
+		/// Return the module that was linked by LinkSampler(). The
+		/// linker retains ownership of the module and it will be 
+		/// destroyed with the linker.
 		inline llvm::Module* GetModule() const
 		{
 			return m_LinkedModule;
 		}
 
+		/// Like GetModule() except that ownership passes to the caller
+		/// and the module will *not* be deleted when the linker is
+		/// destroyed. Callers should release the module via 'delete' when
+		/// they are finished with it.
 		inline llvm::Module* ReleaseModule()
 		{
 			llvm::Module* tmp = m_LinkedModule;
@@ -182,7 +214,12 @@ class SamplerLinker {
 			return tmp;
 		}
 
+		/// Debug only: return a flag indicating if the LLVM optimiser
+		/// is run over the linked module.
 		inline bool GetDoOptimization() const { return m_RunOptimiser; }
+
+		/// Debug only: set a flag indicating if the LLVM optimiser
+		/// is run over the linked module.
 		inline void SetDoOptimization(bool flag) {
 			m_RunOptimiser = flag;
 		}

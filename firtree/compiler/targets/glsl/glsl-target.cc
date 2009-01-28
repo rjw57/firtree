@@ -941,7 +941,7 @@ class GLSLVisitor : public llvm::InstVisitor<GLSLVisitor>
 
 				if(it->hasName())
 				{
-					dest << " " << it->getName();
+					dest << " " << valueNameToVarName(it->getName());
 				}
 			}
 

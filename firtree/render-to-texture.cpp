@@ -172,6 +172,10 @@ void RenderTextureContext::Begin()
             CHECK_GL( m_ParentContext, glViewport(0,0,m_Size.Width,m_Size.Height) );
             FIRTREE_DEBUG("Changing viewport to 0,0+%i+%i.",
                     m_Size.Width,m_Size.Height);
+
+            CHECK_GL( m_ParentContext, glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
+                        GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 
+                        m_OpenGLTextureName, 0) );
         }
 
         GLenum framebufferStatus;

@@ -299,9 +299,9 @@ CompiledKernel::~CompiledKernel()
 		firtree_quitSymbols();
 		freeSymbols();
 		MAP_quit();
-	} else {
-		--g_ModuleInitCount;
 	}
+
+	--g_ModuleInitCount;
 }
 
 //===========================================================================

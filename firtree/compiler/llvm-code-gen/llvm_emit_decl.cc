@@ -164,6 +164,14 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	std::vector<FunctionParameter>::const_iterator it =
 	    prototype.Parameters.begin();
 
+	// Non-intrinsic functions have an implicit first parameter, 
+	// analagous to the 'this' pointer in C++, which gives the
+	// value of destCoord().
+	if(prototype.Qualifier != FunctionPrototype::FuncQualIntrinsic) {
+		param_llvm_types.push_back( llvm::VectorType::get(
+					llvm::Type::FloatTy, 2 ) );
+	}
+
 	while ( it != prototype.Parameters.end() ) {
 		// output parameters are passed by reference.
 		const llvm::Type* base_type = it->Type.ToLLVMType( m_Context );
@@ -335,6 +343,13 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	std::vector<FunctionParameter>::const_iterator it = 
 		prototype.Parameters.begin();
 	Function::arg_iterator AI = F->arg_begin();
+
+	// If this is non-intrinsic, name the implicit
+	// variable '__this__destCoord'.
+	if(prototype.Qualifier != FunctionPrototype::FuncQualIntrinsic) {
+		AI->setName("__this__destCoord");
+		++AI;
+	}
 
 	while ( it != prototype.Parameters.end() ) {
 		if ( it->Name != NULL ) {

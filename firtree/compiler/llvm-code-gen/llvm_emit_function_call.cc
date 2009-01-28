@@ -94,6 +94,24 @@ class FunctionCallEmitter : ExpressionEmitter
 					std::vector<ExpressionValue*> func_params;
 					std::vector<llvm::Value*> llvm_params;
 					try {
+						// If we're calling the builtin 'destCoord' function,
+						// just return the implicit destCoord.
+						if(proto.GetMangledName(context) == "destCoord") {
+							llvm::Value* first_arg = llvm::cast<llvm::Value>(
+									context->Function->arg_begin());
+							return ConstantExpressionValue::Create(context,
+									first_arg, proto.ReturnType.IsStatic());
+						}
+						
+						// If this is a non-intrinisc function, add
+						// the implicit dest coord.
+						if(proto.Qualifier != 
+								FunctionPrototype::FuncQualIntrinsic) {
+							llvm::Value* first_arg = llvm::cast<llvm::Value>(
+									context->Function->arg_begin());
+							llvm_params.push_back(first_arg);
+						}
+
 						for(unsigned int i=0; i<parameters.size(); ++i)
 						{
 							func_params.push_back(TypeCaster::CastValue(

@@ -191,6 +191,9 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
     Function* kernel_F = LLVM_CREATE( Function, kernel_FT,
             Function::ExternalLinkage,
             "kernel", m_LinkedModule );
+
+    kernel_F->arg_begin()->setName("coord");
+
     llvm::BasicBlock *kernel_BB = LLVM_CREATE( llvm::BasicBlock, "entry",
             kernel_F );
 

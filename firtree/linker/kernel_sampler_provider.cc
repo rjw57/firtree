@@ -196,9 +196,17 @@ class KernelSamplerProvider : public SamplerProvider
             BasicBlock *sample_BB = LLVM_CREATE( BasicBlock, "entry", 
                     sample_F );
 
+            // Set the requested co-ordinate parameter.
+            sample_F->arg_begin()->setName("coord");
+
             std::vector<llvm::Value*> kernel_params;
             Function::arg_iterator arg_it = sample_F->arg_begin();
-            ++arg_it; // To skip the initial vec2.
+
+            // Push the implicit co-ordinate parameter for the
+            // kernel.
+            kernel_params.push_back(llvm::cast<llvm::Value>(arg_it));
+            ++arg_it;
+
             for(const_iterator param_it=begin(); param_it!=end(); ++param_it)
             {
                 if(param_it->IsStatic) {

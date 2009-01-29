@@ -99,6 +99,11 @@ class PageCurlTransition:
         '''
 
         self._curve_kernel = Kernel.CreateFromSource(curveKernelSource)
+
+        if(not self._curve_kernel.GetStatus()):
+            print "ERROR:"
+            print self._curve_kernel.GetCompileLog()
+
         self._curve_image = Image.CreateFromKernel(self._curve_kernel)
 
         self._curve_kernel.SetValueForKey(0.707, 0.707, 'diagonal')

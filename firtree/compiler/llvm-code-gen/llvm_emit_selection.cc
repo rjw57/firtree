@@ -72,31 +72,28 @@ class SelectionEmitter : public ExpressionEmitter
 				context->BB = then_BB;
 				then_value = ExpressionEmitterRegistry::
 					GetRegistry()->Emit( context, then_expr );
+				// The 'then' block ends at the current insertion BB.
+				// This may be different to then_BB if there were further
+				// branches.
+				then_BB = context->BB;
 
 				// Emit else block
 				context->BB = else_BB;
 				else_value = ExpressionEmitterRegistry::
 					GetRegistry()->Emit( context, else_expr );
+				// The 'else' block ends at the current insertion BB.
+				// This may be different to else_BB if there were further
+				// branches.
+				else_BB = context->BB;
 
-				// By default, we continue on the last basic block
-				// of the function if it is a continuation (starts
-				// with 'cont'). This allows us
-				// to catch the special case of if() { if() { } }.
-				BasicBlock *cont_BB = &(context->Function->
-					getBasicBlockList().back());
-				if(0 != strncmp(cont_BB->getName().c_str(), "cont", 4)) {
-					cont_BB = LLVM_CREATE( BasicBlock, "cont",
-							context->Function );
-				}
+				// Create a continuation block.
+				BasicBlock *cont_BB = LLVM_CREATE( BasicBlock, "cont",
+						context->Function );
 
 				// Terminate then and else block by branches to
-				// continuation if necessary.
-				if(then_BB->getTerminator() == NULL) {
-					LLVM_CREATE( BranchInst, cont_BB, then_BB );
-				}
-				if(else_BB->getTerminator() == NULL) {
-					LLVM_CREATE( BranchInst, cont_BB, else_BB );
-				}
+				// continuation.
+				LLVM_CREATE( BranchInst, cont_BB, then_BB );
+				LLVM_CREATE( BranchInst, cont_BB, else_BB );
 
 				// Make the continuation where future instructions
 				// should be insterted.

@@ -14,13 +14,13 @@ Regular Grammar
     let HexDigit        = 'a' .. 'f' | 'A' .. 'F' | Digit
     let OctalDigit      = '0' .. '7'
     let Exponent        = 'Ee' [ '+-' ] Digit+
+    let Newline         = "\r" | "\n" | "\r\n"
 
     ;;;; Ignore whitespace
     ign Whitespace      = ' \n\r\t'    
 
     ;;;; Process single and multi-line comments
-    com SinglLnComment  = "//" {Byte - ('\n'|'\00')}    ; The '\n' will implicitly
-                                              ; end this rule.
+    com SinglLnComment  = "//" ({Byte} - ({Byte} Newline {Byte})) [ Newline ]
     com MultiLnComment  = "/*" ({Byte}-({Byte}"*/"{Byte})) "*/"
 
     ;;;; Identifier and keywords

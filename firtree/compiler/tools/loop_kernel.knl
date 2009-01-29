@@ -1,0 +1,30 @@
+kernel vec4 testKernel() {
+  int c = 5;
+
+  for(int dx=-3; dx<=3; dx++) {
+    for(int dy=-3; dy<=3; dy++) {
+      for(int dz=-3; dz<=3; dz++) {
+        c = dx+dy+dz;
+      }
+    }
+  }
+
+  int a = 10;
+  int d = 10;
+  while(a > 3) {
+    int f = 5;
+    while(f > 2) { 
+      --f; 
+      --d;
+    }
+    --a;
+  }
+
+  int b = 5;
+  do { --b; } while(b>0);
+
+  return vec4(a,b,c,d);
+}
+
+// vim:sw=2:ts=2:et:cindent
+

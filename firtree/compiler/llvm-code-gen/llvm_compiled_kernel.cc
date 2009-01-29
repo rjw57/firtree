@@ -487,40 +487,38 @@ void CompiledKernel::RunOptimiser()
     PM.add(createVerifierPass());
 
 	PM.add(createStripSymbolsPass(true));
-	PM.add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+
 	PM.add(createCFGSimplificationPass());    // Clean up disgusting code
 	PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
-	//PM.add(createGlobalOptimizerPass());      // Optimize out global vars
-	//PM.add(createGlobalDCEPass());            // Remove unused fns and globs
 	PM.add(createIPConstantPropagationPass());// IP Constant Propagation
-	//PM.add(createDeadArgEliminationPass());   // Dead argument elimination
 	PM.add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
 	PM.add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
 
-	PM.add(createPruneEHPass());              // Remove dead EH info
-
-	//PM.add(createFunctionInliningPass());   // Inline small functions
-	PM.add(createArgumentPromotionPass());    // Scalarize uninlined fn args
-
-	PM.add(createTailDuplicationPass());      // Simplify cfg by copying code
-	PM.add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
-	PM.add(createCFGSimplificationPass());    // Merge & remove BBs
-	PM.add(createScalarReplAggregatesPass()); // Break up aggregate allocas
-	PM.add(createInstructionCombiningPass()); // Combine silly seq's
 	PM.add(createCondPropagationPass());      // Propagate conditionals
-
-	PM.add(createTailCallEliminationPass());  // Eliminate tail calls
-	PM.add(createCFGSimplificationPass());    // Merge & remove BBs
 	PM.add(createReassociatePass());          // Reassociate expressions
+
 	PM.add(createLoopRotatePass());
-	PM.add(createLICMPass());                 // Hoist loop invariants
-	PM.add(createLoopUnswitchPass());         // Unswitch loops.
-	PM.add(createLoopIndexSplitPass());       // Index split loops.
-	PM.add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
-	PM.add(createIndVarSimplifyPass());       // Canonicalize indvars
+	PM.add(createLoopSimplifyPass());
+	PM.add(createIndVarSimplifyPass());       
+
+	PM.add(createInstructionCombiningPass()); 
+	PM.add(createCFGSimplificationPass());    
+
+	PM.add(createLoopRotatePass());
+	PM.add(createLoopSimplifyPass());
+	PM.add(createIndVarSimplifyPass());     
+	PM.add(createLoopStrengthReducePass());
+	PM.add(createLoopIndexSplitPass());
+	PM.add(createLoopDeletionPass());          
+
+	PM.add(createInstructionCombiningPass()); 
+	PM.add(createCFGSimplificationPass());   
+
 	PM.add(createLoopUnrollPass());           // Unroll small loops
-	PM.add(createInstructionCombiningPass()); // Clean up after the unroller
-	//PM.add(createGVNPass());                  // Remove redundancies
+
+	PM.add(createInstructionCombiningPass()); 
+	PM.add(createCFGSimplificationPass());    
+
 	PM.add(createSCCPPass());                 // Constant prop with SCCP
 
 	// Run instcombine after redundancy elimination to exploit opportunities
@@ -531,9 +529,6 @@ void CompiledKernel::RunOptimiser()
 	PM.add(createDeadStoreEliminationPass()); // Delete dead stores
 	PM.add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
 	PM.add(createCFGSimplificationPass());    // Merge & remove BBs
-	PM.add(createSimplifyLibCallsPass());     // Library Call Optimizations
-	PM.add(createDeadTypeEliminationPass());  // Eliminate dead types
-	PM.add(createConstantMergePass());        // Merge dup global constants
 
 	PM.run(*m);
 }

@@ -335,6 +335,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	// Create a basic block for this function
 	BasicBlock *BB = LLVM_CREATE( BasicBlock, "entry", F );
 	m_Context->BB = BB;
+	m_Context->EntryBB = BB;
 
 	// Create a symbol table
 	m_Context->Variables = new SymbolTable();

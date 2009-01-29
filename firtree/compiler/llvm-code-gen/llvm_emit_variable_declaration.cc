@@ -60,12 +60,24 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			}
 
 			// Create a VariableDeclaration structure for this
-			// variable.
+			// variable. We emit an alloca instruction. Unusually
+			// we don't do this in the current basic block. We
+			// *always* do it in the entry block. This is to allow
+			// the mem2reg optimisation pass to work its magic. Further,
+			// we insert it at the beginning of the entry block so that
+			// the first instructions contain all of the stack allocation.
 			VariableDeclaration var_decl_s;
-			var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
-			                                var_type.ToLLVMType( context ),
-			                                GLS_Tok_string( identifier_tok ),
-			                                context->BB );
+			if(context->EntryBB->empty()) {
+				var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
+						var_type.ToLLVMType( context ),
+			   			GLS_Tok_string( identifier_tok ),
+						context->EntryBB );
+			} else {
+				var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
+						var_type.ToLLVMType( context ),
+			   			GLS_Tok_string( identifier_tok ),
+						context->EntryBB->begin() );
+			}
 			var_decl_s.name = GLS_Tok_symbol( identifier_tok );
 			var_decl_s.type = var_type;
 			var_decl_s.initialised = false;

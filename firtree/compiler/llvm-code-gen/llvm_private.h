@@ -168,6 +168,10 @@ struct LLVMContext {
 	///                   into.
 	llvm::BasicBlock*     BB;
 
+	///					  The BasicBlock which is the entry block to the
+	///                   function.
+	llvm::BasicBlock*     EntryBB;
+
 	///                   The backend which is generating the code.
 	LLVMFrontend*         Backend;
 

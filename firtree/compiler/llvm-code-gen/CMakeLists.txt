@@ -27,7 +27,7 @@ SET(LLVM_CODE_GEN_SOURCES
   llvm_emit_decl.cc           llvm_expression.cc
   llvm_emit_expr_list.cc      llvm_frontend.cc
   llvm_emit_function_call.cc  llvm_type_cast.cc
-  llvm_emit_selection.cc
+  llvm_emit_selection.cc      llvm_emit_loop.cc
   llvm_emit_negate.cc         symbol_table.cc
 
   llvm_compiled_kernel.cc

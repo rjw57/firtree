@@ -26,6 +26,8 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/LinkAllPasses.h"
 
+#include "llvm/Support/CommandLine.h"
+
 #include <iostream>
 #include <vector>
 
@@ -478,6 +480,17 @@ void CompiledKernel::RunOptimiser()
 	if(m == NULL)
 	{
 		return;
+	}
+
+	static bool set_opt = false;
+	if(!set_opt) {
+		char* opts[] = {
+			"progname",
+			"-unroll-threshold",
+			"10000000",
+		};
+		cl::ParseCommandLineOptions(3, opts);
+		set_opt = true;
 	}
 
     PassManager PM;

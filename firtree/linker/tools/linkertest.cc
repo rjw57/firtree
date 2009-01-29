@@ -18,7 +18,12 @@
 
 const char* kernel1_src = 
   "kernel vec4 testKernel(sampler src, float roff, float goff) {\n"
-  "  vec4 incol = sample(src, samplerCoord(src));\n"
+  "  vec4 incol = vec4(0,0,0,0);\n"
+  "  for(int dx=-3;dx<=3;++dx) {\n"
+  "    for(int dy=-3;dy<=3;++dy) {\n"
+  "      incol += sample(src, samplerTransform(src, destCoord() + vec2(dx,dy)));\n"
+  "    }\n"
+  "  }\n"
   "  incol.rg += vec2(roff, goff);\n"
   "  return incol;\n"
   "}\n";
@@ -49,7 +54,7 @@ int main( int argc, const char* argv[] )
   Firtree::GLSLTarget* glsl_target = Firtree::GLSLTarget::Create();
   
   kernel1 = Firtree::LLVM::CompiledKernel::Create();
-  kernel1->SetDoOptimization(false);
+  //kernel1->SetDoOptimization(false);
   kernel1->Compile(&kernel1_src, 1);
 
   if(!kernel1->GetCompileStatus()) {
@@ -59,7 +64,7 @@ int main( int argc, const char* argv[] )
   }
  
   kernel2 = Firtree::LLVM::CompiledKernel::Create();
-  kernel2->SetDoOptimization(false);
+  //kernel2->SetDoOptimization(false);
   kernel2->Compile(&kernel2_src, 1);
 
   if(!kernel2->GetCompileStatus()) {

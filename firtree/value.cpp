@@ -85,9 +85,12 @@ void Value::SetVectorValue(float x, float y, float z, float w)
 }
 
 //===========================================================================
-void Value::SetVectorValue(float* v, int num_components)
+void Value::SetVectorValue(const float* v, int num_components)
 {
     switch(num_components) {
+        case 1: /* Special case 1-d vector. */
+            SetFloatValue(v[0]);
+            break;
         case 2:
             SetVectorValue(v[0], v[1]);
             break;
@@ -214,7 +217,7 @@ Value* Value::CreateVectorValue(float x, float y, float z, float w)
 }
 
 //===========================================================================
-Value* Value::CreateVectorValue(float* v, int num_components)
+Value* Value::CreateVectorValue(const float* v, int num_components)
 {
     Value* rv = Value::Create();
     rv->SetVectorValue(v, num_components);

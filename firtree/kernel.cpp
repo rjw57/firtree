@@ -22,6 +22,7 @@
 #include <string.h>
 #include <firtree/main.h>
 #include <firtree/kernel.h>
+#include <firtree/value.h>
 
 // GLSL runtime.
 #include <firtree/runtime/glsl/glsl-runtime-priv.h>
@@ -30,6 +31,7 @@
 
 // LLVM
 #include <firtree/compiler/llvm_compiled_kernel.h>
+#include <firtree/linker/sampler_provider.h>
 
 #include <sstream>
 
@@ -95,7 +97,7 @@ class StandardExtendProvider : public ExtentProvider
                         i != paramNames.end(); i++)
                 {
                     SamplerParameter* sp = dynamic_cast<SamplerParameter*>
-                        (kernel->GetValueForKey((*i).c_str()));
+                        (kernel->GetParameterForKey((*i).c_str()));
                     if(sp != NULL)
                     {
                         Rect2D samplerExtent = sp->GetExtent();
@@ -127,7 +129,7 @@ class StandardExtendProvider : public ExtentProvider
             }
 
             SamplerParameter* sp = dynamic_cast<SamplerParameter*>
-                    (kernel->GetValueForKey(parameterName));
+                    (kernel->GetParameterForKey(parameterName));
 
             Rect2D samplerExtent = sp->GetExtent();
 
@@ -194,6 +196,7 @@ Kernel::Kernel(const char* source)
     :   ReferenceCounted()
     ,   m_WrappedGLSLKernel(NULL)    
     ,   m_WrappedLLVMKernel(NULL)
+    ,   m_SamplerProvider(NULL)
 {
     // Create a GLSL-based kernel and keep a reference to it.
     m_WrappedGLSLKernel = GLSL::CompiledGLSLKernel::CreateFromSource(source);
@@ -211,6 +214,9 @@ Kernel::Kernel(const char* source)
     m_CompileLog = log_string.str();
 
     m_CompiledSource = source;
+
+    m_SamplerProvider = LLVM::SamplerProvider::CreateFromCompiledKernel(
+            m_WrappedLLVMKernel);
 }
 
 //=============================================================================
@@ -218,6 +224,7 @@ Kernel::~Kernel()
 {
     FIRTREE_SAFE_RELEASE(m_WrappedGLSLKernel);
     FIRTREE_SAFE_RELEASE(m_WrappedLLVMKernel);
+    FIRTREE_SAFE_RELEASE(m_SamplerProvider);
 }
 
 //=============================================================================
@@ -263,7 +270,13 @@ const std::map<std::string, Parameter*>& Kernel::GetParameters() const
 }
 
 //=============================================================================
-Parameter* Kernel::GetValueForKey(const char* key) const
+const Value* Kernel::GetValueForKey(const char* key) const
+{
+    return m_SamplerProvider->GetParameterValue(key);
+}
+
+//=============================================================================
+Parameter* Kernel::GetParameterForKey(const char* key) const
 {
     return m_WrappedGLSLKernel->GetValueForKey(key);
 }
@@ -274,7 +287,7 @@ void Kernel::SetValueForKey(Image* image, const char* key)
     // Firstly see if the value for this key is alreay this image.
     // If so, don't bother creating a new sampler.
     SamplerParameter* oldValue = 
-        dynamic_cast<SamplerParameter*>(GetValueForKey(key));
+        dynamic_cast<SamplerParameter*>(GetParameterForKey(key));
     if(oldValue != NULL)
     {
         if(oldValue->GetRepresentedImage() == image)
@@ -293,6 +306,12 @@ void Kernel::SetValueForKey(Image* image, const char* key)
 void Kernel::SetValueForKey(Parameter* param, const char* key)
 {
     m_WrappedGLSLKernel->SetValueForKey(param, key);
+}
+
+//=============================================================================
+void Kernel::SetValueForKey(Value* value, const char* key)
+{
+    m_SamplerProvider->SetParameterValue(key, value);
 }
 
 //=============================================================================
@@ -336,91 +355,40 @@ void Kernel::SetValueForKey(const float* value, int count, const char* key)
     this->SetValueForKey(p, key);
 
     p->Release();
+
+    Value* v = Value::CreateVectorValue(value, count);
+    SetValueForKey(v, key);
+    FIRTREE_SAFE_RELEASE(v);
 }
 
 //=============================================================================
 void Kernel::SetValueForKey(int value, const char* key)
 {
-    SetValueForKey(&value, 1, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(int x, int y, const char* key)
-{
-    int v[] = {x, y};
-    SetValueForKey(v, 2, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(int x, int y, int z, const char* key)
-{
-    int v[] = {x, y, z};
-    SetValueForKey(v, 3, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(int x, int y, int z, int w, const char* key)
-{
-    int v[] = {x, y, z, w};
-    SetValueForKey(v, 4, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(const int* value, int count, const char* key)
-{
     NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
-
-    p->SetSize(count);
+    p->SetSize(1);
     p->SetBaseType(NumericParameter::TypeInteger);
+    p->SetIntValue(value, 0);
+    SetValueForKey(p, key);
+    FIRTREE_SAFE_RELEASE(p);
 
-    for(int i=0; i<count; i++) { p->SetIntValue(value[i], i); }
-
-    this->SetValueForKey(p, key);
-
-    p->Release();
+    Value* v = Value::CreateIntValue(value);
+    SetValueForKey(v, key);
+    FIRTREE_SAFE_RELEASE(v);
 }
 
 //=============================================================================
 void Kernel::SetValueForKey(bool value, const char* key)
 {
-    SetValueForKey(&value, 1, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(bool x, bool y, const char* key)
-{
-    bool v[] = {x, y};
-    SetValueForKey(v, 2, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(bool x, bool y, bool z, const char* key)
-{
-    bool v[] = {x, y, z};
-    SetValueForKey(v, 3, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(bool x, bool y, bool z, bool w, 
-        const char* key)
-{
-    bool v[] = {x, y, z, w};
-    SetValueForKey(v, 4, key);
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(const bool* value, int count, const char* key)
-{
     NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
-
-    p->SetSize(count);
+    p->SetSize(1);
     p->SetBaseType(NumericParameter::TypeBool);
+    p->SetBoolValue(value, 0);
+    SetValueForKey(p, key);
+    FIRTREE_SAFE_RELEASE(p);
 
-    for(int i=0; i<count; i++) { p->SetBoolValue(value[i], i); }
-
-    this->SetValueForKey(p, key);
-
-    p->Release();
+    Value* v = Value::CreateBoolValue(value);
+    SetValueForKey(v, key);
+    FIRTREE_SAFE_RELEASE(v);
 }
 
 //=============================================================================

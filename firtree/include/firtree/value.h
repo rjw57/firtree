@@ -70,7 +70,7 @@ class Value : public ReferenceCounted
         /// an array of component values and 'num_components' gives
         /// its length. If num_components is outside of the range (2,4), 
         /// an error is thrown.
-        static Value* CreateVectorValue(float* v, int num_components);
+        static Value* CreateVectorValue(const float* v, int num_components);
 
         /// Return the type of the value.
         inline KernelTypeSpecifier GetType() const { return m_Type; }
@@ -113,7 +113,7 @@ class Value : public ReferenceCounted
         /// Assign the value from an array of vector components. 
         /// 'num_components' must be in the range (2,4) or an error is
         /// thrown.
-        void SetVectorValue(float* v, int num_components);
+        void SetVectorValue(const float* v, int num_components);
 
         /// Return the number of vector component values which are
         /// defined.

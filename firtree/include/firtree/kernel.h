@@ -39,6 +39,7 @@ namespace Firtree { namespace GLSL {
 
 namespace Firtree { namespace LLVM {
     class CompiledKernel;
+    class SamplerProvider;
 } }
 
 namespace Firtree {
@@ -47,6 +48,7 @@ class NumericParameter;
 class SamplerParameter;
 class Kernel;
 class Image;
+class Value;
 
 //=============================================================================
 /// \brief Abstract base class for extent providers.
@@ -278,9 +280,13 @@ class Kernel : public ReferenceCounted
         /// name/value pairs.
         const std::map<std::string, Parameter*>& GetParameters() const;
 
+        /// Return the value object for the named parameter or NULL if
+        /// this parameter is unset or there is no parameter with that name.
+        const Value* GetValueForKey(const char* key) const;
+
         /// Return the parameter object for the named parameter or NULL if
         /// this parameter is unset or there is no parameter with that name.
-        Parameter* GetValueForKey(const char* key) const;
+        Parameter* GetParameterForKey(const char* key) const;
 
         // ====================================================================
         // MUTATING METHODS
@@ -292,6 +298,7 @@ class Kernel : public ReferenceCounted
         /// Accessor for setting a kernel parameter value. The accessors below
         /// are convenience wrappers around this method.
         void SetValueForKey(Parameter* parameter, const char* key);
+        void SetValueForKey(Value* val, const char* key);
 
         ///@{
         /// Accessors for the various scalar, vector and sampler parameters.
@@ -303,19 +310,7 @@ class Kernel : public ReferenceCounted
         void SetValueForKey(const float* value, int count, 
                 const char* key);
         void SetValueForKey(int value, const char* key);
-        void SetValueForKey(int x, int y, const char* key);
-        void SetValueForKey(int x, int y, int z, const char* key);
-        void SetValueForKey(int x, int y, int z, int w, 
-                const char* key);
-        void SetValueForKey(const int* value, int count, 
-                const char* key);
         void SetValueForKey(bool value, const char* key);
-        void SetValueForKey(bool x, bool y, const char* key);
-        void SetValueForKey(bool x, bool y, bool z, const char* key);
-        void SetValueForKey(bool x, bool y, bool z, bool w, 
-                const char* key);
-        void SetValueForKey(const bool* value, int count, 
-                const char* key);
         ///@}
         
     protected:
@@ -335,6 +330,9 @@ class Kernel : public ReferenceCounted
         /// A pointer to the compiled LLVM kernel 'wrapped' by this 
         /// kernel
         LLVM::CompiledKernel*       m_WrappedLLVMKernel;
+
+        /// A pointer to the sampler provider for this kernel.
+        LLVM::SamplerProvider*      m_SamplerProvider;
 
         std::string                 m_CompileLog;
         std::string                 m_CompiledSource;

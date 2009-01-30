@@ -482,13 +482,15 @@ void CompiledKernel::RunOptimiser()
 		return;
 	}
 
+	// Nasty, nasty hack to set an option to unroll loops
+	// aggressively.
 	static bool set_opt = false;
+	static char* opts[] = {
+		"progname",
+		"-unroll-threshold",
+		"10000000",
+	};
 	if(!set_opt) {
-		char* opts[] = {
-			"progname",
-			"-unroll-threshold",
-			"10000000",
-		};
 		cl::ParseCommandLineOptions(3, opts);
 		set_opt = true;
 	}

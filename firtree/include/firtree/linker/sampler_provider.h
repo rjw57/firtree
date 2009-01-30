@@ -15,7 +15,10 @@
 
 namespace llvm { class Function; }
 
-namespace Firtree { class Value; }
+namespace Firtree { 
+	class Value; 
+	class Image;
+}
 
 namespace Firtree { namespace LLVM {
 
@@ -55,6 +58,9 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		static SamplerProvider* CreateFromCompiledKernel(
 				const CompiledKernel* kernel,
 				const std::string& kernel_name = "");
+
+		/// Create a sampler provider from a Firtree image.
+		static SamplerProvider* CreateFromImage(const Image* image);
 
 		/// Create a LLVM module which is the result of linking all the
 		/// samplers into one large module.

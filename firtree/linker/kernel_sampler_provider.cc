@@ -70,8 +70,8 @@ class KernelSamplerProvider : public SamplerProvider
 
             if(kernel_it == kernel->end())
             {
-                FIRTREE_ERROR("No such kernel '%s'.",
-                        kernel_name.c_str());
+                // No kernel, sampler is invalid.
+                return;
             }
 
             // Clone the kernel's module.
@@ -109,7 +109,9 @@ class KernelSamplerProvider : public SamplerProvider
             }
             m_ParameterSamplers.clear();
 
-            delete m_ClonedKernelModule;
+            if(m_ClonedKernelModule) {
+                delete m_ClonedKernelModule;
+            }
         }
 
         //===================================================================
@@ -267,6 +269,10 @@ class KernelSamplerProvider : public SamplerProvider
 		/// Get{.*}Function() are undefined if this flag is false.
 		virtual bool IsValid() const
         {
+            if(!m_ClonedKernelModule) {
+                return false;
+            }
+
             // Iterate over all parameters and ensure static params.
             // have non-NULL values.
             for(const_iterator i=begin(); i!=end(); ++i)

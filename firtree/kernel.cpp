@@ -300,6 +300,11 @@ void Kernel::SetValueForKey(Image* image, const char* key)
         SamplerParameter::CreateFromImage(image);
     m_WrappedGLSLKernel->SetValueForKey(sampler, key);
     FIRTREE_SAFE_RELEASE(sampler);
+
+    LLVM::SamplerProvider* sampler_prov = LLVM::SamplerProvider::
+        CreateFromImage(image);
+    m_SamplerProvider->SetParameterSampler(key, sampler_prov);
+    FIRTREE_SAFE_RELEASE(sampler_prov);
 }
 
 //=============================================================================

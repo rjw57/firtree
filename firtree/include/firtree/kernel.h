@@ -318,8 +318,14 @@ class Kernel : public ReferenceCounted
         /// kernel.
         GLSL::CompiledGLSLKernel* GetWrappedGLSLKernel() const;
 
+        /// Internal method to retrieve the wrapped sampler.
+        inline LLVM::SamplerProvider* GetSampler() const {
+            return m_SamplerProvider;
+        }
+
         friend class GLSL::KernelSamplerParameter;
         friend class GLSL::CompiledGLSLKernel;
+        friend class LLVM::SamplerProvider;
 
     private:
 

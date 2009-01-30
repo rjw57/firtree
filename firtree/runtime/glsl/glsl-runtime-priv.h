@@ -30,6 +30,7 @@
 
 #include <firtree/kernel.h>
 #include <firtree/glsl-runtime.h>
+#include <firtree/linker/sampler_provider.h>
 
 namespace Firtree { namespace Internal {
     class ImageImpl;
@@ -206,8 +207,11 @@ class KernelSamplerParameter : public GLSLSamplerParameter
         virtual void AddChildSamplersToVector(
                 std::vector<SamplerParameter*>& sampVec);
 
+        LLVM::SamplerProvider* GetSampler() const { return m_LLVMSampler; }
+
     private:
         CompiledGLSLKernel*         m_Kernel;
+        LLVM::SamplerProvider*      m_LLVMSampler;
 };
 
 //=============================================================================

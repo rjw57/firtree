@@ -41,6 +41,8 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/LinkAllPasses.h"
 
+#include <internal/image-int.h>
+
 namespace llvm { class Module; }
 
 namespace Firtree { class LLVMFrontend; }
@@ -58,6 +60,35 @@ SamplerProvider::SamplerProvider()
 //===========================================================================
 SamplerProvider::~SamplerProvider()
 {
+}
+
+//===========================================================================
+SamplerProvider* SamplerProvider::CreateFromImage(const Image* image)
+{
+    const Firtree::Internal::ImageImpl* imImpl = 
+        dynamic_cast<const Firtree::Internal::ImageImpl*>(image);
+    if(imImpl == NULL) {
+        FIRTREE_WARNING("Passed an invalid image.");
+        return NULL; 
+    }
+
+    // See if this image has a kernel.
+    Kernel* kernel = imImpl->GetKernel();
+
+    if(!kernel) {
+        // If not, create one (temp. hack).
+        kernel = Kernel::CreateFromSource(
+                "kernel vec4 foo() { return vec4(1,0,0,1); }");
+    } else {
+        FIRTREE_SAFE_RETAIN(kernel);
+    }
+
+    SamplerProvider* rv = kernel->GetSampler();
+    FIRTREE_SAFE_RETAIN(rv);
+
+    FIRTREE_SAFE_RELEASE(kernel);
+
+    return rv;
 }
 
 //===========================================================================

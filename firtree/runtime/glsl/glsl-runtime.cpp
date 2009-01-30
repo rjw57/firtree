@@ -18,6 +18,10 @@
 // This file implements the FIRTREE compiler utility functions.
 //=============================================================================
 
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+#include <llvm/Module.h>
+
 #include "glsl-runtime-priv.h"
 #include "sha1.h"
 
@@ -743,6 +747,9 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
                 "from kernel (%p) with no GLSL implementation.", k);
         return;
     }
+
+    m_LLVMSampler = k->GetSampler();
+    FIRTREE_SAFE_RETAIN(m_LLVMSampler);
     
     // NB underlyingTransform must be released
     AffineTransform* underlyingTransform = 
@@ -762,6 +769,7 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
 KernelSamplerParameter::~KernelSamplerParameter()
 {
     FIRTREE_SAFE_RELEASE(m_Kernel);
+    FIRTREE_SAFE_RELEASE(m_LLVMSampler);
 }
 
 //=============================================================================
@@ -1032,6 +1040,20 @@ void LinkShader(std::string& dest, GLSLSamplerParameter* sampler)
     {
         ksp->AddChildSamplersToVector(children);
     }
+
+#if 0
+    if(ksp != NULL) {
+        // HACK: If this is a KSP, try to link the sampler provider
+        LLVM::SamplerLinker linker;
+        LLVM::SamplerProvider* sampler = ksp->GetSampler();
+        if(!linker.CanLinkSampler(sampler)) {
+            FIRTREE_WARNING("Cannot link sampler.");
+        } else {
+            linker.LinkSampler(sampler);
+            linker.GetModule()->dump();
+        }
+    }
+#endif
 
     // For each child sampler, assign a sampler index and
     // (if necessary) a GL texture unit.

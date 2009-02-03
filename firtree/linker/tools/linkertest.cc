@@ -19,8 +19,8 @@
 const char* kernel1_src = 
   "kernel vec4 testKernel(sampler src, float roff, float goff) {\n"
   "  vec4 incol = vec4(0,0,0,0);\n"
-  "  for(int dx=-3;dx<=3;++dx) {\n"
-  "    for(int dy=-3;dy<=3;++dy) {\n"
+  "  for(int dx=-1;dx<=1;++dx) {\n"
+  "    for(int dy=-1;dy<=1;++dy) {\n"
   "      incol += sample(src, samplerTransform(src, destCoord() + vec2(dx,dy)));\n"
   "    }\n"
   "  }\n"

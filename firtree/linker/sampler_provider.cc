@@ -201,6 +201,11 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
         llvm::Module* module = next_provider->CreateSamplerModule(next.first);
         std::string err;
         linker->LinkInModule(module, &err);
+        
+        // Despite what the LLVM comments say, we still need to delete
+        // the object.
+        delete module;
+
         if(!err.empty()) {
             FIRTREE_ERROR("Error linking samplers: %s", err.c_str());
             return;

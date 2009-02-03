@@ -224,7 +224,7 @@ Kernel::Kernel(const char* source)
             m_WrappedLLVMKernel);
 
     m_SamplerLinker = new LLVM::SamplerLinker();
-    m_SamplerLinker->SetDoOptimization(false);
+    //m_SamplerLinker->SetDoOptimization(false);
 }
 
 //=============================================================================

@@ -233,9 +233,6 @@ class SamplerLinker {
 	private:
 		void Reset();
 
-		llvm::Function* WriteTransform();
-		llvm::Function* WriteExtent();
-		llvm::Function* WriteSample();
 		void WriteFreeParamFuncs();
 		void RunOptimiser();
 

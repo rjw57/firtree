@@ -18,6 +18,7 @@ SET(LINKER_SOURCES
   
   kernel_sampler_provider.cc
   sampler_provider.cc
+  canonicalize_sampler_calls.cc
 )
 
 INCLUDE_DIRECTORIES(${LLVM_INCLUDE_DIR})

@@ -302,6 +302,8 @@ void initialize_kernels()
         g_OverKernel2->SetValueForKey(g_GradientImage, "b");
         g_OverKernel2->SetValueForKey(g_RippleImage, "a");
 
+        g_OverKernel2->Dump();
+
         // Don't release these since we want to access them
         // in the render loop.
         // FIRTREE_SAFE_RELEASE(g_RippleKernel);

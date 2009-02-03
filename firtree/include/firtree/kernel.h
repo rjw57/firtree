@@ -40,6 +40,7 @@ namespace Firtree { namespace GLSL {
 namespace Firtree { namespace LLVM {
     class CompiledKernel;
     class SamplerProvider;
+    class SamplerLinker;
 } }
 
 namespace Firtree {
@@ -312,6 +313,9 @@ class Kernel : public ReferenceCounted
         void SetValueForKey(int value, const char* key);
         void SetValueForKey(bool value, const char* key);
         ///@}
+
+        /// Internal. Do not call.
+        void Dump();
         
     protected:
         /// Internal method to retrieve the wrapped GLSL
@@ -328,6 +332,8 @@ class Kernel : public ReferenceCounted
         friend class LLVM::SamplerProvider;
 
     private:
+        /// If possible, relink.
+        void ReLink();
 
         /// A pointer to the compiled GLSL kernel 'wrapped'
         /// by this kernel.
@@ -339,6 +345,9 @@ class Kernel : public ReferenceCounted
 
         /// A pointer to the sampler provider for this kernel.
         LLVM::SamplerProvider*      m_SamplerProvider;
+
+        /// A pointer to a sampler linker.
+        LLVM::SamplerLinker*        m_SamplerLinker;
 
         std::string                 m_CompileLog;
         std::string                 m_CompiledSource;

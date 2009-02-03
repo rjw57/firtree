@@ -18,6 +18,10 @@
 /// \file kernel.cpp This file implements the FIRTREE kernel interface.
 //=============================================================================
 
+#define __STDC_LIMIT_MACROS
+#include <limits.h>
+#include <llvm/Module.h>
+
 #include <float.h>
 #include <string.h>
 #include <firtree/main.h>
@@ -197,6 +201,7 @@ Kernel::Kernel(const char* source)
     ,   m_WrappedGLSLKernel(NULL)    
     ,   m_WrappedLLVMKernel(NULL)
     ,   m_SamplerProvider(NULL)
+    ,   m_SamplerLinker(NULL)
 {
     // Create a GLSL-based kernel and keep a reference to it.
     m_WrappedGLSLKernel = GLSL::CompiledGLSLKernel::CreateFromSource(source);
@@ -217,6 +222,9 @@ Kernel::Kernel(const char* source)
 
     m_SamplerProvider = LLVM::SamplerProvider::CreateFromCompiledKernel(
             m_WrappedLLVMKernel);
+
+    m_SamplerLinker = new LLVM::SamplerLinker();
+    m_SamplerLinker->SetDoOptimization(false);
 }
 
 //=============================================================================
@@ -225,6 +233,7 @@ Kernel::~Kernel()
     FIRTREE_SAFE_RELEASE(m_WrappedGLSLKernel);
     FIRTREE_SAFE_RELEASE(m_WrappedLLVMKernel);
     FIRTREE_SAFE_RELEASE(m_SamplerProvider);
+    delete m_SamplerLinker;
 }
 
 //=============================================================================
@@ -305,6 +314,9 @@ void Kernel::SetValueForKey(Image* image, const char* key)
         CreateFromImage(image);
     m_SamplerProvider->SetParameterSampler(key, sampler_prov);
     FIRTREE_SAFE_RELEASE(sampler_prov);
+
+    // Re-wiring the pipeline *always* requires a re-link.
+    ReLink();
 }
 
 //=============================================================================
@@ -316,7 +328,14 @@ void Kernel::SetValueForKey(Parameter* param, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(Value* value, const char* key)
 {
-    m_SamplerProvider->SetParameterValue(key, value);
+    LLVM::SamplerProvider::const_iterator param =
+        m_SamplerProvider->find(key);
+    if(param != m_SamplerProvider->end()) {
+        // Does setting this parameter cause a re-compile?
+        if(m_SamplerProvider->SetParameterValue(param, value)) {
+            ReLink();
+        }
+    }
 }
 
 //=============================================================================
@@ -394,6 +413,21 @@ void Kernel::SetValueForKey(bool value, const char* key)
     Value* v = Value::CreateBoolValue(value);
     SetValueForKey(v, key);
     FIRTREE_SAFE_RELEASE(v);
+}
+
+//=============================================================================
+void Kernel::ReLink()
+{
+    if(m_SamplerLinker->CanLinkSampler(m_SamplerProvider)) {
+        m_SamplerLinker->LinkSampler(m_SamplerProvider);
+    }
+}
+
+//=============================================================================
+void Kernel::Dump() {
+    if(m_SamplerLinker->GetModule()) {
+        m_SamplerLinker->GetModule()->dump();
+    }
 }
 
 //=============================================================================

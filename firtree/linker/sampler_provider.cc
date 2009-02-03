@@ -258,7 +258,7 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
 
     RunOptimiser();
 
-    m_LinkedModule->dump();
+    //m_LinkedModule->dump();
 
     // By this point, all usages of sample_x_{Transform,Sample,Extent}
     // for any sampler should have been inlined. Check this

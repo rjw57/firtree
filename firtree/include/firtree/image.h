@@ -52,6 +52,7 @@ class BitmapImageRep : public ReferenceCounted {
         enum PixelFormat { 
             Byte,
             Float,
+            Any, ///< Only valid as *input* to CreateBitmapImageRep().
         };
 
     protected:

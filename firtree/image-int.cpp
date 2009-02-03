@@ -395,7 +395,7 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
     }
 
     Firtree::BitmapImageRep* bir = CreateBitmapImageRep(
-            Firtree::BitmapImageRep::Float);
+            Firtree::BitmapImageRep::Any);
 
     ctx->Begin();
 
@@ -644,7 +644,7 @@ AffineTransform* BitmapImageImpl::GetTransformFromUnderlyingImage() const
 Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep(
         Firtree::BitmapImageRep::PixelFormat format)
 {
-    if(format != m_BitmapRep->Format)
+    if((format != BitmapImageRep::Any) && (format != m_BitmapRep->Format))
     {
         FIRTREE_WARNING("Implicit bitmap format conversion not yet implemented.");
     }

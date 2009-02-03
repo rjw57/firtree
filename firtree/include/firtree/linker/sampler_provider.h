@@ -236,8 +236,7 @@ class SamplerLinker {
 		void WriteFreeParamFuncs();
 		void RunOptimiser();
 
-		typedef std::pair<SamplerProvider*, std::string> ParamSpec;
-		typedef std::vector<ParamSpec> ParamSpecList;
+		typedef std::vector<SamplerProvider::const_iterator> ParamSpecList;
 		typedef std::vector<SamplerProvider*> SamplerList;
 
 		bool			m_RunOptimiser;

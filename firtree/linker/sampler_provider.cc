@@ -195,8 +195,7 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
                 m_SamplerTable.push_back(param_samp);
             } else if(! i->IsStatic) {
                 // This is a free parameter
-                m_FreeParameters.push_back(ParamSpec(
-                            next_provider, i->Name));
+                m_FreeParameters.push_back(next_provider->find(i->Name));
             }
         }
 
@@ -246,8 +245,7 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
 
         assert(samp_trans_F && samp_extent_F && samp_sample_F);
 
-        SamplerDesc desc(samp_sample_F,
-            samp_trans_F, samp_extent_F);
+        SamplerDesc desc(samp_sample_F, samp_trans_F, samp_extent_F);
 
         // Handle the free parameters.
         SamplerProvider::const_iterator start = (*i)->begin();
@@ -267,7 +265,7 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
                     ++fpit, ++free_param_idx)
             {
                 // Cheap test first...
-                if((fpit->first == *i) && (fpit->second == param->Name)) {
+                if(*fpit == param) {
                     found = true;
 
                     // Find the free parameter function.

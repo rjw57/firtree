@@ -383,17 +383,6 @@ void BitmapBackedImageImpl::InvalidateCache()
 //=============================================================================
 unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 {
-    // If the context we used to create the texture doesn't match
-    // the one asked for, purge our cache.
-    if((m_GLTexture != 0) && (ctx != m_GLContext))
-    {
-        m_GLContext->DeleteTexture(m_GLTexture);
-        m_GLTexture = 0;
-        FIRTREE_SAFE_RELEASE(m_GLContext);
-
-        InvalidateCache();
-    }
-
     Firtree::BitmapImageRep* bir = CreateBitmapImageRep(
             Firtree::BitmapImageRep::Any);
 
@@ -416,11 +405,10 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
         InvalidateCache();
     }
 
-    // HACK: Comment out this test for the moment since we have no
-    // way of signalling a bitmapimagerep as 'dirty'.
-    //if(!m_CacheValid)
+    if(!m_CacheValid)
     {
-        FIRTREE_DEBUG("Performance hint: copying CPU -> GPU.");
+        FIRTREE_DEBUG("Image %p: Performance hint: copying CPU -> GPU.", 
+                this);
 
         CHECK_GL( ctx, glBindTexture(GL_TEXTURE_2D, m_GLTexture) );
 

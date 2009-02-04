@@ -386,6 +386,10 @@ unsigned int BitmapBackedImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
     Firtree::BitmapImageRep* bir = CreateBitmapImageRep(
             Firtree::BitmapImageRep::Any);
 
+    if(bir->IsDynamic) {
+        InvalidateCache();
+    }
+
     ctx->Begin();
 
     if(m_GLTexture == 0)
@@ -709,7 +713,7 @@ Firtree::BitmapImageRep* ImageProviderImageImpl::CreateBitmapImageRep(
         Firtree::BitmapImageRep::PixelFormat format)
 {
     // FIXME: Pass format down.
-    if(format != Firtree::BitmapImageRep::Float)
+    if((format != Firtree::BitmapImageRep::Float) && (format != Firtree::BitmapImageRep::Any))
     {
         FIRTREE_ERROR("ImageProvider API needs updating to handle non-floating "
                 "point formats.");

@@ -81,6 +81,11 @@ class BitmapImageRep : public ReferenceCounted {
         bool            Flipped;    ///< True if the first scan line in the 
                                     ///< BitmapImageRep is the top one.
 
+        bool            IsDynamic;  ///< True if the contents of the BIR are
+                                    ///< likely to change. Internally this
+                                    ///< means Firtree doesn't keep a cache
+                                    ///< of the contents.
+
         /// Constructor for a BitmapImageRep.
         ///
         /// \param blob The Blob object containing the image data.

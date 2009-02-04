@@ -230,6 +230,11 @@ class SamplerLinker {
 			m_RunOptimiser = flag;
 		}
 
+		/// Return a reference to an array of free parameters for
+		/// this sampler.
+		inline const std::vector<SamplerProvider::const_iterator>&
+			GetFreeParameters() const { return m_FreeParameters; }
+
 	private:
 		void Reset();
 

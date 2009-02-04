@@ -983,7 +983,30 @@ GLSLTarget* GLSLTarget::Create()
 }
 
 //===========================================================================
+const std::string& GLSLTarget::ProcessModule(
+		const LLVM::SamplerLinker* linker,
+		bool optimize)
+{
+	llvm::Module* mod = linker->GetModule();
+	if(!mod) {
+		FIRTREE_ERROR("GLSL target asked to process non-linked sampler.");
+	}
+
+	return ProcessModule(mod, linker->GetFreeParameters(), optimize);
+}
+
+//===========================================================================
 const std::string& GLSLTarget::ProcessModule(const llvm::Module* module, 
+		bool optimize)
+{
+	std::vector<LLVM::SamplerProvider::const_iterator> empty_params;
+
+	return ProcessModule(module, empty_params, optimize);
+}
+
+//===========================================================================
+const std::string& GLSLTarget::ProcessModule(const llvm::Module* module, 
+		const std::vector<LLVM::SamplerProvider::const_iterator>& free_params,
 		bool optimize)
 {
 	GLSLVisitor visitor;

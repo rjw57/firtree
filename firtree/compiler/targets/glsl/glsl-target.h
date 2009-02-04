@@ -5,6 +5,7 @@
 #define __FIRTREE_GLSL_TARGET_H
 
 #include <firtree/main.h>
+#include <firtree/linker/sampler_provider.h>
 
 namespace llvm { class Module; }
 
@@ -22,6 +23,15 @@ class GLSLTarget : public ReferenceCounted
 	public:
 		/// Create a new GLSLTarget. Call Release() to free it.
 		static GLSLTarget* Create();
+
+		/// Process the contents of the linker passed.
+		const std::string& ProcessModule(const LLVM::SamplerLinker* linker,
+				bool optimize = true);
+
+		/// Process the LLVM module passed.
+		const std::string& ProcessModule(const llvm::Module* module,
+				const std::vector<LLVM::SamplerProvider::const_iterator>& free_params,
+				bool optimize = true);
 
 		/// Process the LLVM module passed.
 		const std::string& ProcessModule(const llvm::Module* module,

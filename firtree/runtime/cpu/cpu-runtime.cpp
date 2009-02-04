@@ -22,6 +22,11 @@
 #include <stdint.h>
 #include <llvm/Module.h>
 #include <llvm/ModuleProvider.h>
+#include <llvm/Function.h>
+#include <llvm/DerivedTypes.h>
+#include <llvm/Type.h>
+#include <llvm/BasicBlock.h>
+#include <llvm/Instructions.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 
@@ -35,6 +40,8 @@
 #include <firtree/linker/sampler_provider.h>
 
 #include <firtree/internal/image-int.h>
+
+using namespace llvm;
 
 namespace Firtree { 
 
@@ -152,8 +159,7 @@ Image* CPURenderer::CreateImage()
 
 struct vec2 { float x, y; };
 struct vec4 { float x,y,z,w; };
-typedef vec4 (*KernelFunc) (vec2 coord);
-//typedef void (*KernelFunc) ( void* a, void* b );
+typedef void (*KernelFunc) (vec2* coord, vec4* output);
 
 //=============================================================================
 void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect, 
@@ -233,7 +239,6 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     uint8_t* dest_img = const_cast<uint8_t*>(
             m_OutputRep->ImageBlob->GetBytes());
     off_t row_stride = m_OutputRep->Stride;
-    off_t pixel_size = sizeof(float)*4;
 
     SamplerProvider* im_samp_prov = SamplerProvider::CreateFromImage(image);
     SamplerLinker linker;
@@ -249,34 +254,55 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
         FIRTREE_ERROR("Error JIT-ing module: %s", err_str.c_str());
     }
 
-    mod->dump();
-
     llvm::Function* kernel_F = mod->getFunction("kernel");
+
+    // We want to add our 'doit' function which will actually do the 
+    // work.
+    std::vector<const Type*> params;
+    params.push_back(PointerType::get( 
+                VectorType::get( Type::FloatTy, 2 ), 0 ));
+    params.push_back(PointerType::get( 
+                VectorType::get( Type::FloatTy, 4 ), 0 ));
+    FunctionType* doit_FT = FunctionType::get( 
+            Type::VoidTy, params, false );
+    Function* doit_F = Function::Create( doit_FT,
+            Function::ExternalLinkage,
+            "doit", mod );
+
+    BasicBlock* entry_BB = BasicBlock::Create( "entry", doit_F );
+
+    llvm::Function::arg_iterator ai = doit_F->arg_begin();
+    llvm::Value* coord = new llvm::LoadInst( ai, "coord", entry_BB );
+    std::vector<llvm::Value*> kernel_params;
+    kernel_params.push_back(coord);
+
+    llvm::Value* rv = CallInst::Create( kernel_F, 
+            kernel_params.begin(), kernel_params.end(),
+            "result", entry_BB );
+
+    ++ai;
+    new StoreInst( rv, ai, entry_BB );
+
+    ReturnInst::Create( entry_BB );
+
+    // mod->dump();
+
     KernelFunc kernel_fn = reinterpret_cast<KernelFunc>(
-            engine->getPointerToFunction(mod->getFunction("kernel")));
+            engine->getPointerToFunction(doit_F));
     assert(kernel_fn != NULL);
 
     off_t row_start = row_stride * start_row;
     vec2 pos;
-    vec4 result;
-
-    std::vector<llvm::GenericValue> args;
-    llvm::GenericValue foo, bar;
-    args.push_back(foo);
-    args.push_back(bar);
 
     for(size_t row=start_row; row<end_row; ++row, row_start += row_stride) {
         pos.y = row;
         vec4* outptr = reinterpret_cast<vec4*>(dest_img + row_start);
         for(size_t col=start_col; col<end_col; ++col, ++outptr) {
             pos.x = col;
-            //llvm::GenericValue gv = engine->runFunction(kernel_F, args);
-            //kernel_fn(0,0);
-            *outptr = kernel_fn(pos);
-            result = *outptr;
+            kernel_fn(&pos, outptr);
         }
     }
-    printf("%f,%f,%f,%f", result.x, result.y, result.z, result.w);
+    // printf("%f,%f,%f,%f", result.x, result.y, result.z, result.w);
 
     if(engine) {
         delete engine;

@@ -28,7 +28,10 @@ from Firtree import *
 
 kernel_source = '''
 kernel vec4 testKernel() {
-    return vec4(1,2,3,4);
+    vec4 outputCol = vec4(destCoord() / 700,1-(destCoord().y / 480),1);
+    float a = 0.5*(destCoord().x/640) + 0.5;
+    outputCol *= a;
+    return outputCol;
 }
 '''
 

@@ -5,7 +5,7 @@
 
 #include <llvm_frontend.h>
 
-#include "llvm/ADT/hash_map"
+#include "llvm/ADT/hash_map.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
 

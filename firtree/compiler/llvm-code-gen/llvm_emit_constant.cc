@@ -215,7 +215,7 @@ void CrackVector( LLVMContext* context, ExpressionValue* vector,
 	llvm::Value* vec_val = vector->GetLLVMValue();
 
 	for ( unsigned int i=0; i<vec_type.GetArity(); i++ ) {
-		llvm::Value* ext_val = LLVM_NEW_2_3( ExtractElementInst,
+		llvm::Value* ext_val = new ExtractElementInst(
 		                                    vec_val, i, "tmp",
 		                                    context->BB );
 		output_values.push_back(

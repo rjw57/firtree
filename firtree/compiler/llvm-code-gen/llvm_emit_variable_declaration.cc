@@ -68,12 +68,12 @@ class VariableDeclarationEmitter : ExpressionEmitter
 			// the first instructions contain all of the stack allocation.
 			VariableDeclaration var_decl_s;
 			if(context->EntryBB->empty()) {
-				var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
+				var_decl_s.value = new AllocaInst(
 						var_type.ToLLVMType( context ),
 			   			GLS_Tok_string( identifier_tok ),
 						context->EntryBB );
 			} else {
-				var_decl_s.value = LLVM_NEW_2_3( AllocaInst,
+				var_decl_s.value = new AllocaInst(
 						var_type.ToLLVMType( context ),
 			   			GLS_Tok_string( identifier_tok ),
 						context->EntryBB->begin() );
@@ -99,7 +99,7 @@ class VariableDeclarationEmitter : ExpressionEmitter
  							var_type.Specifier );
 
 					var_decl_s.initialised = true;
-					LLVM_NEW_2_3( StoreInst,
+					new StoreInst(
 					             initialiser_cast_val->GetLLVMValue(),
 					             var_decl_s.value, context->BB );
 					

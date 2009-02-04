@@ -163,14 +163,14 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				llvm::Value* result_val = NULL;
 
 				if ( left_val->GetType().Specifier == Firtree::TySpecFloat ) {
-					result_val = LLVM_NEW_2_3( FCmpInst, fcmp,
+					result_val = new FCmpInst( fcmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmp",
 					                          context->BB );
 				} else if (( left_val->GetType().Specifier == Firtree::TySpecInt ) ||
 				           ( left_val->GetType().Specifier == Firtree::TySpecBool ) ) {
-					result_val = LLVM_NEW_2_3( ICmpInst, icmp,
+					result_val = new ICmpInst( icmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmp",

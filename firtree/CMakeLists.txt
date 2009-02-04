@@ -6,7 +6,15 @@
 
 # This file builds the main Firtree library.
 
-SET(LLVM_CONFIG_COMPONENTS instrumentation bitwriter analysis system linker ipo)
+SET(LLVM_CONFIG_COMPONENTS instrumentation scalaropts ipo linker engine)
+
+FIND_PACKAGE(LLVM)
+IF(NOT LLVM_FOUND)
+  MESSAGE(SEND_ERROR "LLVM required for Firtree.")
+ENDIF(NOT LLVM_FOUND)
+
+MESSAGE(STATUS "LLVM libs: ${LLVM_STATIC_LIBS}")
+MESSAGE(STATUS "LLVM objs: ${LLVM_STATIC_OBJS}")
 
 # Build the compiler and linker
 ADD_SUBDIRECTORY(compiler)
@@ -96,6 +104,7 @@ SET(FIRTREE_HEADERS
 	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
 	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
 	include/firtree/image.h		include/firtree/glsl-runtime.h  include/firtree/value.h
+	include/firtree/cpu-runtime.h
 )
 
 SET(FIRTREE_SOURCES
@@ -109,16 +118,21 @@ SET(FIRTREE_SOURCES
 	runtime/glsl/sha1.h
 	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c
 
+	runtime/cpu/cpu-runtime.cpp
+
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
 
 	image-int.cpp		render-to-texture.cpp	pbuffer.cpp
 	value.cpp
+
+	${LLVM_STATIC_OBJS}
 )
 
 ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
 
 TARGET_LINK_LIBRARIES(firtree 
+	${LLVM_STATIC_LIBS}
 	selog
 	${FIRTREE_TARGET_LIBRARIES}
 	llvm-code-gen glsl-target

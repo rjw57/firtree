@@ -30,7 +30,6 @@
 #include "../compiler/llvm-code-gen/llvm_private.h"
 
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <llvm/ADT/hash_map>
 #include <llvm/Instructions.h>
 #include <llvm/Linker.h>
 
@@ -321,8 +320,31 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
 
     llvm::Function* trans_F = m_LinkedModule->getFunction(
             "samplerTransform_sv2");
+    if(!trans_F) {
+        std::vector<const Type*> params;
+        params.push_back(Type::Int32Ty);
+        params.push_back(VectorType::get( Type::FloatTy, 2 ));
+        FunctionType* FT = FunctionType::get( 
+                VectorType::get( Type::FloatTy, 2 ),
+                params, false );
+        trans_F = LLVM_CREATE( Function, FT,
+                Function::ExternalLinkage,
+                "samplerTransform_sv2", m_LinkedModule );
+    }
+
     llvm::Function* sample_F = m_LinkedModule->getFunction(
             "sample_sv2");
+    if(!sample_F) {
+        std::vector<const Type*> params;
+        params.push_back(Type::Int32Ty);
+        params.push_back(VectorType::get( Type::FloatTy, 2 ));
+        FunctionType* FT = FunctionType::get( 
+                VectorType::get( Type::FloatTy, 4 ),
+                params, false );
+        sample_F = LLVM_CREATE( Function, FT,
+                Function::ExternalLinkage,
+                "sample_sv2", m_LinkedModule );
+    }
 
     // Now write the main kernel function
     std::vector<const Type*> kernel_params;
@@ -551,7 +573,9 @@ void SamplerLinker::RunOptimiser()
 	PM.add(createIndVarSimplifyPass());     
 	PM.add(createLoopStrengthReducePass());
 	PM.add(createLoopIndexSplitPass());
-	PM.add(createLoopDeletionPass());          
+#if LLVM_AT_LEAST_2_3
+	PM.add(createLoopDeletionPass());          // 2.3 only
+#endif
 
 	PM.add(createInstructionCombiningPass()); 
 	PM.add(createCFGSimplificationPass());   

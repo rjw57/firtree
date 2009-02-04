@@ -42,7 +42,7 @@ ADD_DEFINITIONS(-DLLVM_MAJOR_VER=${LLVM_MAJOR} -DLLVM_MINOR_VER=${LLVM_MINOR})
 
 ADD_LIBRARY(llvm-code-gen ${LLVM_CODE_GEN_SOURCES})
 
-TARGET_LINK_LIBRARIES(llvm-code-gen styx-parser ${LLVM_LIBRARIES})
+TARGET_LINK_LIBRARIES(llvm-code-gen styx-parser)
 
 ADD_DEPENDENCIES(llvm-code-gen styx-parser)
 

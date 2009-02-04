@@ -214,7 +214,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                     isa<IntegerType>( llvm_value->getType() ) );
 
 					// Add a conversion instruction
-					llvm::Value* llvm_new_value = LLVM_NEW_2_3( SIToFPInst,
+					llvm::Value* llvm_new_value = new SIToFPInst(
 					                                     llvm_value,
 					                                     Type::FloatTy,
 					                                     "tmp",
@@ -240,7 +240,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					const Type* dest_llvm_type =
 					    ( dest_ty_spec == Firtree::TySpecInt ) ?
 					    Type::Int32Ty : Type::Int1Ty;
-					llvm::Value* llvm_new_value = LLVM_NEW_2_3( FPToSIInst,
+					llvm::Value* llvm_new_value = new FPToSIInst(
 					                                     llvm_value,
 					                                     dest_llvm_type,
 					                                     "tmp",
@@ -253,7 +253,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				case Firtree::TySpecBool: {
 					// Only support implicityle casting bool -> int since
 					// this does not lose bits.
-  	 			    llvm::Value* llvm_new_value = LLVM_NEW_2_3( SExtInst,
+  	 			    llvm::Value* llvm_new_value = new SExtInst(
 					                                     llvm_value,
 					                                     Type::Int32Ty,
 					                                     "tmp",

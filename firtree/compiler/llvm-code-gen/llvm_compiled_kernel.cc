@@ -482,6 +482,7 @@ void CompiledKernel::RunOptimiser()
 		return;
 	}
 
+#if 1
 	// Nasty, nasty hack to set an option to unroll loops
 	// aggressively.
 	static bool set_opt = false;
@@ -494,6 +495,7 @@ void CompiledKernel::RunOptimiser()
 		cl::ParseCommandLineOptions(3, opts);
 		set_opt = true;
 	}
+#endif
 
     PassManager PM;
 
@@ -524,7 +526,9 @@ void CompiledKernel::RunOptimiser()
 	PM.add(createIndVarSimplifyPass());     
 	PM.add(createLoopStrengthReducePass());
 	PM.add(createLoopIndexSplitPass());
+#if LLVM_AT_LEAST_2_3
 	PM.add(createLoopDeletionPass());          
+#endif
 
 	PM.add(createInstructionCombiningPass()); 
 	PM.add(createCFGSimplificationPass());   

@@ -26,7 +26,6 @@
 #include "../compiler/llvm-code-gen/llvm_private.h"
 
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <llvm/ADT/hash_map>
 #include <llvm/Instructions.h>
 #include <llvm/Linker.h>
 

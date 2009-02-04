@@ -10,6 +10,7 @@
 #include "llvm_expression.h"
 
 #include <llvm/Instructions.h>
+// #include <llvm/ParameterAttributes.h>
 
 using namespace llvm;
 
@@ -221,10 +222,24 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	// is no global state within one kernel call. Mark the function as such.
 	// This allows later optimisation stages to coelesce multiple calls to
 	// the same function.
+#if LLVM_AT_LEAST_2_4
+	F->addFnAttr(Attribute::ReadNone);
+	F->addFnAttr(Attribute::NoUnwind);
+#else
+#if LLVM_AT_LEAST_2_3
 	PAListPtr attributes = F->getParamAttrs();
 	attributes = attributes.addAttr(0, ParamAttr::ReadNone);
 	attributes = attributes.addAttr(0, ParamAttr::NoUnwind);
 	F->setParamAttrs(attributes);
+#else
+	const ParamAttrsList* attributes = F->getParamAttrs();
+	attributes = ParamAttrsList::includeAttrs(attributes, 
+			0, ParamAttr::NoUnwind);
+	attributes = ParamAttrsList::includeAttrs(attributes, 
+			0, ParamAttr::ReadNone);
+	F->setParamAttrs(attributes);
+#endif
+#endif
 
 	// Check that the name we've asked for is available.
 	std::string llvm_name = F->getName();
@@ -367,13 +382,12 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 					// the underlying value. Since we pass 'in' parameters by
 					// value, allocate a temporary variable on the stack to
 					// hold the value.
-			        llvm::Value* paramLoc = LLVM_NEW_2_3(
-					                      AllocaInst,
+			        llvm::Value* paramLoc = new AllocaInst(
 					                      it->Type.ToLLVMType( m_Context ),
 					                      "paramtmp", m_Context->BB
 					                  );
 					llvm::Value* argValue = cast<llvm::Value>( AI );
-					LLVM_NEW_2_3( StoreInst, argValue, paramLoc,
+					new StoreInst( argValue, paramLoc,
 					             m_Context->BB );
 
 					// Create a 'declaration' for this parameter.

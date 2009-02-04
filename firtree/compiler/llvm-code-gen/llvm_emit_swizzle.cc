@@ -49,7 +49,7 @@ class SwizzleExpressionValue : public ExpressionValue
 			if ( m_SwizzleIndices.size() == 1 ) {
 				// just need to return a single value.
 				llvm::Value* element_value =
-				    LLVM_NEW_2_3( ExtractElementInst,
+				    new ExtractElementInst(
 				                 m_Swizzlee->GetLLVMValue(),
 				                 m_SwizzleIndices.front(),
 				                 "tmp",
@@ -74,7 +74,7 @@ class SwizzleExpressionValue : public ExpressionValue
 			llvm::Value* swizlee_val = m_Swizzlee->GetLLVMValue();
 			for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
 				llvm::Value* swizzlee_element =
-				    LLVM_NEW_2_3( ExtractElementInst,
+				    new ExtractElementInst(
 				                 swizlee_val,
 				                 m_SwizzleIndices[i],
 				                 "tmp",m_Context->BB );
@@ -153,7 +153,7 @@ class SwizzleExpressionValue : public ExpressionValue
 					new_val = swizzlee;
 					for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
 						llvm::Value* assign_val =
-						    LLVM_NEW_2_3( ExtractElementInst,
+						    new ExtractElementInst(
 						                 assignment,
 						                 i, "tmp",
 						                 m_Context->BB );

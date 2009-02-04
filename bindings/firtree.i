@@ -24,6 +24,7 @@
 #include <firtree/kernel.h>
 #include <firtree/value.h>
 #include <firtree/glsl-runtime.h>
+#include <firtree/cpu-runtime.h>
 
 using namespace Firtree;
 
@@ -130,6 +131,10 @@ namespace std {
 
 %newobject Firtree::GLRenderer::Create;
 %newobject Firtree::GLRenderer::CreateBitmapImageRepFromImage;
+
+%newobject Firtree::CPURenderer::Create;
+%newobject Firtree::CPURenderer::CreateImage;
+%newobject Firtree::CPURenderer::CreateBitmapImageRepFromImage;
 
 %newobject Firtree::ExtentProvider::CreateStandardExtentProvider;
 
@@ -250,6 +255,7 @@ namespace std {
 %include <firtree/image.h>
 %include <firtree/kernel.h>
 %include <firtree/glsl-runtime.h>
+%include <firtree/cpu-runtime.h>
 
 /* So that VIM does the "right thing"
  * vim:cindent:sw=4:ts=4:et

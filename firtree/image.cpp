@@ -60,6 +60,7 @@ BitmapImageRep::BitmapImageRep(Blob* blob,
     ,   Stride(stride)
     ,   Format(format)
     ,   Flipped(flipped)
+    ,   IsDynamic(false)
 {
     if(blob == NULL)
         return;
@@ -81,6 +82,7 @@ BitmapImageRep::BitmapImageRep(const BitmapImageRep* rep, bool copy,
     ,   Stride(rep->Stride)
     ,   Format(rep->Format)
     ,   Flipped(flipped)
+    ,   IsDynamic(false)
 {
     if(rep->ImageBlob == NULL)
         return;

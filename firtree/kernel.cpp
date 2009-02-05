@@ -211,10 +211,11 @@ Kernel::Kernel(const char* source)
     m_WrappedLLVMKernel->Compile(&source, 1);
 
     std::ostringstream log_string(std::ostringstream::out);
-    const char *const * log = m_WrappedLLVMKernel->GetCompileLog();
-    while(*log) {
+    uint32_t line_count = 0;
+    const char *const * log = m_WrappedLLVMKernel->GetCompileLog(&line_count);
+    while(line_count > 0) {
         log_string << *log << "\n";
-        ++log;
+        --line_count;
     }
     m_CompileLog = log_string.str();
 

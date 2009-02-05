@@ -582,6 +582,210 @@ entry:
 	ret <4 x float> %rv4
 }
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; returns minimum of a and b.
+define float @min_ff(float %a, float %b) nounwind readnone {
+entry:
+	%0 = fcmp olt float %a, %b
+	%iftmp = select i1 %0, float %a, float %b
+	ret float %iftmp
+}
+
+define <2 x float> @min_v2f(<2 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %v, i32 0
+	%y = extractelement <2 x float> %v, i32 1
+	%rx = tail call float @min_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @min_ff(float %scalar, float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @min_v3f(<3 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %v, i32 0
+	%y = extractelement <3 x float> %v, i32 1
+	%z = extractelement <3 x float> %v, i32 2
+	%rx = tail call float @min_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @min_ff(float %scalar, float %y) nounwind readnone
+	%rz = tail call float @min_ff(float %scalar, float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @min_v4f(<4 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %v, i32 0
+	%y = extractelement <4 x float> %v, i32 1
+	%z = extractelement <4 x float> %v, i32 2
+	%w = extractelement <4 x float> %v, i32 3
+	%rx = tail call float @min_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @min_ff(float %scalar, float %y) nounwind readnone
+	%rz = tail call float @min_ff(float %scalar, float %z) nounwind readnone
+	%rw = tail call float @min_ff(float %scalar, float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+define <2 x float> @min_v2v2(<2 x float> %a, <2 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <2 x float> %a, i32 0
+	%y1 = extractelement <2 x float> %a, i32 1
+	%x2 = extractelement <2 x float> %b, i32 0
+	%y2 = extractelement <2 x float> %b, i32 1
+	%rx = tail call float @min_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @min_ff(float %y1, float %y2) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @min_v3v3(<3 x float> %a, <3 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <3 x float> %a, i32 0
+	%y1 = extractelement <3 x float> %a, i32 1
+	%z1 = extractelement <3 x float> %a, i32 2
+	%x2 = extractelement <3 x float> %b, i32 0
+	%y2 = extractelement <3 x float> %b, i32 1
+	%z2 = extractelement <3 x float> %b, i32 2
+	%rx = tail call float @min_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @min_ff(float %y1, float %y2) nounwind readnone
+	%rz = tail call float @min_ff(float %z1, float %z2) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @min_v4v4(<4 x float> %a, <4 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <4 x float> %a, i32 0
+	%y1 = extractelement <4 x float> %a, i32 1
+	%z1 = extractelement <4 x float> %a, i32 2
+	%w1 = extractelement <4 x float> %a, i32 3
+	%x2 = extractelement <4 x float> %b, i32 0
+	%y2 = extractelement <4 x float> %b, i32 1
+	%z2 = extractelement <4 x float> %b, i32 2
+	%w2 = extractelement <4 x float> %b, i32 3
+	%rx = tail call float @min_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @min_ff(float %y1, float %y2) nounwind readnone
+	%rz = tail call float @min_ff(float %z1, float %z2) nounwind readnone
+	%rw = tail call float @min_ff(float %w1, float %w2) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; returns maximum of a and b.
+define float @max_ff(float %a, float %b) nounwind readnone {
+entry:
+	%0 = fcmp olt float %a, %b
+	%iftmp = select i1 %0, float %b, float %a
+	ret float %iftmp
+}
+
+define <2 x float> @max_v2f(<2 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %v, i32 0
+	%y = extractelement <2 x float> %v, i32 1
+	%rx = tail call float @max_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @max_ff(float %scalar, float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @max_v3f(<3 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %v, i32 0
+	%y = extractelement <3 x float> %v, i32 1
+	%z = extractelement <3 x float> %v, i32 2
+	%rx = tail call float @max_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @max_ff(float %scalar, float %y) nounwind readnone
+	%rz = tail call float @max_ff(float %scalar, float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @max_v4f(<4 x float> %v, float %scalar) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %v, i32 0
+	%y = extractelement <4 x float> %v, i32 1
+	%z = extractelement <4 x float> %v, i32 2
+	%w = extractelement <4 x float> %v, i32 3
+	%rx = tail call float @max_ff(float %scalar, float %x) nounwind readnone
+	%ry = tail call float @max_ff(float %scalar, float %y) nounwind readnone
+	%rz = tail call float @max_ff(float %scalar, float %z) nounwind readnone
+	%rw = tail call float @max_ff(float %scalar, float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+define <2 x float> @max_v2v2(<2 x float> %a, <2 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <2 x float> %a, i32 0
+	%y1 = extractelement <2 x float> %a, i32 1
+	%x2 = extractelement <2 x float> %b, i32 0
+	%y2 = extractelement <2 x float> %b, i32 1
+	%rx = tail call float @max_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @max_ff(float %y1, float %y2) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @max_v3v3(<3 x float> %a, <3 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <3 x float> %a, i32 0
+	%y1 = extractelement <3 x float> %a, i32 1
+	%z1 = extractelement <3 x float> %a, i32 2
+	%x2 = extractelement <3 x float> %b, i32 0
+	%y2 = extractelement <3 x float> %b, i32 1
+	%z2 = extractelement <3 x float> %b, i32 2
+	%rx = tail call float @max_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @max_ff(float %y1, float %y2) nounwind readnone
+	%rz = tail call float @max_ff(float %z1, float %z2) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @max_v4v4(<4 x float> %a, <4 x float> %b) nounwind readnone {
+entry:
+	%x1 = extractelement <4 x float> %a, i32 0
+	%y1 = extractelement <4 x float> %a, i32 1
+	%z1 = extractelement <4 x float> %a, i32 2
+	%w1 = extractelement <4 x float> %a, i32 3
+	%x2 = extractelement <4 x float> %b, i32 0
+	%y2 = extractelement <4 x float> %b, i32 1
+	%z2 = extractelement <4 x float> %b, i32 2
+	%w2 = extractelement <4 x float> %b, i32 3
+	%rx = tail call float @max_ff(float %x1, float %x2) nounwind readnone
+	%ry = tail call float @max_ff(float %y1, float %y2) nounwind readnone
+	%rz = tail call float @max_ff(float %z1, float %z2) nounwind readnone
+	%rw = tail call float @max_ff(float %w1, float %w2) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
 ; COLOR
 
 define <4 x float> @premultiply_v4(<4 x float> %a) nounwind readnone {

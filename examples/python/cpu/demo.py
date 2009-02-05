@@ -42,7 +42,7 @@ kernel vec4 testKernel() {
     r *= 1.0 + 0.1 * sin(10 * a);
 
     // Calculate the alpha value of the output.
-    float alpha = step(0.5, exp(-(r*r) / (sigma*sigma)));
+    float alpha = min(1.0, 2.0*exp(-(r*r) / (sigma*sigma)));
 
     // Set the output colour.
     vec4 outputCol = vec4(0, 1, 0, alpha);

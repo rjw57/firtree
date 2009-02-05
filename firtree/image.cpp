@@ -367,6 +367,7 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
     ilTexImage(Width, Height, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE,
             (ILvoid*) const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
 
+    ilEnable(IL_FILE_OVERWRITE);
     bool retVal = ilSaveImage(const_cast<char*>(pFileName));
 
     ilBindImage(0);

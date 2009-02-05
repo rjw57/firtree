@@ -291,10 +291,10 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             engine->getPointerToFunction(doit_F));
     assert(kernel_fn != NULL);
 
-    off_t row_start = row_stride * start_row;
+    off_t row_start = row_stride * (end_row-1);
     vec2 pos;
 
-    for(size_t row=start_row; row<end_row; ++row, row_start += row_stride) {
+    for(size_t row=start_row; row<end_row; ++row, row_start -= row_stride) {
         pos.y = row;
         vec4* outptr = reinterpret_cast<vec4*>(dest_img + row_start);
         for(size_t col=start_col; col<end_col; ++col, ++outptr) {

@@ -258,6 +258,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     linker.LinkSampler(im_samp_prov);
     llvm::Module* kernel_module = linker.ReleaseModule();
 
+#if 0
     llvm::Function* kernel_F = kernel_module->getFunction("kernel");
 
     // We want to add our 'doit' function which will actually do the 
@@ -288,6 +289,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     new StoreInst( rv, ai, entry_BB );
 
     ReturnInst::Create( entry_BB );
+#endif
 
     // Now load our builtins library.
     llvm::MemoryBuffer* lib_buf = llvm::MemoryBuffer::getMemBuffer(
@@ -367,7 +369,6 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             kernel_fn(&pos, outptr);
         }
     }
-    // printf("%f,%f,%f,%f", result.x, result.y, result.z, result.w);
 
     if(engine) {
         delete engine;

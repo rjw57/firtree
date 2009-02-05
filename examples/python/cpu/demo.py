@@ -29,23 +29,26 @@ from Firtree import *
 kernel_source = '''
 kernel vec4 testKernel() {
     float r = length(destCoord() - vec2(320, 240));
-    float sigma = 100;
+    float sigma = 150;
     float resp = exp(-(r*r) / (sigma*sigma));
-    vec4 outputCol = vec4(0, 1, 0, 1);
-    outputCol *= resp;
-    return outputCol;
+    vec4 outputCol = vec4(1, 0, 1, resp);
+    return premultiply(outputCol);
 }
 '''
 
-if __name__ == '__main__':
-    renderer = CPURenderer.Create(640, 480)
+# Create a CPU-based renderer to create an image.
+renderer = CPURenderer.Create(640, 480)
 
-    renderer.Clear(0.5,0.5,0.5,1)
+# Set the background colour.
+renderer.Clear(0.5,0.5,0.5,1)
 
-    im = Image.CreateFromKernel(Kernel.CreateFromSource(kernel_source))
+# Create an image from the kernel above.
+im = Image.CreateFromKernel(Kernel.CreateFromSource(kernel_source))
 
-    renderer.RenderInRect(im, renderer.GetViewport(), renderer.GetViewport())
+# Render the image into the renderer's viewport.
+renderer.RenderInRect(im, renderer.GetViewport(), renderer.GetViewport())
 
-    renderer.WriteToFile('foo.png')
+# Write the output.
+renderer.WriteToFile('foo.png')
 
 # vim:sw=4:ts=4:et:autoindent

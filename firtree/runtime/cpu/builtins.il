@@ -162,7 +162,6 @@ entry:
 	ret float %ln
 }
 
-
 ; TRIG
 
 declare float @llvm.sin.f32(float %Val)
@@ -214,3 +213,61 @@ define <4 x float> @cos_v4(<4 x float> %a) nounwind readnone {
 	%rv = tail call <4 x float> @llvm.cos.v4f32(<4 x float> %a) nounwind readnone
 	ret <4 x float> %rv
 }
+
+; COLOR
+
+define <4 x float> @premultiply_v4(<4 x float> %a) nounwind readnone {
+	%alpha = extractelement <4 x float> %a, i32 3
+	%r = extractelement <4 x float> %a, i32 0
+	%g = extractelement <4 x float> %a, i32 1
+	%b = extractelement <4 x float> %a, i32 2
+	%rm = mul float %r, %alpha
+	%gm = mul float %g, %alpha
+	%bm = mul float %b, %alpha
+	%rv1 = insertelement <4 x float> %a, float %rm, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %gm, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %bm, i32 2
+	ret <4 x float> %rv3
+}
+
+define <4 x float> @unpremultiply_v4(<4 x float> %a) nounwind readnone {
+	%alpha = extractelement <4 x float> %a, i32 3
+	%r = extractelement <4 x float> %a, i32 0
+	%g = extractelement <4 x float> %a, i32 1
+	%b = extractelement <4 x float> %a, i32 2
+	%rm = fdiv float %r, %alpha
+	%gm = fdiv float %g, %alpha
+	%bm = fdiv float %b, %alpha
+	%rv1 = insertelement <4 x float> %a, float %rm, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %gm, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %bm, i32 2
+	ret <4 x float> %rv3
+}
+
+;; This function does the actual work calling the kernel and blending the
+;; result.
+
+declare <4 x float> @kernel(<2 x float>) nounwind readnone
+
+define void @doit(<2 x float>* %pcoord, <4 x float>* %pout) {
+entry:
+	%coord = load <2 x float>* %pcoord
+	%oldval = load <4 x float>* %pout
+	%result = call <4 x float> @kernel(<2 x float> %coord)
+
+	;; Perform an OVER composite.
+	%alpha_a = extractelement <4 x float> %result, i32 3
+	%one_minus_a = sub float 1.0, %alpha_a
+
+	%omav1 = insertelement <4 x float> zeroinitializer, float %one_minus_a, i32 0
+	%omav2 = insertelement <4 x float> %omav1, float %one_minus_a, i32 1
+	%omav3 = insertelement <4 x float> %omav2, float %one_minus_a, i32 2
+	%omav4 = insertelement <4 x float> %omav3, float %one_minus_a, i32 3
+
+	%tmp1 = mul <4 x float> %omav4, %oldval
+	%tmp2 = add <4 x float> %tmp1, %result
+
+	store <4 x float> %tmp2, <4 x float>* %pout
+	ret void
+}
+

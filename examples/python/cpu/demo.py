@@ -54,7 +54,7 @@ kernel vec4 testKernel() {
 
 kernel2_source = '''
 kernel vec4 testKernel(sampler src) {
-    //return sample(src, samplerCoord(src));
+    return sample(src, samplerCoord(src));
 
     const int halfwin = 2;
     const float scale = 1.0; //0.5 / halfwin;
@@ -109,10 +109,11 @@ if(not kernel2.GetStatus()):
 
 im2 = Image.CreateFromKernel(kernel2)
 
-kernel2.SetValueForKey(firim, 'src')
+kernel2.SetValueForKey(im1, 'src')
 
 # Render the image into the renderer's viewport.
 renderer.RenderInRect(im2, renderer.GetViewport(), renderer.GetViewport())
+renderer.RenderWithOrigin(firim, Point2D(100,100))
 
 # Write the output.
 renderer.WriteToFile('output.png')

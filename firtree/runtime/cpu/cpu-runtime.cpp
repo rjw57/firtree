@@ -358,7 +358,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             engine->getPointerToFunction(lib_module->getFunction("doit")));
     assert(kernel_fn != NULL);
 
-    off_t row_start = row_stride * (end_row-1);
+    off_t row_start = (row_stride * (end_row-1)) + (start_col * sizeof(vec4));
     vec2 pos;
 
     for(size_t row=start_row; row<end_row; ++row, row_start -= row_stride) {

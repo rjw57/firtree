@@ -9,12 +9,15 @@
 #  LLVM_MAJOR - set to the LLVM major version number.
 #  LLVM_MINOR - set to the LLVM minor version number.
 #  LLVM_CONFIG_EXECUTABLE - the path to the llvm-config executable
+#  LLVM_AS_EXECUTABLE - the path to the llvm-as executable
+#  LLVM_HOST_TARGET - Target triple used to configure LLVM.
 #  LLVM_INCLUDE_DIR - where to find the LLVM headers.
 #  LLVM_LIBRARY_DIR - the LLVM library directory
 #  LLVM_LIBRARIES - the LLVM libraries to link against.
 #
 
 FIND_PROGRAM(LLVM_CONFIG_EXECUTABLE llvm-config)
+FIND_PROGRAM(LLVM_AS_EXECUTABLE llvm-as)
 
 MACRO(LLVM_RUN_CONFIG arg outvar)
   EXECUTE_PROCESS(COMMAND "${LLVM_CONFIG_EXECUTABLE}" ${LLVM_CONFIG_COMPONENTS} "${arg}"
@@ -31,6 +34,8 @@ IF(LLVM_CONFIG_EXECUTABLE)
   LLVM_RUN_CONFIG("--libdir" LLVM_LIBRARY_DIR)
   LLVM_RUN_CONFIG("--includedir" LLVM_INCLUDE_DIR)
   LLVM_RUN_CONFIG("--libfiles" LLVM_LIBRARIES)
+  LLVM_RUN_CONFIG("--host-target" LLVM_HOST_TARGET)
+  STRING(REGEX REPLACE "[ \n\t]+" "" LLVM_HOST_TARGET ${LLVM_HOST_TARGET})
   STRING(REGEX REPLACE "[ \n\t]+" "" LLVM_VERSION ${LLVM_VERSION})
   STRING(REGEX REPLACE "[ \n\t]+" " " LLVM_LIBRARY_DIR ${LLVM_LIBRARY_DIR})
   STRING(REGEX REPLACE "[ \n\t]+" " " LLVM_INCLUDE_DIR ${LLVM_INCLUDE_DIR})

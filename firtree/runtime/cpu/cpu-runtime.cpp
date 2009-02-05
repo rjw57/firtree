@@ -29,6 +29,16 @@
 #include <llvm/Instructions.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/Linker.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Assembly/PrintModulePass.h>
+
+#include "llvm/PassManager.h"
+#include "llvm/Analysis/CallGraph.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/LinkAllPasses.h"
 
 #include <float.h>
 #include <string.h>
@@ -40,6 +50,8 @@
 #include <firtree/linker/sampler_provider.h>
 
 #include <firtree/internal/image-int.h>
+
+#include "builtins_bc.h"
 
 using namespace llvm;
 
@@ -244,17 +256,9 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     SamplerLinker linker;
 
     linker.LinkSampler(im_samp_prov);
-    llvm::Module* mod = linker.ReleaseModule();
-    llvm::ModuleProvider* modprov = new llvm::ExistingModuleProvider(mod);
+    llvm::Module* kernel_module = linker.ReleaseModule();
 
-    std::string err_str;
-    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::createJIT(modprov,
-            &err_str);
-    if(!engine) {
-        FIRTREE_ERROR("Error JIT-ing module: %s", err_str.c_str());
-    }
-
-    llvm::Function* kernel_F = mod->getFunction("kernel");
+    llvm::Function* kernel_F = kernel_module->getFunction("kernel");
 
     // We want to add our 'doit' function which will actually do the 
     // work.
@@ -267,7 +271,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             Type::VoidTy, params, false );
     Function* doit_F = Function::Create( doit_FT,
             Function::ExternalLinkage,
-            "doit", mod );
+            "doit", kernel_module );
 
     BasicBlock* entry_BB = BasicBlock::Create( "entry", doit_F );
 
@@ -285,10 +289,71 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
 
     ReturnInst::Create( entry_BB );
 
-    // mod->dump();
+    // Now load our builtins library.
+    llvm::MemoryBuffer* lib_buf = llvm::MemoryBuffer::getMemBuffer(
+            reinterpret_cast<char*>(builtins_bc),
+            reinterpret_cast<char*>(builtins_bc + sizeof(builtins_bc)));
+
+#if 0
+    llvm::ModuleProvider* lib_mod_prov = 
+        llvm::getBitcodeModuleProvider(lib_buf);
+    assert(lib_mod_prov && "Error parsing builtin bitcode!");
+    llvm::Module* lib_module = lib_mod_prov->getModule();
+#else
+    llvm::Module* lib_module = ParseBitcodeFile(lib_buf);
+    llvm::ModuleProvider* lib_mod_prov = 
+        new llvm::ExistingModuleProvider(lib_module);
+    delete lib_buf;
+#endif
+
+    // Link in our kernel module
+    // Linking kernel into library is better.
+    std::string link_err_str;
+    if(llvm::Linker::LinkModules(lib_module, kernel_module, &link_err_str)) {
+        FIRTREE_ERROR("Error linking bultins: %s.", link_err_str.c_str());
+    }
+    
+    // Delete the kernel module.
+    if(kernel_module) {
+        delete kernel_module;
+    }
+
+    /*
+#   define STR(x) #x
+    lib_module->setTargetTriple( STR(TARGET_TRIPLE) );
+    */
+
+    // Register some passes with a PassManager, and run them.
+    std::vector<const char*> exportList;
+    exportList.push_back("doit");
+
+    PassManager Passes;
+    Passes.add(new TargetData(lib_module));
+#if 1
+    Passes.add(createInternalizePass(exportList));
+    Passes.add(createGlobalDCEPass());
+    Passes.add(createGlobalOptimizerPass());
+    Passes.add(createFunctionInliningPass(32768));
+    Passes.add(createScalarReplAggregatesPass());
+    Passes.add(createInstructionCombiningPass());
+#endif
+    Passes.run(*lib_module);
+
+#if 0
+    PassManager foo;
+    foo.add(new PrintFunctionPass());
+    foo.run(*lib_module);
+#endif
+
+    std::string err_str;
+    llvm::ExecutionEngine* engine = 
+        llvm::ExecutionEngine::createJIT(lib_mod_prov, &err_str);
+    if(!engine) {
+        FIRTREE_ERROR("Error JIT-ing module: %s", err_str.c_str());
+    }
 
     KernelFunc kernel_fn = reinterpret_cast<KernelFunc>(
-            engine->getPointerToFunction(doit_F));
+            engine->getPointerToFunction(lib_module->getFunction("doit")));
     assert(kernel_fn != NULL);
 
     off_t row_start = row_stride * (end_row-1);
@@ -307,6 +372,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     if(engine) {
         delete engine;
     }
+
     FIRTREE_SAFE_RELEASE(im_samp_prov);
 }
 

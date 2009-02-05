@@ -28,10 +28,26 @@ from Firtree import *
 
 kernel_source = '''
 kernel vec4 testKernel() {
-    float r = length(destCoord() - vec2(320, 240));
-    float sigma = 150;
-    float resp = exp(-(r*r) / (sigma*sigma));
-    vec4 outputCol = vec4(1, 0, 1, resp);
+    const float sigma = 150; // < Size of blob.
+
+    // Find delta from centre.
+    vec2 delta = destCoord() - vec2(320, 240);
+
+    // Find distance from the centre.
+    float r = length(delta);
+
+    // Find angle from centre.
+    float a = atan(delta.x, delta.y);
+
+    r *= 1.0 + 0.1 * sin(10 * a);
+
+    // Calculate the alpha value of the output.
+    float alpha = exp(-(r*r) / (sigma*sigma));
+
+    // Set the output colour.
+    vec4 outputCol = vec4(0, 1, 0, alpha);
+
+    // Return the output appropriately alpha pre-multiplied.
     return premultiply(outputCol);
 }
 '''
@@ -49,6 +65,6 @@ im = Image.CreateFromKernel(Kernel.CreateFromSource(kernel_source))
 renderer.RenderInRect(im, renderer.GetViewport(), renderer.GetViewport())
 
 # Write the output.
-renderer.WriteToFile('foo.png')
+renderer.WriteToFile('output.png')
 
 # vim:sw=4:ts=4:et:autoindent

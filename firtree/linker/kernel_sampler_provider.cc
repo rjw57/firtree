@@ -126,7 +126,8 @@ class KernelSamplerProvider : public SamplerProvider
         ///
 		/// The caller now 'owns' the returned module and must call 'delete'
 		/// on it.
-        virtual llvm::Module* CreateSamplerModule(const std::string& prefix)
+        virtual llvm::Module* CreateSamplerModule(const std::string& prefix,
+                uint32_t)
         {
             if(!IsValid()) {
                 FIRTREE_WARNING("Cannot create sampler module for invalid "

@@ -77,9 +77,7 @@ SamplerProvider* SamplerProvider::CreateFromImage(const Image* image)
     Kernel* kernel = imImpl->GetKernel();
 
     if(!kernel) {
-        // If not, create one (temp. hack).
-        kernel = Kernel::CreateFromSource(
-                "kernel vec4 foo() { return vec4(1,0,0,1); }");
+        return SamplerProvider::CreateFromFlatImage(image);
     } else {
         FIRTREE_SAFE_RETAIN(kernel);
     }
@@ -168,6 +166,15 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
         sampler_queue.pop_back();
 
         SamplerProvider* next_provider = next.second;
+        uint32_t sampler_idx = 0xffffffff;
+        uint32_t idx = 0;
+        for(SamplerList::const_iterator i=m_SamplerTable.begin();
+                i != m_SamplerTable.end(); ++i, ++idx) {
+            if(*i == next_provider) {
+                sampler_idx = idx;
+            }
+        }
+        assert(sampler_idx != 0xffffffff);
 
         if(!(next_provider->IsValid())) {
             FIRTREE_ERROR("Not all samplers valid.");
@@ -198,7 +205,8 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
             }
         }
 
-        llvm::Module* module = next_provider->CreateSamplerModule(next.first);
+        llvm::Module* module = next_provider->CreateSamplerModule(
+                next.first, sampler_idx);
         std::string err;
         linker->LinkInModule(module, &err);
         

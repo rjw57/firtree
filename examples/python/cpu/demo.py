@@ -57,7 +57,7 @@ kernel vec4 testKernel(sampler src) {
     //return sample(src, samplerCoord(src));
 
     const int halfwin = 2;
-    const float scale = 0.5 / halfwin;
+    const float scale = 1.0; //0.5 / halfwin;
     const bool gamma_correct = true;
 
     vec4 outval = vec4(0,0,0,0);
@@ -92,6 +92,8 @@ renderer = CPURenderer.Create(640, 480)
 # Set the background colour.
 renderer.Clear(0.5,0,0,1)
 
+firim = Image.CreateFromFile(os.path.join(imageDir, 'firtree-128x128.png'))
+
 kernel1 = Kernel.CreateFromSource(kernel1_source)
 if(not kernel1.GetStatus()):
     print "KERNEL1:"
@@ -107,7 +109,7 @@ if(not kernel2.GetStatus()):
 
 im2 = Image.CreateFromKernel(kernel2)
 
-kernel2.SetValueForKey(im1, 'src')
+kernel2.SetValueForKey(firim, 'src')
 
 # Render the image into the renderer's viewport.
 renderer.RenderInRect(im2, renderer.GetViewport(), renderer.GetViewport())

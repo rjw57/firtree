@@ -17,6 +17,7 @@ SET(LINKER_SOURCES
   ${LINKER_HEADERS}
   
   kernel_sampler_provider.cc
+  flat_image_sampler_provider.cc
   sampler_provider.cc
   canonicalize_sampler_calls.cc
 )

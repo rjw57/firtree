@@ -62,6 +62,11 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// Create a sampler provider from a Firtree image.
 		static SamplerProvider* CreateFromImage(const Image* image);
 
+		/// Create a sampler provider from a Firtree image but always
+		/// explicitly flatten before use. This is the mechanism by
+		/// which bitmap-backed image samplers are created.
+		static SamplerProvider* CreateFromFlatImage(const Image* image);
+
 		/// Create a LLVM module which is the result of linking all the
 		/// samplers into one large module.
 		/// The caller now 'owns' the returned module and must delete it.
@@ -158,9 +163,14 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// vec4 ${prefix}Extent()
 		///
 		/// The caller now 'owns' the returned module and must call 'delete'
-		/// on it.
+		/// on it. 
+		///
+		/// id should be an unique integer id corresponding to, in the
+		/// case of the sampler linker, the index of this sampler
+		/// provider in the global table of sampler providers.
 		virtual llvm::Module* CreateSamplerModule(
-				const std::string& prefix) = 0;
+				const std::string& prefix,
+				uint32_t id) = 0;
 
 		friend class SamplerLinker;
 };

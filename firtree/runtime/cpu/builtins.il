@@ -29,7 +29,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @expf(float %x) nounwind readnone
 	%ry = tail call float @expf(float %y) nounwind readnone
-	%rz = tail call float @expf(float %y) nounwind readnone
+	%rz = tail call float @expf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -44,8 +44,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @expf(float %x) nounwind readnone
 	%ry = tail call float @expf(float %y) nounwind readnone
-	%rz = tail call float @expf(float %y) nounwind readnone
-	%rw = tail call float @expf(float %y) nounwind readnone
+	%rz = tail call float @expf(float %z) nounwind readnone
+	%rw = tail call float @expf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -80,7 +80,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @sqrtf(float %x) nounwind readnone
 	%ry = tail call float @sqrtf(float %y) nounwind readnone
-	%rz = tail call float @sqrtf(float %y) nounwind readnone
+	%rz = tail call float @sqrtf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -95,8 +95,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @sqrtf(float %x) nounwind readnone
 	%ry = tail call float @sqrtf(float %y) nounwind readnone
-	%rz = tail call float @sqrtf(float %y) nounwind readnone
-	%rw = tail call float @sqrtf(float %y) nounwind readnone
+	%rz = tail call float @sqrtf(float %z) nounwind readnone
+	%rw = tail call float @sqrtf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -241,7 +241,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @tanf(float %x) nounwind readnone
 	%ry = tail call float @tanf(float %y) nounwind readnone
-	%rz = tail call float @tanf(float %y) nounwind readnone
+	%rz = tail call float @tanf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -256,8 +256,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @tanf(float %x) nounwind readnone
 	%ry = tail call float @tanf(float %y) nounwind readnone
-	%rz = tail call float @tanf(float %y) nounwind readnone
-	%rw = tail call float @tanf(float %y) nounwind readnone
+	%rz = tail call float @tanf(float %z) nounwind readnone
+	%rw = tail call float @tanf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -292,7 +292,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @asinf(float %x) nounwind readnone
 	%ry = tail call float @asinf(float %y) nounwind readnone
-	%rz = tail call float @asinf(float %y) nounwind readnone
+	%rz = tail call float @asinf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -307,8 +307,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @asinf(float %x) nounwind readnone
 	%ry = tail call float @asinf(float %y) nounwind readnone
-	%rz = tail call float @asinf(float %y) nounwind readnone
-	%rw = tail call float @asinf(float %y) nounwind readnone
+	%rz = tail call float @asinf(float %z) nounwind readnone
+	%rw = tail call float @asinf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -343,7 +343,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @acosf(float %x) nounwind readnone
 	%ry = tail call float @acosf(float %y) nounwind readnone
-	%rz = tail call float @acosf(float %y) nounwind readnone
+	%rz = tail call float @acosf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -358,8 +358,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @acosf(float %x) nounwind readnone
 	%ry = tail call float @acosf(float %y) nounwind readnone
-	%rz = tail call float @acosf(float %y) nounwind readnone
-	%rw = tail call float @acosf(float %y) nounwind readnone
+	%rz = tail call float @acosf(float %z) nounwind readnone
+	%rw = tail call float @acosf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -394,7 +394,7 @@ entry:
 	%z = extractelement <3 x float> %a, i32 2
 	%rx = tail call float @atanf(float %x) nounwind readnone
 	%ry = tail call float @atanf(float %y) nounwind readnone
-	%rz = tail call float @atanf(float %y) nounwind readnone
+	%rz = tail call float @atanf(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
@@ -409,8 +409,8 @@ entry:
 	%w = extractelement <4 x float> %a, i32 3
 	%rx = tail call float @atanf(float %x) nounwind readnone
 	%ry = tail call float @atanf(float %y) nounwind readnone
-	%rz = tail call float @atanf(float %y) nounwind readnone
-	%rw = tail call float @atanf(float %y) nounwind readnone
+	%rz = tail call float @atanf(float %z) nounwind readnone
+	%rw = tail call float @atanf(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
@@ -804,6 +804,11 @@ define <4 x float> @premultiply_v4(<4 x float> %a) nounwind readnone {
 
 define <4 x float> @unpremultiply_v4(<4 x float> %a) nounwind readnone {
 	%alpha = extractelement <4 x float> %a, i32 3
+	%iszero = fcmp oeq float zeroinitializer, %alpha
+	br i1 %iszero, label %early_out, label %cont
+early_out:
+	ret <4 x float> zeroinitializer
+cont:
 	%r = extractelement <4 x float> %a, i32 0
 	%g = extractelement <4 x float> %a, i32 1
 	%b = extractelement <4 x float> %a, i32 2

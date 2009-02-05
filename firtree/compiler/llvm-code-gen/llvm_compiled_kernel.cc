@@ -272,6 +272,7 @@ CompiledKernel::CompiledKernel()
 	,	m_Log(NULL)
 	,	m_LogSize(0)
 	,	m_OptimiseLLVM(true)
+	,	m_CompileStatus(false)
 {
 	++g_ModuleInitCount;
 	if(g_ModuleInitCount == 1)
@@ -371,13 +372,12 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	// done parsing, proceed if no syntax errors
 	//
 
-	bool return_value = false;
-
+	m_CompileStatus = false;
 	if ( PT_errorCnt() == 0 ) {
 		m_CurrentFrontend = new Firtree::LLVMFrontend(( firtree )srcterm,
 				&m_KernelList );
 
-		return_value = m_CurrentFrontend->GetCompilationSucceeded();
+		m_CompileStatus = m_CurrentFrontend->GetCompilationSucceeded();
 
 		// Note the log (if any).
 		const std::vector<std::string>& log = m_CurrentFrontend->GetLog();
@@ -391,9 +391,7 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 			m_Log[idx] = i->c_str();
 		}
 		m_Log[idx] = NULL;
-	}
-
-	if ( PT_errorCnt() > 0 ) {
+	} else {
 		fprintf( stderr,"Total %d errors.\n",PT_errorCnt() );
 	}
 
@@ -403,23 +401,18 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	PT_delT( srcterm );
 
 	// If compilation succeeded, run the optimiser if required.
-	if(return_value && m_OptimiseLLVM)
+	if(m_CompileStatus && m_OptimiseLLVM)
 	{
 		RunOptimiser();
 	}
 
-	return return_value;
+	return m_CompileStatus;
 }
 
 //===========================================================================
 bool CompiledKernel::GetCompileStatus() const
 {
-	if(m_CurrentFrontend == NULL)
-	{
-		return false;
-	}
-
-	return m_CurrentFrontend->GetCompilationSucceeded();
+	return m_CompileStatus;
 }
 
 //===========================================================================

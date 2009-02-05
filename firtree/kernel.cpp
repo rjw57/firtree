@@ -216,6 +216,7 @@ Kernel::Kernel(const char* source)
     while(line_count > 0) {
         log_string << *log << "\n";
         --line_count;
+        ++log;
     }
     m_CompileLog = log_string.str();
 

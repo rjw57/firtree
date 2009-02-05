@@ -26,7 +26,7 @@ sys.path.insert(0, importDir)
 
 from Firtree import *
 
-kernel_source = '''
+kernel1_source = '''
 kernel vec4 testKernel() {
     const float sigma = 150; // < Size of blob.
 
@@ -39,10 +39,10 @@ kernel vec4 testKernel() {
     // Find angle from centre.
     float a = atan(delta.x, delta.y);
 
-    r *= 1.0 + 0.1 * sin(10 * a);
+    //r *= 1.0 + 0.1 * sin(10 * a);
 
     // Calculate the alpha value of the output.
-    float alpha = min(1.0, 2.0*exp(-(r*r) / (sigma*sigma)));
+    float alpha = step(r, sigma);
 
     // Set the output colour.
     vec4 outputCol = vec4(0, 1, 0, alpha);
@@ -52,17 +52,48 @@ kernel vec4 testKernel() {
 }
 '''
 
+kernel2_source = '''
+kernel vec4 testKernel(sampler src) {
+    const int halfwin = 5;
+
+    vec4 outval = vec4(0,0,0,0);
+    for(int dy=-halfwin; dy<=halfwin; ++dy)
+    {
+        for(int dx=-halfwin; dx<=halfwin; ++dx)
+        {
+            outval += sample(src, samplerTransform(src, destCoord() + vec2(dx,dy)));
+        }
+    }
+
+    return outval / ( (2*halfwin+1) * (2*halfwin+1) );
+}
+'''
+
 # Create a CPU-based renderer to create an image.
 renderer = CPURenderer.Create(640, 480)
 
 # Set the background colour.
-renderer.Clear(0.5,0.5,0.5,1)
+renderer.Clear(1,0,0,1)
 
-# Create an image from the kernel above.
-im = Image.CreateFromKernel(Kernel.CreateFromSource(kernel_source))
+kernel1 = Kernel.CreateFromSource(kernel1_source)
+if(not kernel1.GetStatus()):
+    print "KERNEL1:"
+    print kernel1.GetCompileLog()
+    sys.exit(1)
+im1 = Image.CreateFromKernel(kernel1)
+
+kernel2 = Kernel.CreateFromSource(kernel2_source)
+if(not kernel2.GetStatus()):
+    print "KERNEL2:"
+    print kernel2.GetCompileLog()
+    sys.exit(2)
+
+im2 = Image.CreateFromKernel(kernel2)
+
+kernel2.SetValueForKey(im1, 'src')
 
 # Render the image into the renderer's viewport.
-renderer.RenderInRect(im, renderer.GetViewport(), renderer.GetViewport())
+renderer.RenderInRect(im2, renderer.GetViewport(), renderer.GetViewport())
 
 # Write the output.
 renderer.WriteToFile('output.png')

@@ -59,6 +59,10 @@ class KernelSamplerProvider : public SamplerProvider
                 FIRTREE_ERROR("Passed a NULL kernel.");
             }
 
+            if(!kernel->GetCompileStatus()) {
+                return;
+            }
+
             CompiledKernel::const_iterator kernel_it;
 
             if(kernel_name.empty()) {

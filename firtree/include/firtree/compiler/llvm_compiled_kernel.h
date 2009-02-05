@@ -150,6 +150,7 @@ class CompiledKernel : public ReferenceCounted
 		uint32_t				m_LogSize;
 
 		bool					m_OptimiseLLVM;
+		bool					m_CompileStatus;
 
 		KernelFunctionList		m_KernelList;
 };

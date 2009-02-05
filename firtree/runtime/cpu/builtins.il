@@ -821,6 +821,10 @@ cont:
 	ret <4 x float> %rv3
 }
 
+define <4 x float> @texSample(i32, <2 x float>) nounwind readnone {
+	ret <4 x float> <float 0.0, float 0.0, float 1.0, float 1.0>
+}
+
 ;; This function does the actual work calling the kernel and blending the
 ;; result.
 

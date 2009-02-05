@@ -36,6 +36,8 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/LinkAllPasses.h"
 
+#include <internal/image-int.h>
+
 namespace llvm { class Module; }
 
 namespace Firtree { class LLVMFrontend; }
@@ -53,11 +55,15 @@ class FlatImageSamplerProvider : public SamplerProvider
         FlatImageSamplerProvider(const Image* image)
             :   SamplerProvider()
         {
+            m_Image = dynamic_cast<Internal::ImageImpl*>(
+                    const_cast<Image*>(image));
+            FIRTREE_SAFE_RETAIN(m_Image);
         }
 
         //===================================================================
         virtual ~FlatImageSamplerProvider()
         {
+            FIRTREE_SAFE_RELEASE(m_Image);
         }
 
         //===================================================================
@@ -70,7 +76,7 @@ class FlatImageSamplerProvider : public SamplerProvider
 		/// The caller now 'owns' the returned module and must call 'delete'
 		/// on it.
         virtual llvm::Module* CreateSamplerModule(const std::string& prefix,
-                uint32_t)
+                uint32_t sampler_id)
         {
             if(!IsValid()) {
                 FIRTREE_WARNING("Cannot create sampler module for invalid "
@@ -81,16 +87,18 @@ class FlatImageSamplerProvider : public SamplerProvider
             // Create the module.
             llvm::Module* new_module = new Module(prefix);
 
-            /*
-            Function* kernel_function = new_module->getFunction(
-                    m_ClonedFunction.Function->getName());
-            if(!kernel_function) {
-                FIRTREE_ERROR("Internal error: no kernel function.");
-                return NULL;
-            }
-            */
-
             // Start adding some functions.
+
+            // Declare the texSample function.
+            std::vector<const Type*> tex_sample_params;
+            tex_sample_params.push_back( Type::Int32Ty );
+            tex_sample_params.push_back( VectorType::get( Type::FloatTy, 2 ) );
+            FunctionType *tex_sample_FT = FunctionType::get(
+                    VectorType::get( Type::FloatTy, 4 ),
+                    tex_sample_params, false );
+            Function* tex_sample_F = LLVM_CREATE( Function, tex_sample_FT,
+                    Function::ExternalLinkage, "texSample",
+                    new_module );	
 
             // EXTENT function FIXME
             std::vector<const Type*> extent_params;
@@ -137,7 +145,11 @@ class FlatImageSamplerProvider : public SamplerProvider
             BasicBlock *sample_BB = LLVM_CREATE( BasicBlock, "entry", 
                     sample_F );
 
-            llvm::Value* sample_val = ConstantVector(0,1,0,1);
+            std::vector<llvm::Value*> params;
+            params.push_back( ConstantInt::get( Type::Int32Ty, sampler_id ) );
+            params.push_back( sample_F->arg_begin() );
+            llvm::Value* sample_val = LLVM_CREATE( CallInst, tex_sample_F,
+                    params.begin(), params.end(), "tex", sample_BB );
             LLVM_CREATE( ReturnInst, sample_val, sample_BB );
 
             return new_module;
@@ -307,6 +319,7 @@ class FlatImageSamplerProvider : public SamplerProvider
         }
 
         std::vector<Firtree::LLVM::KernelParameter> m_EmptyList;
+        Internal::ImageImpl* m_Image;
 };
 
 //===========================================================================

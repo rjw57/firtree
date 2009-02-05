@@ -28,7 +28,7 @@ from Firtree import *
 
 kernel1_source = '''
 kernel vec4 testKernel() {
-    const float sigma = 150; // < Size of blob.
+    const float sigma = 90; // < Size of blob.
 
     // Find delta from centre.
     vec2 delta = destCoord() - vec2(320, 240);
@@ -39,7 +39,7 @@ kernel vec4 testKernel() {
     // Find angle from centre.
     float a = atan(delta.x, delta.y);
 
-    r *= 1.0 + 0.1 * sin(3 * a);
+    r *= 1.0 + 0.3 * sin(7 * a);
 
     // Calculate the alpha value of the output.
     float alpha = step(r, sigma);
@@ -54,20 +54,35 @@ kernel vec4 testKernel() {
 
 kernel2_source = '''
 kernel vec4 testKernel(sampler src) {
-    return sample(src, samplerCoord(src));
+    //return sample(src, samplerCoord(src));
 
-    const int halfwin = 1;
+    const int halfwin = 2;
+    const float scale = 0.5 / halfwin;
+    const bool gamma_correct = true;
 
     vec4 outval = vec4(0,0,0,0);
     for(int dy=-halfwin; dy<=halfwin; ++dy)
     {
         for(int dx=-halfwin; dx<=halfwin; ++dx)
         {
-            outval += sample(src, samplerTransform(src, destCoord() + vec2(dx,dy)));
+            vec4 pixval = unpremultiply(
+                sample(src, samplerTransform(src, destCoord() + scale*vec2(dx,dy)))
+                );
+            if(gamma_correct) {
+                outval += pixval * pixval;
+            } else {
+                outval += pixval;
+            }
         }
     }
 
-    return outval / ( (2*halfwin+1) * (2*halfwin+1) );
+    outval /= ( (2*halfwin+1) * (2*halfwin+1) );
+
+    if(gamma_correct) {
+        return premultiply(sqrt(outval));
+    } else {
+        return premultiply(outval);
+    }
 }
 '''
 

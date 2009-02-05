@@ -463,8 +463,8 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		// original BB, then it is the 'guard' BB appended by the
 		// return instruction.
 		if((m_Context->BB != BB) && (m_Context->BB->empty())) {
-			// We can safely erase it
-			m_Context->BB->eraseFromParent();
+			// We can safely append an unreachable.
+			new UnreachableInst(m_Context->BB);
 		} else {
 			// Check function return type is void.
 			if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {

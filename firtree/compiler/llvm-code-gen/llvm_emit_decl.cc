@@ -459,13 +459,21 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// Create a default return inst if there was no terminator.
 	if ( m_Context->BB->getTerminator() == NULL ) {
-		// Check function return type is void.
-		if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
-			FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
-			                    "of non-void function." );
-		}
+		// If this basic block is empty, and is different to the 
+		// original BB, then it is the 'guard' BB appended by the
+		// return instruction.
+		if((m_Context->BB != BB) && (m_Context->BB->empty())) {
+			// We can safely erase it
+			m_Context->BB->eraseFromParent();
+		} else {
+			// Check function return type is void.
+			if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
+				FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
+						"of non-void function." );
+			}
 
-		LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+		}
 	}
 
 	delete m_Context->Variables;

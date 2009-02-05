@@ -67,6 +67,11 @@ class ReturnEmitter : public ExpressionEmitter
 				}
 				LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );
 
+				// Create a basic block to follow (in case we have
+				// some unreachable code below).
+				context->BB = LLVM_CREATE( BasicBlock, "cont",
+						context->Function);
+
 				// Ensure static correctness.
 				if(context->CurrentPrototype->ReturnType.IsStatic())
 				{

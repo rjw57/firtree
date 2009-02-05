@@ -39,7 +39,7 @@ kernel vec4 testKernel() {
     // Find angle from centre.
     float a = atan(delta.x, delta.y);
 
-    //r *= 1.0 + 0.1 * sin(10 * a);
+    r *= 1.0 + 0.1 * sin(3 * a);
 
     // Calculate the alpha value of the output.
     float alpha = step(r, sigma);
@@ -54,7 +54,9 @@ kernel vec4 testKernel() {
 
 kernel2_source = '''
 kernel vec4 testKernel(sampler src) {
-    const int halfwin = 5;
+    return sample(src, samplerCoord(src));
+
+    const int halfwin = 1;
 
     vec4 outval = vec4(0,0,0,0);
     for(int dy=-halfwin; dy<=halfwin; ++dy)
@@ -73,7 +75,7 @@ kernel vec4 testKernel(sampler src) {
 renderer = CPURenderer.Create(640, 480)
 
 # Set the background colour.
-renderer.Clear(1,0,0,1)
+renderer.Clear(0.5,0,0,1)
 
 kernel1 = Kernel.CreateFromSource(kernel1_source)
 if(not kernel1.GetStatus()):

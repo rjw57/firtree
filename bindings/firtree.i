@@ -28,6 +28,8 @@
 
 using namespace Firtree;
 
+#undef check
+
 %}
 
 %include "cdata.i" 

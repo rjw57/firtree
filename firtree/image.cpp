@@ -22,14 +22,7 @@
 #include <firtree/image.h>
 #include <internal/image-int.h>
 
-#if defined(FIRTREE_APPLE)
-// HACK: Work around the namespace clash for these typedefs
-// between the Apple libraries and Magick.
-#define ExceptionInfo MagickExceptionInfo
-#define ColorInfo MagickColorInfo
-#endif
-
-#include <wand/magick_wand.h>
+#include <IL/il.h>
 #include <assert.h>
 
 namespace Firtree {
@@ -222,27 +215,29 @@ Image* Image::CreateFromBitmapData(const BitmapImageRep* imageRep,
 //=============================================================================
 Image* Image::CreateFromFile(const char* pFileName)
 {
+    ilInit();
+
+    ILuint image;
+    ilGenImages(1, &image);
+
     if(pFileName == NULL) { return NULL; }
 
-    MagickWand* wand = NewMagickWand();
-    MagickBooleanType status = MagickReadImage(wand, pFileName);
-    if(status == MagickFalse)
+    ilBindImage(image);
+    if(!ilLoadImage(pFileName))
     {
         FIRTREE_WARNING("Could not read image from %s.", pFileName);
-        wand = DestroyMagickWand(wand);
+        ilBindImage(0);
+        ilDeleteImages(1, &image);
         return false;
     }
 
-    // So that row 0 is the bottom-most row.
-    MagickFlipImage(wand);
-
-    unsigned int w = MagickGetImageWidth(wand);
-    unsigned int h = MagickGetImageHeight(wand);
+    unsigned int w = ilGetInteger(IL_IMAGE_WIDTH);
+    unsigned int h = ilGetInteger(IL_IMAGE_HEIGHT);
 
     Blob* imageBlob = Blob::CreateWithLength(w*h*4);
 
-    MagickGetImagePixels(wand, 0, 0, w, h, "RGBA", CharPixel, 
-            const_cast<uint8_t*>(imageBlob->GetBytes()));
+    ilCopyPixels(0, 0, 0, w, h, 1, IL_RGBA, IL_UNSIGNED_BYTE,
+            (ILvoid*)(const_cast<uint8_t*>(imageBlob->GetBytes())));
 
     uint8_t* pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
     for(unsigned int i=0; i<w*h; i++)
@@ -253,15 +248,28 @@ Image* Image::CreateFromFile(const char* pFileName)
         pixel[2] *= alpha;
         pixel += 4;
     }
-    
-    wand = DestroyMagickWand(wand);
 
+    pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
+    for(unsigned int r=0; r<(h>>1); r++)
+    {
+        for(unsigned int c=0; c<w*4; c++)
+        {
+            uint8_t pv1 = pixel[c + (r*w*4)];
+            uint8_t pv2 = pixel[c + ((h-1-r)*w*4)];
+            pixel[c + (r*w*4)] = pv2;
+            pixel[c + ((h-1-r)*w*4)] = pv1;
+        }
+    }
+    
     BitmapImageRep* bir = BitmapImageRep::Create(imageBlob, w, h, w*4, 
             BitmapImageRep::Byte, false);
     Image* rv = Image::CreateFromBitmapData(bir, false);
     FIRTREE_SAFE_RELEASE(bir);
 
     imageBlob->Release();
+
+    ilBindImage(0);
+    ilDeleteImages(1, &image);
 
     return rv;
 }
@@ -300,30 +308,10 @@ Image* Image::CreateFromOpenGLTexture(unsigned int texObj, OpenGLContext* c,
 //=============================================================================
 bool BitmapImageRep::WriteToFile(const char* pFileName) 
 {
-    if(pFileName == NULL) { return false; }
+    ilInit();
 
-    MagickWand* wand = NewMagickWand();
-    assert(wand != NULL);
-    
-    PixelWand* bg_pxl_wnd = NewPixelWand();
-    PixelSetColor( bg_pxl_wnd, "black" );
-
-    if((Width == 0) || (Height == 0))
-    {
-        wand = DestroyMagickWand(wand);
-        return false;
-    }
-
-    MagickBooleanType status = MagickNewImage(wand, Width,
-            Height, bg_pxl_wnd);
-    if(status == MagickFalse)
-    {
-        FIRTREE_WARNING("Could not create image for writing.");
-        wand = DestroyMagickWand(wand);
-        return false;
-    }
-
-    bg_pxl_wnd = DestroyPixelWand(bg_pxl_wnd);
+    ILuint image;
+    ilGenImages(1, &image);
 
     Blob* outputBufferBlob = 
         Blob::CreateWithLength(Width * Height * 4);
@@ -333,7 +321,7 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
 
     for(unsigned int row=0; row < Height; row++)
     {
-        uint8_t* outRow = outBuf + (row * Width * 4);
+        uint8_t* outRow = outBuf + ((Height - row - 1) * Width * 4);
         uint8_t* inRow = inBuf + (row * Stride);
 
         float* inFloatRow = reinterpret_cast<float*>(inRow);
@@ -375,26 +363,16 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
         }
     }
 
-    MagickSetImagePixels(wand, 0, 0, Width,
-            Height, "RGBA", CharPixel, 
-            const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
+    ilBindImage(image);
+    ilTexImage(Width, Height, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE,
+            (ILvoid*) const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
 
-    // A bitmap image rep stores the bottom-most row as row 0. Flip
-    // the image so that row 0 is the top-most row.
-    MagickFlipImage(wand);
+    bool retVal = ilSaveImage(pFileName);
+
+    ilBindImage(0);
+    ilDeleteImages(1, &image);
 
     FIRTREE_SAFE_RELEASE(outputBufferBlob);
-
-    bool retVal = true;
-
-    status = MagickWriteImage(wand, pFileName);
-    if(status == MagickFalse)
-    {
-        FIRTREE_WARNING("Could not write image to '%s'.", pFileName);
-        retVal = false;
-    }
-    
-    wand = DestroyMagickWand(wand);
 
     return retVal;
 }

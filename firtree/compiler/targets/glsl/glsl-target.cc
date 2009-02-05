@@ -4,8 +4,13 @@
 #include "glsl-target.h"
 
 #include <llvm_frontend.h>
+#include <llvm_private.h>
 
+#if LLVM_AT_LEAST_2_4
 #include "llvm/ADT/hash_map.h"
+#else
+#include "llvm/ADT/hash_map"
+#endif
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
 

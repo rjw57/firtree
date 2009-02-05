@@ -6,7 +6,7 @@
 
 # This file builds the main Firtree library.
 
-SET(LLVM_CONFIG_COMPONENTS instrumentation scalaropts ipo linker engine)
+SET(LLVM_CONFIG_COMPONENTS instrumentation scalaropts ipo linker engine jit)
 
 FIND_PACKAGE(LLVM)
 IF(NOT LLVM_FOUND)
@@ -24,7 +24,8 @@ ADD_SUBDIRECTORY(linker)
 FIND_PACKAGE(OpenGL)
 FIND_PACKAGE(OSMesa)
 FIND_PACKAGE(GLUT)
-FIND_PACKAGE(Magick++)
+#FIND_PACKAGE(Magick++)
+FIND_PACKAGE(DevIL)
 
 SET(FIRTREE_TARGET_LIBRARIES "")
 SET(FIRTREE_TARGET_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -57,12 +58,12 @@ ELSE(OSMESA_FOUND AND NOT APPLE)
     SET(FIRTREE_HAVE_OSMESA 0)
 ENDIF(OSMESA_FOUND AND NOT APPLE)
 
-IF(MAGICKPP_FOUND)
-    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${MAGICKPP_LIBRARIES})
-    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${MAGICKPP_INCLUDE_DIR})
-ELSE(MAGICKPP_FOUND)
-    MESSAGE(SEND_ERROR "The ImageMagick libraries are required to build this example.")
-ENDIF(MAGICKPP_FOUND)
+IF(DEVIL_FOUND)
+    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${DEVIL_LIBRARIES})
+    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${DEVIL_INCLUDE_DIR})
+ELSE(DEVIL_FOUND)
+    MESSAGE(SEND_ERROR "The DevIL libraries are required to build this example.")
+ENDIF(DEVIL_FOUND)
 
 INCLUDE_DIRECTORIES(
 	${FIRTREE_TARGET_INCLUDES}
@@ -137,7 +138,8 @@ TARGET_LINK_LIBRARIES(firtree
 	${FIRTREE_TARGET_LIBRARIES}
 	llvm-code-gen glsl-target
 	llvm-linker
-	compiler glslang frontend irbackend glslbackend)
+	compiler glslang frontend irbackend 
+	glslbackend -liconv)
 
 # Set the version and soversion properties for Firtree
 # so that library versioning works.

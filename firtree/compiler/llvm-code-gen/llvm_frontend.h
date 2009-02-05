@@ -8,20 +8,26 @@
 #ifndef __LLVM_BACKEND_H
 #define __LLVM_BACKEND_H
 
+// STL templates
+#include <vector>
+#include <map>
+
+// On OSX, the styx headers define 'FreeMem' which is also defined by the
+// Mac memory handlers. Since we don't use it directly, we can hack around.
+#define FreeMem StyxFreeMem
+
 #include "ptm_gen.h" // General Parsing Routines
 #include "ptm_pp.h"  // Pretty Printer
 #include "gls.h"     // General Language Services
 #include "symbols.h" // Datatype: Symbols
+
+#undef FreeMem
 
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
 #include <firtree_int.h>
-
-// STL templates
-#include <vector>
-#include <map>
 
 #include <firtree/main.h>
 #include <firtree/compiler/llvm_compiled_kernel.h>

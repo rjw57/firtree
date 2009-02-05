@@ -19,6 +19,7 @@ MESSAGE(STATUS "LLVM objs: ${LLVM_STATIC_OBJS}")
 # Build the compiler and linker
 ADD_SUBDIRECTORY(compiler)
 ADD_SUBDIRECTORY(linker)
+ADD_SUBDIRECTORY(runtime)
 
 # Find required libraries.
 FIND_PACKAGE(OpenGL)
@@ -118,8 +119,6 @@ SET(FIRTREE_SOURCES
 	runtime/glsl/sha1.h
 	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c
 
-	runtime/cpu/cpu-runtime.cpp
-
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
 
@@ -137,6 +136,7 @@ TARGET_LINK_LIBRARIES(firtree
 	${FIRTREE_TARGET_LIBRARIES}
 	llvm-code-gen glsl-target
 	llvm-linker
+	cpu-runtime
 	compiler glslang frontend irbackend glslbackend)
 
 # Set the version and soversion properties for Firtree

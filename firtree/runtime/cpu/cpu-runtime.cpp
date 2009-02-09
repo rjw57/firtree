@@ -72,7 +72,9 @@ struct BuiltinDef {
 
 static BuiltinDef ft_builtins[] = {
     BUILTIN_FROM_CMATH( expf ),
-    BUILTIN_FROM_CMATH( sqrtf ),
+    BUILTIN_FROM_CMATH( exp2f ),
+    BUILTIN_FROM_CMATH( logf ),
+    BUILTIN_FROM_CMATH( log2f ),
     BUILTIN_FROM_CMATH( tanf ),
     BUILTIN_FROM_CMATH( asinf ),
     BUILTIN_FROM_CMATH( acosf ),

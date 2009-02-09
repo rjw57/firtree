@@ -70,10 +70,10 @@ const char* _firtree_builtins =
 
   	// Exponential functions
 
-    "__builtin__ float pow(float);\n"
-    "__builtin__ vec2 pow(vec2);\n"
-    "__builtin__ vec3 pow(vec3);\n"
-    "__builtin__ vec4 pow(vec4);\n"
+    "__builtin__ float pow(float,float);\n"
+    "__builtin__ vec2 pow(vec2,vec2);\n"
+    "__builtin__ vec3 pow(vec3,vec3);\n"
+    "__builtin__ vec4 pow(vec4,vec4);\n"
 
     "__builtin__ float exp(float);\n"
     "__builtin__ vec2 exp(vec2);\n"

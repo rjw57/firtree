@@ -4,7 +4,9 @@
 ;; EXTERNAL DECLARATIONS
 
 declare float @_ft_expf(float) nounwind readnone
-declare float @_ft_sqrtf(float) nounwind readnone
+declare float @_ft_exp2f(float) nounwind readnone
+declare float @_ft_logf(float) nounwind readnone
+declare float @_ft_log2f(float) nounwind readnone
 declare float @_ft_tanf(float) nounwind readnone
 declare float @_ft_asinf(float) nounwind readnone
 declare float @_ft_acosf(float) nounwind readnone
@@ -23,7 +25,120 @@ declare <2 x float> @llvm.cos.v2f32(<2 x float> %Val)
 declare <3 x float> @llvm.cos.v3f32(<3 x float> %Val)
 declare <4 x float> @llvm.cos.v4f32(<4 x float> %Val)
 
+declare float @llvm.sqrt.f32(float %Val)
+declare <2 x float> @llvm.sqrt.v2f32(<2 x float> %Val)
+declare <3 x float> @llvm.sqrt.v3f32(<3 x float> %Val)
+declare <4 x float> @llvm.sqrt.v4f32(<4 x float> %Val)
+
 ; MATH
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @radians_f(float %a) nounwind readnone {
+	%rv = mul float %a, 0x3F91DF45A0000000
+	ret float %rv
+}
+
+define <2 x float> @radians_v2(<2 x float> %a) nounwind readnone {
+	%rv = mul <2 x float> %a, < float 0x3F91DF45A0000000, float 0x3F91DF45A0000000 >
+	ret <2 x float> %rv
+}
+
+define <3 x float> @radians_v3(<3 x float> %a) nounwind readnone {
+	%rv = mul <3 x float> %a, < float 0x3F91DF45A0000000, float 0x3F91DF45A0000000, float 0x3F91DF45A0000000 >
+	ret <3 x float> %rv
+}
+
+define <4 x float> @radians_v4(<4 x float> %a) nounwind readnone {
+	%rv = mul <4 x float> %a, < float 0x3F91DF45A0000000, float 0x3F91DF45A0000000, float 0x3F91DF45A0000000, float 0x3F91DF45A0000000  >
+	ret <4 x float> %rv
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @degrees_f(float %a) nounwind readnone {
+	%rv = mul float %a, 0x404CA5DDC0000000
+	ret float %rv
+}
+
+define <2 x float> @degrees_v2(<2 x float> %a) nounwind readnone {
+	%rv = mul <2 x float> %a, < float 0x404CA5DDC0000000, float 0x404CA5DDC0000000 >
+	ret <2 x float> %rv
+}
+
+define <3 x float> @degrees_v3(<3 x float> %a) nounwind readnone {
+	%rv = mul <3 x float> %a, < float 0x404CA5DDC0000000, float 0x404CA5DDC0000000, float 0x404CA5DDC0000000 >
+	ret <3 x float> %rv
+}
+
+define <4 x float> @degrees_v4(<4 x float> %a) nounwind readnone {
+	%rv = mul <4 x float> %a, < float 0x404CA5DDC0000000, float 0x404CA5DDC0000000, float 0x404CA5DDC0000000, float 0x404CA5DDC0000000  >
+	ret <4 x float> %rv
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; This is the result of compiling the famous QuakeIII rsqrt function 
+;; via clang.
+;; From http://www.codemaestro.com/reviews/9
+define float @_ft_inversesqrtf(float %number) nounwind {
+entry:
+	%0 = mul float %number, 5.000000e-01
+	%number8 = bitcast float %number to i32
+	%1 = ashr i32 %number8, 1	
+	%2 = sub i32 1597463007, %1
+	%3 = bitcast i32 %2 to float
+	%4 = mul float %0, %3	
+	%5 = mul float %4, %3
+	%6 = sub float 1.500000e+00, %5	
+	%7 = mul float %6, %3	
+	ret float %7
+}
+
+define float @inversesqrt_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @_ft_inversesqrtf(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @inversesqrt_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %a, i32 0
+	%y = extractelement <2 x float> %a, i32 1
+	%rx = tail call float @_ft_inversesqrtf(float %x) nounwind readnone
+	%ry = tail call float @_ft_inversesqrtf(float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @inversesqrt_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %a, i32 0
+	%y = extractelement <3 x float> %a, i32 1
+	%z = extractelement <3 x float> %a, i32 2
+	%rx = tail call float @_ft_inversesqrtf(float %x) nounwind readnone
+	%ry = tail call float @_ft_inversesqrtf(float %y) nounwind readnone
+	%rz = tail call float @_ft_inversesqrtf(float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @inversesqrt_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %a, i32 0
+	%y = extractelement <4 x float> %a, i32 1
+	%z = extractelement <4 x float> %a, i32 2
+	%w = extractelement <4 x float> %a, i32 3
+	%rx = tail call float @_ft_inversesqrtf(float %x) nounwind readnone
+	%ry = tail call float @_ft_inversesqrtf(float %y) nounwind readnone
+	%rz = tail call float @_ft_inversesqrtf(float %z) nounwind readnone
+	%rw = tail call float @_ft_inversesqrtf(float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 define float @exp_f(float %a) nounwind readnone {
@@ -75,53 +190,176 @@ entry:
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-define float @sqrt_f(float %a) nounwind readnone {
+define float @exp2_f(float %a) nounwind readnone {
 entry:
-	%rv = tail call float @_ft_sqrtf(float %a) nounwind readnone
+	%rv = tail call float @_ft_exp2f(float %a) nounwind readnone
 	ret float %rv
 }
 
-define <2 x float> @sqrt_v2(<2 x float> %a) nounwind readnone {
+define <2 x float> @exp2_v2(<2 x float> %a) nounwind readnone {
 entry:
 	%x = extractelement <2 x float> %a, i32 0
 	%y = extractelement <2 x float> %a, i32 1
-	%rx = tail call float @_ft_sqrtf(float %x) nounwind readnone
-	%ry = tail call float @_ft_sqrtf(float %y) nounwind readnone
+	%rx = tail call float @_ft_exp2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_exp2f(float %y) nounwind readnone
 	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
 	ret <2 x float> %rv2
 }
 
-define <3 x float> @sqrt_v3(<3 x float> %a) nounwind readnone {
+define <3 x float> @exp2_v3(<3 x float> %a) nounwind readnone {
 entry:
 	%x = extractelement <3 x float> %a, i32 0
 	%y = extractelement <3 x float> %a, i32 1
 	%z = extractelement <3 x float> %a, i32 2
-	%rx = tail call float @_ft_sqrtf(float %x) nounwind readnone
-	%ry = tail call float @_ft_sqrtf(float %y) nounwind readnone
-	%rz = tail call float @_ft_sqrtf(float %z) nounwind readnone
+	%rx = tail call float @_ft_exp2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_exp2f(float %y) nounwind readnone
+	%rz = tail call float @_ft_exp2f(float %z) nounwind readnone
 	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
 	ret <3 x float> %rv3
 }
 
-define <4 x float> @sqrt_v4(<4 x float> %a) nounwind readnone {
+define <4 x float> @exp2_v4(<4 x float> %a) nounwind readnone {
 entry:
 	%x = extractelement <4 x float> %a, i32 0
 	%y = extractelement <4 x float> %a, i32 1
 	%z = extractelement <4 x float> %a, i32 2
 	%w = extractelement <4 x float> %a, i32 3
-	%rx = tail call float @_ft_sqrtf(float %x) nounwind readnone
-	%ry = tail call float @_ft_sqrtf(float %y) nounwind readnone
-	%rz = tail call float @_ft_sqrtf(float %z) nounwind readnone
-	%rw = tail call float @_ft_sqrtf(float %w) nounwind readnone
+	%rx = tail call float @_ft_exp2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_exp2f(float %y) nounwind readnone
+	%rz = tail call float @_ft_exp2f(float %z) nounwind readnone
+	%rw = tail call float @_ft_exp2f(float %w) nounwind readnone
 	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
 	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
 	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
 	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @log_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @_ft_logf(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @log_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %a, i32 0
+	%y = extractelement <2 x float> %a, i32 1
+	%rx = tail call float @_ft_logf(float %x) nounwind readnone
+	%ry = tail call float @_ft_logf(float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @log_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %a, i32 0
+	%y = extractelement <3 x float> %a, i32 1
+	%z = extractelement <3 x float> %a, i32 2
+	%rx = tail call float @_ft_logf(float %x) nounwind readnone
+	%ry = tail call float @_ft_logf(float %y) nounwind readnone
+	%rz = tail call float @_ft_logf(float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @log_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %a, i32 0
+	%y = extractelement <4 x float> %a, i32 1
+	%z = extractelement <4 x float> %a, i32 2
+	%w = extractelement <4 x float> %a, i32 3
+	%rx = tail call float @_ft_logf(float %x) nounwind readnone
+	%ry = tail call float @_ft_logf(float %y) nounwind readnone
+	%rz = tail call float @_ft_logf(float %z) nounwind readnone
+	%rw = tail call float @_ft_logf(float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @log2_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @_ft_log2f(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @log2_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %a, i32 0
+	%y = extractelement <2 x float> %a, i32 1
+	%rx = tail call float @_ft_log2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_log2f(float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @log2_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %a, i32 0
+	%y = extractelement <3 x float> %a, i32 1
+	%z = extractelement <3 x float> %a, i32 2
+	%rx = tail call float @_ft_log2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_log2f(float %y) nounwind readnone
+	%rz = tail call float @_ft_log2f(float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @log2_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %a, i32 0
+	%y = extractelement <4 x float> %a, i32 1
+	%z = extractelement <4 x float> %a, i32 2
+	%w = extractelement <4 x float> %a, i32 3
+	%rx = tail call float @_ft_log2f(float %x) nounwind readnone
+	%ry = tail call float @_ft_log2f(float %y) nounwind readnone
+	%rz = tail call float @_ft_log2f(float %z) nounwind readnone
+	%rw = tail call float @_ft_log2f(float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+define float @sqrt_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @llvm.sqrt.f32(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @sqrt_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <2 x float> @llvm.sqrt.v2f32(<2 x float> %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
+define <3 x float> @sqrt_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <3 x float> @llvm.sqrt.v3f32(<3 x float> %a) nounwind readnone
+	ret <3 x float> %rv
+}
+
+define <4 x float> @sqrt_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <4 x float> @llvm.sqrt.v4f32(<4 x float> %a) nounwind readnone
+	ret <4 x float> %rv
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -224,6 +462,72 @@ define <4 x float> @cos_v4(<4 x float> %a) nounwind readnone {
 	ret <4 x float> %rv
 }
 
+define float @sin__f(float %a) nounwind readnone {
+	%rv = tail call float @llvm.sin.f32(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @sin__v2(<2 x float> %a) nounwind readnone {
+	%rv = tail call <2 x float> @llvm.sin.v2f32(<2 x float> %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
+define <3 x float> @sin__v3(<3 x float> %a) nounwind readnone {
+	%rv = tail call <3 x float> @llvm.sin.v3f32(<3 x float> %a) nounwind readnone
+	ret <3 x float> %rv
+}
+
+define <4 x float> @sin__v4(<4 x float> %a) nounwind readnone {
+	%rv = tail call <4 x float> @llvm.sin.v4f32(<4 x float> %a) nounwind readnone
+	ret <4 x float> %rv
+}
+
+define float @cos__f(float %a) nounwind readnone {
+	%rv = tail call float @llvm.cos.f32(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @cos__v2(<2 x float> %a) nounwind readnone {
+	%rv = tail call <2 x float> @llvm.cos.v2f32(<2 x float> %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
+define <3 x float> @cos__v3(<3 x float> %a) nounwind readnone {
+	%rv = tail call <3 x float> @llvm.cos.v3f32(<3 x float> %a) nounwind readnone
+	ret <3 x float> %rv
+}
+
+define <4 x float> @cos__v4(<4 x float> %a) nounwind readnone {
+	%rv = tail call <4 x float> @llvm.cos.v4f32(<4 x float> %a) nounwind readnone
+	ret <4 x float> %rv
+}
+
+define <2 x float> @sincos_f(float %a) nounwind readnone {
+	%s = tail call float @llvm.sin.f32(float %a) nounwind readnone
+	%c = tail call float @llvm.cos.f32(float %a) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %s, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %c, i32 1
+	ret <2 x float> %rv2
+}
+
+define <2 x float> @sincos__f(float %a) nounwind readnone {
+	%rv = tail call <2 x float> @sincos_f(float %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
+define <2 x float> @cossin_f(float %a) nounwind readnone {
+	%s = tail call float @llvm.sin.f32(float %a) nounwind readnone
+	%c = tail call float @llvm.cos.f32(float %a) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %c, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %s, i32 1
+	ret <2 x float> %rv2
+}
+
+define <2 x float> @cossin__f(float %a) nounwind readnone {
+	%rv = tail call <2 x float> @cossin_f(float %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 define float @tan_f(float %a) nounwind readnone {
@@ -272,6 +576,30 @@ entry:
 	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
 	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
 	ret <4 x float> %rv4
+}
+
+define float @tan__f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @tan_f(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @tan__v2(<2 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <2 x float> @tan_v2(<2 x float> %a) nounwind readnone
+	ret <2 x float> %rv
+}
+
+define <3 x float> @tan__v3(<3 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <3 x float> @tan_v3(<3 x float> %a) nounwind readnone
+	ret <3 x float> %rv
+}
+
+define <4 x float> @tan__v4(<4 x float> %a) nounwind readnone {
+entry:
+	%rv = tail call <4 x float> @tan_v4(<4 x float> %a) nounwind readnone
+	ret <4 x float> %rv
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

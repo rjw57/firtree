@@ -17,15 +17,19 @@ INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/firtree")
 INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/firtree/include")
 
 ADD_CUSTOM_COMMAND(OUTPUT builtins_bc.h 
-  COMMAND ${PYTHON_EXECUTABLE} ARGS ${BIN2H} builtins_bc builtins.bc builtins_bc.h
-  MAIN_DEPENDENCY builtins.bc
+  COMMAND ${PYTHON_EXECUTABLE} ARGS ${BIN2H} builtins_bc builtins.bc.opt builtins_bc.h
+  MAIN_DEPENDENCY builtins.bc.opt
   DEPENDS ${BIN2H}
+  )
+
+ADD_CUSTOM_COMMAND(OUTPUT builtins.bc.opt
+  COMMAND ${LLVM_OPT_EXECUTABLE} ARGS builtins.bc -f -std-compile-opts -o=builtins.bc.opt
+  MAIN_DEPENDENCY builtins.bc
   )
 
 ADD_CUSTOM_COMMAND(OUTPUT builtins.bc 
   COMMAND ${LLVM_AS_EXECUTABLE} ARGS builtins.il -f -o=builtins.bc
   MAIN_DEPENDENCY builtins.il
-  DEPENDS ${BIN2H}
   )
 
 ADD_DEFINITIONS("-DLLVM_HOST_TARGET=${LLVM_HOST_TARGET}")

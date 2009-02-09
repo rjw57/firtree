@@ -33,6 +33,7 @@
 #include <llvm/Linker.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/System/DynamicLibrary.h>
 
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/CallGraph.h"
@@ -43,6 +44,8 @@
 #include <float.h>
 #include <string.h>
 #include <assert.h>
+
+#include <cmath>
 
 #include <firtree/main.h>
 #include <firtree/kernel.h>
@@ -58,6 +61,26 @@ using namespace llvm;
 namespace Firtree { 
 
 using namespace LLVM;
+
+struct BuiltinDef {
+    const char* name;
+    void*       func;
+};
+
+#define BUILTIN_FROM_CMATH( funcname ) \
+    { "_ft_" #funcname , reinterpret_cast<void*>(funcname) }
+
+static BuiltinDef ft_builtins[] = {
+    BUILTIN_FROM_CMATH( expf ),
+    BUILTIN_FROM_CMATH( sqrtf ),
+    BUILTIN_FROM_CMATH( tanf ),
+    BUILTIN_FROM_CMATH( asinf ),
+    BUILTIN_FROM_CMATH( acosf ),
+    BUILTIN_FROM_CMATH( atanf ),
+    BUILTIN_FROM_CMATH( atan2f ),
+    { NULL, NULL },
+};
+static bool ft_haveRegisteredBuiltins = false;
 
 //=============================================================================
 CPURenderer::CPURenderer(const Rect2D& viewport)
@@ -177,6 +200,18 @@ typedef void (*KernelFunc) (vec2* coord, vec4* output);
 void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
 {
+    // If we've not yet registered the builtins, do so.
+    if(!ft_haveRegisteredBuiltins) {
+        uint32_t idx = 0;
+        while(ft_builtins[idx].name) {
+            llvm::sys::DynamicLibrary::AddSymbol(
+                    ft_builtins[idx].name,
+                    ft_builtins[idx].func);
+            ++idx;
+        }
+        ft_haveRegisteredBuiltins = true;
+    }
+
 #if 1
     FIRTREE_DEBUG("RenderInRect image %p:", image);
     FIRTREE_DEBUG(" dst rect: %f,%f+%f+%f.", destRect.Origin.X, destRect.Origin.Y,
@@ -294,7 +329,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     // Now load our builtins library.
     llvm::MemoryBuffer* lib_buf = llvm::MemoryBuffer::getMemBuffer(
             reinterpret_cast<char*>(builtins_bc),
-            reinterpret_cast<char*>(builtins_bc + sizeof(builtins_bc)));
+            reinterpret_cast<char*>(builtins_bc + sizeof(builtins_bc) - 1));
 
 #if 0
     llvm::ModuleProvider* lib_mod_prov = 
@@ -303,6 +338,9 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     llvm::Module* lib_module = lib_mod_prov->getModule();
 #else
     llvm::Module* lib_module = ParseBitcodeFile(lib_buf);
+    if(!lib_module) {
+        FIRTREE_ERROR("Error parsing bitcode file.");
+    }
     llvm::ModuleProvider* lib_mod_prov = 
         new llvm::ExistingModuleProvider(lib_module);
     delete lib_buf;

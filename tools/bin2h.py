@@ -35,6 +35,7 @@ output = []
 while 1:
     c = in_file.read(1)
     if not c:
+	output.append('0x00')
         break
     if (byte_count % 8) == 0:
         output.append('\n\t')

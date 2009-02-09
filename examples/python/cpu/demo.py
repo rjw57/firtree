@@ -28,7 +28,8 @@ from Firtree import *
 
 kernel1_source = '''
 kernel vec4 testKernel() {
-    const float sigma = 90; // < Size of blob.
+    const float radius = 90; // < Size of blob.
+    const float sigma = 30; // < Size of blob.
 
     // Find delta from centre.
     vec2 delta = destCoord() - vec2(320, 240);
@@ -40,9 +41,11 @@ kernel vec4 testKernel() {
     float a = atan(delta.x, delta.y);
 
     r *= 1.0 + 0.3 * sin(7 * a);
+    r -= radius;
+    r /= sigma;
 
     // Calculate the alpha value of the output.
-    float alpha = step(r, sigma);
+    float alpha = exp(-r*r);
 
     // Set the output colour.
     vec4 outputCol = vec4(0, 1, 0, alpha);
@@ -66,7 +69,8 @@ kernel vec4 testKernel(sampler src) {
         for(int dx=-halfwin; dx<=halfwin; ++dx)
         {
             vec4 pixval = unpremultiply(
-                sample(src, samplerTransform(src, destCoord() + scale*vec2(dx,dy)))
+                sample(src, samplerTransform(src, 
+                    destCoord() + scale*vec2(dx,dy)))
                 );
             if(gamma_correct) {
                 outval += pixval * pixval;

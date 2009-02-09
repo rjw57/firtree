@@ -333,7 +333,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             reinterpret_cast<char*>(builtins_bc),
             reinterpret_cast<char*>(builtins_bc + sizeof(builtins_bc) - 1));
 
-#if 0
+#if 1
     llvm::ModuleProvider* lib_mod_prov = 
         llvm::getBitcodeModuleProvider(lib_buf);
     assert(lib_mod_prov && "Error parsing builtin bitcode!");
@@ -373,8 +373,8 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     Passes.add(new TargetData(lib_module));
 #if 1
     Passes.add(createInternalizePass(exportList));
-    Passes.add(createGlobalDCEPass());
-    Passes.add(createGlobalOptimizerPass());
+    //Passes.add(createGlobalDCEPass());
+    //Passes.add(createGlobalOptimizerPass());
     Passes.add(createFunctionInliningPass(32768));
     Passes.add(createScalarReplAggregatesPass());
     Passes.add(createInstructionCombiningPass());

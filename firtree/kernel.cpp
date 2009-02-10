@@ -207,7 +207,7 @@ Kernel::Kernel(const char* source)
 
     // Create a LLVM-based kernel and keep a reference.
     m_WrappedLLVMKernel = LLVM::CompiledKernel::Create();
-    m_WrappedLLVMKernel->Compile(&source, 1);
+    m_bCompileStatus = m_WrappedLLVMKernel->Compile(&source, 1);
 
     std::ostringstream log_string(std::ostringstream::out);
     uint32_t line_count = 0;
@@ -248,7 +248,7 @@ GLSL::CompiledGLSLKernel* Kernel::GetWrappedGLSLKernel() const
 //=============================================================================
 bool Kernel::GetStatus() const
 {
-    return m_WrappedLLVMKernel->GetCompileStatus();
+    return m_bCompileStatus;
 }
 
 //=============================================================================

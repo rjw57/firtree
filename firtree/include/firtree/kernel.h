@@ -339,6 +339,9 @@ class Kernel : public ReferenceCounted
         /// A pointer to the sampler provider for this kernel.
         LLVM::SamplerProvider*      m_SamplerProvider;
 
+        /// A flag indicating the compile staus.
+        bool                        m_bCompileStatus;
+
         std::string                 m_CompileLog;
         std::string                 m_CompiledSource;
 };

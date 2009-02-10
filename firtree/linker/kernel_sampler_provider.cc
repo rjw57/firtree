@@ -323,12 +323,6 @@ class KernelSamplerProvider : public SamplerProvider
                 m_ParameterValues[param->Name] = value->Clone();
             }
 
-            // If all the static parameters are set and we've just set
-            // one, re-compile.
-            if(IsValid() && (param->IsStatic)) {
-                ReCompile();
-            }
-
             return param->IsStatic;
         }
 
@@ -372,11 +366,6 @@ class KernelSamplerProvider : public SamplerProvider
             } else {
                 m_ParameterSamplers[param->Name] = value;
                 FIRTREE_SAFE_RETAIN(value);
-            }
-
-            // If all the static parameters are set, re-compile.
-            if(IsValid()) {
-                ReCompile();
             }
         }
 
@@ -579,12 +568,6 @@ class KernelSamplerProvider : public SamplerProvider
             }
 
             return NULL;
-        }
-
-        //===================================================================
-        /// Called when the sampler functions, etc need recompiling.
-        void ReCompile()
-        {
         }
 
         typedef HASH_NAMESPACE::hash_map<std::string, Value*> 

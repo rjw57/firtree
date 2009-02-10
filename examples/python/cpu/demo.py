@@ -48,7 +48,7 @@ kernel vec4 testKernel() {
     float alpha = exp(-r*r);
 
     // Set the output colour.
-    vec4 outputCol = vec4(0.5, 0.75, 0, alpha);
+    vec4 outputCol = vec4(0.5, 0.75, 0, 0.5*alpha);
 
     // Return the output appropriately alpha pre-multiplied.
     return premultiply(outputCol);
@@ -99,6 +99,7 @@ def render(renderer, viewport):
     renderer.RenderInRect(im2, viewport, viewport)
     kernel2.SetValueForKey(im1, 'src')
     renderer.RenderInRect(im2, viewport, viewport)
+    renderer.RenderInRect(im1, viewport, viewport)
     for x in range(50, 600, 200):
         renderer.RenderWithOrigin(firim, Point2D(x,50))
 

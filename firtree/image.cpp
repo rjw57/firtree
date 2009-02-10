@@ -159,6 +159,60 @@ void FormatConversion::ExpandComponents(Blob* src,
                 }
             }
             break;
+        case RGBA8:
+            {
+                uint32_t num_pixels = (src->GetLength()) / 4;
+
+                uint32_t dest_min_size = num_pixels * 4 *
+                    (dest_is_float ? 4 : 1);
+                if(dest->GetLength() < dest_min_size)
+                {
+                    FIRTREE_ERROR("Destination blob is too small.");
+                    return;
+                }
+
+                if(dest_is_float)
+                {
+                    const uint8_t* inbuf = src->GetBytes();
+                    float* outbuf = const_cast<float*>(
+                            reinterpret_cast<const float*>(
+                                dest->GetBytes()));
+                    for(uint32_t pixel_idx=0; pixel_idx<num_pixels; pixel_idx++)
+                    {
+                        float rpixel = (inbuf[0] / 255.0f);
+                        float gpixel = (inbuf[1] / 255.0f);
+                        float bpixel = (inbuf[2] / 255.0f);
+                        float apixel = (inbuf[3] / 255.0f);
+
+                        outbuf[0] = rpixel;
+                        outbuf[1] = gpixel;
+                        outbuf[2] = bpixel;
+                        outbuf[3] = apixel;
+
+                        inbuf += 4;
+                        outbuf += 4;
+                    }
+                } else {
+                    const uint8_t* inbuf = src->GetBytes();
+                    uint8_t* outbuf = const_cast<uint8_t*>(dest->GetBytes());
+                    for(uint32_t pixel_idx=0; pixel_idx<num_pixels; pixel_idx++)
+                    {
+                        float rpixel = (inbuf[0] / 255.0f);
+                        float gpixel = (inbuf[1] / 255.0f);
+                        float bpixel = (inbuf[2] / 255.0f);
+                        float apixel = (inbuf[3] / 255.0f);
+
+                        outbuf[0] = rpixel;
+                        outbuf[1] = gpixel;
+                        outbuf[2] = bpixel;
+                        outbuf[3] = apixel;
+
+                        inbuf += 4;
+                        outbuf += 4;
+                    }
+                }
+            }
+            break;
 
         default:
             FIRTREE_ERROR("Unsupported conversion format: %i", src_format);
@@ -220,9 +274,14 @@ Image* Image::CreateFromFile(const char* pFileName)
     ILuint image;
     ilGenImages(1, &image);
 
+    // Ensure all images have their origin in the lower-left.
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+
     if(pFileName == NULL) { return NULL; }
 
     ilBindImage(image);
+    //ilSetInteger(IL_ORIGIN_MODE, IL_ORIGIN_LOWER_LEFT);
     if(!ilLoadImage(const_cast<char*>(pFileName)))
     {
         FIRTREE_WARNING("Could not read image from %s.", pFileName);
@@ -239,6 +298,7 @@ Image* Image::CreateFromFile(const char* pFileName)
     ilCopyPixels(0, 0, 0, w, h, 1, IL_RGBA, IL_UNSIGNED_BYTE,
             (ILvoid*)(const_cast<uint8_t*>(imageBlob->GetBytes())));
 
+    // Pre multiply
     uint8_t* pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
     for(unsigned int i=0; i<w*h; i++)
     {
@@ -249,6 +309,8 @@ Image* Image::CreateFromFile(const char* pFileName)
         pixel += 4;
     }
 
+#if 0
+    // Flip so that bottom pixels at beginning of buffer.
     pixel = const_cast<uint8_t*>(imageBlob->GetBytes());
     for(unsigned int r=0; r<(h>>1); r++)
     {
@@ -260,6 +322,7 @@ Image* Image::CreateFromFile(const char* pFileName)
             pixel[c + ((h-1-r)*w*4)] = pv1;
         }
     }
+#endif
     
     BitmapImageRep* bir = BitmapImageRep::Create(imageBlob, w, h, w*4, 
             BitmapImageRep::Byte, false);
@@ -313,6 +376,10 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
     ILuint image;
     ilGenImages(1, &image);
 
+    // Ensure all images have their origin in the lower-left.
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+
     Blob* outputBufferBlob = 
         Blob::CreateWithLength(Width * Height * 4);
 
@@ -321,7 +388,8 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
 
     for(unsigned int row=0; row < Height; row++)
     {
-        uint8_t* outRow = outBuf + ((Height - row - 1) * Width * 4);
+        //uint8_t* outRow = outBuf + ((Height - row - 1) * Width * 4);
+        uint8_t* outRow = outBuf + (row * Width * 4);
         uint8_t* inRow = inBuf + (row * Stride);
 
         float* inFloatRow = reinterpret_cast<float*>(inRow);
@@ -364,6 +432,7 @@ bool BitmapImageRep::WriteToFile(const char* pFileName)
     }
 
     ilBindImage(image);
+    //ilSetInteger(IL_ORIGIN_MODE, IL_ORIGIN_LOWER_LEFT);
     ilTexImage(Width, Height, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE,
             (ILvoid*) const_cast<uint8_t*>(outputBufferBlob->GetBytes()));
 

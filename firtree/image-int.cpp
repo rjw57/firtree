@@ -66,6 +66,12 @@ Kernel* ImageImpl::GetKernel() const
 }
 
 //=============================================================================
+const Image* ImageImpl::GetBaseImage() const
+{
+    return this;
+}
+
+//=============================================================================
 TransformedImageImpl::TransformedImageImpl(const Image* inim, AffineTransform* t,
         Rect2D crop)
     :   ImageImpl()
@@ -107,16 +113,9 @@ bool TransformedImageImpl::GetIsFlipped() const
 }
 
 //=============================================================================
-Image* TransformedImageImpl::GetBaseImage() const
+const Image* TransformedImageImpl::GetBaseImage() const
 {
-    TransformedImageImpl* transImage = 
-        dynamic_cast<TransformedImageImpl*>(m_BaseImage);
-    if(transImage != NULL)
-    {
-        return transImage->GetBaseImage();
-    }
-
-    return m_BaseImage;
+    return m_BaseImage->GetBaseImage();
 }
 
 //=============================================================================

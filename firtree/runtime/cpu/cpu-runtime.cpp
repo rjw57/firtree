@@ -361,10 +361,16 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
                 const_iterator i = sampler_table.begin();
                 i != sampler_table.end(); ++i, ++idx) {
             FlattenedSampler fs;
-            if(NULL == (*i)->GetKernel()) {
-                const Image* samp_im = (*i)->GetImage();
+            const Image* base_im = reinterpret_cast<
+                const Internal::ImageImpl*>((*i)->GetImage())->GetBaseImage();
+            const Internal::ImageImpl* im = reinterpret_cast<
+                const Internal::ImageImpl*>(base_im);
+
+            //printf("PR: %i\n", im->GetPreferredRepresentation());
+            if(im->GetPreferredRepresentation() != 
+                    Internal::ImageImpl::Kernel) {
                 BitmapImageRep* bir = CreateBitmapImageRepFromImage(
-                        const_cast<Image*>(samp_im),
+                        const_cast<Image*>(base_im),
                         BitmapImageRep::Float);
                 fs.PixelData = (vec4*)(bir->ImageBlob->GetBytes());
                 fs.Width = bir->Width;
@@ -374,6 +380,7 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
                 fs.PixelData = NULL;
                 fs.Width = fs.Height = 0;
             }
+            //printf("B: %p,%i,%i\n", fs.PixelData, fs.Width, fs.Height);
             flat_sampler_list[idx] = fs;
         }
     }
@@ -465,13 +472,16 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
             engine->getPointerToFunction(lib_module->getFunction("doit")));
     assert(kernel_fn != NULL);
 
-    size_t start_row = renderRect.Origin.Y;
-    size_t end_row = renderRect.Origin.Y + renderRect.Size.Height;
-    size_t start_col = renderRect.Origin.X;
-    size_t end_col = renderRect.Origin.X + renderRect.Size.Width;
+    int32_t start_row = renderRect.Origin.Y;
+    int32_t end_row = renderRect.Origin.Y + renderRect.Size.Height;
+    int32_t start_col = renderRect.Origin.X;
+    int32_t end_col = renderRect.Origin.X + renderRect.Size.Width;
 
-    size_t src_start_row = clipSrcRect.Origin.Y;
-    size_t src_start_col = clipSrcRect.Origin.X;
+/*
+    printf("%i, %i\n", start_row, end_row);
+    printf("%i, %i\n", start_col, end_col);
+    printf("%f, %f\n", clipSrcRect.Origin.Y, clipSrcRect.Origin.X);
+*/
 
     uint8_t* dest_img = const_cast<uint8_t*>(
             m_OutputRep->ImageBlob->GetBytes());
@@ -481,11 +491,11 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
         (start_col * sizeof(vec4));
     vec2 pos;
 
-    pos[1] = src_start_row;
-    for(size_t row=start_row; row<end_row; ++row, row_start += row_stride) {
+    pos[1] = clipSrcRect.Origin.Y;
+    for(int32_t row=start_row; row<end_row; ++row, row_start += row_stride) {
         vec4* outptr = reinterpret_cast<vec4*>(dest_img + row_start);
-        pos[0] = src_start_col;
-        for(size_t col=start_col; col<end_col; ++col, ++outptr, ++pos[0]) {
+        pos[0] = clipSrcRect.Origin.X;
+        for(int32_t col=start_col; col<end_col; ++col, ++outptr, ++pos[0]) {
             kernel_fn(&pos, outptr);
 #if 0
             if((col == start_col) || (col == end_col-1) ||

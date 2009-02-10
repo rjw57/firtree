@@ -116,14 +116,77 @@ SamplerProvider* SamplerProvider::CreateFromImage(const Image* image)
         return NULL; 
     }
 
-    // See if this image has a kernel.
-    Kernel* kernel = imImpl->GetKernel();
-
-    if(!kernel) {
+    if(imImpl->GetPreferredRepresentation() != Internal::ImageImpl::Kernel) {
         return SamplerProvider::CreateFromFlatImage(image);
     }
 
     return SamplerProvider::CreateFromKernelImage(image);
+}
+
+//===================================================================
+void RunOptimiser(llvm::Module* m) 
+{
+    if(m == NULL)
+    {
+        return;
+    }
+
+    PassManager PM;
+
+    PM.add(new TargetData(m));
+
+    PM.add(createVerifierPass());
+
+    PM.add(createStripSymbolsPass(true));
+    PM.add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+    PM.add(createCFGSimplificationPass());    // Clean up disgusting code
+    PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
+    PM.add(createGlobalOptimizerPass());      // Optimize out global vars
+    PM.add(createGlobalDCEPass());            // Remove unused fns and globs
+    PM.add(createIPConstantPropagationPass());// IP Constant Propagation
+    PM.add(createDeadArgEliminationPass());   // Dead argument elimination
+    PM.add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+    PM.add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+    PM.add(createPruneEHPass());              // Remove dead EH info
+
+    PM.add(createFunctionInliningPass());   // Inline small functions
+    PM.add(createArgumentPromotionPass());    // Scalarize uninlined fn args
+
+    PM.add(createTailDuplicationPass());      // Simplify cfg by copying code
+    PM.add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
+    PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+    PM.add(createScalarReplAggregatesPass()); // Break up aggregate allocas
+    PM.add(createInstructionCombiningPass()); // Combine silly seq's
+    PM.add(createCondPropagationPass());      // Propagate conditionals
+
+    PM.add(createTailCallEliminationPass());  // Eliminate tail calls
+    PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+    PM.add(createReassociatePass());          // Reassociate expressions
+    PM.add(createLoopRotatePass());
+    PM.add(createLICMPass());                 // Hoist loop invariants
+    PM.add(createLoopUnswitchPass());         // Unswitch loops.
+    PM.add(createLoopIndexSplitPass());       // Index split loops.
+    PM.add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
+    PM.add(createIndVarSimplifyPass());       // Canonicalize indvars
+    PM.add(createLoopUnrollPass());           // Unroll small loops
+    PM.add(createInstructionCombiningPass()); // Clean up after the unroller
+    PM.add(createGVNPass());                  // Remove redundancies
+    PM.add(createSCCPPass());                 // Constant prop with SCCP
+
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    PM.add(createInstructionCombiningPass());
+    PM.add(createCondPropagationPass());      // Propagate conditionals
+
+    PM.add(createDeadStoreEliminationPass()); // Delete dead stores
+    PM.add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+    PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+    PM.add(createSimplifyLibCallsPass());     // Library Call Optimizations
+    PM.add(createDeadTypeEliminationPass());  // Eliminate dead types
+    PM.add(createConstantMergePass());        // Merge dup global constants
+
+    PM.run(*m);
 }
 
 //===========================================================================
@@ -147,7 +210,15 @@ llvm::Module* SamplerProvider::CreateModule(const std::string& prefix,
     llvm::Value* extent_val = ConstantVector(0,0,0,0);
     LLVM_CREATE( ReturnInst, extent_val, extent_BB );
 
-    // TRANSFORM function FIXME
+    // TRANSFORM function
+    
+    AffineTransform* underlyingTransform = 
+        reinterpret_cast<const Internal::ImageImpl*>(m_Image)->
+            GetTransformFromUnderlyingImage();
+    underlyingTransform->Invert();
+    const AffineTransformStruct& transform =
+        underlyingTransform->GetTransformStruct();
+    
     std::vector<const Type*> trans_params;
     trans_params.push_back(VectorType::get( Type::FloatTy, 2 ));
     FunctionType *trans_FT = FunctionType::get(
@@ -160,9 +231,50 @@ llvm::Module* SamplerProvider::CreateModule(const std::string& prefix,
     BasicBlock *trans_BB = LLVM_CREATE( BasicBlock, "entry", 
             trans_F );
 
-    LLVM_CREATE( ReturnInst, 
-            llvm::cast<llvm::Value>(trans_F->arg_begin()),
-            trans_BB );
+#if 0
+    printf("[%f,%f,%f]\n", transform.m11, transform.m12, 
+            transform.tX);
+    printf("[%f,%f,%f]\n", transform.m21, transform.m22, 
+            transform.tY);
+#endif
+
+#if 1
+    // Declare matrix mult function.
+    std::vector<const Type*> mult_params;
+    mult_params.push_back(VectorType::get( Type::FloatTy, 2 ));
+    mult_params.push_back(VectorType::get( Type::FloatTy, 3 ));
+    mult_params.push_back(VectorType::get( Type::FloatTy, 3 ));
+    FunctionType *mult_FT = FunctionType::get(
+            VectorType::get( Type::FloatTy, 2 ),
+            mult_params, false );
+    Function* mult_F = LLVM_CREATE( Function, mult_FT,
+            Function::ExternalLinkage, "_ft_apply_matrix",
+            new_module);
+
+    llvm::Value* row1 = ConstantVector(transform.m11, transform.m12, 
+            transform.tX);
+    llvm::Value* row2 = ConstantVector(transform.m21, transform.m22, 
+            transform.tY);
+//    llvm::Value* row1 = ConstantVector(1,0,0);
+//    llvm::Value* row2 = ConstantVector(0,1,0);
+
+    std::vector<llvm::Value*> mult_call_params;
+    mult_call_params.push_back(trans_F->arg_begin());
+    mult_call_params.push_back(row1);
+    mult_call_params.push_back(row2);
+
+    llvm::Value* result = llvm::CallInst::Create( mult_F,
+            mult_call_params.begin(), mult_call_params.end(),
+            "rv", trans_BB);
+
+    LLVM_CREATE( ReturnInst, result, trans_BB );
+#else
+    LLVM_CREATE( ReturnInst, trans_F->arg_begin(), trans_BB );
+#endif
+
+    FIRTREE_SAFE_RELEASE( underlyingTransform );
+
+    RunOptimiser(new_module);
 
     return new_module;
 }

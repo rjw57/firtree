@@ -1315,9 +1315,36 @@ cont:
 	i32		; Height
 } >
 
+define <2 x float> @_ft_apply_matrix(<2 x float> %in, <3 x float> %row1,
+		<3 x float> %row2) {
+	%x = extractelement <2 x float> %in, i32 0
+	%y = extractelement <2 x float> %in, i32 1
+
+	%inh1 = insertelement <3 x float> <float 0.0, float 0.0, float 1.0>, float %x, i32 0
+	%inh = insertelement <3 x float> %inh1, float %y, i32 1
+
+	%ox = call float @dot_v3v3(<3 x float> %inh, <3 x float> %row1) nounwind readnone
+	%oy = call float @dot_v3v3(<3 x float> %inh, <3 x float> %row2) nounwind readnone
+
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ox, i32 0
+	%rv = insertelement <2 x float> %rv1, float %oy, i32 1
+
+	ret <2 x float> %rv
+}
+
 ;; This global is defined by the CPU runtime to be an array
 ;; of sampler structures.
 @_ft_sampler_table = external global [0 x %sampler]
+
+;define <4 x float> @foo_ft_sample(i32 %samp, i32 %x, i32 %y) nounwind readonly {
+;	%xf1 = sitofp i32 %x to float
+;	%yf1 = sitofp i32 %y to float
+;	%xf = fdiv float %xf1, 300.0
+;	%yf = fdiv float %yf1, 300.0
+;	%rv1 = insertelement <4 x float> <float 0.0, float 0.0, float 0.0, float 1.0>, float %xf, i32 0
+;	%rv2 = insertelement <4 x float> %rv1, float %yf, i32 1
+;	ret <4 x float> %rv1
+;}
 
 define <4 x float> @_ft_sample(i32 %samp, i32 %x, i32 %y) nounwind readonly {
 	;; Extract sampler info.

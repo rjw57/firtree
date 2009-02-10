@@ -82,6 +82,9 @@ class ImageImpl : public Image
         /// Return true if this image should be flipped vertically.
         virtual bool GetIsFlipped() const;
 
+        /// Get the underlying non-transformed image.
+        virtual const Image* GetBaseImage() const;
+
         // ====================================================================
         // MUTATING METHODS
 
@@ -124,9 +127,7 @@ class TransformedImageImpl : public ImageImpl
         virtual AffineTransform* GetTransformFromUnderlyingImage() const;
         virtual Firtree::Kernel* GetKernel() const;
         virtual bool GetIsFlipped() const;
-
-        /// Get the underlying non-transformed image.
-        Image*  GetBaseImage() const;
+        virtual const Image* GetBaseImage() const;
 
         // ====================================================================
         // MUTATING METHODS

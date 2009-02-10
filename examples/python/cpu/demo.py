@@ -68,7 +68,7 @@ kernel vec4 testKernel(sampler src) {
 '''
 
 bigbenim = Image.CreateFromFile(os.path.join(imageDir, 'bigben.jpg'))
-firim = Image.CreateFromFile(os.path.join(imageDir, 'firtree-192x192.png'))
+firim_orig = Image.CreateFromFile(os.path.join(imageDir, 'firtree-128x128.png'))
 
 kernel1 = Kernel.CreateFromSource(kernel1_source)
 if(not kernel1.GetStatus()):
@@ -85,7 +85,7 @@ if(not kernel2.GetStatus()):
 
 im2 = Image.CreateFromKernel(kernel2)
 
-vp = Rect2D(0,0,640,480)
+vp = Rect2D(0,0,650,500)
 
 # Create a CPU-based renderer to create an image.
 renderer = CPURenderer.Create(vp)
@@ -95,13 +95,21 @@ def render(renderer, viewport):
     # Set the background colour.
     renderer.Clear(0.25,0.25,0.25,1.0)
 
+    centre = Point2D(viewport.Origin.X + 0.5*viewport.Size.Width,
+        viewport.Origin.Y + 0.5*viewport.Size.Height)
+
     kernel2.SetValueForKey(bigbenim, 'src')
-    renderer.RenderInRect(im2, viewport, viewport)
-    kernel2.SetValueForKey(im1, 'src')
-    renderer.RenderInRect(im2, viewport, viewport)
-    renderer.RenderInRect(im1, viewport, viewport)
-    for x in range(50, 600, 200):
-        renderer.RenderWithOrigin(firim, Point2D(x,50))
+    renderer.RenderInRect(
+        Image.CreateFromImageWithTransform(im2, 
+            AffineTransform.Translation(25,25)),
+        viewport, viewport)
+    #kernel2.SetValueForKey(im1, 'src')
+    #renderer.RenderInRect(im2, viewport, viewport)
+    #renderer.RenderInRect(im1, viewport, viewport)
+    for a in range(0, 360, 60):
+        trans = AffineTransform.RotationByDegrees(a)
+        firim = Image.CreateFromImageWithTransform(firim_orig, trans)
+        renderer.RenderWithOrigin(firim, centre)
 
 # Write the output.
 render(renderer, renderer.GetViewport())

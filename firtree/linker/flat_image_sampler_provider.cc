@@ -96,6 +96,7 @@ class FlatImageSamplerProvider : public SamplerProvider
                     Function::ExternalLinkage, "texSample",
                     new_module );	
 
+#if 1
             // EXTENT function FIXME
             std::vector<const Type*> extent_params;
             FunctionType *extent_FT = FunctionType::get(
@@ -127,6 +128,7 @@ class FlatImageSamplerProvider : public SamplerProvider
             LLVM_CREATE( ReturnInst, 
                     llvm::cast<llvm::Value>(trans_F->arg_begin()),
                     trans_BB );
+#endif
 
             // SAMPLE function
             std::vector<const Type*> sample_params;

@@ -160,11 +160,9 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		}
 
 	protected:
-		/// Create a LLVM module which *only* has three exported functions:
+		/// Create a LLVM module which *only* has the exported function:
 		///
 		/// vec4 ${prefix}Sample(vec2 coord, ... /* free vars */)
-		/// vec2 ${prefix}Transform(vec2 coord)
-		/// vec4 ${prefix}Extent()
 		///
 		/// The caller now 'owns' the returned module and must call 'delete'
 		/// on it. 

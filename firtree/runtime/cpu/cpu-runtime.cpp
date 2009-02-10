@@ -84,6 +84,81 @@ static BuiltinDef ft_builtins[] = {
 };
 static bool ft_haveRegisteredBuiltins = false;
 
+typedef float vec2[2];
+typedef float vec4[4];
+typedef void (*KernelFunc) (vec2* coord, vec4* output);
+
+struct FlattenedSampler {
+	vec4*   PixelData;
+	int32_t	Width;			// In pixels.
+	int32_t	Height;			// In pixels.
+};
+
+//===========================================================================
+/// This pass takes a vector of FlattenedSampler structs and replaces calls
+/// to texSample() with appropriate calls to sampling functions.
+struct FlatSamplerCallsPass : public llvm::BasicBlockPass {
+    static char ID;
+
+    FlatSamplerCallsPass(const FlattenedSampler* list,
+            llvm::Function* nn_sample_func,
+            llvm::Function* lin_sample_func)
+        :   llvm::BasicBlockPass((intptr_t)&ID)
+        ,   m_NearestNeighbourSampleFunc(nn_sample_func)
+        ,   m_LinearSampleFunc(lin_sample_func)
+        ,   m_List(list)
+    {
+    }
+
+    ~FlatSamplerCallsPass()
+    {
+    }
+
+    virtual bool runOnBasicBlock(llvm::BasicBlock &BB)
+    {
+        bool bModified = false;
+        std::vector<llvm::Instruction*> to_erase;
+
+        for(BasicBlock::iterator i=BB.begin(); i!=BB.end(); ++i) {
+            if(llvm::isa<CallInst>(i)) {
+                CallInst* ci = llvm::cast<CallInst>(i);
+                Function* f = ci->getCalledFunction();
+            
+                if(f->getName() == "texSample") {
+                    std::vector<llvm::Value*> params;
+                    params.push_back(ci->getOperand(1));
+                    params.push_back(ci->getOperand(2));
+                    llvm::Value* new_inst = llvm::CallInst::Create(
+                        //m_NearestNeighbourSampleFunc,
+                        m_LinearSampleFunc,
+                        params.begin(), params.end(),
+                        "tmp", ci);
+                    ci->replaceAllUsesWith(new_inst);
+                    to_erase.push_back(ci);
+
+                    bModified = true;
+                }
+            }
+        }
+
+        for(std::vector<llvm::Instruction*>::iterator i=to_erase.begin();
+                i!=to_erase.end(); ++i) {
+            (*i)->eraseFromParent();
+        }
+
+        return bModified;
+    }
+
+    private:
+
+    llvm::Function* m_NearestNeighbourSampleFunc;
+    llvm::Function* m_LinearSampleFunc;
+
+    const FlattenedSampler* m_List;
+};
+
+char FlatSamplerCallsPass::ID = 0;
+
 //=============================================================================
 CPURenderer::CPURenderer(const Rect2D& viewport)
     :   ReferenceCounted()
@@ -194,10 +269,6 @@ Image* CPURenderer::CreateImage()
     return Image::CreateFromBitmapData(m_OutputRep, false);
 }
 
-struct vec2 { float x, y; };
-struct vec4 { float x,y,z,w; };
-typedef void (*KernelFunc) (vec2* coord, vec4* output);
-
 //=============================================================================
 void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect, 
         const Rect2D& srcRect)
@@ -225,16 +296,6 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     FIRTREE_DEBUG("  vp rect: %f,%f+%f+%f.", 
             m_ViewportRect.Origin.X, m_ViewportRect.Origin.Y,
             m_ViewportRect.Size.Width, m_ViewportRect.Size.Height);
-
-#if 0
-    uint8_t digest[20];
-    glslSampler->ComputeDigest(digest);
-    for(int i=0; i<20; i++)
-    {
-        printf("%02X", digest[i]);
-    }
-    printf("\n");
-#endif
 
     Rect2D clipSrcRect = srcRect;
     Rect2D renderRect = destRect;
@@ -269,71 +330,62 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
         }
     }
 
-#if 0
-    FIRTREE_DEBUG(" clip dst: %f,%f+%f+%f.", renderRect.Origin.X, renderRect.Origin.Y,
-            renderRect.Size.Width, renderRect.Size.Height);
-    FIRTREE_DEBUG(" clip src: %f,%f+%f+%f.", clipSrcRect.Origin.X, clipSrcRect.Origin.Y,
-            clipSrcRect.Size.Width, clipSrcRect.Size.Height);
-#endif
-
+#if 1
     FIRTREE_DEBUG(" rdr rect: %f,%f+%f+%f.", 
             renderRect.Origin.X, renderRect.Origin.Y,
             renderRect.Size.Width, renderRect.Size.Height);
-
-    size_t start_row = renderRect.Origin.Y;
-    size_t end_row = renderRect.Origin.Y + renderRect.Size.Height;
-    size_t start_col = renderRect.Origin.X;
-    size_t end_col = renderRect.Origin.X + renderRect.Size.Width;
-
-    uint8_t* dest_img = const_cast<uint8_t*>(
-            m_OutputRep->ImageBlob->GetBytes());
-    off_t row_stride = m_OutputRep->Stride;
+    FIRTREE_DEBUG("csrc rect: %f,%f+%f+%f.", 
+            clipSrcRect.Origin.X, clipSrcRect.Origin.Y,
+            clipSrcRect.Size.Width, clipSrcRect.Size.Height);
+#else
+    FIRTREE_DEBUG(" rdr rect: %f,%f+%f+%f.", 
+            renderRect.Origin.X, renderRect.Origin.Y,
+            renderRect.Size.Width, renderRect.Size.Height);
+#endif
 
     SamplerProvider* im_samp_prov = SamplerProvider::CreateFromImage(image);
     SamplerLinker linker;
 
     linker.LinkSampler(im_samp_prov);
+    
+    // Get the sampler table.
+    const std::vector<SamplerProvider*>& sampler_table = 
+        linker.GetSamplerTable();
+
+    std::vector<BitmapImageRep*> to_release;
+    FlattenedSampler* flat_sampler_list = NULL;
+    if(sampler_table.size() > 0 ) {
+        flat_sampler_list = new FlattenedSampler[sampler_table.size()];
+        size_t idx = 0;
+        for(std::vector<SamplerProvider*>::
+                const_iterator i = sampler_table.begin();
+                i != sampler_table.end(); ++i, ++idx) {
+            FlattenedSampler fs;
+            const Image* samp_im = (*i)->GetImage();
+            if(samp_im) {
+                BitmapImageRep* bir = CreateBitmapImageRepFromImage(
+                        const_cast<Image*>(samp_im),
+                        BitmapImageRep::Float);
+                fs.PixelData = (vec4*)(bir->ImageBlob->GetBytes());
+                fs.Width = bir->Width;
+                fs.Height = bir->Height;
+                to_release.push_back(bir);
+            } else {
+                fs.PixelData = NULL;
+                fs.Width = fs.Height = 0;
+            }
+            flat_sampler_list[idx] = fs;
+        }
+    }
+
     llvm::Module* kernel_module = linker.ReleaseModule();
-
-#if 0
-    llvm::Function* kernel_F = kernel_module->getFunction("kernel");
-
-    // We want to add our 'doit' function which will actually do the 
-    // work.
-    std::vector<const Type*> params;
-    params.push_back(PointerType::get( 
-                VectorType::get( Type::FloatTy, 2 ), 0 ));
-    params.push_back(PointerType::get( 
-                VectorType::get( Type::FloatTy, 4 ), 0 ));
-    FunctionType* doit_FT = FunctionType::get( 
-            Type::VoidTy, params, false );
-    Function* doit_F = Function::Create( doit_FT,
-            Function::ExternalLinkage,
-            "doit", kernel_module );
-
-    BasicBlock* entry_BB = BasicBlock::Create( "entry", doit_F );
-
-    llvm::Function::arg_iterator ai = doit_F->arg_begin();
-    llvm::Value* coord = new llvm::LoadInst( ai, "coord", entry_BB );
-    std::vector<llvm::Value*> kernel_params;
-    kernel_params.push_back(coord);
-
-    llvm::Value* rv = CallInst::Create( kernel_F, 
-            kernel_params.begin(), kernel_params.end(),
-            "result", entry_BB );
-
-    ++ai;
-    new StoreInst( rv, ai, entry_BB );
-
-    ReturnInst::Create( entry_BB );
-#endif
 
     // Now load our builtins library.
     llvm::MemoryBuffer* lib_buf = llvm::MemoryBuffer::getMemBuffer(
             reinterpret_cast<char*>(builtins_bc),
             reinterpret_cast<char*>(builtins_bc + sizeof(builtins_bc) - 1));
 
-#if 1
+#if 0
     llvm::ModuleProvider* lib_mod_prov = 
         llvm::getBitcodeModuleProvider(lib_buf);
     assert(lib_mod_prov && "Error parsing builtin bitcode!");
@@ -360,10 +412,11 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
         delete kernel_module;
     }
 
-    /*
-#   define STR(x) #x
-    lib_module->setTargetTriple( STR(TARGET_TRIPLE) );
-    */
+    llvm::Function* nn_samp_func = lib_module->getFunction("nearestSample");
+    assert(nn_samp_func && "No nearest neighbour sample function!");
+
+    llvm::Function* lin_samp_func = lib_module->getFunction("linearSample");
+    assert(lin_samp_func && "No linear sample function!");
 
     // Register some passes with a PassManager, and run them.
     std::vector<const char*> exportList;
@@ -372,10 +425,14 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     PassManager Passes;
     Passes.add(new TargetData(lib_module));
 #if 1
+    if(flat_sampler_list) {
+        Passes.add(new FlatSamplerCallsPass(flat_sampler_list,
+                    nn_samp_func, lin_samp_func));
+    }
     Passes.add(createInternalizePass(exportList));
-    //Passes.add(createGlobalDCEPass());
-    //Passes.add(createGlobalOptimizerPass());
-    Passes.add(createFunctionInliningPass(32768));
+    Passes.add(createGlobalDCEPass());
+    Passes.add(createGlobalOptimizerPass());
+    Passes.add(createFunctionInliningPass(32768)); // Aggressively inline.
     Passes.add(createScalarReplAggregatesPass());
     Passes.add(createInstructionCombiningPass());
 #endif
@@ -394,20 +451,51 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
         FIRTREE_ERROR("Error JIT-ing module: %s", err_str.c_str());
     }
 
+    if(flat_sampler_list) {
+        GlobalVariable* ft_sampler_table_gv = 
+            lib_module->getGlobalVariable("_ft_sampler_table", true);
+        // The sampler table global may well have been optimised away.
+        if(ft_sampler_table_gv) {
+            engine->updateGlobalMapping(ft_sampler_table_gv,
+                    reinterpret_cast<void*>(flat_sampler_list));
+        }
+    }
+
     KernelFunc kernel_fn = reinterpret_cast<KernelFunc>(
             engine->getPointerToFunction(lib_module->getFunction("doit")));
     assert(kernel_fn != NULL);
 
-    off_t row_start = (row_stride * (end_row-1)) + (start_col * sizeof(vec4));
+    size_t start_row = renderRect.Origin.Y;
+    size_t end_row = renderRect.Origin.Y + renderRect.Size.Height;
+    size_t start_col = renderRect.Origin.X;
+    size_t end_col = renderRect.Origin.X + renderRect.Size.Width;
+
+    size_t src_start_row = clipSrcRect.Origin.Y;
+    size_t src_start_col = clipSrcRect.Origin.X;
+
+    uint8_t* dest_img = const_cast<uint8_t*>(
+            m_OutputRep->ImageBlob->GetBytes());
+    off_t row_stride = m_OutputRep->Stride;
+
+    off_t row_start = (row_stride * start_row) + 
+        (start_col * sizeof(vec4));
     vec2 pos;
 
-    for(size_t row=start_row; row<end_row; ++row, row_start -= row_stride) {
-        pos.y = row;
+    pos[1] = src_start_row;
+    for(size_t row=start_row; row<end_row; ++row, row_start += row_stride) {
         vec4* outptr = reinterpret_cast<vec4*>(dest_img + row_start);
-        for(size_t col=start_col; col<end_col; ++col, ++outptr) {
-            pos.x = col;
+        pos[0] = src_start_col;
+        for(size_t col=start_col; col<end_col; ++col, ++outptr, ++pos[0]) {
             kernel_fn(&pos, outptr);
+#if 0
+            if((col == start_col) || (col == end_col-1) ||
+                    (row == start_row) || (row == end_row-1)) {
+                (*outptr)[1] = 1.f;
+                (*outptr)[3] = 1.f;
+            }
+#endif
         }
+        ++pos[1];
     }
 
     if(engine) {
@@ -415,6 +503,16 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
     }
 
     FIRTREE_SAFE_RELEASE(im_samp_prov);
+
+    for(std::vector<BitmapImageRep*>::iterator ri=to_release.begin();
+            ri!=to_release.end(); ++ri) {
+        BitmapImageRep* bir = *ri;
+        FIRTREE_SAFE_RELEASE(bir);
+    }
+
+    if(flat_sampler_list) {
+        delete flat_sampler_list;
+    }
 }
 
 } // namespace Firtree

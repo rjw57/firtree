@@ -39,7 +39,7 @@ namespace Firtree { namespace LLVM {
 class SamplerProvider : public ReferenceCounted, private Uncopiable
 {
 	protected:
-		SamplerProvider();
+		SamplerProvider(const Image* im = NULL);
 		~SamplerProvider();
 
 	public:
@@ -66,6 +66,10 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// explicitly flatten before use. This is the mechanism by
 		/// which bitmap-backed image samplers are created.
 		static SamplerProvider* CreateFromFlatImage(const Image* image);
+
+		/// If this sampler represents a flattenerd image, return a
+		/// pointer to it, otherwise return NULL.
+		inline const Image* GetImage() const { return m_Image; }
 
 		/// Create a LLVM module which is the result of linking all the
 		/// samplers into one large module.
@@ -173,6 +177,8 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 				uint32_t id) = 0;
 
 		friend class SamplerLinker;
+
+		const Image* m_Image;
 };
 
 //===========================================================================
@@ -244,6 +250,9 @@ class SamplerLinker {
 		/// this sampler.
 		inline const std::vector<SamplerProvider::const_iterator>&
 			GetFreeParameters() const { return m_FreeParameters; }
+
+		inline const std::vector<SamplerProvider*>& GetSamplerTable() const {
+			return m_SamplerTable; }
 
 	private:
 		void Reset();

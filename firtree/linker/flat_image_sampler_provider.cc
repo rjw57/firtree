@@ -53,17 +53,13 @@ class FlatImageSamplerProvider : public SamplerProvider
     public:
         //===================================================================
         FlatImageSamplerProvider(const Image* image)
-            :   SamplerProvider()
+            :   SamplerProvider(image)
         {
-            m_Image = dynamic_cast<Internal::ImageImpl*>(
-                    const_cast<Image*>(image));
-            FIRTREE_SAFE_RETAIN(m_Image);
         }
 
         //===================================================================
         virtual ~FlatImageSamplerProvider()
         {
-            FIRTREE_SAFE_RELEASE(m_Image);
         }
 
         //===================================================================
@@ -319,7 +315,6 @@ class FlatImageSamplerProvider : public SamplerProvider
         }
 
         std::vector<Firtree::LLVM::KernelParameter> m_EmptyList;
-        Internal::ImageImpl* m_Image;
 };
 
 //===========================================================================

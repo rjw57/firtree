@@ -50,6 +50,57 @@ entry:
 	ret float %7
 }
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Floor and ceiling are tricksy beasts. In general we can get somewhere
+;; by truncating.
+define i32 @_ft_floori(float %number) nounwind readnone {
+entry:
+	;; Calculate the truncated value.
+	%tmpint = fptosi float %number to i32
+	%truncval = sitofp i32 %tmpint to float
+
+	;; Sub 1 from the truncated value
+	%lowerval = sub i32 %tmpint, 1
+
+	;; If truncated value is <= to %number, return it, otherwise
+	;; return the lower value
+	%0 = fcmp ole float %truncval, %number
+	%rv = select i1 %0, i32 %tmpint, i32 %lowerval
+
+	ret i32 %rv
+}
+
+define float @_ft_floorf(float %number) nounwind readnone {
+entry:
+	%iv = tail call i32 @_ft_floori(float %number) nounwind readnone
+	%rv = sitofp i32 %iv to float
+	ret float %rv
+}
+
+define i32 @_ft_ceili(float %number) nounwind readnone {
+entry:
+	;; Calculate the truncated value.
+	%tmpint = fptosi float %number to i32
+	%truncval = sitofp i32 %tmpint to float
+
+	;; Add 1 to the truncated value
+	%higherval = add i32 %tmpint, 1
+
+	;; If truncated value is >= to %number, return it, otherwise
+	;; return the higher value
+	%0 = fcmp oge float %truncval, %number
+	%rv = select i1 %0, i32 %tmpint, i32 %higherval
+
+	ret i32 %rv
+}
+
+define float @_ft_ceilf(float %number) nounwind readnone {
+entry:
+	%iv = tail call i32 @_ft_ceili(float %number) nounwind readnone
+	%rv = sitofp i32 %iv to float
+	ret float %rv
+}
+
 ; MATH
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -758,6 +809,104 @@ entry:
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @floor_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @_ft_floorf(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @floor_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %a, i32 0
+	%y = extractelement <2 x float> %a, i32 1
+	%rx = tail call float @_ft_floorf(float %x) nounwind readnone
+	%ry = tail call float @_ft_floorf(float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @floor_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %a, i32 0
+	%y = extractelement <3 x float> %a, i32 1
+	%z = extractelement <3 x float> %a, i32 2
+	%rx = tail call float @_ft_floorf(float %x) nounwind readnone
+	%ry = tail call float @_ft_floorf(float %y) nounwind readnone
+	%rz = tail call float @_ft_floorf(float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @floor_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %a, i32 0
+	%y = extractelement <4 x float> %a, i32 1
+	%z = extractelement <4 x float> %a, i32 2
+	%w = extractelement <4 x float> %a, i32 3
+	%rx = tail call float @_ft_floorf(float %x) nounwind readnone
+	%ry = tail call float @_ft_floorf(float %y) nounwind readnone
+	%rz = tail call float @_ft_floorf(float %z) nounwind readnone
+	%rw = tail call float @_ft_floorf(float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define float @ceil_f(float %a) nounwind readnone {
+entry:
+	%rv = tail call float @_ft_ceilf(float %a) nounwind readnone
+	ret float %rv
+}
+
+define <2 x float> @ceil_v2(<2 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <2 x float> %a, i32 0
+	%y = extractelement <2 x float> %a, i32 1
+	%rx = tail call float @_ft_ceilf(float %x) nounwind readnone
+	%ry = tail call float @_ft_ceilf(float %y) nounwind readnone
+	%rv1 = insertelement <2 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ry, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @ceil_v3(<3 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <3 x float> %a, i32 0
+	%y = extractelement <3 x float> %a, i32 1
+	%z = extractelement <3 x float> %a, i32 2
+	%rx = tail call float @_ft_ceilf(float %x) nounwind readnone
+	%ry = tail call float @_ft_ceilf(float %y) nounwind readnone
+	%rz = tail call float @_ft_ceilf(float %z) nounwind readnone
+	%rv1 = insertelement <3 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %rz, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @ceil_v4(<4 x float> %a) nounwind readnone {
+entry:
+	%x = extractelement <4 x float> %a, i32 0
+	%y = extractelement <4 x float> %a, i32 1
+	%z = extractelement <4 x float> %a, i32 2
+	%w = extractelement <4 x float> %a, i32 3
+	%rx = tail call float @_ft_ceilf(float %x) nounwind readnone
+	%ry = tail call float @_ft_ceilf(float %y) nounwind readnone
+	%rz = tail call float @_ft_ceilf(float %z) nounwind readnone
+	%rw = tail call float @_ft_ceilf(float %w) nounwind readnone
+	%rv1 = insertelement <4 x float> zeroinitializer, float %rx, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ry, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %rz, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %rw, i32 3
+	ret <4 x float> %rv4
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; returns minimum of a and b.
 define float @min_ff(float %a, float %b) nounwind readnone {
 entry:
@@ -1160,9 +1309,137 @@ cont:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-define <4 x float> @texSample(i32, <2 x float>) nounwind readnone {
-	ret <4 x float> <float 0.5, float 0.0, float 0.5, float 0.5>
+%sampler = type < { 
+	<4 x float>*,	; Pointer to data.
+	i32,		; Width
+	i32		; Height
+} >
+
+;; This global is defined by the CPU runtime to be an array
+;; of sampler structures.
+@_ft_sampler_table = external global [0 x %sampler]
+
+define <4 x float> @_ft_sample(i32 %samp, i32 %x, i32 %y) nounwind readonly {
+	;; Extract sampler info.
+	%pw = getelementptr [0 x %sampler]* @_ft_sampler_table, i32 0,
+		i32 %samp, i32 1
+	%w = load i32* %pw
+	%ph = getelementptr [0 x %sampler]* @_ft_sampler_table, i32 0,
+		i32 %samp, i32 2
+	%h = load i32* %ph
+
+	;; Early out if we're outside image.
+	%xlt0 = icmp slt i32 %x, zeroinitializer
+	br i1 %xlt0, label %early_out, label %cont1
+cont1:
+	%ylt0 = icmp slt i32 %y, zeroinitializer
+	br i1 %ylt0, label %early_out, label %cont2
+cont2:
+	%xgew = icmp sge i32 %x, %w
+	br i1 %xgew, label %early_out, label %cont3
+cont3:
+	%ygeh = icmp sge i32 %y, %h
+	br i1 %ygeh, label %early_out, label %cont4
+cont4:
+
+	%idx1 = mul i32 %w, %y
+	%idx2 = add i32 %idx1, %x
+
+	%pdata = getelementptr [0 x %sampler]* @_ft_sampler_table, i32 0,
+		i32 %samp, i32 0
+	%data = load <4 x float>** %pdata
+
+	%pval = getelementptr <4 x float>* %data, i32 %idx2
+	%val = load <4 x float>* %pval
+
+	ret <4 x float> %val
+
+early_out:
+	; Return a transparent border.
+	ret <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>
 }
+
+define <4 x float> @nearestSample(i32 %sampidx, <2 x float> %coord) nounwind readonly {
+	;; Round image co-ordinate.
+	%xf = extractelement <2 x float> %coord, i32 0
+	%yf = extractelement <2 x float> %coord, i32 1
+
+	%x = tail call i32 @_ft_floori(float %xf) nounwind readnone
+	%y = tail call i32 @_ft_floori(float %yf) nounwind readnone
+
+	%rv = tail call <4 x float> @_ft_sample(i32 %sampidx, i32 %x, i32 %y) nounwind readonly
+
+	ret <4 x float> %rv
+}
+
+define <4 x float> @linearSample(i32 %samp_idx, <2 x float> %coord) nounwind readonly {
+	;; Round image co-ordinate.
+	%xflt = extractelement <2 x float> %coord, i32 0
+	%yflt = extractelement <2 x float> %coord, i32 1
+
+	%xf = tail call i32 @_ft_floori(float %xflt) nounwind readnone
+	%yf = tail call i32 @_ft_floori(float %yflt) nounwind readnone
+	%xc = add i32 %xf, 1
+	%yc = add i32 %yf, 1
+
+	%xfflt = sitofp i32 %xf to float
+	%yfflt = sitofp i32 %yf to float
+	%xcflt = sitofp i32 %xc to float
+	%ycflt = sitofp i32 %yc to float
+
+	%dx = sub float %xflt, %xfflt
+	%dy = sub float %yflt, %yfflt
+
+	%omdx = sub float 1.0, %dx
+	%omdy = sub float 1.0, %dy
+
+	%dxv1 = insertelement <4 x float> zeroinitializer, float %dx, i32 0
+	%dxv2 = insertelement <4 x float> %dxv1, float %dx, i32 1
+	%dxv3 = insertelement <4 x float> %dxv2, float %dx, i32 2
+	%dxv = insertelement <4 x float> %dxv3, float %dx, i32 3
+
+	%dyv1 = insertelement <4 x float> zeroinitializer, float %dy, i32 0
+	%dyv2 = insertelement <4 x float> %dyv1, float %dy, i32 1
+	%dyv3 = insertelement <4 x float> %dyv2, float %dy, i32 2
+	%dyv = insertelement <4 x float> %dyv3, float %dy, i32 3
+
+	%omdxv1 = insertelement <4 x float> zeroinitializer, float %omdx, i32 0
+	%omdxv2 = insertelement <4 x float> %omdxv1, float %omdx, i32 1
+	%omdxv3 = insertelement <4 x float> %omdxv2, float %omdx, i32 2
+	%omdxv = insertelement <4 x float> %omdxv3, float %omdx, i32 3
+
+	%omdyv1 = insertelement <4 x float> zeroinitializer, float %omdy, i32 0
+	%omdyv2 = insertelement <4 x float> %omdyv1, float %omdy, i32 1
+	%omdyv3 = insertelement <4 x float> %omdyv2, float %omdy, i32 2
+	%omdyv = insertelement <4 x float> %omdyv3, float %omdy, i32 3
+
+	%ff = tail call <4 x float> @_ft_sample(i32 %samp_idx,
+		i32 %xf, i32 %yf) nounwind readonly
+	%cf = tail call <4 x float> @_ft_sample(i32 %samp_idx,
+		i32 %xc, i32 %yf) nounwind readonly
+	%fc = tail call <4 x float> @_ft_sample(i32 %samp_idx,
+		i32 %xf, i32 %yc) nounwind readonly
+	%cc = tail call <4 x float> @_ft_sample(i32 %samp_idx,
+		i32 %xc, i32 %yc) nounwind readonly
+
+	%y1a = mul <4 x float> %omdyv, %ff
+	%y1b = mul <4 x float> %dyv, %fc
+	%y1 = add <4 x float> %y1a, %y1b
+
+	%y2a = mul <4 x float> %omdyv, %cf
+	%y2b = mul <4 x float> %dyv, %cc
+	%y2 = add <4 x float> %y2a, %y2b
+
+	%rva = mul <4 x float> %omdxv, %y1
+	%rvb = mul <4 x float> %dxv, %y2
+	%rv = add <4 x float> %rva, %rvb
+
+	ret <4 x float> %rv
+}
+
+;define <4 x float> @texSample(i32, <2 x float>) nounwind readnone {
+;	ret <4 x float> <float 0.5, float 0.0, float 0.5, float 0.5>
+;}
 
 ;; This function does the actual work calling the kernel and blending the
 ;; result.

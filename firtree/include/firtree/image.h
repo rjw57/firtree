@@ -146,6 +146,7 @@ class FormatConversion
         /// The possible source pixel formats,
         enum SourcePixelFormat {
             Luminance8,         ///< 8-bit luminance.
+            RGBA8,              ///< 8-bit rgba.
         };
 
         /// Perform a format conversion from the data in src in format

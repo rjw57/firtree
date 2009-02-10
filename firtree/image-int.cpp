@@ -638,7 +638,37 @@ Firtree::BitmapImageRep* BitmapImageImpl::CreateBitmapImageRep(
 {
     if((format != BitmapImageRep::Any) && (format != m_BitmapRep->Format))
     {
-        FIRTREE_WARNING("Implicit bitmap format conversion not yet implemented.");
+        Blob* imblob = NULL;
+        if(format == BitmapImageRep::Float) {
+            imblob = Blob::CreateWithLength(
+                    m_BitmapRep->Width * m_BitmapRep->Height * 
+                        sizeof(float) * 4);
+        } else if(format == BitmapImageRep::Byte) {
+            imblob = Blob::CreateWithLength(
+                    m_BitmapRep->Width * m_BitmapRep->Height * 4);
+        } else {
+            FIRTREE_WARNING("Implicit bitmap format conversion not "
+                    "yet implemented.");
+        }
+
+        FormatConversion::SourcePixelFormat informat;
+        switch(m_BitmapRep->Format) {
+            case BitmapImageRep::Byte:
+                informat = FormatConversion::RGBA8;
+                break;
+            default:
+                FIRTREE_WARNING("Unknown format: %i", 
+                        m_BitmapRep->Format);
+        }
+        FormatConversion::ExpandComponents(m_BitmapRep->ImageBlob,
+                informat, imblob, format);
+        Firtree::BitmapImageRep* newrep = BitmapImageRep::Create(imblob,
+                m_BitmapRep->Width, m_BitmapRep->Height,
+                m_BitmapRep->Width * sizeof(float) * 4,
+                format);
+        FIRTREE_SAFE_RELEASE(imblob);
+
+        return newrep;
     }
 
     return BitmapImageRep::CreateFromBitmapImageRep(m_BitmapRep, false);

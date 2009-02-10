@@ -48,7 +48,7 @@ kernel vec4 testKernel() {
     float alpha = exp(-r*r);
 
     // Set the output colour.
-    vec4 outputCol = vec4(0, 1, 0, alpha);
+    vec4 outputCol = vec4(0.5, 0.75, 0, alpha);
 
     // Return the output appropriately alpha pre-multiplied.
     return premultiply(outputCol);
@@ -57,46 +57,18 @@ kernel vec4 testKernel() {
 
 kernel2_source = '''
 kernel vec4 testKernel(sampler src) {
-    return sample(src, samplerCoord(src));
+    vec2 delta = destCoord() - vec2(320, 240);
+    vec2 s = sin(delta / 30.0);
 
-    const int halfwin = 2;
-    const float scale = 1.0; //0.5 / halfwin;
-    const bool gamma_correct = true;
+    vec2 pos = destCoord();
+    pos.yx += 20 * s;
 
-    vec4 outval = vec4(0,0,0,0);
-    for(int dy=-halfwin; dy<=halfwin; ++dy)
-    {
-        for(int dx=-halfwin; dx<=halfwin; ++dx)
-        {
-            vec4 pixval = unpremultiply(
-                sample(src, samplerTransform(src, 
-                    destCoord() + scale*vec2(dx,dy)))
-                );
-            if(gamma_correct) {
-                outval += pixval * pixval;
-            } else {
-                outval += pixval;
-            }
-        }
-    }
-
-    outval /= ( (2*halfwin+1) * (2*halfwin+1) );
-
-    if(gamma_correct) {
-        return premultiply(sqrt(outval));
-    } else {
-        return premultiply(outval);
-    }
+    return sample(src, samplerTransform(src, pos));
 }
 '''
 
-# Create a CPU-based renderer to create an image.
-renderer = CPURenderer.Create(640, 480)
-
-# Set the background colour.
-renderer.Clear(0.5,0,0,1)
-
-firim = Image.CreateFromFile(os.path.join(imageDir, 'firtree-128x128.png'))
+bigbenim = Image.CreateFromFile(os.path.join(imageDir, 'bigben.jpg'))
+firim = Image.CreateFromFile(os.path.join(imageDir, 'firtree-192x192.png'))
 
 kernel1 = Kernel.CreateFromSource(kernel1_source)
 if(not kernel1.GetStatus()):
@@ -113,13 +85,25 @@ if(not kernel2.GetStatus()):
 
 im2 = Image.CreateFromKernel(kernel2)
 
-kernel2.SetValueForKey(im1, 'src')
+vp = Rect2D(0,0,640,480)
+
+# Create a CPU-based renderer to create an image.
+renderer = CPURenderer.Create(vp)
 
 # Render the image into the renderer's viewport.
-renderer.RenderInRect(im2, renderer.GetViewport(), renderer.GetViewport())
-renderer.RenderWithOrigin(firim, Point2D(100,100))
+def render(renderer, viewport):
+    # Set the background colour.
+    renderer.Clear(0.25,0.25,0.25,1.0)
+
+    kernel2.SetValueForKey(bigbenim, 'src')
+    renderer.RenderInRect(im2, viewport, viewport)
+    kernel2.SetValueForKey(im1, 'src')
+    renderer.RenderInRect(im2, viewport, viewport)
+    for x in range(50, 600, 200):
+        renderer.RenderWithOrigin(firim, Point2D(x,50))
 
 # Write the output.
+render(renderer, renderer.GetViewport())
 renderer.WriteToFile('output.png')
 
 # vim:sw=4:ts=4:et:autoindent

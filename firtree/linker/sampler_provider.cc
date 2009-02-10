@@ -53,14 +53,22 @@ namespace Firtree { namespace LLVM {
 using namespace llvm;
 
 //===========================================================================
-SamplerProvider::SamplerProvider()
+SamplerProvider::SamplerProvider(const Image* im)
     :   ReferenceCounted()
+    ,   m_Image(im)
 {
+    if(m_Image) {
+        FIRTREE_SAFE_RETAIN(const_cast<Image*>(m_Image));
+    }
 }
 
 //===========================================================================
 SamplerProvider::~SamplerProvider()
 {
+    if(m_Image) {
+        Image* im = const_cast<Image*>(m_Image);
+        FIRTREE_SAFE_RELEASE(im);
+    }
 }
 
 //===========================================================================

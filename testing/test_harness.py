@@ -197,7 +197,7 @@ if(__name__ == '__main__'):
     </head><body>
     ''')
 
-    context = OpenGLContext.CreateOffScreenContext(16, 16, True)
+    context = OpenGLContext.CreateOffScreenContext(16, 16, False)
     renderer = GLRenderer.Create(context)
 
     if(len(sys.argv) > 1):

@@ -15,15 +15,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 //===========================================================================
-// This file implements the Firtree flat image sampler provider.
+// This file implements the Firtree kernel sampler provider.
 //===========================================================================
-
-#include <firtree/main.h>
-#include <firtree/linker/sampler_provider.h>
-#include <firtree/value.h>
-
-#include "../compiler/llvm-code-gen/llvm_frontend.h"
-#include "../compiler/llvm-code-gen/llvm_private.h"
 
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Instructions.h>
@@ -36,7 +29,14 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/LinkAllPasses.h"
 
-#include <internal/image-int.h>
+#include <firtree/main.h>
+#include <firtree/linker/sampler_provider.h>
+#include <firtree/value.h>
+#include "internal/image-int.h"
+#include <firtree/kernel.h>
+
+#include "../compiler/llvm-code-gen/llvm_frontend.h"
+#include "../compiler/llvm-code-gen/llvm_private.h"
 
 namespace llvm { class Module; }
 
@@ -46,20 +46,58 @@ namespace Firtree { namespace LLVM {
 
 using namespace llvm;
 
+//===================================================================
+llvm::Value* _ConstantVector(float* v, int n)
+{
+    std::vector<Constant*> elements;
+
+    for ( int i=0; i<n; i++ ) {
+        elements.push_back( ConstantFP::get( Type::FloatTy, 
+                    (double)(v[i])));
+    }
+
+    llvm::Value* val = ConstantVector::get( elements );
+    return val;
+}
+
+//===================================================================
+llvm::Value* _ConstantVector(float x, float y, float z, float w)
+{
+    float v[] = {x,y,z,w};
+    return _ConstantVector(v,4);
+}
+
 //===========================================================================
 /// Specialised kernel sampler provider class.
-class FlatImageSamplerProvider : public SamplerProvider
+class KernelImageSamplerProvider : public SamplerProvider
 {
     public:
         //===================================================================
-        FlatImageSamplerProvider(const Image* image)
+        KernelImageSamplerProvider(const Image* image)
             :   SamplerProvider(image)
+            ,   m_Kernel(NULL)
         {
+            const Firtree::Internal::ImageImpl* imImpl = 
+                dynamic_cast<const Firtree::Internal::ImageImpl*>(image);
+            if(imImpl == NULL) {
+                FIRTREE_ERROR("Passed an invalid image.");
+            }
+
+            // See if this image has a kernel.
+            Kernel* kernel = imImpl->GetKernel();
+            if(!kernel) {
+                FIRTREE_ERROR("Asked to construct kernel image sampler "
+                        "provider from non-kernel image.");
+            }
+
+            m_Kernel = kernel;
+            FIRTREE_SAFE_RETAIN(m_Kernel);
         }
 
         //===================================================================
-        virtual ~FlatImageSamplerProvider()
+        virtual ~KernelImageSamplerProvider()
         {
+            FIRTREE_SAFE_RELEASE(m_Kernel);
         }
 
         //===================================================================
@@ -72,31 +110,19 @@ class FlatImageSamplerProvider : public SamplerProvider
 		/// The caller now 'owns' the returned module and must call 'delete'
 		/// on it.
         virtual llvm::Module* CreateSamplerModule(const std::string& prefix,
-                uint32_t sampler_id)
+                uint32_t)
         {
-            if(!IsValid()) {
+            if(!m_Kernel->IsValid()) {
                 FIRTREE_WARNING("Cannot create sampler module for invalid "
                         "sampler.");
                 return NULL;
             }
 
-            // Create the module.
-            llvm::Module* new_module = new Module(prefix);
+            // Create the kernel module.
+            llvm::Module* new_module = m_Kernel->CreateSamplerModule(prefix);
 
             // Start adding some functions.
 
-            // Declare the texSample function.
-            std::vector<const Type*> tex_sample_params;
-            tex_sample_params.push_back( Type::Int32Ty );
-            tex_sample_params.push_back( VectorType::get( Type::FloatTy, 2 ) );
-            FunctionType *tex_sample_FT = FunctionType::get(
-                    VectorType::get( Type::FloatTy, 4 ),
-                    tex_sample_params, false );
-            Function* tex_sample_F = LLVM_CREATE( Function, tex_sample_FT,
-                    Function::ExternalLinkage, "texSample",
-                    new_module );	
-
-#if 1
             // EXTENT function FIXME
             std::vector<const Type*> extent_params;
             FunctionType *extent_FT = FunctionType::get(
@@ -109,7 +135,7 @@ class FlatImageSamplerProvider : public SamplerProvider
             BasicBlock *extent_BB = LLVM_CREATE( BasicBlock, "entry", 
                     extent_F );
 
-            llvm::Value* extent_val = ConstantVector(0,0,0,0);
+            llvm::Value* extent_val = _ConstantVector(0,0,0,0);
             LLVM_CREATE( ReturnInst, extent_val, extent_BB );
 
             // TRANSFORM function FIXME
@@ -128,27 +154,6 @@ class FlatImageSamplerProvider : public SamplerProvider
             LLVM_CREATE( ReturnInst, 
                     llvm::cast<llvm::Value>(trans_F->arg_begin()),
                     trans_BB );
-#endif
-
-            // SAMPLE function
-            std::vector<const Type*> sample_params;
-            sample_params.push_back( VectorType::get( Type::FloatTy, 2 ) );
-            FunctionType *sample_FT = FunctionType::get(
-                    VectorType::get( Type::FloatTy, 4 ),
-                    sample_params, false );
-            Function* sample_F = LLVM_CREATE( Function, sample_FT,
-                    Function::ExternalLinkage,
-                    prefix + "Sample",
-                    new_module );	
-            BasicBlock *sample_BB = LLVM_CREATE( BasicBlock, "entry", 
-                    sample_F );
-
-            std::vector<llvm::Value*> params;
-            params.push_back( ConstantInt::get( Type::Int32Ty, sampler_id ) );
-            params.push_back( sample_F->arg_begin() );
-            llvm::Value* sample_val = LLVM_CREATE( CallInst, tex_sample_F,
-                    params.begin(), params.end(), "tex", sample_BB );
-            LLVM_CREATE( ReturnInst, sample_val, sample_BB );
 
             return new_module;
         }
@@ -159,6 +164,12 @@ class FlatImageSamplerProvider : public SamplerProvider
 		/// same iterator as end().
 		virtual const_iterator find(const std::string& name) const
         {
+            for(const_iterator i = begin(); i != end(); ++i)
+            {
+                if(i->Name == name) {
+                    return i;
+                }
+            }
             return end();
         }
 
@@ -166,14 +177,14 @@ class FlatImageSamplerProvider : public SamplerProvider
 		/// Return an iterator pointing to the start of the parameter list.
 		virtual const_iterator begin() const
         {
-            return m_EmptyList.begin();
+            return m_Kernel->GetFunctionRecord().Parameters.begin();
         }
 
         //===================================================================
 		/// Return an iterator pointing to the end of the parameter list.
 		virtual const_iterator end() const 
         {
-            return m_EmptyList.end();
+            return m_Kernel->GetFunctionRecord().Parameters.end();
         }
 
         //===================================================================
@@ -183,13 +194,13 @@ class FlatImageSamplerProvider : public SamplerProvider
 		/// Get{.*}Function() are undefined if this flag is false.
 		virtual bool IsValid() const
         {
-            return true;
+            return m_Kernel->IsValid();
         }
 
         //===================================================================
         virtual Kernel* GetKernel() const 
         {
-            return NULL;
+            return m_Kernel;
         }
 
         //===================================================================
@@ -201,6 +212,9 @@ class FlatImageSamplerProvider : public SamplerProvider
 		virtual bool SetParameterValue(const const_iterator& param,
 				const Value* value)
         {
+            m_Kernel->SetValueForKey(value, param->Name.c_str());
+
+            // FIXME
             return false;
         }
 
@@ -209,7 +223,7 @@ class FlatImageSamplerProvider : public SamplerProvider
 		virtual const Value* GetParameterValue(
                 const const_iterator& param) const
         {
-            return NULL;
+            return m_Kernel->GetValueForKey(param->Name.c_str());
         }
 
         //===================================================================
@@ -224,7 +238,7 @@ class FlatImageSamplerProvider : public SamplerProvider
 		virtual void SetParameterSampler(const const_iterator& param,
 				SamplerProvider* value)
         {
-            /* nothing */
+            m_Kernel->SetSamplerProviderForKey(value, param->Name.c_str());
         }
 
         //===================================================================
@@ -232,104 +246,18 @@ class FlatImageSamplerProvider : public SamplerProvider
 		virtual SamplerProvider* GetParameterSampler(
                 const const_iterator& param) const
         {
-            return NULL;
+            return const_cast<SamplerProvider*>(m_Kernel->GetSamplerProviderForKey(param->Name.c_str()));
         }
 
     private:
-        //===================================================================
-        llvm::Value* ConstantVector(float x, float y, float z, float w)
-        {
-            float v[] = {x,y,z,w};
-            return ConstantVector(v,4);
-        }
-  
-        //===================================================================
-        llvm::Value* ConstantVector(float* v, int n)
-        {
-            std::vector<Constant*> elements;
-
-            for ( int i=0; i<n; i++ ) {
-#if LLVM_AT_LEAST_2_3
-                elements.push_back( ConstantFP::get( Type::FloatTy, 
-                            (double)(v[i])));
-#else
-                elements.push_back( ConstantFP::get( Type::FloatTy,
-                            APFloat( v[i] ) ) );
-#endif
-            }
-
-            llvm::Value* val = ConstantVector::get( elements );
-            return val;
-        }
-
-        //===================================================================
-        /// Returns the value of the specified parameter as a LLVM constant.
-        llvm::Value* GetParamAsLLVMConstant(const const_iterator& param)
-        {
-            const Value* ft_val = GetParameterValue(param);
-            if(ft_val == NULL) { 
-                FIRTREE_ERROR("Internal error. GetParamAsLLVMConstant() "
-                        "value is unset.");
-                return NULL;
-            }
-
-            switch(ft_val->GetType()) {
-                case Firtree::TySpecInt:
-                    return llvm::ConstantInt::get( llvm::Type::Int32Ty, 
-                            ft_val->GetIntValue() );
-                    break;
-                case Firtree::TySpecBool:
-                    return llvm::ConstantInt::get( llvm::Type::Int1Ty, 
-                            ft_val->GetIntValue() );
-                    break;
-                case Firtree::TySpecFloat:
-#if LLVM_AT_LEAST_2_3
-                    return llvm::ConstantFP::get( llvm::Type::FloatTy,
-                            (double)(ft_val->GetFloatValue()) );
-#else
-                    return llvm::ConstantFP::get( llvm::Type::FloatTy,
-                            llvm::APFloat( ft_val->GetFloatValue() ) );
-#endif
-                    break;
-                case Firtree::TySpecVec2:
-                case Firtree::TySpecVec3:
-                case Firtree::TySpecVec4:
-                    {
-                        unsigned arity = ft_val->GetArity();
-                        std::vector<llvm::Constant*> elements;
-                        for ( unsigned i=0; i<arity; ++i ) {
-#if LLVM_AT_LEAST_2_3
-                            elements.push_back( 
-                                    llvm::ConstantFP::get( 
-                                        llvm::Type::FloatTy, 
-                                        (double)(ft_val->GetVectorValue(i))));
-#else
-                            elements.push_back( 
-                                    llvm::ConstantFP::get( 
-                                        llvm::Type::FloatTy,
-                                        llvm::APFloat( ft_val->GetVectorValue(i) ) ) );
-#endif
-                        }
-                        return llvm::ConstantVector::get( elements );
-                    }
-                    break;
-                default:
-                    FIRTREE_ERROR("Internal error. GetParamAsLLVMConstant() "
-                            "parameter value is of invalid type.");
-                    break;
-            }
-
-            return NULL;
-        }
-
-        std::vector<Firtree::LLVM::KernelParameter> m_EmptyList;
+        Kernel*     m_Kernel;
 };
 
 //===========================================================================
-SamplerProvider* SamplerProvider::CreateFromFlatImage(
+SamplerProvider* SamplerProvider::CreateFromKernelImage(
         const Image* image)
 {
-    return new FlatImageSamplerProvider(image);
+    return new KernelImageSamplerProvider(image);
 }
 
 } } // namespace Firtree::LLVM

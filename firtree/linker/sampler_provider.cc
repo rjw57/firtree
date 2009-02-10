@@ -86,16 +86,9 @@ SamplerProvider* SamplerProvider::CreateFromImage(const Image* image)
 
     if(!kernel) {
         return SamplerProvider::CreateFromFlatImage(image);
-    } else {
-        FIRTREE_SAFE_RETAIN(kernel);
     }
 
-    SamplerProvider* rv = kernel->GetSampler();
-    FIRTREE_SAFE_RETAIN(rv);
-
-    FIRTREE_SAFE_RELEASE(kernel);
-
-    return rv;
+    return SamplerProvider::CreateFromKernelImage(image);
 }
 
 //===========================================================================

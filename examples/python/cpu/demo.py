@@ -48,7 +48,7 @@ kernel vec4 testKernel() {
     float alpha = exp(-r*r);
 
     // Set the output colour.
-    vec4 outputCol = vec4(0.5, 0.75, 0, 0.5*alpha);
+    vec4 outputCol = vec4(0.5, 0.75, 0, alpha);
 
     // Return the output appropriately alpha pre-multiplied.
     return premultiply(outputCol);

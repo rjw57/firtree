@@ -18,6 +18,7 @@ namespace llvm { class Function; }
 namespace Firtree { 
 	class Value; 
 	class Image;
+	class Kernel;
 }
 
 namespace Firtree { namespace LLVM {
@@ -56,7 +57,7 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// be used, otherwise the first kernel defined in the source
 		/// will be used.
 		static SamplerProvider* CreateFromCompiledKernel(
-				const CompiledKernel* kernel,
+				CompiledKernel* kernel,
 				const std::string& kernel_name = "");
 
 		/// Create a sampler provider from a Firtree image.
@@ -66,6 +67,11 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// explicitly flatten before use. This is the mechanism by
 		/// which bitmap-backed image samplers are created.
 		static SamplerProvider* CreateFromFlatImage(const Image* image);
+
+		/// Create a sampler provider from a Firtree image but always
+		/// explicitly flatten before use. This is the mechanism by
+		/// which bitmap-backed image samplers are created.
+		static SamplerProvider* CreateFromKernelImage(const Image* image);
 
 		/// If this sampler represents a flattenerd image, return a
 		/// pointer to it, otherwise return NULL.
@@ -92,6 +98,10 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		/// set to some non-NULL value. The return values of 
 		/// Get{.*}Function() are undefined if this flag is false.
 		virtual bool IsValid() const = 0;
+
+		/// Return the kernel that this sampler encapsulates. If there
+		/// is no such kernel, return NULL.
+		virtual Firtree::Kernel* GetKernel() const = 0;
 
 		/// Set the parameter pointed to by a given iterator to be
 		/// associated with the sampler provider 'provider'. It is an 

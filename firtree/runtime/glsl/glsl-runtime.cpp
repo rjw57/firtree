@@ -748,9 +748,6 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
         return;
     }
 
-    m_LLVMSampler = k->GetSampler();
-    FIRTREE_SAFE_RETAIN(m_LLVMSampler);
-    
     // NB underlyingTransform must be released
     AffineTransform* underlyingTransform = 
         imImpl->GetTransformFromUnderlyingImage();
@@ -769,7 +766,6 @@ KernelSamplerParameter::KernelSamplerParameter(Image* im)
 KernelSamplerParameter::~KernelSamplerParameter()
 {
     FIRTREE_SAFE_RELEASE(m_Kernel);
-    FIRTREE_SAFE_RELEASE(m_LLVMSampler);
 }
 
 //=============================================================================

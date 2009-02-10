@@ -361,8 +361,8 @@ void CPURenderer::RenderInRect(Image* image, const Rect2D& destRect,
                 const_iterator i = sampler_table.begin();
                 i != sampler_table.end(); ++i, ++idx) {
             FlattenedSampler fs;
-            const Image* samp_im = (*i)->GetImage();
-            if(samp_im) {
+            if(NULL == (*i)->GetKernel()) {
+                const Image* samp_im = (*i)->GetImage();
                 BitmapImageRep* bir = CreateBitmapImageRepFromImage(
                         const_cast<Image*>(samp_im),
                         BitmapImageRep::Float);

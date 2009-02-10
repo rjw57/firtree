@@ -16,7 +16,7 @@ SET(LINKER_HEADERS
 SET(LINKER_SOURCES
   ${LINKER_HEADERS}
   
-  kernel_sampler_provider.cc
+  kernel_image_sampler_provider.cpp
   flat_image_sampler_provider.cc
   sampler_provider.cc
   canonicalize_sampler_calls.cc
@@ -35,7 +35,7 @@ ADD_DEPENDENCIES(llvm-linker styx-parser)
 
 TARGET_LINK_LIBRARIES(llvm-linker)
 
-ADD_EXECUTABLE(linkertest tools/linkertest.cc)
-TARGET_LINK_LIBRARIES(linkertest firtree)
+# ADD_EXECUTABLE(linkertest tools/linkertest.cc)
+# TARGET_LINK_LIBRARIES(linkertest firtree)
 
 # vim:sw=2:ts=2:et

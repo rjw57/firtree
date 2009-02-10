@@ -39,8 +39,12 @@ namespace Firtree { namespace GLSL {
 
 namespace Firtree { namespace LLVM {
     class CompiledKernel;
+    class KernelFunction;
     class SamplerProvider;
+    class KernelImageSamplerProvider;
 } }
+
+namespace llvm { class Module; }
 
 namespace Firtree {
 
@@ -288,6 +292,11 @@ class Kernel : public ReferenceCounted
         /// this parameter is unset or there is no parameter with that name.
         Parameter* GetParameterForKey(const char* key) const;
 
+        /// Return true if the kernel is 'valid', i.e. all static parameters
+        /// have some value and the kernel source was successfully
+        /// compiled.
+        bool IsValid() const;
+
         // ====================================================================
         // MUTATING METHODS
 
@@ -298,7 +307,7 @@ class Kernel : public ReferenceCounted
         /// Accessor for setting a kernel parameter value. The accessors below
         /// are convenience wrappers around this method.
         void SetValueForKey(Parameter* parameter, const char* key);
-        void SetValueForKey(Value* val, const char* key);
+        void SetValueForKey(const Value* val, const char* key);
 
         ///@{
         /// Accessors for the various scalar, vector and sampler parameters.
@@ -314,36 +323,44 @@ class Kernel : public ReferenceCounted
         ///@}
         
     protected:
+        /// Internal method to construct a llvm module for the
+        /// kernel.
+        llvm::Module* CreateSamplerModule(const std::string& prefix);
+
         /// Internal method to retrieve the wrapped GLSL
         /// kernel.
         GLSL::CompiledGLSLKernel* GetWrappedGLSLKernel() const;
 
-        /// Internal method to retrieve the wrapped sampler.
-        inline LLVM::SamplerProvider* GetSampler() const {
-            return m_SamplerProvider;
-        }
+        void SetSamplerProviderForKey(LLVM::SamplerProvider* sampler_prov, 
+                const char* key);
+        const LLVM::SamplerProvider* GetSamplerProviderForKey(const char* key) const;
 
         friend class GLSL::KernelSamplerParameter;
         friend class GLSL::CompiledGLSLKernel;
         friend class LLVM::SamplerProvider;
+        friend class LLVM::KernelImageSamplerProvider;
 
     private:
+        const LLVM::KernelFunction&   GetFunctionRecord() const;
+
         /// A pointer to the compiled GLSL kernel 'wrapped'
         /// by this kernel.
         GLSL::CompiledGLSLKernel* m_WrappedGLSLKernel;
-
-        /// A pointer to the compiled LLVM kernel 'wrapped' by this 
-        /// kernel
-        LLVM::CompiledKernel*       m_WrappedLLVMKernel;
-
-        /// A pointer to the sampler provider for this kernel.
-        LLVM::SamplerProvider*      m_SamplerProvider;
 
         /// A flag indicating the compile staus.
         bool                        m_bCompileStatus;
 
         std::string                 m_CompileLog;
         std::string                 m_CompiledSource;
+
+        typedef std::map<std::string, Value*> 
+            ParameterValueMap;
+        typedef std::map<std::string, LLVM::SamplerProvider*> 
+            ParameterSamplerMap;
+
+        LLVM::CompiledKernel*       m_CompiledKernel;
+        ParameterValueMap           m_ParameterValues;
+        ParameterSamplerMap         m_ParameterSamplers;
 };
 
 }

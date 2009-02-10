@@ -121,40 +121,6 @@ class KernelImageSamplerProvider : public SamplerProvider
             // Create the kernel module.
             llvm::Module* new_module = m_Kernel->CreateSamplerModule(prefix);
 
-            // Start adding some functions.
-
-            // EXTENT function FIXME
-            std::vector<const Type*> extent_params;
-            FunctionType *extent_FT = FunctionType::get(
-                    VectorType::get( Type::FloatTy, 4 ),
-                    extent_params, false );
-            Function* extent_F = LLVM_CREATE( Function, extent_FT,
-                    Function::ExternalLinkage,
-                    prefix + "Extent",
-                    new_module );	
-            BasicBlock *extent_BB = LLVM_CREATE( BasicBlock, "entry", 
-                    extent_F );
-
-            llvm::Value* extent_val = _ConstantVector(0,0,0,0);
-            LLVM_CREATE( ReturnInst, extent_val, extent_BB );
-
-            // TRANSFORM function FIXME
-            std::vector<const Type*> trans_params;
-            trans_params.push_back(VectorType::get( Type::FloatTy, 2 ));
-            FunctionType *trans_FT = FunctionType::get(
-                    VectorType::get( Type::FloatTy, 2 ),
-                    trans_params, false );
-            Function* trans_F = LLVM_CREATE( Function, trans_FT,
-                    Function::ExternalLinkage,
-                    prefix + "Transform",
-                    new_module );	
-            BasicBlock *trans_BB = LLVM_CREATE( BasicBlock, "entry", 
-                    trans_F );
-
-            LLVM_CREATE( ReturnInst, 
-                    llvm::cast<llvm::Value>(trans_F->arg_begin()),
-                    trans_BB );
-
             return new_module;
         }
 

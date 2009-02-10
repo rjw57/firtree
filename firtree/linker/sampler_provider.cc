@@ -52,6 +52,41 @@ namespace Firtree { namespace LLVM {
 
 using namespace llvm;
 
+//===================================================================
+llvm::Value* ConstantVector(float* v, int n)
+{
+    std::vector<llvm::Constant*> elements;
+
+    for ( int i=0; i<n; i++ ) {
+        elements.push_back( llvm::ConstantFP::get( llvm::Type::FloatTy, 
+                    (double)(v[i])));
+    }
+
+    llvm::Value* val = llvm::ConstantVector::get( elements );
+    return val;
+}
+
+//===================================================================
+llvm::Value* ConstantVector(float x, float y)
+{
+    float v[] = {x,y};
+    return ConstantVector(v,2);
+}
+
+//===================================================================
+llvm::Value* ConstantVector(float x, float y, float z)
+{
+    float v[] = {x,y,z};
+    return ConstantVector(v,3);
+}
+
+//===================================================================
+llvm::Value* ConstantVector(float x, float y, float z, float w)
+{
+    float v[] = {x,y,z,w};
+    return ConstantVector(v,4);
+}
+
 //===========================================================================
 SamplerProvider::SamplerProvider(const Image* im)
     :   ReferenceCounted()
@@ -89,6 +124,47 @@ SamplerProvider* SamplerProvider::CreateFromImage(const Image* image)
     }
 
     return SamplerProvider::CreateFromKernelImage(image);
+}
+
+//===========================================================================
+llvm::Module* SamplerProvider::CreateModule(const std::string& prefix,
+        uint32_t id)
+{
+    llvm::Module* new_module = CreateSamplerModule(prefix, id);
+    
+    // EXTENT function FIXME
+    std::vector<const Type*> extent_params;
+    FunctionType *extent_FT = FunctionType::get(
+            VectorType::get( Type::FloatTy, 4 ),
+            extent_params, false );
+    Function* extent_F = LLVM_CREATE( Function, extent_FT,
+            Function::ExternalLinkage,
+            prefix + "Extent",
+            new_module );	
+    BasicBlock *extent_BB = LLVM_CREATE( BasicBlock, "entry", 
+            extent_F );
+
+    llvm::Value* extent_val = ConstantVector(0,0,0,0);
+    LLVM_CREATE( ReturnInst, extent_val, extent_BB );
+
+    // TRANSFORM function FIXME
+    std::vector<const Type*> trans_params;
+    trans_params.push_back(VectorType::get( Type::FloatTy, 2 ));
+    FunctionType *trans_FT = FunctionType::get(
+            VectorType::get( Type::FloatTy, 2 ),
+            trans_params, false );
+    Function* trans_F = LLVM_CREATE( Function, trans_FT,
+            Function::ExternalLinkage,
+            prefix + "Transform",
+            new_module );	
+    BasicBlock *trans_BB = LLVM_CREATE( BasicBlock, "entry", 
+            trans_F );
+
+    LLVM_CREATE( ReturnInst, 
+            llvm::cast<llvm::Value>(trans_F->arg_begin()),
+            trans_BB );
+
+    return new_module;
 }
 
 //===========================================================================
@@ -206,7 +282,7 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
             }
         }
 
-        llvm::Module* module = next_provider->CreateSamplerModule(
+        llvm::Module* module = next_provider->CreateModule(
                 next.first, sampler_idx);
         std::string err;
         linker->LinkInModule(module, &err);
@@ -441,46 +517,6 @@ void SamplerLinker::LinkSampler(SamplerProvider* sampler)
         samp_sample_F->eraseFromParent();
     }
 
-}
-
-//===================================================================
-llvm::Value* ConstantVector(float* v, int n)
-{
-    std::vector<llvm::Constant*> elements;
-
-    for ( int i=0; i<n; i++ ) {
-#if LLVM_AT_LEAST_2_3
-        elements.push_back( llvm::ConstantFP::get( llvm::Type::FloatTy, 
-                    (double)(v[i])));
-#else
-        elements.push_back( llvm::ConstantFP::get( llvm::Type::FloatTy,
-                    llvm::APFloat( v[i] ) ) );
-#endif
-    }
-
-    llvm::Value* val = llvm::ConstantVector::get( elements );
-    return val;
-}
-
-//===================================================================
-llvm::Value* ConstantVector(float x, float y)
-{
-    float v[] = {x,y};
-    return ConstantVector(v,2);
-}
-
-//===================================================================
-llvm::Value* ConstantVector(float x, float y, float z)
-{
-    float v[] = {x,y,z};
-    return ConstantVector(v,3);
-}
-
-//===================================================================
-llvm::Value* ConstantVector(float x, float y, float z, float w)
-{
-    float v[] = {x,y,z,w};
-    return ConstantVector(v,4);
 }
 
 //===================================================================

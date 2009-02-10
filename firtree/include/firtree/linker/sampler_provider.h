@@ -170,6 +170,9 @@ class SamplerProvider : public ReferenceCounted, private Uncopiable
 		}
 
 	protected:
+		llvm::Module* CreateModule(const std::string& prefix,
+				uint32_t id);
+
 		/// Create a LLVM module which *only* has the exported function:
 		///
 		/// vec4 ${prefix}Sample(vec2 coord, ... /* free vars */)

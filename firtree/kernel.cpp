@@ -467,7 +467,7 @@ llvm::Value* ConstantVector(float* v, int n)
                     (double)(v[i])));
     }
 
-    llvm::Value* val = ConstantVector::get( elements );
+    llvm::Value* val = llvm::ConstantVector::get( elements );
     return val;
 }
 

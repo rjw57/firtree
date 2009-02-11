@@ -132,7 +132,8 @@ class LoopEmitter : public ExpressionEmitter
 
 				// Ensure that the BB which ends the post-condition is
 				// the one we remember.
-				BasicBlock *post_cond_start_BB = post_cond_BB;
+
+				// BasicBlock *post_cond_start_BB = post_cond_BB; // Unused.
 				post_cond_BB = context->BB;
 
 				// Create a BB for the continuation.

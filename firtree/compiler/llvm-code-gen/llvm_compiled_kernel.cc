@@ -345,10 +345,10 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	//
 	Scn_get_firtree( &scn );                         // Get scanner table
 
-	builtinstream = Stream_line( scn, &builtin_reader, GetNextChar, "_builtins_");
+	builtinstream = Stream_line( scn, &builtin_reader, GetNextChar, const_cast<char*>("_builtins_"));
 
 	// Open source file
-	cstream = Stream_line( scn, &source_reader, GetNextChar, "input");
+	cstream = Stream_line( scn, &source_reader, GetNextChar, const_cast<char*>("input"));
 
 	std::vector<Scn_Stream> streams;
 	streams.push_back(builtinstream);
@@ -358,7 +358,7 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 	plr     = PLR_get_firtree();                     // Get parser table
 	PCfg    = PT_init_extscn( plr, total_scanner.GetScannerObject() );            // Create parser
-	srcterm = PT_PARSE( PCfg,"TranslationUnit" );        // Parse
+	srcterm = PT_PARSE( PCfg,const_cast<char*>("TranslationUnit") );        // Parse
 	PT_setErrorCnt( PT_synErrorCnt( PCfg ) );    // Save error count
 	PT_quit( PCfg );                             // Free parser
 	Stream_close( cstream );                     // Close source stream
@@ -479,13 +479,13 @@ void CompiledKernel::RunOptimiser()
 	// Nasty, nasty hack to set an option to unroll loops
 	// aggressively.
 	static bool set_opt = false;
-	static char* opts[] = {
+	static const char* opts[] = {
 		"progname",
 		"-unroll-threshold",
 		"10000000",
 	};
 	if(!set_opt) {
-		cl::ParseCommandLineOptions(3, opts);
+		cl::ParseCommandLineOptions(3, const_cast<char**>(opts));
 		set_opt = true;
 	}
 #endif

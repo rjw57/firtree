@@ -41,11 +41,6 @@
 #include <firtree/kernel.h>
 #include <firtree/value.h>
 
-// GLSL runtime.
-#include <firtree/runtime/glsl/glsl-runtime-priv.h>
-
-#include <compiler/include/compiler.h>
-
 // LLVM
 #include <firtree/compiler/llvm_compiled_kernel.h>
 #include <firtree/linker/sampler_provider.h>
@@ -85,6 +80,10 @@ class StandardExtendProvider : public ExtentProvider
 
         virtual Rect2D ComputeExtentForKernel(Kernel* kernel)
         {
+            return Rect2D::MakeInfinite();
+
+            // FIXME
+#if 0
             if(kernel == NULL)
             {
                 FIRTREE_ERROR("Passed a null kernel.");
@@ -151,6 +150,7 @@ class StandardExtendProvider : public ExtentProvider
             Rect2D samplerExtent = sp->GetExtent();
 
             return Rect2D::Inset(samplerExtent, m_Delta.Width, m_Delta.Height);
+#endif
         }
 
     private:
@@ -166,56 +166,9 @@ ExtentProvider* ExtentProvider::CreateStandardExtentProvider(const char* sampler
 }
 
 //=============================================================================
-Parameter::Parameter()
-    :   ReferenceCounted()
-{
-}
-
-//=============================================================================
-Parameter::Parameter(const Parameter& p)
-{
-    Parameter();
-}
-
-//=============================================================================
-Parameter::~Parameter()
-{
-}
-
-//=============================================================================
-NumericParameter::NumericParameter()
-    :   Parameter()
-    ,   m_BaseType(NumericParameter::TypeFloat)
-    ,   m_Size(0)
-{
-}
-
-//=============================================================================
-NumericParameter::~NumericParameter()
-{
-}
-
-//=============================================================================
-void NumericParameter::AssignFrom(const NumericParameter& p)
-{
-    // Can just memcpy a numeric type.
-    memcpy(this, &p, sizeof(NumericParameter));
-}
-
-//=============================================================================
-Parameter* NumericParameter::Create()
-{
-    return new NumericParameter();
-}
-
-//=============================================================================
 Kernel::Kernel(const char* source)
     :   ReferenceCounted()
-    ,   m_WrappedGLSLKernel(NULL)    
 {
-    // Create a GLSL-based kernel and keep a reference to it.
-    m_WrappedGLSLKernel = GLSL::CompiledGLSLKernel::CreateFromSource(source);
-
     // Create a LLVM-based kernel and keep a reference.
     LLVM::CompiledKernel* llvm_kernel = LLVM::CompiledKernel::Create();
     m_bCompileStatus = llvm_kernel->Compile(&source, 1);
@@ -258,7 +211,6 @@ Kernel::~Kernel()
     }
     m_ParameterSamplers.clear();
 
-    FIRTREE_SAFE_RELEASE(m_WrappedGLSLKernel);
     FIRTREE_SAFE_RELEASE(m_CompiledKernel);
 }
 
@@ -272,12 +224,6 @@ const LLVM::KernelFunction& Kernel::GetFunctionRecord() const
 Kernel* Kernel::CreateFromSource(const char* source)
 {
     return new Kernel(source);
-}
-
-//=============================================================================
-GLSL::CompiledGLSLKernel* Kernel::GetWrappedGLSLKernel() const
-{
-    return m_WrappedGLSLKernel;
 }
 
 //=============================================================================
@@ -299,18 +245,6 @@ const char* Kernel::GetSource() const
 }
 
 //=============================================================================
-const std::vector<std::string>& Kernel::GetParameterNames() const
-{
-    return m_WrappedGLSLKernel->GetParameterNames();
-}
-
-//=============================================================================
-const std::map<std::string, Parameter*>& Kernel::GetParameters() const
-{
-    return m_WrappedGLSLKernel->GetParameters();
-}
-
-//=============================================================================
 const Value* Kernel::GetValueForKey(const char* key) const
 {
     ParameterValueMap::const_iterator i = m_ParameterValues.find(key);
@@ -318,12 +252,6 @@ const Value* Kernel::GetValueForKey(const char* key) const
         return NULL;
     }
     return i->second;
-}
-
-//=============================================================================
-Parameter* Kernel::GetParameterForKey(const char* key) const
-{
-    return m_WrappedGLSLKernel->GetValueForKey(key);
 }
 
 //=============================================================================
@@ -624,10 +552,6 @@ void Kernel::SetValueForKey(Image* image, const char* key)
 
     FIRTREE_DEBUG("Performance hint: re-wiring pipeline is expensive.");
 
-    SamplerParameter* sampler = SamplerParameter::CreateFromImage(image);
-    m_WrappedGLSLKernel->SetValueForKey(sampler, key);
-    FIRTREE_SAFE_RELEASE(sampler);
-
     LLVM::SamplerProvider* sampler_prov = LLVM::SamplerProvider::
         CreateFromImage(image);
 
@@ -673,12 +597,6 @@ const LLVM::SamplerProvider* Kernel::GetSamplerProviderForKey(
         return NULL;
     }
     return i->second;
-}
-
-//=============================================================================
-void Kernel::SetValueForKey(Parameter* param, const char* key)
-{
-    m_WrappedGLSLKernel->SetValueForKey(param, key);
 }
 
 //=============================================================================
@@ -742,17 +660,6 @@ void Kernel::SetValueForKey(float x, float y, float z, float w,
 //=============================================================================
 void Kernel::SetValueForKey(const float* value, int count, const char* key)
 {
-    NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
-
-    p->SetSize(count);
-    p->SetBaseType(NumericParameter::TypeFloat);
-
-    for(int i=0; i<count; i++) { p->SetFloatValue(value[i], i); }
-
-    this->SetValueForKey(p, key);
-
-    p->Release();
-
     Value* v = Value::CreateVectorValue(value, count);
     SetValueForKey(v, key);
     FIRTREE_SAFE_RELEASE(v);
@@ -761,13 +668,6 @@ void Kernel::SetValueForKey(const float* value, int count, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(int value, const char* key)
 {
-    NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
-    p->SetSize(1);
-    p->SetBaseType(NumericParameter::TypeInteger);
-    p->SetIntValue(value, 0);
-    SetValueForKey(p, key);
-    FIRTREE_SAFE_RELEASE(p);
-
     Value* v = Value::CreateIntValue(value);
     SetValueForKey(v, key);
     FIRTREE_SAFE_RELEASE(v);
@@ -776,63 +676,9 @@ void Kernel::SetValueForKey(int value, const char* key)
 //=============================================================================
 void Kernel::SetValueForKey(bool value, const char* key)
 {
-    NumericParameter* p = (NumericParameter*)(NumericParameter::Create());
-    p->SetSize(1);
-    p->SetBaseType(NumericParameter::TypeBool);
-    p->SetBoolValue(value, 0);
-    SetValueForKey(p, key);
-    FIRTREE_SAFE_RELEASE(p);
-
     Value* v = Value::CreateBoolValue(value);
     SetValueForKey(v, key);
     FIRTREE_SAFE_RELEASE(v);
-}
-
-//=============================================================================
-SamplerParameter::SamplerParameter(Image* srcImage)
-    :   Parameter()
-    ,   m_SourceImage(srcImage)
-{
-    FIRTREE_SAFE_RETAIN(m_SourceImage);
-    
-    m_WrappedGLSLSampler = GLSL::CreateSampler(m_SourceImage);
-}
-
-//=============================================================================
-SamplerParameter::~SamplerParameter()
-{
-    FIRTREE_SAFE_RELEASE(m_WrappedGLSLSampler);
-    FIRTREE_SAFE_RELEASE(m_SourceImage);
-}
-
-//=============================================================================
-SamplerParameter* SamplerParameter::CreateFromImage(Image* im)
-{
-    return new SamplerParameter(im);
-}
-
-//=============================================================================
-const Rect2D SamplerParameter::GetDomain() const
-{
-    return m_WrappedGLSLSampler->GetDomain();
-}
-
-//=============================================================================
-const Rect2D SamplerParameter::GetExtent() const
-{
-    return m_WrappedGLSLSampler->GetExtent();
-}
-
-//=============================================================================
-AffineTransform* SamplerParameter::GetAndOwnTransform() const
-{
-    return m_WrappedGLSLSampler->GetAndOwnTransform();
-}
-
-//=============================================================================
-GLSL::GLSLSamplerParameter* SamplerParameter::GetWrappedGLSLSampler() const
-{
-    return m_WrappedGLSLSampler;
 }
 
 } // namespace Firtree 

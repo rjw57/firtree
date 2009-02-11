@@ -55,12 +55,6 @@ ADD_SUBDIRECTORY(testing)
 # The third partuy frameworks
 ADD_SUBDIRECTORY(third-party)
 
-# The kernel language frontend
-ADD_SUBDIRECTORY(glsl-frontend)
-
-# The kernel language compiler
-ADD_SUBDIRECTORY(compiler)
-
 # The FIRTREE library itself.
 ADD_SUBDIRECTORY(firtree)
 

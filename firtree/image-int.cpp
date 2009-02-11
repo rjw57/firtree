@@ -25,7 +25,6 @@
 #include <firtree/glsl-runtime.h>
 #include <internal/image-int.h>
 #include <internal/render-to-texture.h>
-#include <runtime/glsl/glsl-runtime-priv.h>
 
 #include <assert.h>
 #include <float.h>
@@ -452,7 +451,6 @@ KernelImageImpl::KernelImageImpl(Firtree::Kernel* k, ExtentProvider* extentProvi
     ,   m_Kernel(k)
     ,   m_ExtentProvider(extentProvider)
     ,   m_TextureRenderer(NULL)
-    ,   m_GLRenderer(NULL)
 {
     FIRTREE_DEBUG("Created KernelImageImpl @ %p", this);
     FIRTREE_SAFE_RETAIN(m_Kernel);
@@ -462,7 +460,6 @@ KernelImageImpl::KernelImageImpl(Firtree::Kernel* k, ExtentProvider* extentProvi
 //=============================================================================
 KernelImageImpl::~KernelImageImpl()
 {
-    FIRTREE_SAFE_RELEASE(m_GLRenderer);
     FIRTREE_SAFE_RELEASE(m_TextureRenderer);
 
     FIRTREE_SAFE_RELEASE(m_Kernel);
@@ -510,6 +507,10 @@ Firtree::Kernel* KernelImageImpl::GetKernel() const
 //=============================================================================
 unsigned int KernelImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
 {
+    // FIXME
+    return 0;
+
+#if 0
     Rect2D extent = GetExtent();
     if(Rect2D::IsInfinite(extent))
     {
@@ -561,6 +562,7 @@ unsigned int KernelImageImpl::GetAsOpenGLTexture(OpenGLContext* ctx)
     FIRTREE_SAFE_RELEASE(m_GLRenderer);
 
     return m_TextureRenderer->GetOpenGLTexture();
+#endif
 }
 
 //=============================================================================

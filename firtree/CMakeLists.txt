@@ -109,8 +109,9 @@ INSTALL(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig
 SET(FIRTREE_HEADERS
 	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
 	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
-	include/firtree/image.h		include/firtree/glsl-runtime.h  include/firtree/value.h
+	include/firtree/image.h		include/firtree/value.h
 	include/firtree/cpu-runtime.h
+	include/firtree/glsl-runtime.h
 )
 
 SET(FIRTREE_SOURCES
@@ -121,14 +122,13 @@ SET(FIRTREE_SOURCES
 	internal/render-to-texture.h
 	internal/pbuffer.h
 
-	runtime/glsl/sha1.h
-	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c
-
 	main.cpp		math.cpp		blob.cpp
 	kernel.cpp		image.cpp
 
 	image-int.cpp		render-to-texture.cpp	pbuffer.cpp
 	value.cpp
+
+	runtime/glsl/glsl-runtime.cpp
 
 	${LLVM_STATIC_OBJS}
 )
@@ -141,9 +141,7 @@ TARGET_LINK_LIBRARIES(firtree
 	${FIRTREE_TARGET_LIBRARIES}
 	llvm-code-gen glsl-target
 	llvm-linker
-	cpu-runtime
-	compiler glslang frontend irbackend 
-	glslbackend)
+	cpu-runtime)
 
 # Set the version and soversion properties for Firtree
 # so that library versioning works.

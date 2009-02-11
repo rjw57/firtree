@@ -455,6 +455,8 @@ Image* Image::Copy() const
 
 // IMAGE ACCUMULATOR //////////////////////////////////////////////////////////
 
+#if 0
+
 //=============================================================================
 ImageAccumulator::ImageAccumulator(Rect2D extent, OpenGLContext* context)
     : ReferenceCounted()
@@ -519,6 +521,8 @@ void ImageAccumulator::RenderImage(Image* im)
 {
     m_Renderer->RenderInRect(im, Rect2D(Point2D(0,0), m_Extent.Size), m_Extent);
 }
+
+#endif
 
 } // namespace Firtree 
 

@@ -30,7 +30,6 @@
 #include <firtree/blob.h>
 #include <firtree/image.h>
 #include <firtree/kernel.h>
-#include <firtree/glsl-runtime.h>
 #include <internal/render-to-texture.h>
 
 namespace Firtree { namespace Internal {
@@ -262,7 +261,6 @@ class KernelImageImpl : public TextureBackedImageImpl
         ExtentProvider*     m_ExtentProvider;
 
         RenderTextureContext*   m_TextureRenderer;
-        GLRenderer*             m_GLRenderer;
 };
 
 //=============================================================================

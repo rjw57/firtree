@@ -48,8 +48,6 @@ namespace llvm { class Module; }
 
 namespace Firtree {
 
-class NumericParameter;
-class SamplerParameter;
 class Kernel;
 class Image;
 class Value;
@@ -84,159 +82,6 @@ class ExtentProvider : public ReferenceCounted
         static ExtentProvider* CreateStandardExtentProvider(
                 const char* samplerName = NULL,
                 float deltaX = 0.f, float deltaY = 0.f);
-};
-
-//=============================================================================
-/// The base class for all kernel parameters.
-class Parameter : public ReferenceCounted
-{
-    public:
-        ///@{
-        /// Protected constructors. Use the static factory methods of 
-        /// derived classes.
-        Parameter();
-        Parameter(const Parameter& p);
-        virtual ~Parameter();
-        ///@}
-};
-
-//=============================================================================
-/// A numeric (scalar, vector or colour) parameter for a kernel.
-class NumericParameter : public Parameter
-{
-    public:
-        /// An enum specifying the possible base types for elements in 
-        /// a numeric value.
-        enum BaseType {
-            TypeInteger,    ///< Integer elements.
-            TypeFloat,      ///< Floating point elements.
-            TypeBool,       ///< Boolean elements.
-        };
-
-    protected:
-        ///@{
-        /// Protected constructors/destructors. Use the Create()
-        /// static method.
-        NumericParameter();
-        ///@}
-
-    public:
-        virtual ~NumericParameter();
-        // ====================================================================
-        // CONSTRUCTION METHODS
-
-        /// Create a numeric parameter.
-        static Parameter* Create();
-
-        // ====================================================================
-        // CONST METHODS
-
-        ///@{
-        /// Return the value of the 'idx'th element as a float, integer or
-        /// boolean.
-        float GetFloatValue(int idx) const { return m_Value[idx].f; }
-        int GetIntValue(int idx) const { return m_Value[idx].i; }
-        bool GetBoolValue(int idx) const { return m_Value[idx].i != 0; }
-        ///@}
-
-        /// Return the base type of the numeric parameter's elements.
-        BaseType GetBaseType() const { return m_BaseType; }
-
-        /// Return the size of the numeric parameter. A scalar has size 1
-        /// and an n-D vector has size n. The size must be between 1 and
-        /// 4 inclusive.
-        int GetSize() const { return m_Size; }
-
-        /// Return a boolean indicating if the parameter represents a 
-        /// color.
-        bool IsColor() const { return m_IsColor; }
-
-        // ====================================================================
-        // MUTATING METHODS
-
-        ///@{
-        /// Assign the 'idx'th element a floating point, integer or boolean
-        /// value.
-        void SetFloatValue(float f, int idx) { m_Value[idx].f = f; }
-        void SetIntValue(int i, int idx) { m_Value[idx].i = i; }
-        void SetBoolValue(bool b, int idx) { m_Value[idx].i = b ? 1 : 0; }
-        ///@}
-
-        /// Set the base type of the parameter's elements.
-        void SetBaseType(BaseType bt) { m_BaseType = bt; }
-
-        /// Set the size of the numeric parameter.
-        /// \see GetSize().
-        void SetSize(int s) { m_Size = s; }
-
-        /// Set a flag indicating whether this parameter represents a 
-        /// color.
-        void SetIsColor(bool flag) { m_IsColor = flag; }
-
-        /// Copy the value of the numeric parameter passed.
-        void AssignFrom(const NumericParameter& param);
-
-    private:
-        BaseType    m_BaseType;
-        int         m_Size;
-        union {
-            float f;
-            int i;      /* 0/1 for bool */
-        }           m_Value[4];
-        bool        m_IsColor : 1;
-};
-
-//=============================================================================
-/// Class encapsulating a sampler parameter.
-class SamplerParameter : public Parameter
-{
-    protected:
-        /// Protected constructor. Use static Create*() members.
-        SamplerParameter(Image* srcImage);
-
-    public:
-        virtual ~SamplerParameter();
-
-        // ====================================================================
-        // CONSTRUCTION METHODS
-
-        /// Construct a sampler from a Firtree image.
-        static SamplerParameter* CreateFromImage(Image* im);
-
-        /// Return a rectangle in sampler co-ordinates which completely
-        /// encloses the non-transparent pixels of the source.
-        const Rect2D GetDomain() const;
-
-        /// Return a rectangle in world co-ordinates which completely
-        /// encloses the non-transparent pixels of the source.
-        const Rect2D GetExtent() const;
-
-        /// Return a pointer to the affine transform which maps the
-        /// sampler co-ordinate system to the world co-ordinate system.
-        /// \note This *must* be Release()-ed when the caller is done.
-        AffineTransform* GetAndOwnTransform() const;
-
-        // ====================================================================
-        // CONST METHODS
-
-        /// Get the image this sampler represents.
-        const Image* GetRepresentedImage() const { return m_SourceImage; }
-
-    protected:
-        /// Internal method to retrieve the wrapped GLSL
-        /// sampler.
-        GLSL::GLSLSamplerParameter* GetWrappedGLSLSampler() const;
-
-        friend class GLSL::GLSLSamplerParameter;
-        friend class GLSL::CompiledGLSLKernel;
-
-    private:
-        /// The GLSL runtime sampler parameter wrapped by this
-        /// instance.
-        GLSL::GLSLSamplerParameter* m_WrappedGLSLSampler;
-
-        /// The source image for the sampler.
-        Image*                  m_SourceImage;
 };
 
 //=============================================================================
@@ -275,22 +120,9 @@ class Kernel : public ReferenceCounted
         /// the FIRTREE kernel language.
         const char* GetSource() const;
         
-        /// Return a const reference to a vector containing the parameter
-        /// names matching the order they were specified in within the 
-        /// kernel source.
-        const std::vector<std::string>& GetParameterNames() const;
-
-        /// Return a const reference to a map containing the parameter 
-        /// name/value pairs.
-        const std::map<std::string, Parameter*>& GetParameters() const;
-
         /// Return the value object for the named parameter or NULL if
         /// this parameter is unset or there is no parameter with that name.
         const Value* GetValueForKey(const char* key) const;
-
-        /// Return the parameter object for the named parameter or NULL if
-        /// this parameter is unset or there is no parameter with that name.
-        Parameter* GetParameterForKey(const char* key) const;
 
         /// Return true if the kernel is 'valid', i.e. all static parameters
         /// have some value and the kernel source was successfully
@@ -306,7 +138,6 @@ class Kernel : public ReferenceCounted
 
         /// Accessor for setting a kernel parameter value. The accessors below
         /// are convenience wrappers around this method.
-        void SetValueForKey(Parameter* parameter, const char* key);
         void SetValueForKey(const Value* val, const char* key);
 
         ///@{
@@ -327,25 +158,15 @@ class Kernel : public ReferenceCounted
         /// kernel.
         llvm::Module* CreateSamplerModule(const std::string& prefix);
 
-        /// Internal method to retrieve the wrapped GLSL
-        /// kernel.
-        GLSL::CompiledGLSLKernel* GetWrappedGLSLKernel() const;
-
         void SetSamplerProviderForKey(LLVM::SamplerProvider* sampler_prov, 
                 const char* key);
         const LLVM::SamplerProvider* GetSamplerProviderForKey(const char* key) const;
 
-        friend class GLSL::KernelSamplerParameter;
-        friend class GLSL::CompiledGLSLKernel;
         friend class LLVM::SamplerProvider;
         friend class LLVM::KernelImageSamplerProvider;
 
     private:
         const LLVM::KernelFunction&   GetFunctionRecord() const;
-
-        /// A pointer to the compiled GLSL kernel 'wrapped'
-        /// by this kernel.
-        GLSL::CompiledGLSLKernel* m_WrappedGLSLKernel;
 
         /// A flag indicating the compile staus.
         bool                        m_bCompileStatus;

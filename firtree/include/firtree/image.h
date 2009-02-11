@@ -229,6 +229,8 @@ class Image : public ReferenceCounted
     protected:
 };
 
+#if 0
+
 //=============================================================================
 /// An image accumulator can be used to allow for feedback and iterative update
 /// of images.
@@ -275,6 +277,8 @@ class ImageAccumulator : public ReferenceCounted
         Internal::RenderTextureContext*   m_TextureContext;
         Image*                  m_Image;
 };
+
+#endif
 
 }
 

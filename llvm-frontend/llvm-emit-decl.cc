@@ -6,7 +6,7 @@
 #include "llvm-frontend.h"
 #include "llvm-private.h"
 
-
+#include <common/uuid.h>
 
 #include "llvm-emit-decl.h"
 #include "llvm-expression.h"
@@ -202,6 +202,14 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	{
 		case FunctionPrototype::FuncQualKernel:
 			linkage = Function::ExternalLinkage;
+			{
+				// A kernel has it's name mangled so that is is
+				// globally unique.
+				gchar uuid[37];
+				generate_random_uuid(uuid, '_');
+				func_name = "kernel_";
+				func_name += uuid;
+			}
 			break;
 		case FunctionPrototype::FuncQualFunction:
 			linkage = Function::InternalLinkage;

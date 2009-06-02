@@ -20,6 +20,10 @@ set(STYX_PARSER_SOURCES
     firtree_int.c firtree_pim.c firtree_lim.c
 )
 
+if(APPLE)
+    set(STYX_LIBRARIES ${STYX_LIBRARIES} -liconv)
+endif(APPLE)
+
 include_directories(${STYX_INCLUDE_DIR})
 include_directories(${FIRTREE_COMPILER_INCLUDE_DIRS})
 add_library(styx-parser ${STYX_PARSER_SOURCES})

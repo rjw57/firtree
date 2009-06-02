@@ -13,9 +13,6 @@ cmake_minimum_required(VERSION 2.6)
 # Update the module path to include any extra CMake modiles we might ship.
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
-# We use pkg-config to fing glib et al
-find_package(PkgConfig)
-
 # Set some variables indicating the version number of Firtree.
 set(FIRTREE_VERSION_MAJOR "0")
 set(FIRTREE_VERSION_MINOR "1")
@@ -28,9 +25,21 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -pthread)
 # Add the root source dir as an include dir
 include_directories("${CMAKE_SOURCE_DIR}")
 
-# Find glib et al
-pkg_check_modules(GLIB REQUIRED glib-2.0)
-include_directories(${GLIB_INCLUDE_DIRS})
+if(NOT APPLE)
+    # We use pkg-config to fing glib et al
+    find_package(PkgConfig)
+    # Find glib et al
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    include_directories(${GLIB_INCLUDE_DIRS})
+else(NOT APPLE)
+    find_library(GLIB_LIBRARIES GLib)
+    if(NOT GLIB_LIBRARIES)
+        message(SEND_ERROR "GLib framework is required.")
+    endif(NOT GLIB_LIBRARIES)
+
+    find_path(GLIB_INCLUDE_DIRS glib.h)
+    include_directories(${GLIB_INCLUDE_DIRS})
+endif(NOT APPLE)
 
 # Build the common C++ support libraries
 add_subdirectory(common)

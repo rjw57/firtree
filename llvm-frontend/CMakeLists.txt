@@ -21,26 +21,25 @@ endif(NOT STYX_FOUND)
 
 set(LLVM_FRONTEND_HEADERS
   prodnames.incl
-  llvm_frontend.h       llvm_emit_decl.h  llvm_type_cast.h
-  llvm_emit_constant.h  llvm_private.h
+  llvm-frontend.h       llvm-emit-decl.h  llvm-type-cast.h
+  llvm-emit-constant.h  llvm-private.h
   llvm-compiled-kernel.h
 )
 
 set(LLVM_FRONTEND_SOURCES
   ${LLVM_FRONTEND_HEADERS}
-  
-  llvm_emit_binop_arith.cc    llvm_emit_return.cc
-  llvm_emit_binop_assign.cc   llvm_emit_swizzle.cc
-  llvm_emit_binop_cmp.cc      llvm_emit_unary_incdec.cc
-  llvm_emit_binop_logic.cc    llvm_emit_variable.cc
-  llvm_emit_constant.cc       llvm_emit_variable_declaration.cc
-  llvm_emit_decl.cc           llvm_expression.cc
-  llvm_emit_expr_list.cc      llvm_frontend.cc
-  llvm_emit_function_call.cc  llvm_type_cast.cc
-  llvm_emit_selection.cc      llvm_emit_loop.cc
-  llvm_emit_negate.cc         symbol_table.cc
 
-  llvm_compiled_kernel.cc
+  llvm-compiled-kernel.cc     llvm-emit-return.cc
+  llvm-emit-binop-arith.cc    llvm-emit-selection.cc
+  llvm-emit-binop-assign.cc   llvm-emit-swizzle.cc
+  llvm-emit-binop-cmp.cc      llvm-emit-unary-incdec.cc
+  llvm-emit-binop-logic.cc    llvm-emit-variable.cc
+  llvm-emit-constant.cc       llvm-emit-variable-declaration.cc
+  llvm-emit-decl.cc           llvm-expression.cc
+  llvm-emit-expr-list.cc      llvm-frontend.cc
+  llvm-emit-function-call.cc  llvm-type-cast.cc
+  llvm-emit-loop.cc           symbol-table.cc
+  llvm-emit-negate.cc
 )
 
 include_directories(${STYX_INCLUDE_DIR})

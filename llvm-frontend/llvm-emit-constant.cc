@@ -1,14 +1,14 @@
 //===========================================================================
-/// \file llvm_emit_constant.cc
+/// \file llvm-emit-constant.cc
 
 #define __STDC_CONSTANT_MACROS
 
 
 
-#include "llvm_frontend.h"
-#include "llvm_private.h"
-#include "llvm_expression.h"
-#include "llvm_emit_constant.h"
+#include "llvm-frontend.h"
+#include "llvm-private.h"
+#include "llvm-expression.h"
+#include "llvm-emit-constant.h"
 
 #include <llvm/Instructions.h>
 #include <llvm/DerivedTypes.h>

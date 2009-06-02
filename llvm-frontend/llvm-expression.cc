@@ -1,13 +1,13 @@
 //===========================================================================
-/// \file llvm_expression.cc
+/// \file llvm-expression.cc
 
 #define __STDC_CONSTANT_MACROS
 
 
 
-#include "llvm_frontend.h"
-#include "llvm_private.h"
-#include "llvm_expression.h"
+#include "llvm-frontend.h"
+#include "llvm-private.h"
+#include "llvm-expression.h"
 
 using namespace llvm;
 

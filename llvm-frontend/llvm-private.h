@@ -1,11 +1,11 @@
 //===========================================================================
-/// \file llvm_private.h Internal data structures for the LLVM code
+/// \file llvm-private.h Internal data structures for the LLVM code
 /// generator.
 
 #ifndef __LLVM_PRIVATE_H
 #define __LLVM_PRIVATE_H
 
-#include "llvm_frontend.h"
+#include "llvm-frontend.h"
 
 #include "common/common.h"
 

@@ -1,5 +1,5 @@
 //===========================================================================
-/// \file llvm_frontend.h LLVM output backend for the firtree kernel language.
+/// \file llvm-frontend.h LLVM output backend for the firtree kernel language.
 ///
 /// This file defines the interface to the LLVM output backend. The backend
 /// also takes care of checking the well-formedness of the passed abstract

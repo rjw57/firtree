@@ -1,14 +1,14 @@
 //===========================================================================
-/// \file llvm_frontend.cc
+/// \file llvm-frontend.cc
 
 #define __STDC_CONSTANT_MACROS
 
-#include "llvm_frontend.h"
-#include "llvm_private.h"
+#include "llvm-frontend.h"
+#include "llvm-private.h"
 
 
 
-#include "llvm_emit_decl.h"
+#include "llvm-emit-decl.h"
 
 using namespace llvm;
 

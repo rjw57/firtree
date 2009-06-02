@@ -1,10 +1,10 @@
 //===========================================================================
-/// \file llvm_emit_constant.h Classes for outputting constant values.
+/// \file llvm-emit-constant.h Classes for outputting constant values.
 
 #ifndef __LLVM_EMIT_CONSTANT_H
 #define __LLVM_EMIT_CONSTANT_H
 
-#include "llvm_expression.h"
+#include "llvm-expression.h"
 
 namespace Firtree
 {

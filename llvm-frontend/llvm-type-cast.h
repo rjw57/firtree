@@ -1,10 +1,10 @@
 //===========================================================================
-/// \file llvm_type_cast.h Classes for type casting
+/// \file llvm-type_cast.h Classes for type casting
 
 #ifndef __LLVM_TYPE_CAST_H
 #define __LLVM_TYPE_CAST_H
 
-#include "llvm_expression.h"
+#include "llvm-expression.h"
 
 namespace Firtree
 {

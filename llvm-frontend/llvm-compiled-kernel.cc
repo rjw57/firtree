@@ -14,7 +14,7 @@
 #include "styx-parser/firtree_lim.h" // scanner table
 #include "styx-parser/firtree_pim.h" // parser  table
 
-#include "llvm_frontend.h"
+#include "llvm-frontend.h"
 
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"

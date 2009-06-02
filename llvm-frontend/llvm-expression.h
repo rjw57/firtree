@@ -1,5 +1,5 @@
 //===========================================================================
-/// \file llvm_expression.h Classes for outputting firtree expressions.
+/// \file llvm-expression.h Classes for outputting firtree expressions.
 ///
 /// This file defines the interfaces for various objects which know how to
 /// output LLVM for Firtree expressions.

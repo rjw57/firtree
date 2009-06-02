@@ -1,15 +1,15 @@
 //===========================================================================
-/// \file llvm_emit_decl.cc Implementation of Firtree::EmitDeclarations.
+/// \file llvm-emit-decl.cc Implementation of Firtree::EmitDeclarations.
 
 #define __STDC_CONSTANT_MACROS
 
-#include "llvm_frontend.h"
-#include "llvm_private.h"
+#include "llvm-frontend.h"
+#include "llvm-private.h"
 
 
 
-#include "llvm_emit_decl.h"
-#include "llvm_expression.h"
+#include "llvm-emit-decl.h"
+#include "llvm-expression.h"
 
 #include <llvm/Instructions.h>
 // #include <llvm/ParameterAttributes.h>

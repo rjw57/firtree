@@ -5,6 +5,7 @@
 # See LICENSE file for distribution rights.
 
 add_library(common
+    uuid.h          uuid.cpp
     common.h        common.cpp)
 
 target_link_libraries(common ${GLIB_LIBRARIES})

@@ -201,7 +201,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	switch( prototype.Qualifier )
 	{
 		case FunctionPrototype::FuncQualKernel:
-			linkage = Function::InternalLinkage;
+			linkage = Function::ExternalLinkage;
 			break;
 		case FunctionPrototype::FuncQualFunction:
 			linkage = Function::InternalLinkage;

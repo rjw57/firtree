@@ -475,29 +475,15 @@ void CompiledKernel::RunOptimiser()
 		return;
 	}
 
-#if 1
-	// Nasty, nasty hack to set an option to unroll loops
-	// aggressively.
-	static bool set_opt = false;
-	static const char* opts[] = {
-		"progname",
-		"-unroll-threshold",
-		"10000000",
-	};
-	if(!set_opt) {
-		cl::ParseCommandLineOptions(3, const_cast<char**>(opts));
-		set_opt = true;
-	}
-#endif
-
     PassManager PM;
 
 	PM.add(new TargetData(m));
 
     PM.add(createVerifierPass());
-
 	PM.add(createStripSymbolsPass(true));
 
+	// These are the simple set of optimisations
+	// used to clean up the initial code.
 	PM.add(createCFGSimplificationPass());    // Clean up disgusting code
 	PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
 	PM.add(createIPConstantPropagationPass());// IP Constant Propagation
@@ -507,40 +493,13 @@ void CompiledKernel::RunOptimiser()
 	PM.add(createCondPropagationPass());      // Propagate conditionals
 	PM.add(createReassociatePass());          // Reassociate expressions
 
-	PM.add(createLoopRotatePass());
-	PM.add(createLoopSimplifyPass());
-	PM.add(createIndVarSimplifyPass());       
-
-	PM.add(createInstructionCombiningPass()); 
-	PM.add(createCFGSimplificationPass());    
-
-	PM.add(createLoopRotatePass());
-	PM.add(createLoopSimplifyPass());
-	PM.add(createIndVarSimplifyPass());     
-	PM.add(createLoopStrengthReducePass());
-	PM.add(createLoopIndexSplitPass());
-#if LLVM_AT_LEAST_2_3
-	PM.add(createLoopDeletionPass());          
-#endif
-
-	PM.add(createInstructionCombiningPass()); 
-	PM.add(createCFGSimplificationPass());   
-
-	PM.add(createLoopUnrollPass());           // Unroll small loops
-
-	PM.add(createInstructionCombiningPass()); 
-	PM.add(createCFGSimplificationPass());    
-
-	PM.add(createSCCPPass());                 // Constant prop with SCCP
-
-	// Run instcombine after redundancy elimination to exploit opportunities
-	// opened up by them.
-	PM.add(createInstructionCombiningPass());
-	PM.add(createCondPropagationPass());      // Propagate conditionals
-
 	PM.add(createDeadStoreEliminationPass()); // Delete dead stores
 	PM.add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
 	PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+
+	PM.add(createStripDeadPrototypesPass());  // Remove unused prototypes
+
+	PM.add(createGlobalDCEPass());            // Remove dead code
 
 	PM.run(*m);
 }

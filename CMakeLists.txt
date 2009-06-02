@@ -41,5 +41,8 @@ add_subdirectory(llvm-frontend)
 # Build the example command line tools
 add_subdirectory(tools)
 
+# Build the documentation
+add_subdirectory(doc)
+
 # vim:sw=4:ts=4:autoindent:et
 

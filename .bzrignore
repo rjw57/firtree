@@ -5,5 +5,7 @@ cmake_install.cmake
 llvm-frontend/styx-parser/firtree_*
 llvm-frontend/styx-parser/firtree.abs
 llvm-frontend/styx-parser/ctoh.cth
-
 tools/kernel2llvm
+doc/internal/html/
+doc/internal/latex/
+doc/internal/doxy.config

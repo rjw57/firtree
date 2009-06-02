@@ -1,0 +1,159 @@
+// Firtree - A real-time image processing system.
+// Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
+
+#include <glib.h>
+
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <iostream>
+#include <fstream>
+
+#include <llvm-frontend/llvm-compiled-kernel.h>
+
+using namespace Firtree;
+using namespace Firtree::LLVM;
+
+//=============================================================================
+static GOptionEntry opt_entries[] =
+{
+  { NULL }
+};
+
+//=============================================================================
+void
+free_lines(GPtrArray* line_array)
+{
+    for(guint i=0; i<line_array->len; ++i)
+    {
+        g_free(line_array->pdata[i]);
+    }
+    g_ptr_array_free(line_array, TRUE);
+}
+
+//=============================================================================
+GPtrArray*
+read_lines(int fd)
+{
+    GPtrArray* line_array = NULL;
+    GIOChannel* io_channel = g_io_channel_unix_new(fd);
+
+    if(io_channel == NULL) {
+        return NULL;
+    }
+
+    /* create an array to hold the new lines */
+    line_array = g_ptr_array_new();
+
+    gchar* line_str;
+    GError* error = NULL;
+    GIOStatus status;
+    while(G_IO_STATUS_NORMAL == (status = g_io_channel_read_line(
+                    io_channel, &line_str, NULL, NULL, &error))) 
+    {
+        g_ptr_array_add(line_array, line_str);
+    }
+
+    if(status != G_IO_STATUS_EOF)
+    {
+        g_print("Error reading input: %s\n", error->message);
+    } 
+
+    g_io_channel_unref(io_channel);
+
+    return line_array;
+}
+
+//=============================================================================
+int
+main(int argc, char** argv)
+{
+    GError *error = NULL;
+    GOptionContext *context;
+
+    context = g_option_context_new("infile outfile - compile LLVM modules from kernels.");
+
+    if(!g_option_context_parse(context, &argc, &argv, &error))
+    {
+        g_print ("option parsing failed: %s\n", error->message);
+        exit(1);
+    }
+
+    if(argc < 3) {
+        g_print("Must have input and output file.\n");
+        exit(2);
+    }
+
+    int fd;
+    if(0 != strcmp(argv[1], "-")) {
+        fd = open(argv[1], O_RDONLY);
+        if(fd == -1)
+        {
+            g_print("Error opening input: %s\n", argv[1]);
+            exit(2);
+        }
+    }
+
+    GPtrArray* lines = read_lines(fd);
+    if(lines == NULL) 
+    {
+        exit(3);
+    }
+
+    CompiledKernel* compiled_kernel = CompiledKernel::Create();
+
+    if(!compiled_kernel->Compile((const char* const*)lines->pdata, lines->len))
+    {
+        g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Compilation failed.\n");
+    }
+
+    free_lines(lines);
+
+    const char* const* log_lines = compiled_kernel->GetCompileLog();
+    while(*log_lines != NULL) {
+        g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "%s\n", *log_lines);
+        ++log_lines;
+    }
+
+    std::ofstream output(argv[2]);
+
+    compiled_kernel->GetCompiledModule()->print(output, NULL);
+
+    output << "; Defined kernels:\n";
+    for(CompiledKernel::const_iterator func = compiled_kernel->begin();
+            func != compiled_kernel->end(); ++func)
+    {
+        output << "; " << func->Name << " -> " 
+            << func->Function->getName() << "\n";
+    }
+
+    FIRTREE_SAFE_RELEASE(compiled_kernel);
+
+    if(fd != 0) 
+    {
+        close(fd);
+    }
+
+    return 0;
+}
+
+// vim:sw=4:ts=4:cindent:et
+

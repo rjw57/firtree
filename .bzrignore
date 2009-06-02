@@ -1,0 +1,9 @@
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+llvm-frontend/styx-parser/firtree_*
+llvm-frontend/styx-parser/firtree.abs
+llvm-frontend/styx-parser/ctoh.cth
+
+tools/kernel2llvm

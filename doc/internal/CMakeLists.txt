@@ -4,8 +4,7 @@
 #
 # See LICENSE file for distribution rights.
 
-set(DOC_TARGET_NAME "internal-docs")
-set(DOC_ALWAYS_BUILD YES)
+set(DOC_TARGET_NAME "doc-internal")
 include(UseDoxygen)
 
 # vim:sw=4:ts=4:autoindent:et

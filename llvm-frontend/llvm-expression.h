@@ -139,7 +139,7 @@ class ExpressionEmitterRegistry
 			m_RegisteredEmitters.insert(
 			    std::pair<std::string, const EmitterFactory*>(
 			        product, factory ) );
-			FIRTREE_DEBUG( "Registered emitter for '%s'.", product.c_str() );
+			// FIRTREE_DEBUG( "Registered emitter for '%s'.", product.c_str() );
 		}
 
 	private:

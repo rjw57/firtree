@@ -41,6 +41,15 @@ else(NOT APPLE)
     include_directories(${GLIB_INCLUDE_DIRS})
 endif(NOT APPLE)
 
+# Magic to set GCC-specific compile flags
+set(GCC_FLAGS "-Wall -O9")
+if(CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_FLAGS}")
+endif(CMAKE_COMPILER_IS_GNUCC)
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS}")
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
 # Build the common C++ support libraries
 add_subdirectory(common)
 

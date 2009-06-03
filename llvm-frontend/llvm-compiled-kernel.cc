@@ -295,6 +295,7 @@ CompiledKernel::~CompiledKernel()
 	if(m_CurrentFrontend != NULL)
 	{
 		delete m_CurrentFrontend;
+		m_CurrentFrontend = NULL;
 	}
 
 	if(g_ModuleInitCount == 1)
@@ -314,6 +315,18 @@ CompiledKernel* CompiledKernel::Create()
 }
 
 //===========================================================================
+// This is so immensely horrible I can't even bring myself to comment on
+// it.
+static std::vector<std::string> _error_log;
+static void
+_append_log_message(c_string msg)
+{
+	int len = strlen(msg);
+	if(msg[len-1] == '\n') { len--; } // chop any trailing newline.
+	_error_log.push_back(std::string(msg, len));
+}
+
+//===========================================================================
 bool CompiledKernel::Compile(const char* const* source_lines, 
 		int source_line_count)
 {
@@ -321,11 +334,13 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 	if(m_Log != NULL)
 	{
 		delete m_Log;
+		m_Log = NULL;
 	}
 
 	if(m_CurrentFrontend != NULL)
 	{
 		delete m_CurrentFrontend;
+		m_CurrentFrontend = NULL;
 	}
 
 	m_KernelList.clear();
@@ -356,8 +371,11 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 	Scanner total_scanner(streams);
 
+	_error_log.clear();
+
 	plr     = PLR_get_firtree();                     // Get parser table
 	PCfg    = PT_init_extscn( plr, total_scanner.GetScannerObject() );            // Create parser
+	PT_setMsgFun(_append_log_message);
 	srcterm = PT_PARSE( PCfg,const_cast<char*>("TranslationUnit") );        // Parse
 	PT_setErrorCnt( PT_synErrorCnt( PCfg ) );    // Save error count
 	PT_quit( PCfg );                             // Free parser
@@ -384,7 +402,6 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 
 		m_Log = new const char*[log.size() + 1];
 		m_LogSize = log.size();
-
 		std::vector<std::string>::const_iterator i = log.begin();
 		int idx = 0;
 		for ( ; i != log.end(); i++, idx++ ) {
@@ -392,7 +409,15 @@ bool CompiledKernel::Compile(const char* const* source_lines,
 		}
 		m_Log[idx] = NULL;
 	} else {
-		fprintf( stderr,"Total %d errors.\n",PT_errorCnt() );
+		// nasty ...
+		m_Log = new const char*[_error_log.size() + 1];
+		m_LogSize = _error_log.size();
+		std::vector<std::string>::const_iterator i = _error_log.begin();
+		int idx = 0;
+		for ( ; i != _error_log.end(); i++, idx++ ) {
+			m_Log[idx] = i->c_str();
+		}
+		m_Log[idx] = NULL;
 	}
 
 	//

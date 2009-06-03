@@ -7,4 +7,7 @@
 # Build the internal documentation.
 add_subdirectory(internal)
 
+# Build the public documentation.
+add_subdirectory(public)
+
 # vim:sw=4:ts=4:autoindent:et

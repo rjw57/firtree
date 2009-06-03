@@ -9,6 +9,7 @@ add_subdirectory(styx-parser)
 
 # We need the styx libraries and LLVM
 find_package(Styx)
+set(LLVM_CONFIG_COMPONENTS backend ipo instrumentation)
 find_package(LLVM)
 
 # Moan if we can't find our dependencies

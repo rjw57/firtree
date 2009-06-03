@@ -6,7 +6,7 @@
 
 # The simple kernel compiler.
 add_executable(kernel2llvm kernel2llvm.cc)
-target_link_libraries(kernel2llvm llvm-frontend)
+target_link_libraries(kernel2llvm firtree)
 
 # vim:sw=4:ts=4:autoindent:et
 

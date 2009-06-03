@@ -9,3 +9,5 @@ tools/kernel2llvm
 doc/internal/html/
 doc/internal/latex/
 doc/internal/doxy.config
+doc/public/firtree/
+firtree/libfirtree.so.*

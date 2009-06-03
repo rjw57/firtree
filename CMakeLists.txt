@@ -29,7 +29,7 @@ if(NOT APPLE)
     # We use pkg-config to fing glib et al
     find_package(PkgConfig)
     # Find glib et al
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    pkg_check_modules(GLIB REQUIRED glib-2.0 gobject-2.0)
     include_directories(${GLIB_INCLUDE_DIRS})
 else(NOT APPLE)
     find_library(GLIB_LIBRARIES GLib)
@@ -58,6 +58,9 @@ add_subdirectory(llvm-frontend)
 
 # Build the example command line tools
 add_subdirectory(tools)
+
+# The Firtree library itself
+add_subdirectory(firtree)
 
 # Build the documentation
 add_subdirectory(doc)

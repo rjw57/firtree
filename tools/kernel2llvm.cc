@@ -27,15 +27,12 @@
 #include <iostream>
 #include <fstream>
 
-#include <llvm-frontend/llvm-compiled-kernel.h>
-
-using namespace Firtree;
-using namespace Firtree::LLVM;
+#include <firtree/firtree-kernel-priv.hpp>
 
 //=============================================================================
 static GOptionEntry opt_entries[] =
 {
-  { NULL }
+    { NULL }
 };
 
 //=============================================================================
@@ -89,6 +86,8 @@ main(int argc, char** argv)
     GError *error = NULL;
     GOptionContext *context;
 
+    g_type_init();
+
     context = g_option_context_new("infile outfile - compile LLVM modules from kernels.");
 
     if(!g_option_context_parse(context, &argc, &argv, &error))
@@ -102,7 +101,7 @@ main(int argc, char** argv)
         exit(2);
     }
 
-    int fd;
+    int fd = 0;
     if(0 != strcmp(argv[1], "-")) {
         fd = open(argv[1], O_RDONLY);
         if(fd == -1)
@@ -118,39 +117,43 @@ main(int argc, char** argv)
         exit(3);
     }
 
-    CompiledKernel* compiled_kernel = CompiledKernel::Create();
+    FirtreeKernel* kernel = firtree_kernel_new();
 
-    if(!compiled_kernel->Compile((const char* const*)lines->pdata, lines->len))
+    if(!firtree_kernel_compile_from_source(kernel, (gchar**)lines->pdata, lines->len, NULL))
     {
         g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Compilation failed.\n");
     }
 
     free_lines(lines);
 
-    const char* const* log_lines = compiled_kernel->GetCompileLog();
+    if(fd != 0) 
+    {
+        close(fd);
+    }
+
+    const char* const* log_lines = firtree_kernel_get_compile_log(kernel, NULL);
     while(*log_lines != NULL) {
         g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "%s\n", *log_lines);
         ++log_lines;
     }
 
-    std::ofstream output(argv[2]);
+    if(firtree_kernel_get_compile_status(kernel)) {
+        std::ofstream output(argv[2]);
 
-    compiled_kernel->GetCompiledModule()->print(output, NULL);
+        firtree_kernel_get_llvm_module(kernel)->print(output, NULL);
 
-    output << "; Defined kernels:\n";
-    for(CompiledKernel::const_iterator func = compiled_kernel->begin();
-            func != compiled_kernel->end(); ++func)
-    {
-        output << "; " << func->Name << " -> " 
+        /*
+           output << "; Defined kernels:\n";
+           for(CompiledKernel::const_iterator func = compiled_kernel->begin();
+           func != compiled_kernel->end(); ++func)
+           {
+           output << "; " << func->Name << " -> " 
             << func->Function->getName() << "\n";
+            }
+         */
     }
 
-    FIRTREE_SAFE_RELEASE(compiled_kernel);
-
-    if(fd != 0) 
-    {
-        close(fd);
-    }
+    g_object_unref(kernel);
 
     return 0;
 }

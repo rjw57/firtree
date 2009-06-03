@@ -1,0 +1,22 @@
+%%
+headers
+#include <Python.h>
+#include <pyglib.h> 
+#include <pygobject.h> 
+
+#include <firtree/firtree-kernel.h>
+%%
+init
+%%
+modulename pyfirtree
+%%
+import gobject.GObject as PyGObject_Type
+%%
+ignore-glob
+  *_get_type                            
+  _*
+  *_ref
+  *_unref
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

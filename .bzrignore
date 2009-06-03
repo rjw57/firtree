@@ -11,3 +11,4 @@ doc/internal/latex/
 doc/internal/doxy.config
 doc/public/firtree/
 firtree/libfirtree.so.*
+bindings/python/firtree.generated.*

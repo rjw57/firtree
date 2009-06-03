@@ -42,7 +42,7 @@ else(NOT APPLE)
 endif(NOT APPLE)
 
 # Magic to set GCC-specific compile flags
-set(GCC_FLAGS "-Wall -O9")
+set(GCC_FLAGS "-Wall -O9 -g")
 if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_FLAGS}")
 endif(CMAKE_COMPILER_IS_GNUCC)

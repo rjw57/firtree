@@ -1,0 +1,41 @@
+
+;; From firtree-kernel.h
+
+(define-function kernel_get_type
+  (c-name "firtree_kernel_get_type")
+  (return-type "GType")
+)
+
+(define-function kernel_new
+  (c-name "firtree_kernel_new")
+  (is-constructor-of "FirtreeKernel")
+  (return-type "FirtreeKernel*")
+)
+
+(define-method compile_from_source
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_compile_from_source")
+  (return-type "gboolean")
+  (parameters
+    '("gchar**" "lines")
+    '("gint" "n_lines")
+    '("gchar*" "kernel_name")
+  )
+)
+
+(define-method get_compile_log
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_compile_log")
+  (return-type "gchar**")
+  (parameters
+    '("guint*" "n_log_lines")
+  )
+)
+
+(define-method get_compile_status
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_compile_status")
+  (return-type "gboolean")
+)
+
+

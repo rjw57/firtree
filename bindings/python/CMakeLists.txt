@@ -25,7 +25,7 @@ if(BUILD_PYTHON_BINDINGS)
     endif(CMAKE_COMPILER_IS_GNUCC)
 
 	pygobject_target_add_bindings(SVFBINDINGS firtree MODULEPREFIX pyfirtree
-        DEFS firtree-types.defs firtree.defs OVERRIDE firtree.override)
+        DEFS firtree-types.defs firtree.defs firtree-overriden.defs OVERRIDE firtree.override)
 	include_directories(${SVFBINDINGS_INCLUDE_DIRS} ${PYGOBJECT_PYGTK_INCLUDE_DIRS})
 	add_library(pyfirtree MODULE firtreemodule.c ${SVFBINDINGS_SOURCES})
 	link_directories(${SVFBINDINGS_LINK_DIRS})

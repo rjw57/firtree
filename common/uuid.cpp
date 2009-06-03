@@ -27,8 +27,8 @@ generate_random_uuid(gchar* buffer, gchar separator)
 {
     // The field names refer to RFC 4122 section 4.1.2
     snprintf(buffer, 37, "%04x%04x%c%04x%c%03x4%c%04x%c%04x%04x%04x",
-            g_random_int_range(0, 65535), // \_
-            g_random_int_range(0, 65535), // / `- 32 bits - time_low
+            g_random_int_range(0, 65535), // -._
+            g_random_int_range(0, 65535), // -' '- 32 bits - time_low
             separator,
             g_random_int_range(0, 65535), // ---- 16 bits - time_mid
             separator,
@@ -36,9 +36,9 @@ generate_random_uuid(gchar* buffer, gchar separator)
             separator,
             ((g_random_int_range(0, 65535) & ~0x0300) | 0x0100), // clk_seq_low
             separator,
-            g_random_int_range(0, 65535),  // \ 
+            g_random_int_range(0, 65535),  // -. 
             g_random_int_range(0, 65535),  //  |- 48 bits - node
-            g_random_int_range(0, 65535)); // / 
+            g_random_int_range(0, 65535)); // -'
 }
 
 // So that VIM does the "right thing"

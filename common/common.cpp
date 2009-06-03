@@ -40,12 +40,12 @@ class Overseer {
         Overseer() 
         {
             // FIRTREE_DEBUG("Log config: %s\n", selog_config);
-            FIRTREE_DEBUG("Object monitor started.");
+            // FIRTREE_DEBUG("Object monitor started.");
         }
 
         ~Overseer()
         {
-            FIRTREE_DEBUG("Object monitor shutting down...");
+            // FIRTREE_DEBUG("Object monitor shutting down...");
 
             if(ReferenceCounted::GetGlobalObjectCount() > 0)
             {

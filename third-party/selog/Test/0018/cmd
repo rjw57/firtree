@@ -1,3 +1,0 @@
-../test-harness +log_pid@/WORK/selall
-sed 's|test-harness[[][0-9]*[]]|test-harness[]|' <selall >selall-
-mv selall- selall

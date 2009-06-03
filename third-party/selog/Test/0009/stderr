@@ -1,2 +1,0 @@
-test-harness log_config error: open_file: /WORK/missing/file: No such file or directory
-test-harness fatal: selog_open "@/WORK/missing/file": No such file or directory

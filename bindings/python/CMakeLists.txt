@@ -1,76 +1,36 @@
-# CMake project file for FIRTREE
+# CMake project file for firtree
 #
-# Copyright (C) 2007, 2008 Rich Wareham <richwareham@gmail.com>
+# Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
 #
 # See LICENSE file for distribution rights.
 
-# See if we can locate the SWIG tool.
-FIND_PACKAGE(SWIG)
-FIND_PACKAGE(PythonInterp)
-FIND_PACKAGE(PythonLibs)
-IF(SWIG_FOUND)
-    INCLUDE(UseSWIG)
-ENDIF(SWIG_FOUND)
+# Attempt to find pygobject
+find_package(PyGObject)
 
-# See if python was found
-SET(PYTHON_FOUND 0)
-IF(PYTHON_LIBRARIES)
-    SET(PYTHON_FOUND 1)
-ENDIF(PYTHON_LIBRARIES)
+# For finding things like glib, etc.
+find_package(PkgConfig)
 
-# Setup SWIG options in general.
-IF(SWIG_FOUND AND PYTHON_FOUND AND PYTHONINTERP_FOUND)
-    EXECUTE_PROCESS(
-      COMMAND
-      ${PYTHON_EXECUTABLE} -c 
-      "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+set(BUILD_PYTHON_BINDINGS 1)
 
-    SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR})
-    MESSAGE(STATUS "=> Generating Python wrappers.")
+if(NOT PYGOBJECT_FOUND)
+	message(STATUS "PyGObject could not be found, Python bindings will not be built.")
+	set(BUILD_PYTHON_BINDINGS 0)
+endif(NOT PYGOBJECT_FOUND)
 
-    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+if(BUILD_PYTHON_BINDINGS)
+    if(CMAKE_COMPILER_IS_GNUCC)
+        # warning 'fix' for GCC warning about a lack of 
+        # long long in C90.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-long-long")
+    endif(CMAKE_COMPILER_IS_GNUCC)
 
-    CONFIGURE_FILE(
-        "${CMAKE_CURRENT_SOURCE_DIR}/../firtree.i"
-    	"${CMAKE_CURRENT_BINARY_DIR}/firtree-python.i"
-        @ONLY)
-    SET_SOURCE_FILES_PROPERTIES(firtree-python.i PROPERTIES GENERATED 1)
-    SET_SOURCE_FILES_PROPERTIES(firtree-python.i PROPERTIES CPLUSPLUS 1)
-    SWIG_ADD_MODULE(Firtree python firtree-python.i)
-    SWIG_LINK_LIBRARIES(Firtree firtree ${FIRTREE_LIBS} ${PYTHON_LIBRARIES})
+	pygobject_target_add_bindings(SVFBINDINGS firtree MODULEPREFIX pyfirtree
+        DEFS firtree-types.defs firtree.defs firtree-overriden.defs OVERRIDE firtree.override)
+	include_directories(${SVFBINDINGS_INCLUDE_DIRS} ${PYGOBJECT_PYGTK_INCLUDE_DIRS})
+	add_library(pyfirtree MODULE firtreemodule.c ${SVFBINDINGS_SOURCES})
+	link_directories(${SVFBINDINGS_LINK_DIRS})
+	target_link_libraries(pyfirtree firtree ${SVFBINDINGS_LIBRARIES})
+    set_target_properties(pyfirtree PROPERTIES PREFIX "")
+endif(BUILD_PYTHON_BINDINGS)
 
-    # On Windows, the generated DLL has to be named _Firtree.pyd.
-    IF(WIN32)
-        ADD_CUSTOM_COMMAND(TARGET _Firtree
-        COMMAND ${CMAKE_COMMAND}
-            ARGS -E copy _Firtree.dll _Firtree.pyd)
-        ADD_CUSTOM_COMMAND(TARGET _Firtree
-        COMMAND ${CMAKE_COMMAND}
-            ARGS -E remove _Firtree.dll)
-    ENDIF(WIN32)
-
-    INSTALL(TARGETS _Firtree DESTINATION ${PYTHON_INSTDIR})
-    INSTALL(FILES Firtree.py DESTINATION ${PYTHON_INSTDIR})
-ELSE(SWIG_FOUND AND PYTHON_FOUND)
-    MESSAGE(STATUS 
-    "=> Not generating Python wrappers.")
-    IF(NOT SWIG_FOUND)
-        MESSAGE(STATUS "   `-> SWIG was not found.")
-    ENDIF(NOT SWIG_FOUND)
-
-    IF(NOT PYTHON_FOUND)
-        MESSAGE(STATUS 
-        "   `-> The Python development libraries were not found.")
-    ENDIF(NOT PYTHON_FOUND)
-    
-    IF(NOT PYTHONINTERP_FOUND)
-        MESSAGE(STATUS 
-        "   `-> The Python interpreter was not found.")
-    ENDIF(NOT PYTHONINTERP_FOUND)
-ENDIF(SWIG_FOUND AND PYTHON_FOUND AND PYTHONINTERP_FOUND)
-
-# Vim modeline
-# vim:ts=4:sw=4:et
+# vim:sw=4:ts=4:autoindent:et

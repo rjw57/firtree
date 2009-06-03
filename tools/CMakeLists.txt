@@ -1,10 +1,12 @@
 # CMake project file for firtree
 #
-# Copyright (C) 2007, 2008 Rich Wareham <richwareham@gmail.com>
+# Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
 #
 # See LICENSE file for distribution rights.
 
-# Nothing for the moment.
+# The simple kernel compiler.
+add_executable(kernel2llvm kernel2llvm.cc)
+target_link_libraries(kernel2llvm firtree)
 
-# Vim modeline
-# vim:ts=4:sw=4:et
+# vim:sw=4:ts=4:autoindent:et
+

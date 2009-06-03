@@ -4,7 +4,11 @@
 #
 # See LICENSE file for distribution rights.
 
-# Build the Python bindings
-add_subdirectory(python)
+add_library(common
+    uuid.h          uuid.cpp
+    common.h        common.cpp)
+
+target_link_libraries(common ${GLIB_LIBRARIES})
 
 # vim:sw=4:ts=4:autoindent:et
+

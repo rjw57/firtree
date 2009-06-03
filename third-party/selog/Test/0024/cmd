@@ -1,3 +1,0 @@
-date=$(date | cut -c 5-19)
-../test-harness @syslog
-sed "/^$date [^ ]* test-harness/!d;s//test-harness/" /var/log/messages

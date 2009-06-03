@@ -1,0 +1,120 @@
+%%
+headers
+#include <Python.h>
+#include <pyglib.h> 
+#include <pygobject.h> 
+
+#include <firtree/firtree-kernel.h>
+%%
+init
+%%
+modulename pyfirtree
+%%
+import gobject.GObject as PyGObject_Type
+%%
+ignore-glob
+  *_get_type                            
+  _*
+  *_ref
+  *_unref
+%%
+override firtree_kernel_compile_from_source kwargs
+static PyObject*
+_wrap_firtree_kernel_compile_from_source(PyGObject* self, PyObject *args, PyObject *kwargs) 
+{
+    static char *kwlist[] = { "lines", "kernel_name" };
+
+    PyObject* lines = NULL;
+    char* kernel_name = NULL;
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O|s:Kernel.compile_from_source", kwlist,
+                &lines, &kernel_name))
+    {
+        return NULL;
+    }
+
+    /* lines may be a sequence, in which case the string
+     * value of it's items is used or a non-sequence and the 
+     * string value is used directly. */
+    gboolean rv = FALSE;
+    if(PyString_Check(lines)) {
+        /* it is a string. */
+        gchar* str = PyString_AS_STRING(lines);
+        rv = firtree_kernel_compile_from_source(FIRTREE_KERNEL(self->obj), 
+                &str, 1, kernel_name);
+    } else if(PySequence_Check(lines)) {
+        /* it is a sequence */
+        guint i = 0;
+        guint n_items = PySequence_Length(lines);
+        GArray* str_array = g_array_sized_new(FALSE, FALSE,
+                sizeof(gchar*), n_items);
+        gboolean all_are_strings = TRUE;
+
+        for(i=0; i<n_items; ++i)
+        {
+            PyObject* item = PySequence_ITEM(lines, i);
+            gchar* str_val = NULL;
+            if(PyString_Check(item)) {
+                str_val = PyString_AS_STRING(item);
+            } else {
+                all_are_strings = FALSE;
+            }
+            g_array_append_val(str_array, str_val);
+            Py_DECREF(item);
+        }
+
+        if(all_are_strings) {
+            rv = firtree_kernel_compile_from_source(FIRTREE_KERNEL(self->obj), 
+                    (gchar**)(str_array->data), str_array->len, kernel_name);
+            g_array_free(str_array, TRUE);
+        } else {
+            g_array_free(str_array, TRUE);
+
+            PyErr_SetString(PyExc_TypeError, "Sequence elements must all be strings.");
+            return NULL;
+        }
+
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Expected a string or sequence of strings.");
+        return NULL;
+    }
+
+    return PyBool_FromLong((long)rv);
+}
+%%
+override firtree_kernel_get_compile_log kwargs
+static PyObject*
+_wrap_firtree_kernel_get_compile_log(PyGObject* self, PyObject *args)
+{
+    /* We expect no parameters */
+    if(!PyArg_ParseTuple(args, ":Kernel.get_compile_log"))
+    {
+        return NULL;
+    }
+
+    guint n_log_lines = 0;
+    gchar** compile_log = 
+        firtree_kernel_get_compile_log(FIRTREE_KERNEL(self->obj), &n_log_lines);
+
+    if(NULL == compile_log) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    PyObject* log_tuple = PyTuple_New(n_log_lines);
+    if(NULL == log_tuple) {
+        return NULL;
+    }
+
+    guint i;
+    for(i = 0; i<n_log_lines; ++i) {
+        PyObject* new_str = PyString_FromString(compile_log[i]);
+        PyTuple_SET_ITEM(log_tuple, i, new_str);
+    }
+
+    return log_tuple;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

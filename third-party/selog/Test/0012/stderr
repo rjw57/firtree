@@ -1,2 +1,0 @@
-test-harness log_config error: open_file: bogus: Filename must be absolute
-test-harness fatal: selog_open "@file bogus": Invalid argument

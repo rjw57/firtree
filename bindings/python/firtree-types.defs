@@ -1,0 +1,18 @@
+;; -*- scheme -*-
+; boxed definitions ...
+
+; interface definitions ...
+
+; object definitions ...
+
+(define-object Kernel
+  (in-module "Firtree")
+  (parent "GObject")
+  (c-name "FirtreeKernel")
+  (gtype-id "FIRTREE_TYPE_KERNEL")
+)
+
+; pointer definitions ...
+
+;; Enumerations and Flags ...
+

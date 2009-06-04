@@ -77,6 +77,8 @@ typedef struct {
 
 typedef struct {
     GObjectClass parent_class;
+
+    void (* argument_changed) (FirtreeKernel *kernel);
 } FirtreeKernelClass;
 
 GType firtree_kernel_get_type (void);
@@ -226,6 +228,17 @@ firtree_kernel_get_argument_value (FirtreeKernel* self, GQuark arg_name);
 gboolean
 firtree_kernel_set_argument_value (FirtreeKernel* self,
         GQuark arg_name, GValue* value);
+
+/**
+ * firtree_kernel_argument_changed:
+ * @self: A FirtreeKernel instance.
+ * @arg_name: A quark corresponding to an argument name.
+ *
+ * Emit an ::argument-changed signal indicating that the value of
+ * @arg_name has changed.
+ */
+void
+firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name);
 
 G_END_DECLS
 

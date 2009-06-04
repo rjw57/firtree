@@ -10,12 +10,18 @@
 using namespace Firtree;
 using namespace Firtree::LLVM;
 
-enum
-{
-  PROP_0,
-
-  PROP_COMPILE_STATUS
+enum {
+    PROP_0,
+    PROP_COMPILE_STATUS,
+    LAST_PROP
 };
+
+enum {
+    ARGUMENT_CHANGED,
+    LAST_SIGNAL
+};
+
+static guint _firtree_kernel_signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (FirtreeKernel, firtree_kernel, G_TYPE_OBJECT)
 
@@ -33,6 +39,30 @@ struct _FirtreeKernelPrivate {
     GData*                              arg_spec_list;
     GData*                              arg_value_list;
 };
+
+static GType
+_firtree_kernel_type_specifier_to_gtype(KernelTypeSpecifier type_spec)
+{
+    static GType type_map[TySpecVoid+1] = {
+        G_TYPE_FLOAT,
+        G_TYPE_INT,
+        G_TYPE_BOOLEAN,
+        G_TYPE_NONE,
+        G_TYPE_NONE,
+        G_TYPE_NONE,
+        G_TYPE_NONE,
+        G_TYPE_NONE,
+        G_TYPE_NONE
+    };
+
+    if((type_spec >= 0) && (type_spec <= TySpecVoid)) {
+        return type_map[type_spec];
+    }
+
+    g_error("Unhandled type specifier: %i\n", type_spec);
+
+    return G_TYPE_NONE;
+}
 
 static void
 firtree_kernel_get_property (GObject *object, guint property_id,
@@ -109,6 +139,8 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     object_class->dispose = firtree_kernel_dispose;
     object_class->finalize = firtree_kernel_finalize;
 
+    klass->argument_changed = NULL;
+
     param_spec = g_param_spec_boolean(
             "compile-status",
             "A flag indicating the success of the last compilation.",
@@ -129,6 +161,23 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     g_object_class_install_property (object_class,
             PROP_COMPILE_STATUS,
             param_spec);
+
+    /**
+     * FirtreeKernel::argument-changed:
+     * @kernel: The kernel whose argument has changed.
+     * @arg_name: A GQuark indicating the argument name.
+     *
+     * The ::argument-changed signal is emitted each time a @kernel 's argument
+     * is modified via firtree_kernel_set_argument_value().
+     */
+    _firtree_kernel_signals[ARGUMENT_CHANGED] = 
+        g_signal_new("argument-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeKernelClass, argument_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__INT,
+                G_TYPE_NONE, 1, G_TYPE_INT);
 }
 
 static void
@@ -218,7 +267,7 @@ firtree_kernel_compile_from_source (FirtreeKernel* self,
                 g_slice_new(FirtreeKernelArgumentSpec);
 
             spec->name_quark = name_quark;
-            spec->type = 0; // FIXME
+            spec->type = _firtree_kernel_type_specifier_to_gtype(i->Type);
             spec->is_static = i->IsStatic;
 
             /* add the spec to the list. */
@@ -321,6 +370,7 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
     /* If value is NULL, unset the value and return. */
     if(NULL == value) {
         g_datalist_id_set_data(&p->arg_value_list, arg_name, NULL);
+        firtree_kernel_argument_changed(self, arg_name);
         return TRUE;
     }
 
@@ -331,8 +381,17 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
     /* Insert the GValue into the arg value list. */
     g_datalist_id_set_data_full(&p->arg_value_list, arg_name,
             new_val, _firtree_kernel_value_destroy_func);
+    
+    firtree_kernel_argument_changed(self, arg_name);
 
     return TRUE;
+}
+
+void
+firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name)
+{
+    g_return_if_fail(FIRTREE_IS_KERNEL(self));
+    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED], 0, arg_name);
 }
 
 llvm::Module*

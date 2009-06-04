@@ -61,5 +61,30 @@ class Identity(unittest.TestCase):
         self._t.set_identity()
         self.assert_(self._t.is_identity())
 
+class CopyAndClone(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def testCopy(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.get_elements(), (1,2,3,4,5,6))
+        t = AffineTransform()
+        self.assert_(t.is_identity())
+        t.set_transform(self._t)
+        self.assertEqual(t.get_elements(), (1,2,3,4,5,6))
+
+    def testClone(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.get_elements(), (1,2,3,4,5,6))
+        t = self._t.clone()
+        self._t.set_elements(6,5,4,3,2,1)
+        self.assertEqual(self._t.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(t.get_elements(), (1,2,3,4,5,6))
+
 # vim:sw=4:ts=4:et:autoindent
 

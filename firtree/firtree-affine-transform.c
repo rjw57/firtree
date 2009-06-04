@@ -90,7 +90,9 @@ firtree_affine_transform_new (void)
 FirtreeAffineTransform* 
 firtree_affine_transform_clone (FirtreeAffineTransform* self)
 {
-    return NULL;
+    FirtreeAffineTransform* new_trans = firtree_affine_transform_new();
+    firtree_affine_transform_set_transform(new_trans, self);
+    return new_trans;
 }
 
 gboolean
@@ -215,6 +217,18 @@ firtree_affine_transform_get_elements (FirtreeAffineTransform* self,
     *m22 = self->m22;
     *tx = self->tx;
     *ty = self->ty;
+}
+
+void
+firtree_affine_transform_set_transform (FirtreeAffineTransform* self, 
+        FirtreeAffineTransform* src)
+{
+    self->m11 = src->m11;
+    self->m12 = src->m12;
+    self->m21 = src->m21;
+    self->m22 = src->m22;
+    self->tx = src->tx;
+    self->ty = src->ty;
 }
 
 /* vim:sw=4:ts=4:et:cindent

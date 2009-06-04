@@ -38,4 +38,50 @@
   (return-type "gboolean")
 )
 
+(define-method list_arguments
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_list_arguments")
+  (return-type "GQuark*")
+  (parameters
+    '("guint*" "n_arguments")
+  )
+)
+
+(define-method has_argument_named
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_has_argument_named")
+  (return-type "gboolean")
+  (parameters
+    '("gchar*" "arg_name")
+  )
+)
+
+(define-method get_argument_spec
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_argument_spec")
+  (return-type "FirtreeKernelArgumentSpec*")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
+(define-method get_argument_value
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_argument_value")
+  (return-type "GValue*")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
+(define-method set_argument_value
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_set_argument_value")
+  (return-type "gboolean")
+  (parameters
+    '("GQuark" "arg_name")
+    '("GValue*" "value")
+  )
+)
+
 

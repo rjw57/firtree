@@ -142,15 +142,21 @@ main(int argc, char** argv)
 
         firtree_kernel_get_llvm_module(kernel)->print(output, NULL);
 
-        /*
-           output << "; Defined kernels:\n";
-           for(CompiledKernel::const_iterator func = compiled_kernel->begin();
-           func != compiled_kernel->end(); ++func)
-           {
-           output << "; " << func->Name << " -> " 
-            << func->Function->getName() << "\n";
-            }
-         */
+        output << "\n";
+
+        guint n_args = 0;
+        GQuark* args = firtree_kernel_list_arguments(kernel, &n_args);
+
+        output << "; Kernel argument count: " << n_args << "\n";
+
+        GQuark* current_arg = args;
+        while(*current_arg) {
+            FirtreeKernelArgumentSpec* spec =
+                firtree_kernel_get_argument_spec(kernel, *current_arg);
+            output << ";   - " << g_quark_to_string(*current_arg);
+            output << " (is static: " << spec->is_static << ") \n";
+            ++current_arg;
+        }
     }
 
     g_object_unref(kernel);

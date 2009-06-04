@@ -51,6 +51,20 @@ G_BEGIN_DECLS
     (G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_KERNEL, FirtreeKernelClass))
 
 /**
+ * FirtreeKernelArgumentSpec:
+ * @name_quark: The name of the argument.
+ * @type: The type of the argument.
+ * @is_static: Flag indicating if the argument is static.
+ *
+ * A structure which holds a record of a kernel argument.
+ */
+typedef struct {
+    GQuark      name_quark;
+    GType       type;
+    gboolean    is_static;
+} FirtreeKernelArgumentSpec;
+
+/**
  * FirtreeKernel:
  * @parent: The parent GObject.
  *
@@ -136,6 +150,82 @@ firtree_kernel_get_compile_log (FirtreeKernel* self, guint* n_log_lines);
  */
 gboolean
 firtree_kernel_get_compile_status (FirtreeKernel* self);
+
+/**
+ * firtree_kernel_list_arguments:
+ * @self: A FirtreeKernel instance.
+ * @n_arguments: NULL or a pointer to write the number of arguments.
+ *
+ * Obtain a pointer to a 0-terminated array of argument name quarks.
+ *
+ * Should there not be a compiled kernel, this method returns NULL.
+ *
+ * Returns: NULL or an array of GQuark-s.
+ */
+GQuark*
+firtree_kernel_list_arguments (FirtreeKernel* self, guint* n_arguments);
+
+/**
+ * firtree_kernel_has_argument_named:
+ * @self: A FirtreeKernel instance.
+ * @arg_name: A string containing an argument name.
+ *
+ * Checks to see if ther kernel posesses an argument named @arg_name.
+ * If no such argument is present, or the kernel is not compiled,
+ * FALSE is returned. Otherwise, TRUE is returned.
+ *
+ * Returns: A boolean indicating the presence of an argument named 
+ * @arg_name.
+ */
+gboolean
+firtree_kernel_has_argument_named (FirtreeKernel* self, gchar* arg_name);
+
+/**
+ * firtree_kernel_get_argument_spec:
+ * @self: A FirtreeKernel instance.
+ * @arg_name: A quark corresponding to an argument name.
+ *
+ * Return a pointer to a FirtreeKernelArgumentSpec containing details
+ * on the argument with name @arg_name. If no such argument exists,
+ * return NULL.
+ *
+ * Returns: A pointer to a FirtreeKernelArgumentSpec structure describing
+ * the argument.
+ */
+FirtreeKernelArgumentSpec*
+firtree_kernel_get_argument_spec (FirtreeKernel* self, GQuark arg_name);
+
+/**
+ * firtree_kernel_get_argument_value:
+ * @self: A FirtreeKernel instance.
+ * @arg_name: A quark corresponding to an argument name.
+ *
+ * Retrieves the value of the argument referred to by @arg_name. If 
+ * the kernel is not compiled, there is no argument named @arg_name, or
+ * the argument is unset, NULL is returned.
+ *
+ * Returns: The value of the specified argument.
+ */
+GValue*
+firtree_kernel_get_argument_value (FirtreeKernel* self, GQuark arg_name);
+
+/**
+ * firtree_kernel_set_argument_value:
+ * @self: A FirtreeKernel instance.
+ * @arg_name: A quark corresponding to an argument name.
+ * @value: A GValue containing the new value of the argument.
+ *
+ * Sets the value of @arg_name to @value. It is an error for the type of
+ * @value to be a mis-match with that of @arg_name. Use 
+ * firtree_kernel_get_argument_spec() to quiery what type is expected.
+ *
+ * If NULL is passed in @value, the argument is unset.
+ *
+ * Returns: A flag indicating if the argument was set.
+ */
+gboolean
+firtree_kernel_set_argument_value (FirtreeKernel* self,
+        GQuark arg_name, GValue* value);
 
 G_END_DECLS
 

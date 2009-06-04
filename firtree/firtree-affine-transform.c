@@ -107,22 +107,58 @@ firtree_affine_transform_is_identity (FirtreeAffineTransform* self)
     return FALSE;
 }
 
+/* Computes c <- a*b */
+static void
+_firtree_affine_transform_multiply(
+        FirtreeAffineTransform* a,
+        FirtreeAffineTransform* b,
+        FirtreeAffineTransform* c)
+{
+    float m11 = (a->m11*b->m11) + (a->m12*b->m21);
+    float m12 = (a->m11*b->m12) + (a->m12*b->m22);
+    float m21 = (a->m21*b->m11) + (a->m22*b->m21);
+    float m22 = (a->m21*b->m12) + (a->m22*b->m22);
+    float tx = (a->m11*b->tx) + (a->m12*b->ty) + a->tx;
+    float ty = (a->m21*b->tx) + (a->m22*b->ty) + a->ty;
+    firtree_affine_transform_set_elements(c, m11, m12, m21, m22, tx, ty);
+}
+
 void
 firtree_affine_transform_append_transform (FirtreeAffineTransform* self,
         FirtreeAffineTransform* trans)
 {
+    /* self <- trans * self */
+    _firtree_affine_transform_multiply(trans, self, self);
 }
 
 void
 firtree_affine_transform_prepend_transform (FirtreeAffineTransform* self,
         FirtreeAffineTransform* trans)
 {
+    /* self <- self * trans */
+    _firtree_affine_transform_multiply(self, trans, self);
 }
 
 gboolean
 firtree_affine_transform_invert (FirtreeAffineTransform* self)
 {
-    return FALSE;
+    float d = (self->m11*self->m22) - (self->m12*self->m21);
+    if(d == 0.f) {
+        return FALSE;
+    }
+    float ood = 1.f / d;
+
+    float m11 = ood * self->m22;
+    float m22 = ood * self->m11;
+    float m12 = ood * -self->m12;
+    float m21 = ood * -self->m21;
+
+    float tx = ood * (self->m12*self->ty - self->m22*self->tx);
+    float ty = ood * (self->m21*self->tx - self->m11*self->ty);
+
+    firtree_affine_transform_set_elements(self, m11, m12, m21, m22, tx, ty);
+
+    return TRUE;
 }
 
 void

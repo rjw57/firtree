@@ -86,5 +86,105 @@ class CopyAndClone(unittest.TestCase):
         self.assertEqual(self._t.get_elements(), (6,5,4,3,2,1))
         self.assertEqual(t.get_elements(), (1,2,3,4,5,6))
 
+class AppendAndPrepend(unittest.TestCase):
+    def setUp(self):
+        self._t1 = AffineTransform()
+        self._t2 = AffineTransform()
+        self.failIfEqual(self._t1, None)
+        self.assert_(self._t1.is_identity())
+        self.failIfEqual(self._t2, None)
+        self.assert_(self._t2.is_identity())
+
+    def tearDown(self):
+        self._t1 = None
+        self._t2 = None
+
+    def testAppendIdentity(self):
+        self._t1.set_identity()
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assert_(self._t1.is_identity())
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t2.append_transform(self._t1)
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+
+    def testPrependIdentity(self):
+        self._t1.set_identity()
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assert_(self._t1.is_identity())
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t2.prepend_transform(self._t1)
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+
+    def testAppend1(self):
+        self._t1.set_elements(6,5,4,3,2,1)
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t2.append_transform(self._t1)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (21,32,13,20,62,39))
+
+    def testPrepend1(self):
+        self._t1.set_elements(6,5,4,3,2,1)
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t2.prepend_transform(self._t1)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (14,11,34,27,9,16))
+
+    def testPrepend2(self):
+        self._t1.set_elements(6,5,4,3,2,1)
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t1.prepend_transform(self._t2)
+        self.assertEqual(self._t1.get_elements(), (21,32,13,20,62,39))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+
+    def testAppend2(self):
+        self._t1.set_elements(6,5,4,3,2,1)
+        self._t2.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t1.get_elements(), (6,5,4,3,2,1))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self._t1.append_transform(self._t2)
+        self.assertEqual(self._t1.get_elements(), (14,11,34,27,9,16))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+
+class Inverse(unittest.TestCase):
+    def setUp(self):
+        self._t1 = AffineTransform()
+        self._t2 = AffineTransform()
+        self.failIfEqual(self._t1, None)
+        self.assert_(self._t1.is_identity())
+        self.failIfEqual(self._t2, None)
+        self.assert_(self._t2.is_identity())
+
+    def tearDown(self):
+        self._t1 = None
+        self._t2 = None
+
+    def testInvertLeft(self):
+        self._t1.set_elements(1,2,3,4,5,6)
+        self._t2.set_transform(self._t1)
+        self.assertEqual(self._t1.get_elements(), (1,2,3,4,5,6))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self.assert_(self._t1.invert())
+        self._t2.append_transform(self._t1)
+        self.assert_(self._t2.is_identity())
+
+    def testInvertRight(self):
+        self._t1.set_elements(1,2,3,4,5,6)
+        self._t2.set_transform(self._t1)
+        self.assertEqual(self._t1.get_elements(), (1,2,3,4,5,6))
+        self.assertEqual(self._t2.get_elements(), (1,2,3,4,5,6))
+        self.assert_(self._t1.invert())
+        self._t2.prepend_transform(self._t1)
+        self.assert_(self._t2.is_identity())
+
+    def testSingular(self):
+        self._t1.set_elements(1,0,3,0,5,6)
+        self.assert_(not self._t1.invert())
+
 # vim:sw=4:ts=4:et:autoindent
 

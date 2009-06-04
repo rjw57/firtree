@@ -13,6 +13,9 @@ class SimpleGood(unittest.TestCase):
         """
         self._k.compile_from_source(src)
 
+    def testArgList(self):
+        self.assertEqual(self._k.list_arguments(), ())
+
     def testCompileStatusMethod(self):
         self.assertEqual(self._k.get_compile_status(), True)
 
@@ -87,6 +90,9 @@ class Arguments(unittest.TestCase):
     def argChange(self, kernel, arg):
         self.assertEqual(kernel, self._k)
         self._mirror[arg] = kernel[arg]
+
+    def testArgList(self):
+        self.assertEqual(self._k.list_arguments(), ('arg1', 'arg2'))
 
     def testArgExistence(self):
         self.assert_(self._k.has_argument_named('arg1'))
@@ -214,6 +220,9 @@ class Creation(unittest.TestCase):
 
     def testKernelCreation(self):
         self.failIfEqual(self._k, None)
+
+    def testDefaultArgList(self):
+        self.assertEqual(self._k.list_arguments(), None)
 
     def testDefaultStatus(self):
         self.assertEqual(self._k.get_compile_status(), False)

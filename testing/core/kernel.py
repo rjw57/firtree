@@ -358,6 +358,31 @@ class VectorArguments(unittest.TestCase):
             self._k['arg4'] = (1.0, 'bad', 3.0, 'worse')
         self.assertRaises(TypeError, badSet)
 
+class SamplerArguments(unittest.TestCase):
+    def setUp(self):
+        self._k = Kernel()
+        self.assertNotEqual(self._k, None)
+        src = """
+            kernel vec4 simpleKernel(sampler arg1) {
+                return vec4(1,0,0,1);
+            }
+        """
+        self._k.compile_from_source(src)
+        self.assertEqual(self._k.get_compile_status(), True)
+        self.assertEqual(self._k['arg1'], None)
+
+    def testSimpleConstruction(self):
+        s = Sampler()
+        self.assertNotEqual(s, None)
+
+    def testSimpleAssignment(self):
+        self._k['arg1'] = None
+        self.assertEqual(self._k['arg1'], None)
+        s = Sampler()
+        self.assertNotEqual(s, None)
+        self._k['arg1'] = s
+        self.assertEqual(self._k['arg1'], s)
+
 
 # vim:sw=4:ts=4:et:autoindent
 

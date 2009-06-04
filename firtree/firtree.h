@@ -30,6 +30,7 @@
  */
 
 #include "firtree-kernel.h"
+#include "firtree-sampler.h"
 #include "firtree-vector.h"
 
 #endif /* _FIRTREE_MAIN_INCLUDE */

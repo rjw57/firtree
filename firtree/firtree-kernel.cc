@@ -4,6 +4,7 @@
 #define __STDC_CONSTANT_MACROS
 
 #include "firtree-kernel-priv.hpp"
+#include "firtree-sampler.h"
 #include "firtree-vector.h"
 
 #include <llvm-frontend/llvm-compiled-kernel.h>
@@ -52,7 +53,7 @@ _firtree_kernel_type_specifier_to_gtype(KernelTypeSpecifier type_spec)
         FIRTREE_TYPE_VEC2,
         FIRTREE_TYPE_VEC3,
         FIRTREE_TYPE_VEC4,
-        G_TYPE_NONE,
+        FIRTREE_TYPE_SAMPLER,
         FIRTREE_TYPE_VEC4,
         G_TYPE_NONE
     };

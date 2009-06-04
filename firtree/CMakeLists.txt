@@ -5,9 +5,10 @@
 # See LICENSE file for distribution rights.
 
 add_library(firtree SHARED
-    firtree.h
+    firtree-kernel.cc       firtree-kernel.h
+    firtree-sampler.c       firtree-sampler.h
     firtree-vector.h        firtree-vector.c
-    firtree-kernel.cc       firtree-kernel.h)
+    firtree.h)
 
 # set the library version.
 set_target_properties(firtree 

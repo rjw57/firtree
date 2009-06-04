@@ -30,6 +30,13 @@
   (gtype-id "FIRTREE_TYPE_KERNEL")
 )
 
+(define-object Sampler
+  (in-module "Firtree")
+  (parent "GObject")
+  (c-name "FirtreeSampler")
+  (gtype-id "FIRTREE_TYPE_SAMPLER")
+)
+
 ; pointer definitions ...
 
 ;; Enumerations and Flags ...

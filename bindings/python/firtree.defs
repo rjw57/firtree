@@ -95,6 +95,21 @@
 
 
 
+;; From firtree-sampler.h
+
+(define-function sampler_get_type
+  (c-name "firtree_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function sampler_new
+  (c-name "firtree_sampler_new")
+  (is-constructor-of "FirtreeSampler")
+  (return-type "FirtreeSampler*")
+)
+
+
+
 ;; From firtree-vector.h
 
 (define-function vec2_get_type

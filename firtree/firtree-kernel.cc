@@ -300,11 +300,39 @@ firtree_kernel_get_argument_value (FirtreeKernel* self, GQuark arg_name)
     return (GValue*)g_datalist_id_get_data(&p->arg_value_list, arg_name);
 }
 
+/* Free a GValue structure allocated via g_slice_{alloc,new}, etc. */
+/* Used in firtree_kernel_set_argument_value(). */
+static void
+_firtree_kernel_value_destroy_func (gpointer value)
+{
+    g_slice_free(GValue, value);
+}
+
 gboolean
 firtree_kernel_set_argument_value (FirtreeKernel* self,
         GQuark arg_name, GValue* value)
 {
-    return FALSE;
+    FirtreeKernelPrivate* p = GET_PRIVATE(self);
+    if(!firtree_kernel_has_argument_named(self, 
+                const_cast<gchar*>(g_quark_to_string(arg_name)))) {
+        return FALSE;
+    }
+
+    /* If value is NULL, unset the value and return. */
+    if(NULL == value) {
+        g_datalist_id_set_data(&p->arg_value_list, arg_name, NULL);
+        return TRUE;
+    }
+
+    /* Create a new GValue to store a copy of the passed value. */
+    GValue* new_val = (GValue*)g_slice_alloc0(sizeof(GValue));
+    g_value_copy(value, new_val);
+
+    /* Insert the GValue into the arg value list. */
+    g_datalist_id_set_data_full(&p->arg_value_list, arg_name,
+            new_val, _firtree_kernel_value_destroy_func);
+
+    return TRUE;
 }
 
 llvm::Module*

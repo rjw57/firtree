@@ -106,6 +106,12 @@
   )
 )
 
+(define-method set_identity
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_identity")
+  (return-type "none")
+)
+
 (define-method set_rotation_by_degrees
   (of-object "FirtreeAffineTransform")
   (c-name "firtree_affine_transform_set_rotation_by_degrees")

@@ -78,6 +78,7 @@ firtree_affine_transform_class_init (FirtreeAffineTransformClass *klass)
 static void
 firtree_affine_transform_init (FirtreeAffineTransform *self)
 {
+    firtree_affine_transform_set_identity(self);
 }
 
 FirtreeAffineTransform*
@@ -95,6 +96,12 @@ firtree_affine_transform_clone (FirtreeAffineTransform* self)
 gboolean
 firtree_affine_transform_is_identity (FirtreeAffineTransform* self)
 {
+    if((self->m11 == 1.f) && (self->m12 == 0.f) &&
+            (self->m21 == 0.f) && (self->m22 == 1.f) &&
+            (self->tx == 0.f) && (self->ty == 0.f)) 
+    {
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -154,6 +161,12 @@ firtree_affine_transform_transform_size (FirtreeAffineTransform* self,
 {
     FirtreeVec2 vec = {0,0};
     return vec;
+}
+
+void
+firtree_affine_transform_set_identity (FirtreeAffineTransform* self)
+{
+    firtree_affine_transform_set_elements(self, 1, 0, 0, 1, 0, 0);
 }
 
 void

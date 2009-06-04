@@ -34,5 +34,32 @@ class Creation(unittest.TestCase):
     def testCreated(self):
         self.failIfEqual(self._t, None)
 
+    def testDefaultValue(self):
+        self.assert_(self._t.is_identity())
+
+class Identity(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def testElement1(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.get_elements(), (1,2,3,4,5,6))
+        self.assert_(not self._t.is_identity())
+        self._t.set_elements(1,0,0,1,0,0)
+        self.assertEqual(self._t.get_elements(), (1,0,0,1,0,0))
+        self.assert_(self._t.is_identity())
+
+    def testElement2(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.get_elements(), (1,2,3,4,5,6))
+        self.assert_(not self._t.is_identity())
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+
 # vim:sw=4:ts=4:et:autoindent
 

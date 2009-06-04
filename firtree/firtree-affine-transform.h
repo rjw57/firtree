@@ -101,6 +101,9 @@ firtree_affine_transform_transform_size (FirtreeAffineTransform* self,
         float width, float height);
 
 void
+firtree_affine_transform_set_identity (FirtreeAffineTransform* self);
+
+void
 firtree_affine_transform_set_rotation_by_degrees (FirtreeAffineTransform* self,
         float angle);
 

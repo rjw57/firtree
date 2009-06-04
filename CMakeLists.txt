@@ -68,5 +68,8 @@ add_subdirectory(bindings)
 # Build the documentation
 add_subdirectory(doc)
 
+# The test suite
+add_subdirectory(testing)
+
 # vim:sw=4:ts=4:autoindent:et
 

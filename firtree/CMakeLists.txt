@@ -5,6 +5,8 @@
 # See LICENSE file for distribution rights.
 
 add_library(firtree SHARED
+    firtree.h
+    firtree-vector.h        firtree-vector.c
     firtree-kernel.cc       firtree-kernel.h)
 
 # set the library version.

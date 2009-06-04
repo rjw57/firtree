@@ -4,7 +4,7 @@ headers
 #include <pyglib.h> 
 #include <pygobject.h> 
 
-#include <firtree/firtree-kernel.h>
+#include <firtree/firtree.h>
 
 static PyObject* 
 _wrap_firtree_kernel_mp_subscript(PyObject *self, PyObject *arg_obj);

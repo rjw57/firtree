@@ -53,7 +53,7 @@ _firtree_kernel_type_specifier_to_gtype(KernelTypeSpecifier type_spec)
         FIRTREE_TYPE_VEC3,
         FIRTREE_TYPE_VEC4,
         G_TYPE_NONE,
-        G_TYPE_NONE,
+        FIRTREE_TYPE_VEC4,
         G_TYPE_NONE
     };
 

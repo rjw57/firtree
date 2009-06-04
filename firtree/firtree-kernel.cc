@@ -269,9 +269,20 @@ firtree_kernel_list_arguments (FirtreeKernel* self, guint* n_arguments)
 gboolean
 firtree_kernel_has_argument_named (FirtreeKernel* self, gchar* arg_name)
 {
-    FirtreeKernelPrivate* p = GET_PRIVATE(self);
-    return (NULL != g_datalist_id_get_data(&p->arg_spec_list, 
-                g_quark_from_string(arg_name)));
+    /* We do it this way to avoid creating a GQuark for an
+     * argument name that may well not exist meaning we needlessly make
+     * a copy of the argument. This way is slower but more memory 
+     * efficient. */
+
+    GQuark* args = firtree_kernel_list_arguments(self, NULL);
+    while(*args)
+    {
+        if(0 == g_strcmp0(arg_name, g_quark_to_string(*args))) {
+            return TRUE;
+        }
+        ++args;
+    }
+    return FALSE;
 }
 
 FirtreeKernelArgumentSpec*

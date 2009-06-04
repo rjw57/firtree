@@ -12,9 +12,9 @@ using namespace Firtree::LLVM;
 
 enum
 {
-  FIRTREE_KERNEL_PROP_0,
+  PROP_0,
 
-  FIRTREE_KERNEL_PROP_COMPILE_STATUS
+  PROP_COMPILE_STATUS
 };
 
 G_DEFINE_TYPE (FirtreeKernel, firtree_kernel, G_TYPE_OBJECT)
@@ -40,7 +40,7 @@ firtree_kernel_get_property (GObject *object, guint property_id,
 {
     FirtreeKernelPrivate* p = GET_PRIVATE(object);
     switch (property_id) {
-        case FIRTREE_KERNEL_PROP_COMPILE_STATUS:
+        case PROP_COMPILE_STATUS:
             g_value_set_boolean(value, p->compile_status);
             break;
         default:
@@ -127,7 +127,7 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
      * has not yet been called.
      */
     g_object_class_install_property (object_class,
-            FIRTREE_KERNEL_PROP_COMPILE_STATUS,
+            PROP_COMPILE_STATUS,
             param_spec);
 }
 

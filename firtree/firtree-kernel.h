@@ -217,7 +217,7 @@ firtree_kernel_get_argument_value (FirtreeKernel* self, GQuark arg_name);
  *
  * Sets the value of @arg_name to @value. It is an error for the type of
  * @value to be a mis-match with that of @arg_name. Use 
- * firtree_kernel_get_argument_spec() to quiery what type is expected.
+ * firtree_kernel_get_argument_spec() to query what type is expected.
  *
  * If NULL is passed in @value, the argument is unset.
  *

@@ -114,6 +114,12 @@
   (return-type "FirtreeSampler*")
 )
 
+(define-method get_extent
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_get_extent")
+  (return-type "FirtreeVec4")
+)
+
 
 
 ;; From firtree-vector.h

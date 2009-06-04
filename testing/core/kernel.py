@@ -13,6 +13,9 @@ class SimpleGood(unittest.TestCase):
         """
         self._k.compile_from_source(src)
 
+    def tearDown(self):
+        self._k = None
+
     def testArgList(self):
         self.assertEqual(self._k.list_arguments(), ())
 
@@ -42,6 +45,9 @@ class SimpleBad(unittest.TestCase):
         """
         self._k.compile_from_source(src)
 
+    def tearDown(self):
+        self._k = None
+
     def testValidity(self):
         self.assertEqual(self._k.is_valid(), False)
 
@@ -64,6 +70,9 @@ class SimpleLines(unittest.TestCase):
                 "    return vec4(1,0,0,1);",
                 "}", )
         self._k.compile_from_source(src)
+
+    def tearDown(self):
+        self._k = None
 
     def testCompileStatusMethod(self):
         self.assertEqual(self._k.get_compile_status(), True)
@@ -92,6 +101,9 @@ class Arguments(unittest.TestCase):
 
         self._mirror = { }
         self._k.connect('argument-changed', self.argChange)
+
+    def tearDown(self):
+        self._k = None
 
     def argChange(self, kernel, arg):
         self.assertEqual(kernel, self._k)
@@ -237,6 +249,9 @@ class Creation(unittest.TestCase):
     def setUp(self):
         self._k = Kernel()
 
+    def tearDown(self):
+        self._k = None
+
     def testKernelCreation(self):
         self.failIfEqual(self._k, None)
 
@@ -270,6 +285,9 @@ class VectorArguments(unittest.TestCase):
         self.assertEqual(self._k['arg2'], None)
         self.assertEqual(self._k['arg3'], None)
         self.assertEqual(self._k['arg4'], None)
+
+    def tearDown(self):
+        self._k = None
 
     def assertAlmostEqualTuples(self, a, b):
         self.assertEqual(len(a), len(b))
@@ -392,6 +410,9 @@ class SamplerArguments(unittest.TestCase):
         self._k.compile_from_source(src)
         self.assertEqual(self._k.get_compile_status(), True)
         self.assertEqual(self._k['arg1'], None)
+
+    def tearDown(self):
+        self._k = None
 
     def testSimpleConstruction(self):
         s = Sampler()

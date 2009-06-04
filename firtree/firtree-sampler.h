@@ -22,6 +22,8 @@
 
 #include <glib-object.h>
 
+#include "firtree-vector.h"
+
 /**
  * SECTION:firtree-sampler
  * @short_description: Encapsulate the various image sources Firtree can use.
@@ -76,6 +78,18 @@ GType firtree_sampler_get_type (void);
  */
 FirtreeSampler*
 firtree_sampler_new (void);
+
+/**
+ * firtree_sampler_get_extent:
+ * @self: An instantiated FirtreeSampler object.
+ *
+ * Find the extent of the sampler as a (minx, miny, width, height)
+ * 4-vector.
+ *
+ * Returns: A 4-vector with the sampler extent.
+ */
+FirtreeVec4
+firtree_sampler_get_extent (FirtreeSampler* self);
 
 G_END_DECLS
 

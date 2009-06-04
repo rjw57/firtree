@@ -86,5 +86,12 @@ firtree_sampler_new (void)
     return g_object_new (FIRTREE_TYPE_SAMPLER, NULL);
 }
 
+FirtreeVec4
+firtree_sampler_get_extent (FirtreeSampler* self)
+{
+    FirtreeVec4 extent = { 0, 0, 0, 0 };
+    return extent;
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

@@ -9,10 +9,16 @@ bindings_path = os.path.join(root_path, 'bindings', 'python')
 sys.path.append(bindings_path)
 
 # Now import the tests
-from core.kernel import *
+import core.kernel
+import core.sampler
+
+suite = unittest.TestSuite()
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernel))
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.sampler))
 
 if __name__ == '__main__':
-    unittest.main()
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 
 # vim:sw=4:ts=4:et:autoindent
 

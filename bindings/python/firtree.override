@@ -5,8 +5,15 @@ headers
 #include <pygobject.h> 
 
 #include <firtree/firtree-kernel.h>
+
+static PyObject* 
+_wrap_firtree_kernel_mp_subscript(PyObject *self, PyObject *arg_obj);
+
+static int
+_wrap_firtree_kernel_mp_ass_subscript(PyObject *self, PyObject *arg_obj, PyObject *value);
 %%
 init
+
 %%
 modulename pyfirtree
 %%
@@ -138,32 +145,13 @@ static PyObject *
 _wrap_firtree_kernel_get_argument_value(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "arg_name", NULL };
-    char *arg_name;
+    PyObject* arg_obj;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:FirtreeKernel.get_argument_value", kwlist, &arg_name))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:FirtreeKernel.get_argument_value", kwlist,
+                &PyString_Type, &arg_obj))
         return NULL;
-    
-    GQuark arg_quark = g_quark_from_string(arg_name);
-    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(
-            FIRTREE_KERNEL(self->obj), arg_quark);
 
-    /* If no spec, throw a key error */
-    if(NULL == spec) {
-        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
-        PyErr_SetObject(PyExc_KeyError, err_str);
-        Py_DECREF(err_str);
-        return NULL;
-    }
-
-    GValue* arg_value = firtree_kernel_get_argument_value(
-            FIRTREE_KERNEL(self->obj), arg_quark);
-    if(NULL == arg_value)
-    {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-
-    return pyg_value_as_pyobject(arg_value, TRUE);
+    return _wrap_firtree_kernel_mp_subscript((PyObject*)self, arg_obj);
 }
 %%
 override firtree_kernel_set_argument_value kwargs
@@ -171,45 +159,15 @@ static PyObject *
 _wrap_firtree_kernel_set_argument_value(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "arg_name", "value", NULL };
-    char *arg_name;
+    PyObject* arg_obj;
     PyObject* value;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "sO:FirtreeKernel.set_argument_value", kwlist,
-                &arg_name, &value))
+                "O!O:FirtreeKernel.set_argument_value", kwlist,
+                 &PyString_Type, &arg_obj, &value))
         return NULL;
-    
-    GQuark arg_quark = g_quark_from_string(arg_name);
-    GValue arg_value = {0,};
-    
-    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(
-            FIRTREE_KERNEL(self->obj), arg_quark);
 
-    /* If no spec, throw a key error */
-    if(NULL == spec) {
-        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
-        PyErr_SetObject(PyExc_KeyError, err_str);
-        Py_DECREF(err_str);
-        return NULL;
-    }
-
-    g_value_init(&arg_value, spec->type);
-    if(pyg_value_from_pyobject(&arg_value, value)) {
-        PyObject* err_str = PyString_FromFormat(
-                "Argument is expected to be of type %s.",
-                g_type_name(spec->type));
-        PyErr_SetObject(PyExc_TypeError, err_str);
-        Py_DECREF(err_str);
-        return NULL;
-    }
-
-    gboolean rv = firtree_kernel_set_argument_value(
-            FIRTREE_KERNEL(self->obj), arg_quark, &arg_value);
-
-    g_value_unset(&arg_value);
-
-    if(!rv) {
-        PyErr_SetString(PyExc_ValueError, "Could not set argument value.");
+    if(_wrap_firtree_kernel_mp_ass_subscript((PyObject*)self, arg_obj, value)) {
         return NULL;
     }
 
@@ -279,6 +237,95 @@ _wrap_firtree_kernel_list_arguments(PyGObject *self, PyObject *args, PyObject *k
 
     return arg_tuple;
 }
+%%
+override-slot FirtreeKernel.tp_as_mapping
+static Py_ssize_t
+_wrap_firtree_kernel_mp_length(PyGObject *self)
+{
+    guint n_args = 0;
+    firtree_kernel_list_arguments(FIRTREE_KERNEL(self->obj), &n_args);
+    return n_args;
+}
+
+static PyObject* 
+_wrap_firtree_kernel_mp_subscript(PyObject *self, PyObject *arg_obj)
+{
+    gchar* arg_name = PyString_AsString(arg_obj);
+    if(NULL == arg_name) {
+        return NULL;
+    }
+
+    FirtreeKernel* kernel = FIRTREE_KERNEL(((PyGObject*)self)->obj);
+    GQuark arg_quark = g_quark_from_string(arg_name);
+    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(kernel, arg_quark);
+
+    /* If no spec, throw a key error */
+    if(NULL == spec) {
+        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
+        PyErr_SetObject(PyExc_KeyError, err_str);
+        Py_DECREF(err_str);
+        return NULL;
+    }
+
+    GValue* arg_value = firtree_kernel_get_argument_value(kernel, arg_quark);
+    if(NULL == arg_value)
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    return pyg_value_as_pyobject(arg_value, TRUE);
+}
+
+static int
+_wrap_firtree_kernel_mp_ass_subscript(PyObject *self, PyObject *arg_obj, PyObject *value)
+{
+    gchar* arg_name = PyString_AsString(arg_obj);
+    if(NULL == arg_name) {
+        return -1;
+    }
+
+    FirtreeKernel* kernel = FIRTREE_KERNEL(((PyGObject*)self)->obj);
+    GQuark arg_quark = g_quark_from_string(arg_name);
+    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(kernel, arg_quark);
+
+    /* If no spec, throw a key error */
+    if(NULL == spec) {
+        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
+        PyErr_SetObject(PyExc_KeyError, err_str);
+        Py_DECREF(err_str);
+        return -1;
+    }
+
+    GValue arg_value = {0,};
+    g_value_init(&arg_value, spec->type);
+    if(pyg_value_from_pyobject(&arg_value, value)) {
+        PyObject* err_str = PyString_FromFormat(
+                "Argument %s is expected to be of type %s.",
+                arg_name,
+                g_type_name(spec->type));
+        PyErr_SetObject(PyExc_TypeError, err_str);
+        Py_DECREF(err_str);
+        return -1;
+    }
+
+    gboolean rv = firtree_kernel_set_argument_value(kernel, arg_quark, &arg_value);
+
+    g_value_unset(&arg_value);
+
+    if(!rv) {
+        PyErr_SetString(PyExc_ValueError, "Could not set argument value.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static PyMappingMethods _wrap_firtree_kernel_tp_as_mapping = {
+    (lenfunc)_wrap_firtree_kernel_mp_length,
+    (binaryfunc)_wrap_firtree_kernel_mp_subscript,
+    (objobjargproc)_wrap_firtree_kernel_mp_ass_subscript,
+};
 %%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

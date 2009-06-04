@@ -21,6 +21,8 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
     
     list(LENGTH _xml_file _xml_file_length)
 
+    # set(_do_all ALL)
+
     set(_opts_valid 1)
     if(NOT _xml_file_length LESS 2)
         message(SEND_ERROR "Must have at most one sgml file specified.")
@@ -197,7 +199,8 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
             WORKING_DIRECTORY "${_output_html_dir}"
             VERBATIM)
 
-        add_custom_target(${_doc_prefix}-docs ALL DEPENDS "${_output_html_stamp}")
+        add_custom_target(doc-${_doc_prefix} ${_do_all} 
+            DEPENDS "${_output_html_stamp}")
     endif(_opts_valid)
 endmacro(gtk_doc_add_module)
 

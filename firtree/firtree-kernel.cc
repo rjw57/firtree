@@ -354,6 +354,7 @@ firtree_kernel_get_argument_value (FirtreeKernel* self, GQuark arg_name)
 static void
 _firtree_kernel_value_destroy_func (gpointer value)
 {
+    g_value_unset((GValue*)value);
     g_slice_free(GValue, value);
 }
 
@@ -362,8 +363,12 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
         GQuark arg_name, GValue* value)
 {
     FirtreeKernelPrivate* p = GET_PRIVATE(self);
-    if(!firtree_kernel_has_argument_named(self, 
-                const_cast<gchar*>(g_quark_to_string(arg_name)))) {
+    FirtreeKernelArgumentSpec* spec =
+        firtree_kernel_get_argument_spec(self, arg_name);
+
+    /* If we have no spec, we assume it is because this argument doesn't
+     * exist. */
+    if(spec == NULL) {
         return FALSE;
     }
 
@@ -374,8 +379,14 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
         return TRUE;
     }
 
+    /* Check the type */
+    if(spec->type != G_VALUE_TYPE(value)) {
+        return FALSE;
+    }
+
     /* Create a new GValue to store a copy of the passed value. */
     GValue* new_val = (GValue*)g_slice_alloc0(sizeof(GValue));
+    g_value_init(new_val, spec->type);
     g_value_copy(value, new_val);
 
     /* Insert the GValue into the arg value list. */

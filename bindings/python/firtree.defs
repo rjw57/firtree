@@ -94,3 +94,32 @@
 )
 
 
+
+;; From firtree-vector.h
+
+(define-function vec2_get_type
+  (c-name "firtree_vec2_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+(define-function vec3_get_type
+  (c-name "firtree_vec3_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+(define-function vec4_get_type
+  (c-name "firtree_vec4_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+
+
+;; From firtree.h
+
+

@@ -1,6 +1,24 @@
 ;; -*- scheme -*-
 ; boxed definitions ...
 
+(define-boxed _vec2
+  (in-module "firtree")
+  (c-name "firtree_vec2")
+  (gtype-id "FIRTREE_TYPE_VEC2")
+)
+
+(define-boxed _vec3
+  (in-module "firtree")
+  (c-name "firtree_vec3")
+  (gtype-id "FIRTREE_TYPE_VEC3")
+)
+
+(define-boxed _vec4
+  (in-module "firtree")
+  (c-name "firtree_vec4")
+  (gtype-id "FIRTREE_TYPE_VEC4")
+)
+
 ; interface definitions ...
 
 ; object definitions ...

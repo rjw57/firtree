@@ -180,5 +180,29 @@ firtree_affine_transform_set_translation_by (FirtreeAffineTransform* self,
 {
 }
 
+void
+firtree_affine_transform_set_elements (FirtreeAffineTransform* self, 
+        float m11, float m12, float m21, float m22, float tx, float ty)
+{
+    self->m11 = m11;
+    self->m12 = m12;
+    self->m21 = m21;
+    self->m22 = m22;
+    self->tx = tx;
+    self->ty = ty;
+}
+
+void
+firtree_affine_transform_get_elements (FirtreeAffineTransform* self, 
+        float* m11, float* m12, float* m21, float* m22, float* tx, float* ty)
+{
+    *m11 = self->m11;
+    *m12 = self->m12;
+    *m21 = self->m21;
+    *m22 = self->m22;
+    *tx = self->tx;
+    *ty = self->ty;
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

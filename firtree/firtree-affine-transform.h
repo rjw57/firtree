@@ -116,6 +116,14 @@ void
 firtree_affine_transform_set_translation_by (FirtreeAffineTransform* self, 
         float tx, float ty);
 
+void
+firtree_affine_transform_set_elements (FirtreeAffineTransform* self, 
+        float m11, float m12, float m21, float m22, float tx, float ty);
+
+void
+firtree_affine_transform_get_elements (FirtreeAffineTransform* self, 
+        float* m11, float* m12, float* m21, float* m22, float* tx, float* ty);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_AFFINE_TRANSFORM */

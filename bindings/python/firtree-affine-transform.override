@@ -47,5 +47,35 @@ _wrap_firtree_affine_transform_transform_size(PyGObject* self, PyObject *args,  
     return rv;
 }
 %%
+override firtree_affine_transform_get_elements
+static PyObject* 
+_wrap_firtree_affine_transform_get_elements(PyGObject* self, PyObject *args)
+{
+    /* We expect no parameters */
+    if(!PyArg_ParseTuple(args, ":AffineTransform.get_elements"))
+    {
+        return NULL;
+    }
+
+    float m11, m12, m21, m22, tx, ty;
+
+    firtree_affine_transform_get_elements(FIRTREE_AFFINE_TRANSFORM(self->obj),
+            &m11, &m12, &m21, &m22, &tx, &ty);
+
+    PyObject* element_tuple = PyTuple_New(6);
+    if(NULL == element_tuple) {
+        return NULL;
+    }
+
+    PyTuple_SET_ITEM(element_tuple, 0, PyFloat_FromDouble(m11));
+    PyTuple_SET_ITEM(element_tuple, 1, PyFloat_FromDouble(m12));
+    PyTuple_SET_ITEM(element_tuple, 2, PyFloat_FromDouble(m21));
+    PyTuple_SET_ITEM(element_tuple, 3, PyFloat_FromDouble(m22));
+    PyTuple_SET_ITEM(element_tuple, 4, PyFloat_FromDouble(tx));
+    PyTuple_SET_ITEM(element_tuple, 5, PyFloat_FromDouble(ty));
+
+    return element_tuple;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

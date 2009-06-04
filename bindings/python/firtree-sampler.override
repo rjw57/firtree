@@ -4,7 +4,7 @@ static PyObject*
 _wrap_firtree_sampler_get_extent(PyGObject* self, PyObject *args)
 {
     /* We expect no parameters */
-    if(!PyArg_ParseTuple(args, ":Kernel.get_compile_log"))
+    if(!PyArg_ParseTuple(args, ":Sampler.get_extent"))
     {
         return NULL;
     }

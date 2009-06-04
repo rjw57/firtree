@@ -23,6 +23,13 @@
 
 ; object definitions ...
 
+(define-object AffineTransform
+  (in-module "Firtree")
+  (parent "GObject")
+  (c-name "FirtreeAffineTransform")
+  (gtype-id "FIRTREE_TYPE_AFFINE_TRANSFORM")
+)
+
 (define-object Kernel
   (in-module "Firtree")
   (parent "GObject")

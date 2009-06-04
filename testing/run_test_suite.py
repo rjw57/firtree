@@ -9,10 +9,12 @@ bindings_path = os.path.join(root_path, 'bindings', 'python')
 sys.path.append(bindings_path)
 
 # Now import the tests
+import core.affinetransform
 import core.kernel
 import core.sampler
 
 suite = unittest.TestSuite()
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.affinetransform))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernel))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.sampler))
 

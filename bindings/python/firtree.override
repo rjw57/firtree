@@ -102,6 +102,7 @@ ignore-glob
   *_unref
 %%
 include
+    firtree-affine-transform.override
     firtree-kernel.override
     firtree-sampler.override
 %%

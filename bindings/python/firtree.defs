@@ -1,4 +1,151 @@
 
+;; From firtree-affine-transform.h
+
+(define-function affine_transform_get_type
+  (c-name "firtree_affine_transform_get_type")
+  (return-type "GType")
+)
+
+(define-function affine_transform_new
+  (c-name "firtree_affine_transform_new")
+  (is-constructor-of "FirtreeAffineTransform")
+  (return-type "FirtreeAffineTransform*")
+)
+
+(define-method clone
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_clone")
+  (return-type "FirtreeAffineTransform*")
+)
+
+(define-method is_identity
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_is_identity")
+  (return-type "gboolean")
+)
+
+(define-method append_transform
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_append_transform")
+  (return-type "none")
+  (parameters
+    '("FirtreeAffineTransform*" "trans")
+  )
+)
+
+(define-method prepend_transform
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_prepend_transform")
+  (return-type "none")
+  (parameters
+    '("FirtreeAffineTransform*" "trans")
+  )
+)
+
+(define-method invert
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_invert")
+  (return-type "gboolean")
+)
+
+(define-method rotate_by_degrees
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_rotate_by_degrees")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method rotate_by_radians
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_rotate_by_radians")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method scale_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_scale_by")
+  (return-type "none")
+  (parameters
+    '("float" "sx")
+    '("float" "sy")
+  )
+)
+
+(define-method translate_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_translate_by")
+  (return-type "none")
+  (parameters
+    '("float" "tx")
+    '("float" "ty")
+  )
+)
+
+(define-method transform_point
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_transform_point")
+  (return-type "FirtreeVec2")
+  (parameters
+    '("float" "x")
+    '("float" "y")
+  )
+)
+
+(define-method transform_size
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_transform_size")
+  (return-type "FirtreeVec2")
+  (parameters
+    '("float" "width")
+    '("float" "height")
+  )
+)
+
+(define-method set_rotation_by_degrees
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_rotation_by_degrees")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method set_rotation_by_radians
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_rotation_by_radians")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method set_scaling_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_scaling_by")
+  (return-type "none")
+  (parameters
+    '("float" "sx")
+    '("float" "sy")
+  )
+)
+
+(define-method set_translation_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_translation_by")
+  (return-type "none")
+  (parameters
+    '("float" "tx")
+    '("float" "ty")
+  )
+)
+
+
+
 ;; From firtree-kernel.h
 
 (define-function kernel_get_type

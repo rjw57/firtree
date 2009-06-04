@@ -16,6 +16,9 @@ class SimpleGood(unittest.TestCase):
     def testArgList(self):
         self.assertEqual(self._k.list_arguments(), ())
 
+    def testValidity(self):
+        self.assertEqual(self._k.is_valid(), True)
+
     def testCompileStatusMethod(self):
         self.assertEqual(self._k.get_compile_status(), True)
 
@@ -38,6 +41,9 @@ class SimpleBad(unittest.TestCase):
             }
         """
         self._k.compile_from_source(src)
+
+    def testValidity(self):
+        self.assertEqual(self._k.is_valid(), False)
 
     def testCompileStatusMethod(self):
         self.assertEqual(self._k.get_compile_status(), False)
@@ -90,6 +96,19 @@ class Arguments(unittest.TestCase):
     def argChange(self, kernel, arg):
         self.assertEqual(kernel, self._k)
         self._mirror[arg] = kernel[arg]
+
+    def testValidity(self):
+        self._k['arg1'] = None
+        self._k['arg2'] = None
+        self.assertEqual(self._k.is_valid(), False)
+        self._k['arg1'] = 1.0
+        self.assertEqual(self._k.is_valid(), False)
+        self._k['arg2'] = 2.0
+        self.assertEqual(self._k.is_valid(), True)
+        self._k['arg1'] = None
+        self.assertEqual(self._k.is_valid(), False)
+        self._k['arg2'] = None
+        self.assertEqual(self._k.is_valid(), False)
 
     def testArgList(self):
         self.assertEqual(self._k.list_arguments(), ('arg1', 'arg2'))
@@ -223,6 +242,9 @@ class Creation(unittest.TestCase):
 
     def testDefaultArgList(self):
         self.assertEqual(self._k.list_arguments(), None)
+
+    def testDefaultValidity(self):
+        self.assertEqual(self._k.is_valid(), False)
 
     def testDefaultStatus(self):
         self.assertEqual(self._k.get_compile_status(), False)

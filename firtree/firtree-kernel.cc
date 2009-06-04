@@ -427,6 +427,29 @@ firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name)
     g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED_QUARK], 0, arg_name);
 }
 
+gboolean
+firtree_kernel_is_valid (FirtreeKernel* self)
+{
+    FirtreeKernelPrivate* p = GET_PRIVATE(self);
+    if(!p->compile_status) {
+        return FALSE;
+    }
+
+    /* iterate through arguments */
+    GQuark* args = firtree_kernel_list_arguments(self, NULL);
+    if(!args) {
+        return FALSE;
+    }
+    while(*args) {
+        if(NULL == firtree_kernel_get_argument_value(self, *args)) {
+            return FALSE;
+        }
+        ++args;
+    }
+
+    return TRUE;
+}
+
 llvm::Module*
 firtree_kernel_get_llvm_module(FirtreeKernel* self)
 {

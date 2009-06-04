@@ -243,6 +243,18 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
 void
 firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name);
 
+/**
+ * firtree_kernel_is_valid:
+ * @self: A FirtreeKernel instance.
+ *
+ * Returns TRUE iff the kernel is considered 'valid'. A valid kernel is
+ * one which is successfully compiled and has all of its arguments set.
+ *
+ * Returns: A gboolean indicating whether the kernel is valid.
+ */
+gboolean
+firtree_kernel_is_valid (FirtreeKernel* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_KERNEL */

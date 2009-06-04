@@ -93,6 +93,12 @@
   )
 )
 
+(define-method is_valid
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_is_valid")
+  (return-type "gboolean")
+)
+
 
 
 ;; From firtree-sampler.h

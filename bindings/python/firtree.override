@@ -116,5 +116,169 @@ _wrap_firtree_kernel_get_compile_log(PyGObject* self, PyObject *args)
     return log_tuple;
 }
 %%
+override firtree_kernel_argument_changed kwargs
+static PyObject *
+_wrap_firtree_kernel_argument_changed(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "arg_name", NULL };
+    char *arg_name;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:FirtreeKernel.argument_changed", kwlist, &arg_name))
+        return NULL;
+    
+    firtree_kernel_argument_changed(FIRTREE_KERNEL(self->obj),
+            g_quark_from_string(arg_name));
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+override firtree_kernel_get_argument_value kwargs
+static PyObject *
+_wrap_firtree_kernel_get_argument_value(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "arg_name", NULL };
+    char *arg_name;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:FirtreeKernel.get_argument_value", kwlist, &arg_name))
+        return NULL;
+    
+    GQuark arg_quark = g_quark_from_string(arg_name);
+    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(
+            FIRTREE_KERNEL(self->obj), arg_quark);
+
+    /* If no spec, throw a key error */
+    if(NULL == spec) {
+        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
+        PyErr_SetObject(PyExc_KeyError, err_str);
+        Py_DECREF(err_str);
+        return NULL;
+    }
+
+    GValue* arg_value = firtree_kernel_get_argument_value(
+            FIRTREE_KERNEL(self->obj), arg_quark);
+    if(NULL == arg_value)
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    return pyg_value_as_pyobject(arg_value, TRUE);
+}
+%%
+override firtree_kernel_set_argument_value kwargs
+static PyObject *
+_wrap_firtree_kernel_set_argument_value(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "arg_name", "value", NULL };
+    char *arg_name;
+    PyObject* value;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "sO:FirtreeKernel.set_argument_value", kwlist,
+                &arg_name, &value))
+        return NULL;
+    
+    GQuark arg_quark = g_quark_from_string(arg_name);
+    GValue arg_value = {0,};
+    
+    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(
+            FIRTREE_KERNEL(self->obj), arg_quark);
+
+    /* If no spec, throw a key error */
+    if(NULL == spec) {
+        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
+        PyErr_SetObject(PyExc_KeyError, err_str);
+        Py_DECREF(err_str);
+        return NULL;
+    }
+
+    g_value_init(&arg_value, spec->type);
+    if(pyg_value_from_pyobject(&arg_value, value)) {
+        PyObject* err_str = PyString_FromFormat(
+                "Argument is expected to be of type %s.",
+                g_type_name(spec->type));
+        PyErr_SetObject(PyExc_TypeError, err_str);
+        Py_DECREF(err_str);
+        return NULL;
+    }
+
+    gboolean rv = firtree_kernel_set_argument_value(
+            FIRTREE_KERNEL(self->obj), arg_quark, &arg_value);
+
+    g_value_unset(&arg_value);
+
+    if(!rv) {
+        PyErr_SetString(PyExc_ValueError, "Could not set argument value.");
+        return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+override firtree_kernel_get_argument_spec kwargs
+static PyObject *
+_wrap_firtree_kernel_get_argument_spec(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "arg_name", NULL };
+    char *arg_name;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "s:FirtreeKernel.get_argument_spec", kwlist,
+                &arg_name))
+        return NULL;
+    
+    GQuark arg_quark = g_quark_from_string(arg_name);
+
+    FirtreeKernelArgumentSpec* spec = firtree_kernel_get_argument_spec(
+            FIRTREE_KERNEL(self->obj), arg_quark);
+
+    /* If no spec, throw a key error */
+    if(NULL == spec) {
+        PyObject* err_str = PyString_FromFormat("No such argument: %s.", arg_name);
+        PyErr_SetObject(PyExc_KeyError, err_str);
+        Py_DECREF(err_str);
+        return NULL;
+    }
+
+    /* Create a tuple to hold spec. */
+    PyObject* spec_tuple = PyTuple_New(3);
+    PyTuple_SET_ITEM(spec_tuple, 0, PyString_FromString(arg_name));
+    PyTuple_SET_ITEM(spec_tuple, 1, pyg_type_wrapper_new(spec->type));
+    PyTuple_SET_ITEM(spec_tuple, 2, PyBool_FromLong((long)spec->is_static));
+
+    return spec_tuple;
+}
+%%
+override firtree_kernel_list_arguments kwargs
+static PyObject *
+_wrap_firtree_kernel_list_arguments(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                ":FirtreeKernel.list_arguments", kwlist))
+        return NULL;
+
+    guint n_args = 0;
+    GQuark* arg_list = firtree_kernel_list_arguments(
+            FIRTREE_KERNEL(self->obj), &n_args);
+
+    if(NULL == arg_list) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    
+    /* Create a tuple to hold result. */
+    PyObject* arg_tuple = PyTuple_New(n_args);
+    guint i;
+    for(i=0; i<n_args; ++i) {
+        PyTuple_SET_ITEM(arg_tuple, i, PyString_FromString(g_quark_to_string(arg_list[i])));
+    }
+
+    return arg_tuple;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

@@ -84,4 +84,13 @@
   )
 )
 
+(define-method argument_changed
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_argument_changed")
+  (return-type "none")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
 

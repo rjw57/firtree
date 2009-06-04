@@ -233,5 +233,131 @@ class Creation(unittest.TestCase):
     def testDefaultArgList(self):
         self.assertEqual(self._k.list_arguments(), None)
 
+class VectorArguments(unittest.TestCase):
+    def setUp(self):
+        self._k = Kernel()
+        self.assertNotEqual(self._k, None)
+        src = """
+            kernel vec4 simpleKernel(float arg1, vec2 arg2, vec3 arg3, vec4 arg4) {
+                return vec4(1,0,0,1);
+            }
+        """
+        self._k.compile_from_source(src)
+        self.assertEqual(self._k.get_compile_status(), True)
+        self.assertEqual(self._k['arg1'], None)
+        self.assertEqual(self._k['arg2'], None)
+        self.assertEqual(self._k['arg3'], None)
+        self.assertEqual(self._k['arg4'], None)
+
+    def assertAlmostEqualTuples(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(0, len(a)):
+            self.assertAlmostEqual(a[i], b[i], 4)
+
+    def testSet1Int(self):
+        self._k['arg1'] = 1;
+        self.assertEqual(self._k['arg1'], 1.0)
+
+    def testSet1Float(self):
+        self._k['arg1'] = 4.5;
+        self.assertEqual(self._k['arg1'], 4.5)
+
+    def testSet1Bad(self):
+        def badSet():
+            self._k['arg1'] = 'invalid';
+        self.assertRaises(TypeError, badSet)
+
+    def testSet2Int(self):
+        self._k['arg2'] = (1, 2)
+        self.assertAlmostEqualTuples(self._k['arg2'], (1, 2))
+
+    def testSet2Float(self):
+        self._k['arg2'] = (1.2, 2.3)
+        self.assertAlmostEqualTuples(self._k['arg2'], (1.2, 2.3))
+        
+    def testSet2Mixed(self):
+        self._k['arg2'] = (1.2, 2)
+        self.assertAlmostEqualTuples(self._k['arg2'], (1.2, 2))
+
+    def testSet2Bad1(self):
+        def badSet():
+            self._k['arg2'] = 1.0
+        self.assertRaises(TypeError, badSet)
+ 
+    def testSet2Bad2(self):
+        def badSet():
+            self._k['arg2'] = (1.0, 2.0, 3.0)
+        self.assertRaises(TypeError, badSet)
+ 
+    def testSet2Bad3(self):
+        def badSet():
+            self._k['arg2'] = (1.0, 'bad')
+        self.assertRaises(TypeError, badSet)
+
+    def testSet3Int(self):
+        self._k['arg3'] = (1, 2, 3)
+        self.assertAlmostEqualTuples(self._k['arg3'], (1, 2, 3))
+
+    def testSet3Float(self):
+        self._k['arg3'] = (1.2, 2.3, 3.4)
+        self.assertAlmostEqualTuples(self._k['arg3'], (1.2, 2.3, 3.4))
+        
+    def testSet3Mixed(self):
+        self._k['arg3'] = (1.2, 2, 3.4)
+        self.assertAlmostEqualTuples(self._k['arg3'], (1.2, 2, 3.4))
+
+    def testSet3Bad1(self):
+        def badSet():
+            self._k['arg3'] = 1.0
+        self.assertRaises(TypeError, badSet)
+  
+    def testSet3Bad2a(self):
+        def badSet():
+            self._k['arg3'] = (1.0, 2.0)
+        self.assertRaises(TypeError, badSet)
+
+    def testSet3Bad2b(self):
+        def badSet():
+            self._k['arg3'] = (1.0, 2.0, 3.0, 4.0)
+        self.assertRaises(TypeError, badSet)
+ 
+    def testSet3Bad3(self):
+        def badSet():
+            self._k['arg3'] = (1.0, 'bad', 3.0)
+        self.assertRaises(TypeError, badSet)
+
+    def testSet4Int(self):
+        self._k['arg4'] = (1, 2, 3, 4)
+        self.assertAlmostEqualTuples(self._k['arg4'], (1, 2, 3, 4))
+
+    def testSet4Float(self):
+        self._k['arg4'] = (1.2, 2.3, 3.4, 4.5)
+        self.assertAlmostEqualTuples(self._k['arg4'], (1.2, 2.3, 3.4, 4.5))
+        
+    def testSet4Mixed(self):
+        self._k['arg4'] = (1.2, 2, 3.4, 4)
+        self.assertAlmostEqualTuples(self._k['arg4'], (1.2, 2, 3.4, 4))
+
+    def testSet4Bad1(self):
+        def badSet():
+            self._k['arg4'] = 1.0
+        self.assertRaises(TypeError, badSet)
+ 
+    def testSet4Bad2a(self):
+        def badSet():
+            self._k['arg4'] = (3.0, 4.0, 5.0)
+        self.assertRaises(TypeError, badSet)
+ 
+    def testSet4Bad2b(self):
+        def badSet():
+            self._k['arg4'] = (1.0, 2.0, 3.0, 4.0, 5.0)
+        self.assertRaises(TypeError, badSet)
+
+    def testSet4Bad3(self):
+        def badSet():
+            self._k['arg4'] = (1.0, 'bad', 3.0, 'worse')
+        self.assertRaises(TypeError, badSet)
+
+
 # vim:sw=4:ts=4:et:autoindent
 

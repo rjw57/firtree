@@ -14,12 +14,26 @@ find_package(GtkDoc)
 # If omitted, sgmlfile defaults to the auto generated ${doc_prefix}/${doc_prefix}-docs.xml.
 macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
     set(_list_names "DEPENDS" "XML" "FIXXREFOPTS" "IGNOREHEADERS" 
-        "CFLAGS" "LDFLAGS" "LDPATH")
+        "CFLAGS" "LDFLAGS" "LDPATH" "SUFFIXES")
     set(_list_variables "_depends" "_xml_file" "_fixxref_opts" "_ignore_headers"
-        "_extra_cflags" "_extra_ldflags" "_extra_ldpath")
+        "_extra_cflags" "_extra_ldflags" "_extra_ldpath" "_suffixes")
     parse_options(_list_names _list_variables ${ARGN})
     
     list(LENGTH _xml_file _xml_file_length)
+
+
+    if(_suffixes)
+        set(_doc_source_suffixes "")
+        foreach(_suffix ${_suffixes})
+            if(_doc_source_suffixes)
+                set(_doc_source_suffixes "${_doc_source_suffixes},${_suffix}")
+            else(_doc_source_suffixes)
+                set(_doc_source_suffixes "${_suffix}")
+            endif(_doc_source_suffixes)
+        endforeach(_suffix)
+    else(_suffixes)
+        set(_doc_source_suffixes "h")
+    endif(_suffixes)
 
     # set(_do_all ALL)
 
@@ -164,6 +178,7 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
             COMMAND ${GTKDOC_MKDB_EXE}
                 "--module=${_doc_prefix}"
                 "--source-dir=${_doc_sourcedir}"
+                "--source-suffixes=${_doc_source_suffixes}"
                 "--output-format=xml"
                 "--main-sgml-file=${_default_xml_file}"
             ${_copy_xml_if_needed}

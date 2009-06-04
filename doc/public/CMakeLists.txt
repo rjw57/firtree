@@ -15,6 +15,7 @@ else(NOT GTKDOC_FOUND)
 		#XML firtree-docs.xml # When the time comes, copy this from firtree-docs.xml
 		# IGNOREHEADERS firtreetypebuiltins.h firtree-priv.h
         # CFLAGS -I../../firtree
+        SUFFIXES h c cc # <- what files to scan
         LDFLAGS -L${CMAKE_CURRENT_SOURCE_DIR}/../../firtree -lfirtree
         LDPATH ${CMAKE_CURRENT_SOURCE_DIR}/../../firtree
 		DEPENDS firtree)

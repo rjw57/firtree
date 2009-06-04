@@ -147,9 +147,11 @@ firtree_kernel_get_compile_log (FirtreeKernel* self, guint* n_log_lines);
  * firtree_kernel_get_compile_status:
  * @self: A FirtreeKernel instance.
  *
- * Returns: The return value from the last call to 
+ * Obtain the return value from the last call to 
  * firtree_kernel_compile_from_source() or FALSE if this method
  * has not yet been called.
+ *
+ * Returns: A gboolean indicating whether compilation was successful.
  */
 gboolean
 firtree_kernel_get_compile_status (FirtreeKernel* self);

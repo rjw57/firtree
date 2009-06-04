@@ -18,6 +18,7 @@ enum {
 
 enum {
     ARGUMENT_CHANGED,
+    ARGUMENT_CHANGED_QUARK,
     LAST_SIGNAL
 };
 
@@ -165,7 +166,7 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     /**
      * FirtreeKernel::argument-changed:
      * @kernel: The kernel whose argument has changed.
-     * @arg_name: A GQuark indicating the argument name.
+     * @arg_name: A string indicating the argument name.
      *
      * The ::argument-changed signal is emitted each time a @kernel 's argument
      * is modified via firtree_kernel_set_argument_value().
@@ -175,6 +176,23 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
                 G_OBJECT_CLASS_TYPE(klass),
                 (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
                 G_STRUCT_OFFSET(FirtreeKernelClass, argument_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__STRING,
+                G_TYPE_NONE, 1, G_TYPE_STRING);
+    
+    /**
+     * FirtreeKernel::argument-changed-quark:
+     * @kernel: The kernel whose argument has changed.
+     * @arg_name: A quark indicating the argument name.
+     *
+     * The ::argument-changed-quark signal is emitted each time a @kernel 's argument
+     * is modified via firtree_kernel_set_argument_value().
+     */
+    _firtree_kernel_signals[ARGUMENT_CHANGED_QUARK] = 
+        g_signal_new("argument-changed-quark",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeKernelClass, argument_changed_quark),
                 NULL, NULL,
                 g_cclosure_marshal_VOID__INT,
                 G_TYPE_NONE, 1, G_TYPE_INT);
@@ -402,7 +420,9 @@ void
 firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name)
 {
     g_return_if_fail(FIRTREE_IS_KERNEL(self));
-    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED], 0, arg_name);
+    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED], 0, 
+            g_quark_to_string(arg_name));
+    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED_QUARK], 0, arg_name);
 }
 
 llvm::Module*

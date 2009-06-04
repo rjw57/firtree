@@ -79,6 +79,7 @@ typedef struct {
     GObjectClass parent_class;
 
     void (* argument_changed) (FirtreeKernel *kernel);
+    void (* argument_changed_quark) (FirtreeKernel *kernel);
 } FirtreeKernelClass;
 
 GType firtree_kernel_get_type (void);

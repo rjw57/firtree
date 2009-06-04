@@ -14,6 +14,9 @@ else(NOT GTKDOC_FOUND)
 	gtk_doc_add_module(firtree ${CMAKE_SOURCE_DIR}/firtree 
 		#XML firtree-docs.xml # When the time comes, copy this from firtree-docs.xml
 		# IGNOREHEADERS firtreetypebuiltins.h firtree-priv.h
+        # CFLAGS -I../../firtree
+        LDFLAGS -L${CMAKE_CURRENT_SOURCE_DIR}/../../firtree -lfirtree
+        LDPATH ${CMAKE_CURRENT_SOURCE_DIR}/../../firtree
 		DEPENDS firtree)
 endif(NOT GTKDOC_FOUND)
 

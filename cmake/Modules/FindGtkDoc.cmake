@@ -27,6 +27,13 @@ if(NOT GTKDOC_SCANGOBJ_EXE)
     set(GTKDOC_FOUND 0)
 endif(NOT GTKDOC_SCANGOBJ_EXE)
 
+get_filename_component(_this_dir ${CMAKE_CURRENT_LIST_FILE} PATH)
+find_file(GTKDOC_SCANGOBJ_WRAPPER GtkDocScanGObjWrapper.cmake PATH ${_this_dir})
+if(NOT GTKDOC_SCANGOBJ_WRAPPER)
+	message(STATUS "GtkDocScanGObjWrapper.cmake not found")
+    set(GTKDOC_FOUND 0)
+endif(NOT GTKDOC_SCANGOBJ_WRAPPER)
+
 find_program(GTKDOC_MKTMPL_EXE gtkdoc-mktmpl)
 if(NOT GTKDOC_MKTMPL_EXE)
 	message(STATUS "gtkdoc-mktmpl not found")

@@ -13,8 +13,10 @@ find_package(GtkDoc)
 #
 # If omitted, sgmlfile defaults to the auto generated ${doc_prefix}/${doc_prefix}-docs.xml.
 macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
-    set(_list_names "DEPENDS" "XML" "FIXXREFOPTS" "IGNOREHEADERS")
-    set(_list_variables "_depends" "_xml_file" "_fixxref_opts" "_ignore_headers")
+    set(_list_names "DEPENDS" "XML" "FIXXREFOPTS" "IGNOREHEADERS" 
+        "CFLAGS" "LDFLAGS" "LDPATH")
+    set(_list_variables "_depends" "_xml_file" "_fixxref_opts" "_ignore_headers"
+        "_extra_cflags" "_extra_ldflags" "_extra_ldpath")
     parse_options(_list_names _list_variables ${ARGN})
     
     list(LENGTH _xml_file _xml_file_length)
@@ -44,6 +46,8 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
         set(_output_overrides "${_output_dir}/${_doc_prefix}-overrides.txt")
         set(_output_sections "${_output_dir}/${_doc_prefix}-sections.txt")
         set(_output_types "${_output_dir}/${_doc_prefix}.types")
+
+        set(_output_signals "${_output_dir}/${_doc_prefix}.signals")
 
         set(_output_unused "${_output_dir}/${_doc_prefix}-unused.txt")
         set(_output_undeclared "${_output_dir}/${_doc_prefix}-undeclared.txt")
@@ -93,6 +97,25 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
             WORKING_DIRECTORY "${_output_dir}"
             VERBATIM)
 
+        # add a command to scan the input via gtkdoc-scangobj
+        # This is such a disgusting hack!
+        add_custom_command(
+            OUTPUT
+                "${_output_signals}"
+            DEPENDS
+                "${_output_types}"
+            COMMAND ${CMAKE_COMMAND} 
+                -D "GTKDOC_SCANGOBJ_EXE:STRING=${GTKDOC_SCANGOBJ_EXE}"
+                -D "doc_prefix:STRING=${_doc_prefix}"
+                -D "output_types:STRING=${_output_types}"
+                -D "output_dir:STRING=${_output_dir}"
+                -D "EXTRA_CFLAGS:STRING=${_extra_cflags}"
+                -D "EXTRA_LDFLAGS:STRING=${_extra_ldflags}"
+                -D "EXTRA_LDPATH:STRING=${_extra_ldpath}"
+                -P ${GTKDOC_SCANGOBJ_WRAPPER}
+            WORKING_DIRECTORY "${_output_dir}"
+            VERBATIM)
+
         # add a command to make the templates
         add_custom_command(
             OUTPUT
@@ -103,6 +126,7 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
                 "${_output_tmpl_stamp}"
             DEPENDS
                 "${_output_types}"
+                "${_output_signals}"
                 "${_output_sections}"
                 "${_output_overrides}"
                 ${_depends}

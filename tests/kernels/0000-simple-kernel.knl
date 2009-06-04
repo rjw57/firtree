@@ -1,9 +1,0 @@
-// Simple kernel example
-
-kernel vec4 simple_kernel()
-{
-    return vec4(1,0,0,1);
-}
-
-// vim:sw=4:ts=4:cindent:set filetype=c:et
-

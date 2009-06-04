@@ -201,6 +201,7 @@ firtree_kernel_compile_from_source (FirtreeKernel* self,
     /* If the compile status is good, let's create a list of our arguments. */
     if(p->compile_status) {
         /* Create an array to store the argument name quarks. */
+        g_assert(p->arg_names == NULL);
         p->arg_names = g_array_sized_new(TRUE, FALSE, 
                 sizeof(GQuark), p->preferred_function->Parameters.size());
 

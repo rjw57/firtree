@@ -226,7 +226,7 @@ void LLVMFrontend::ThrowCompileErrorException(
 
 	std::string message_str( message );
 
-	delete message;
+	delete[] message;
 
 	// Throw exception.
 	throw CompileErrorException( message_str, file,
@@ -274,7 +274,7 @@ void LLVMFrontend::RecordWarning( PT_Term term, const char* format, ... )
 
 	RecordMessage( term, false, "warning: %s", message );
 
-	delete message;
+	delete[] message;
 }
 
 //===========================================================================
@@ -324,7 +324,7 @@ void LLVMFrontend::RecordMessage( PT_Term term, bool is_error,
 		m_Status = false;
 	}
 
-	delete message;
+	delete[] message;
 }
 
 }

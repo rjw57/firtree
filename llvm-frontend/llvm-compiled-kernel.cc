@@ -289,7 +289,7 @@ CompiledKernel::~CompiledKernel()
 {
 	if(m_Log != NULL)
 	{
-		delete m_Log;
+		delete[] m_Log;
 	}
 
 	if(m_CurrentFrontend != NULL)

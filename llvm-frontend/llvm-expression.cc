@@ -91,19 +91,21 @@ ExpressionEmitterRegistry::~ExpressionEmitterRegistry()
 
 //===========================================================================
 // Global variable holding ExpressionEmitterRegistry singleton.
-ExpressionEmitterRegistry* g_ExpressionEmitterRegistrySingleton = NULL;
+ExpressionEmitterRegistry g_ExpressionEmitterRegistrySingleton;
 
 //===========================================================================
 /// Return a pointer to the singleton representing the
 /// global ExpressionEmitterRegistry.
 ExpressionEmitterRegistry* ExpressionEmitterRegistry::GetRegistry()
 {
+	/*
 	if ( g_ExpressionEmitterRegistrySingleton == NULL ) {
 		g_ExpressionEmitterRegistrySingleton =
 		    new ExpressionEmitterRegistry();
 	}
+	*/
 
-	return g_ExpressionEmitterRegistrySingleton;
+	return &g_ExpressionEmitterRegistrySingleton;
 }
 
 //===========================================================================

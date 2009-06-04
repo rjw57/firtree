@@ -96,6 +96,8 @@ main(int argc, char** argv)
         exit(1);
     }
 
+    g_option_context_free(context);
+
     if(argc < 3) {
         g_print("Must have input and output file.\n");
         exit(2);

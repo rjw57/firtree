@@ -52,6 +52,12 @@ G_BEGIN_DECLS
 #define FIRTREE_KERNEL_SAMPLER_GET_CLASS(obj) \
     (G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_KERNEL_SAMPLER, FirtreeKernelSamplerClass))
 
+/**
+ * FirtreeKernelSampler:
+ * @parent: The parent FirtreeSampler.
+ *
+ * A structure representing a FirtreeKernelSampler object.
+ */
 typedef struct {
     FirtreeSampler parent;
 } FirtreeKernelSampler;

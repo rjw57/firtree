@@ -64,10 +64,21 @@ typedef struct {
     GObject parent;
 } FirtreeSampler;
 
+/**
+ * FirtreeSamplerIntlVTable:
+ *
+ * Internal structure holding virtual function pointers for the 
+ * internal API.
+ */
 typedef struct _FirtreeSamplerIntlVTable FirtreeSamplerIntlVTable;
 
 typedef struct {
     GObjectClass                parent_class;
+
+    void (* contents_changed) (FirtreeSampler *kernel);
+    void (* module_changed) (FirtreeSampler *kernel);
+    void (* extents_changed) (FirtreeSampler *kernel);
+    void (* transform_changed) (FirtreeSampler *kernel);
 
     /* internal table of virtual methods. These are not publically
      * overridable. */
@@ -113,6 +124,42 @@ firtree_sampler_get_extent (FirtreeSampler* self);
  */
 FirtreeAffineTransform*
 firtree_sampler_get_transform (FirtreeSampler* self);
+
+/**
+ * firtree_sampler_contents_changed:
+ * @self: A FirtreeSampler object.
+ *
+ * Emit the ::contents-changed signal.
+ */
+void
+firtree_sampler_contents_changed (FirtreeSampler* self);
+
+/**
+ * firtree_sampler_module_changed:
+ * @self: A FirtreeSampler object.
+ *
+ * Emit the ::module-changed signal.
+ */
+void
+firtree_sampler_module_changed (FirtreeSampler* self);
+
+/**
+ * firtree_sampler_extents_changed:
+ * @self: A FirtreeSampler object.
+ *
+ * Emit the ::extents-changed signal.
+ */
+void
+firtree_sampler_extents_changed (FirtreeSampler* self);
+
+/**
+ * firtree_sampler_transform_changed:
+ * @self: A FirtreeSampler object.
+ *
+ * Emit the ::transform-changed signal.
+ */
+void
+firtree_sampler_transform_changed (FirtreeSampler* self);
 
 G_END_DECLS
 

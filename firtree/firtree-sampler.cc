@@ -24,6 +24,16 @@
 
 #include "internal/firtree-sampler-intl.hh"
 
+enum {
+    CONTENTS_CHANGED,
+    MODULE_CHANGED,
+    EXTENTS_CHANGED,
+    TRANSFORM_CHANGED,
+    LAST_SIGNAL
+};
+
+static guint _firtree_sampler_signals[LAST_SIGNAL] = { 0 };
+
 G_DEFINE_TYPE (FirtreeSampler, firtree_sampler, G_TYPE_OBJECT)
 
 #define GET_PRIVATE(o) \
@@ -88,9 +98,76 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
     object_class->dispose = firtree_sampler_dispose;
     object_class->finalize = firtree_sampler_finalize;
 
+    klass->contents_changed = NULL;
+    klass->module_changed = NULL;
+    klass->extents_changed = NULL;
+    klass->transform_changed = NULL;
+
     klass->intl_vtable = &_firtree_sampler_class_vtable;
     klass->intl_vtable->get_param = firtree_sampler_get_param_default;
     klass->intl_vtable->get_function = firtree_sampler_get_function_default;
+
+    /**
+     * FirtreeSampler::contents-changed:
+     * @sampler: The sampler whose contents has changed.
+     *
+     * Emitted by a sampler when the contents this sampler represents
+     * has changed.
+     */
+    _firtree_sampler_signals[CONTENTS_CHANGED] = 
+        g_signal_new("contents-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeSamplerClass, contents_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
+
+    /**
+     * FirtreeSampler::module-changed:
+     * @sampler: The sampler whose module has changed.
+     *
+     * Used by the internal API. Emitted when the LLVM IR of this sampler
+     * has changed.
+     */
+    _firtree_sampler_signals[MODULE_CHANGED] = 
+        g_signal_new("module-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeSamplerClass, module_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
+
+    /**
+     * FirtreeSampler::extents-changed:
+     * @sampler: The sampler whose extents have changed.
+     *
+     * Emitted by a sampler when its extents have changed. 
+     */
+    _firtree_sampler_signals[EXTENTS_CHANGED] = 
+        g_signal_new("extents-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeSamplerClass, extents_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
+
+    /**
+     * FirtreeSampler::transform-changed:
+     * @sampler: The sampler whose transform has changed.
+     *
+     * Emitted by a sampler when the sampler's transform has changed.
+     */
+    _firtree_sampler_signals[TRANSFORM_CHANGED] = 
+        g_signal_new("transform-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeSamplerClass, transform_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
 }
 
 static void
@@ -115,6 +192,34 @@ FirtreeAffineTransform*
 firtree_sampler_get_transform (FirtreeSampler* self)
 {
     return firtree_affine_transform_new();
+}
+
+void
+firtree_sampler_contents_changed (FirtreeSampler* self)
+{
+    g_return_if_fail(FIRTREE_IS_SAMPLER(self));
+    g_signal_emit(self, _firtree_sampler_signals[CONTENTS_CHANGED], 0);
+}
+
+void
+firtree_sampler_module_changed (FirtreeSampler* self)
+{
+    g_return_if_fail(FIRTREE_IS_SAMPLER(self));
+    g_signal_emit(self, _firtree_sampler_signals[MODULE_CHANGED], 0);
+}
+
+void
+firtree_sampler_extents_changed (FirtreeSampler* self)
+{
+    g_return_if_fail(FIRTREE_IS_SAMPLER(self));
+    g_signal_emit(self, _firtree_sampler_signals[EXTENTS_CHANGED], 0);
+}
+
+void
+firtree_sampler_transform_changed (FirtreeSampler* self)
+{
+    g_return_if_fail(FIRTREE_IS_SAMPLER(self));
+    g_signal_emit(self, _firtree_sampler_signals[TRANSFORM_CHANGED], 0);
 }
 
 gboolean

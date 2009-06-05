@@ -37,6 +37,13 @@
   (gtype-id "FIRTREE_TYPE_KERNEL")
 )
 
+(define-object KernelSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreeKernelSampler")
+  (gtype-id "FIRTREE_TYPE_KERNEL_SAMPLER")
+)
+
 (define-object Sampler
   (in-module "Firtree")
   (parent "GObject")

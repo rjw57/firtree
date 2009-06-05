@@ -189,6 +189,21 @@
 
 
 
+;; From firtree-kernel-sampler.h
+
+(define-function kernel_sampler_get_type
+  (c-name "firtree_kernel_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function kernel_sampler_new
+  (c-name "firtree_kernel_sampler_new")
+  (is-constructor-of "FirtreeKernelSampler")
+  (return-type "FirtreeKernelSampler*")
+)
+
+
+
 ;; From firtree-kernel.h
 
 (define-function kernel_get_type

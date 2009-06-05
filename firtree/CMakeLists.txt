@@ -7,6 +7,7 @@
 add_library(firtree SHARED
     firtree-affine-transform.c  firtree-affine-transform.h
     firtree-kernel.cc           firtree-kernel.h
+    firtree-kernel-sampler.cc   firtree-kernel-sampler.h
     firtree-sampler.cc          firtree-sampler.h
     firtree-vector.h            firtree-vector.c
 

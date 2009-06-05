@@ -22,11 +22,13 @@ sys.path.append(bindings_path)
 import core.affinetransform
 import core.kernel
 import core.sampler
+import core.kernelsampler
 
 suite = unittest.TestSuite()
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.affinetransform))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernel))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.sampler))
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernelsampler))
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()

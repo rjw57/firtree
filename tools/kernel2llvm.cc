@@ -18,6 +18,8 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <llvm/Module.h>
+
 #include <glib.h>
 
 #include <fcntl.h>
@@ -27,7 +29,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <firtree/firtree-kernel-priv.hpp>
+#include <firtree/firtree-kernel-priv.hh>
 
 //=============================================================================
 static GOptionEntry opt_entries[] =
@@ -142,7 +144,9 @@ main(int argc, char** argv)
     if(firtree_kernel_get_compile_status(kernel)) {
         std::ofstream output(argv[2]);
 
-        firtree_kernel_get_llvm_module(kernel)->print(output, NULL);
+        llvm::Function* func = firtree_kernel_get_llvm_function(kernel);
+            
+        func->getParent()->print(output, NULL);
 
         output << "\n";
 

@@ -3,7 +3,7 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include "firtree-kernel-priv.hpp"
+#include "firtree-kernel-priv.hh"
 #include "firtree-sampler.h"
 #include "firtree-vector.h"
 
@@ -475,8 +475,15 @@ firtree_kernel_is_valid (FirtreeKernel* self)
     return TRUE;
 }
 
-llvm::Module*
-firtree_kernel_get_llvm_module(FirtreeKernel* self)
+void
+firtree_kernel_module_changed (FirtreeKernel* self)
+{
+    g_return_if_fail(FIRTREE_IS_KERNEL(self));
+    g_signal_emit(self, _firtree_kernel_signals[MODULE_CHANGED], 0);
+}
+
+llvm::Function*
+firtree_kernel_get_llvm_function(FirtreeKernel* self)
 {
     FirtreeKernelPrivate* p = GET_PRIVATE(self);
 
@@ -485,14 +492,7 @@ firtree_kernel_get_llvm_module(FirtreeKernel* self)
         return NULL;
     }
 
-    return p->compiled_kernel->GetCompiledModule();
-}
-
-void
-firtree_kernel_module_changed (FirtreeKernel* self)
-{
-    g_return_if_fail(FIRTREE_IS_KERNEL(self));
-    g_signal_emit(self, _firtree_kernel_signals[MODULE_CHANGED], 0);
+    return p->preferred_function->Function;
 }
 
 /* vim:sw=4:ts=4:et:cindent

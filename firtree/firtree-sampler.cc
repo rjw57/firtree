@@ -1,4 +1,4 @@
-/* firtree-sampler.c */
+/* firtree-sampler.cc */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -17,7 +17,12 @@
  * Franklin Street, Fifth Floor, Boston, MA    02110-1301, USA
  */
 
-#include "firtree-sampler.h"
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
+
+#include <llvm/Function.h>
+
+#include "firtree-sampler-priv.hh"
 
 G_DEFINE_TYPE (FirtreeSampler, firtree_sampler, G_TYPE_OBJECT)
 
@@ -42,7 +47,7 @@ firtree_sampler_get_property (GObject *object, guint property_id,
 
 static void
 firtree_sampler_set_property (GObject *object, guint property_id,
-                                                            const GValue *value, GParamSpec *pspec)
+        const GValue *value, GParamSpec *pspec)
 {
     switch (property_id) {
     default:
@@ -83,7 +88,7 @@ firtree_sampler_init (FirtreeSampler *self)
 FirtreeSampler*
 firtree_sampler_new (void)
 {
-    return g_object_new (FIRTREE_TYPE_SAMPLER, NULL);
+    return (FirtreeSampler*)g_object_new (FIRTREE_TYPE_SAMPLER, NULL);
 }
 
 FirtreeVec4
@@ -91,6 +96,19 @@ firtree_sampler_get_extent (FirtreeSampler* self)
 {
     FirtreeVec4 extent = { 0, 0, 0, 0 };
     return extent;
+}
+
+gboolean
+firtree_sampler_get_param(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size)
+{
+    return FALSE;
+}
+
+llvm::Function*
+firtree_sampler_get_function(FirtreeSampler* self)
+{
+    return NULL;
 }
 
 /* vim:sw=4:ts=4:et:cindent

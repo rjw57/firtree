@@ -34,6 +34,12 @@
 
 G_BEGIN_DECLS
 
+struct _FirtreeSamplerIntlVTable {
+    gboolean (* get_param) (FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size);
+    llvm::Function* (* get_function) (FirtreeSampler* self);
+};
+
 /**
  * firtree_sampler_get_param:
  * @self: A FirtreeSampler instance.

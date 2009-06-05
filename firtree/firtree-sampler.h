@@ -64,8 +64,14 @@ typedef struct {
     GObject parent;
 } FirtreeSampler;
 
+typedef struct _FirtreeSamplerIntlVTable FirtreeSamplerIntlVTable;
+
 typedef struct {
-    GObjectClass parent_class;
+    GObjectClass                parent_class;
+
+    /* internal table of virtual methods. These are not publically
+     * overridable. */
+    FirtreeSamplerIntlVTable*   intl_vtable; 
 } FirtreeSamplerClass;
 
 GType firtree_sampler_get_type (void);

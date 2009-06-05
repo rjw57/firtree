@@ -35,6 +35,13 @@ struct _FirtreeSamplerPrivate {
         int dummy;
 };
 
+gboolean
+firtree_sampler_get_param_default(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size);
+
+llvm::Function*
+firtree_sampler_get_function_default(FirtreeSampler* self);
+
 static void
 firtree_sampler_get_property (GObject *object, guint property_id,
                                                             GValue *value, GParamSpec *pspec)
@@ -67,6 +74,8 @@ firtree_sampler_finalize (GObject *object)
     G_OBJECT_CLASS (firtree_sampler_parent_class)->finalize (object);
 }
 
+static FirtreeSamplerIntlVTable _firtree_sampler_class_vtable;
+
 static void
 firtree_sampler_class_init (FirtreeSamplerClass *klass)
 {
@@ -78,6 +87,10 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
     object_class->set_property = firtree_sampler_set_property;
     object_class->dispose = firtree_sampler_dispose;
     object_class->finalize = firtree_sampler_finalize;
+
+    klass->intl_vtable = &_firtree_sampler_class_vtable;
+    klass->intl_vtable->get_param = firtree_sampler_get_param_default;
+    klass->intl_vtable->get_function = firtree_sampler_get_function_default;
 }
 
 static void
@@ -105,14 +118,28 @@ firtree_sampler_get_transform (FirtreeSampler* self)
 }
 
 gboolean
-firtree_sampler_get_param(FirtreeSampler* self, guint param, 
+firtree_sampler_get_param_default(FirtreeSampler* self, guint param, 
         gpointer dest, guint dest_size)
 {
     return FALSE;
 }
 
+gboolean
+firtree_sampler_get_param(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size)
+{
+    return FIRTREE_SAMPLER_GET_CLASS(self)->intl_vtable->
+        get_param(self, param, dest, dest_size);
+}
+
 llvm::Function*
 firtree_sampler_get_function(FirtreeSampler* self)
+{
+    return FIRTREE_SAMPLER_GET_CLASS(self)->intl_vtable->get_function(self);
+}
+
+llvm::Function*
+firtree_sampler_get_function_default(FirtreeSampler* self)
 {
     return NULL;
 }

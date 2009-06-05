@@ -3,7 +3,7 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include "firtree-kernel-priv.hh"
+#include "internal/firtree-kernel-intl.hh"
 #include "firtree-sampler.h"
 #include "firtree-vector.h"
 

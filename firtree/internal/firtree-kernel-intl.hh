@@ -1,4 +1,4 @@
-/* firtree-kernel-priv.hpp */
+/* firtree-kernel-intl.hpp */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -17,19 +17,19 @@
  * Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#ifndef _FIRTREE_KERNEL_PRIV
-#define _FIRTREE_KERNEL_PRIV
+#ifndef _FIRTREE_KERNEL_INTL
+#define _FIRTREE_KERNEL_INTL
 
-#include "firtree-kernel.h"
+#include "../firtree-kernel.h"
 
 #include <llvm/Function.h>
 
 G_BEGIN_DECLS
 
 /**
- * SECTION:firtree-kernel-priv
+ * SECTION:firtree-kernel-intl
  * @short_description: Internal kernel interface
- * @include: firtree/firtree-kernel-priv.hh
+ * @include: firtree/internal/firtree-kernel-intl.hh
  *
  * The private interface for kernels exists of a function which returns
  * a LLVM module associated with the kernel.
@@ -50,7 +50,7 @@ firtree_kernel_get_llvm_function(FirtreeKernel* self);
 
 G_END_DECLS
 
-#endif /* _FIRTREE_KERNEL_PRIV */
+#endif /* _FIRTREE_KERNEL_INTL */
 
 /* vim:sw=4:ts=4:et:cindent
  */

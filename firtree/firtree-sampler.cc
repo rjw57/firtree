@@ -22,7 +22,7 @@
 
 #include <llvm/Function.h>
 
-#include "firtree-sampler-priv.hh"
+#include "internal/firtree-sampler-intl.hh"
 
 G_DEFINE_TYPE (FirtreeSampler, firtree_sampler, G_TYPE_OBJECT)
 

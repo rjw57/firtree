@@ -1,4 +1,4 @@
-/* firtree-sampler-priv.hh */
+/* firtree-sampler-intl.hh */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -17,17 +17,17 @@
  * Franklin Street, Fifth Floor, Boston, MA    02110-1301, USA
  */
 
-#ifndef _FIRTREE_SAMPLER_PRIV
-#define _FIRTREE_SAMPLER_PRIV
+#ifndef _FIRTREE_SAMPLER_INTL
+#define _FIRTREE_SAMPLER_INTL
 
 #include <glib-object.h>
 
-#include "firtree-sampler.h"
+#include "../firtree-sampler.h"
 
 /**
- * SECTION:firtree-sampler-priv
+ * SECTION:firtree-sampler-intl
  * @short_description: Internal sampler interface
- * @include: firtree/firtree-sampler-priv.hh
+ * @include: firtree/internal/firtree-sampler-intl.hh
  *
  * The private interface of a sampler.
  */
@@ -71,7 +71,7 @@ firtree_sampler_get_function(FirtreeSampler* self);
 
 G_END_DECLS
 
-#endif /* _FIRTREE_SAMPLER_PRIV */
+#endif /* _FIRTREE_SAMPLER_INTL */
 
 /* vim:sw=4:ts=4:et:cindent
  */

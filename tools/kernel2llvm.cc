@@ -29,7 +29,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <firtree/firtree-kernel-priv.hh>
+#include <firtree/internal/firtree-kernel-intl.hh>
 
 //=============================================================================
 static GOptionEntry opt_entries[] =

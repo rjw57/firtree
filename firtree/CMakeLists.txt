@@ -6,9 +6,13 @@
 
 add_library(firtree SHARED
     firtree-affine-transform.c  firtree-affine-transform.h
-    firtree-kernel.cc           firtree-kernel.h  firtree-kernel-priv.hh
-    firtree-sampler.cc          firtree-sampler.h firtree-sampler-priv.hh
+    firtree-kernel.cc           firtree-kernel.h
+    firtree-sampler.cc          firtree-sampler.h
     firtree-vector.h            firtree-vector.c
+
+    internal/firtree-kernel-intl.hh
+    internal/firtree-sampler-intl.hh
+    
     firtree.h)
 
 # set the library version.

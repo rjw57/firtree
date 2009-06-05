@@ -21,6 +21,7 @@ enum {
 enum {
     ARGUMENT_CHANGED,
     ARGUMENT_CHANGED_QUARK,
+    MODULE_CHANGED,
     LAST_SIGNAL
 };
 
@@ -143,6 +144,8 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     object_class->finalize = firtree_kernel_finalize;
 
     klass->argument_changed = NULL;
+    klass->argument_changed_quark = NULL;
+    klass->module_changed = NULL;
 
     param_spec = g_param_spec_boolean(
             "compile-status",
@@ -198,6 +201,24 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
                 NULL, NULL,
                 g_cclosure_marshal_VOID__INT,
                 G_TYPE_NONE, 1, G_TYPE_INT);
+     
+    /**
+     * FirtreeKernel::module-changed:
+     * @kernel: The kernel whose module has changed.
+     *
+     * The ::module-changed signal is emitted each time the @kernel 's 
+     * compiled module is changed via a call to 
+     * firtree_kernel_compile_from_source(). In addition, failed compilations
+     * cause this signal to be emitted.
+     */
+    _firtree_kernel_signals[MODULE_CHANGED] = 
+        g_signal_new("module-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                G_STRUCT_OFFSET(FirtreeKernelClass, module_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
 }
 
 static void
@@ -244,6 +265,7 @@ firtree_kernel_compile_from_source (FirtreeKernel* self,
 
     p->compile_status = p->compiled_kernel->Compile(lines, n_lines);
     if(!p->compile_status) {
+        firtree_kernel_module_changed(self);
         return p->compile_status;
     }
 
@@ -252,6 +274,7 @@ firtree_kernel_compile_from_source (FirtreeKernel* self,
     /* Do we have any functions defined? */
     if(functions.size() == 0) {
         p->compile_status = FALSE;
+        firtree_kernel_module_changed(self);
         return p->compile_status;
     }
 
@@ -296,6 +319,8 @@ firtree_kernel_compile_from_source (FirtreeKernel* self,
                     _firtree_kernel_arg_spec_destroy_func);
         }
     }
+
+    firtree_kernel_module_changed(self);
 
     return p->compile_status;
 }
@@ -461,6 +486,13 @@ firtree_kernel_get_llvm_module(FirtreeKernel* self)
     }
 
     return p->compiled_kernel->GetCompiledModule();
+}
+
+void
+firtree_kernel_module_changed (FirtreeKernel* self)
+{
+    g_return_if_fail(FIRTREE_IS_KERNEL(self));
+    g_signal_emit(self, _firtree_kernel_signals[MODULE_CHANGED], 0);
 }
 
 /* vim:sw=4:ts=4:et:cindent

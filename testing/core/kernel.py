@@ -5,16 +5,25 @@ from pyfirtree import *
 class SimpleGood(unittest.TestCase):
     def setUp(self):
         self._k = Kernel()
+        self._k.connect('module-changed', self.modChange)
+        self._mod_changed_called = False
+
         self.assertNotEqual(self._k, None)
+        self.assert_(not self._mod_changed_called)
         src = """
             kernel vec4 simpleKernel() {
                 return vec4(1,0,0,1);
             }
         """
         self._k.compile_from_source(src)
+        self.assert_(self._mod_changed_called)
 
     def tearDown(self):
         self._k = None
+
+    def modChange(self, kernel):
+        self.assertEqual(kernel, self._k)
+        self._mod_changed_called = True
 
     def testArgList(self):
         self.assertEqual(self._k.list_arguments(), ())
@@ -36,7 +45,11 @@ class SimpleGood(unittest.TestCase):
 class SimpleBad(unittest.TestCase):
     def setUp(self):
         self._k = Kernel()
+        self._k.connect('module-changed', self.modChange)
+        self._mod_changed_called = False
+
         self.assertNotEqual(self._k, None)
+        self.assert_(not self._mod_changed_called)
         src = """
             kernel vec4 simpleKernel() {
                 int a = functionDoesNotExist();
@@ -44,9 +57,14 @@ class SimpleBad(unittest.TestCase):
             }
         """
         self._k.compile_from_source(src)
+        self.assert_(self._mod_changed_called)
 
     def tearDown(self):
         self._k = None
+
+    def modChange(self, kernel):
+        self.assertEqual(kernel, self._k)
+        self._mod_changed_called = True
 
     def testValidity(self):
         self.assertEqual(self._k.is_valid(), False)

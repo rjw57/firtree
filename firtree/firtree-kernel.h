@@ -78,8 +78,9 @@ typedef struct {
 typedef struct {
     GObjectClass parent_class;
 
-    void (* argument_changed) (FirtreeKernel *kernel);
-    void (* argument_changed_quark) (FirtreeKernel *kernel);
+    void (* argument_changed) (FirtreeKernel *kernel, gchar* arg_name);
+    void (* argument_changed_quark) (FirtreeKernel *kernel, GQuark arg_quark);
+    void (* module_changed) (FirtreeKernel *kernel);
 } FirtreeKernelClass;
 
 GType firtree_kernel_get_type (void);
@@ -254,6 +255,16 @@ firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name);
  */
 gboolean
 firtree_kernel_is_valid (FirtreeKernel* self);
+
+/**
+ * firtree_kernel_module_changed:
+ * @self: A FirtreeKernel instance.
+ *
+ * Emit an ::modules-changed signal indicating that the underlying compiled
+ * module of @self has changed.
+ */
+void
+firtree_kernel_module_changed (FirtreeKernel* self);
 
 G_END_DECLS
 

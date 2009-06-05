@@ -15,5 +15,9 @@ class Creation(unittest.TestCase):
         self.assertEqual(len(extent), 4)
         self.assertEqual(extent, (0,0,0,0))
 
+    def testDefaultTransform(self):
+        trans = self._s.get_transform()
+        self.assert_(trans.is_identity())
+
 # vim:sw=4:ts=4:et:autoindent
 

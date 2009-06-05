@@ -22,6 +22,7 @@
 
 #include <glib-object.h>
 
+#include "firtree-affine-transform.h"
 #include "firtree-vector.h"
 
 /**
@@ -90,6 +91,22 @@ firtree_sampler_new (void);
  */
 FirtreeVec4
 firtree_sampler_get_extent (FirtreeSampler* self);
+
+/**
+ * firtree_sampler_get_transform:
+ * @self: An instantiated FirtreeSampler object.
+ *
+ * Retrieve the transform which should be use to map points from the
+ * output space of the sampler to the sampler space. This ultimately
+ * is what ends up being implemented by samplerTransform().
+ *
+ * Callers should release the returned transform via g_object_unref()
+ * when finished with it.
+ *
+ * Returns: A referenced FirtreeAffineTransform object.
+ */
+FirtreeAffineTransform*
+firtree_sampler_get_transform (FirtreeSampler* self);
 
 G_END_DECLS
 

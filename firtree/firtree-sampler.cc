@@ -98,6 +98,12 @@ firtree_sampler_get_extent (FirtreeSampler* self)
     return extent;
 }
 
+FirtreeAffineTransform*
+firtree_sampler_get_transform (FirtreeSampler* self)
+{
+    return firtree_affine_transform_new();
+}
+
 gboolean
 firtree_sampler_get_param(FirtreeSampler* self, guint param, 
         gpointer dest, guint dest_size)

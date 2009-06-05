@@ -289,6 +289,12 @@
   (return-type "gboolean")
 )
 
+(define-method module_changed
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_module_changed")
+  (return-type "none")
+)
+
 
 
 ;; From firtree-sampler.h
@@ -308,6 +314,12 @@
   (of-object "FirtreeSampler")
   (c-name "firtree_sampler_get_extent")
   (return-type "FirtreeVec4")
+)
+
+(define-method get_transform
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_get_transform")
+  (return-type "FirtreeAffineTransform*")
 )
 
 

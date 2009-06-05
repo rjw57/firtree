@@ -26,7 +26,7 @@ if(PYTHONINTERP_FOUND)
                 ${PYTHON_EXECUTABLE} -E -tt run_test_suite.py --valgrind
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     else(VALGRIND_EXECUTABLE)
-        message(SEND_ERROR "Could not find valgrind, memory testing disabled.")
+        message(STATUS "Could not find valgrind, memory testing disabled.")
     endif(VALGRIND_EXECUTABLE)
 else(PYTHONINTERP_FOUND)
     message(STATUS "Python interpreter could not be found, the test suite is unavailable.")

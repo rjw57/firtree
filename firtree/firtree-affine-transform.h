@@ -162,14 +162,51 @@ void
 firtree_affine_transform_translate_by (FirtreeAffineTransform* self, 
         float tx, float ty);
 
+/**
+ * firtree_affine_transform_transform_point:
+ * @self: An affine transform.
+ * @x: The x-co-ordinate of the point to transform.
+ * @y: The y-co-ordinate of the point to transform.
+ *
+ * Performs the mapping
+ *
+ * (x,y) -> (m11*x+m21*y+tx, m21*x+m22*y+ty)
+ *
+ * This effectively 'applies' the transform to the point.
+ *
+ * Returns: A FirtreeVec2 representing the transformed point.
+ */
 FirtreeVec2
 firtree_affine_transform_transform_point (FirtreeAffineTransform* self,
         float x, float y);
 
+/**
+ * firtree_affine_transform_transform_size:
+ * @self: An affine transform.
+ * @width: The width of the size to transform.
+ * @height: The height of the size to transform.
+ *
+ * Performs the mapping
+ *
+ * (x,y) -> (m11*x+m21*y, m21*x+m22*y)
+ *
+ * This effectively 'applies' the transform to the size. This is
+ * the same as applying the transform to a point but without the translational
+ * component.
+ *
+ * Returns: A FirtreeVec2 representing the transformed size.
+ */
 FirtreeVec2
 firtree_affine_transform_transform_size (FirtreeAffineTransform* self,
         float width, float height);
 
+/**
+ * firtree_affine_transform_set_identity:
+ * @self: An affine transform.
+ *
+ * Set the elements of @self so that it represents the identity transform
+ * (i.e. one which maps a point to itself, (x,y) -> (x,y)).
+ */
 void
 firtree_affine_transform_set_identity (FirtreeAffineTransform* self);
 

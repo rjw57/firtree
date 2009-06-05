@@ -61,6 +61,14 @@ class Identity(unittest.TestCase):
         self._t.set_identity()
         self.assert_(self._t.is_identity())
 
+    def testApplication1(self):
+        self._t.set_identity()
+        self.assertEqual(self._t.transform_point(2,3), (2,3))
+
+    def testApplication2(self):
+        self._t.set_identity()
+        self.assertEqual(self._t.transform_size(2,3), (2,3))
+
 class CopyAndClone(unittest.TestCase):
     def setUp(self):
         self._t = AffineTransform()
@@ -185,6 +193,31 @@ class Inverse(unittest.TestCase):
     def testSingular(self):
         self._t1.set_elements(1,0,3,0,5,6)
         self.assert_(not self._t1.invert())
+
+class TestTransform(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def testPoint1(self):
+        self._t.set_identity()
+        self.assertEqual(self._t.transform_point(4,5), (4,5))
+
+    def testPoint2(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.transform_point(4,5), (19,38))
+
+    def testSize1(self):
+        self._t.set_identity()
+        self.assertEqual(self._t.transform_size(4,5), (4,5))
+
+    def testSize2(self):
+        self._t.set_elements(1,2,3,4,5,6)
+        self.assertEqual(self._t.transform_size(4,5), (14,32))
 
 # vim:sw=4:ts=4:et:autoindent
 

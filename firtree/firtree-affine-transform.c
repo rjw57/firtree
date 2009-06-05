@@ -189,7 +189,10 @@ FirtreeVec2
 firtree_affine_transform_transform_point (FirtreeAffineTransform* self,
         float x, float y)
 {
-    FirtreeVec2 vec = {0,0};
+    FirtreeVec2 vec = {
+        self->m11*x + self->m12*y + self->tx,
+        self->m21*x + self->m22*y + self->ty,
+    };
     return vec;
 }
 
@@ -197,7 +200,10 @@ FirtreeVec2
 firtree_affine_transform_transform_size (FirtreeAffineTransform* self,
         float width, float height)
 {
-    FirtreeVec2 vec = {0,0};
+    FirtreeVec2 vec = {
+        self->m11*width + self->m12*height,
+        self->m21*width + self->m22*height,
+    };
     return vec;
 }
 

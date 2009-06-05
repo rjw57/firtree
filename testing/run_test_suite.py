@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 
-import sys, os, unittest
+import os, sys
+
+# if we were passed the --valgrind option, set
+# some environement variables appropriatelt for
+# running GLib programs in valgrind.
+if('--valgrind' in sys.argv):
+    print(">>>> Running tests in valgrind mode <<<<")
+    os.environ['G_SLICE'] = 'always-malloc'
+    os.environ['G_DEBUG'] = 'gc-friendly'
+
+import unittest
 
 # Set up the path so that the Python bindings are
 # loaded correctly.

@@ -1,0 +1,18 @@
+# A miscellaneous set of suppressions to deal with any leaks that aren't the fault
+# of firtree or are spurious.
+
+{
+   The annoying g_type_init() problem
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   ...
+   fun:g_type_init
+}
+
+{
+   Some long-lived structure allocated in the Python GC.
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyObject_GC_NewVar
+}

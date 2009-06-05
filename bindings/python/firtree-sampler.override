@@ -20,5 +20,26 @@ _wrap_firtree_sampler_get_extent(PyGObject* self, PyObject *args)
     return rv;
 }
 %%
+override firtree_sampler_get_transform
+static PyObject *
+_wrap_firtree_sampler_get_transform(PyGObject *self)
+{
+    FirtreeAffineTransform *ret;
+    
+    /* This needs to be overridden to ensure the returned
+     * transform is unref-ed after passing it to pygobject_new. */
+
+    ret = firtree_sampler_get_transform(FIRTREE_SAMPLER(self->obj));
+    
+    /* pygobject_new handles NULL checking */
+    PyObject* new_obj = pygobject_new((GObject *)ret);
+
+    if(ret) {
+        g_object_unref(ret);
+    }
+
+    return new_obj;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

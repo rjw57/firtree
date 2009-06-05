@@ -77,5 +77,26 @@ _wrap_firtree_affine_transform_get_elements(PyGObject* self, PyObject *args)
     return element_tuple;
 }
 %%
+override firtree_affine_transform_clone
+static PyObject *
+_wrap_firtree_affine_transform_clone(PyGObject *self)
+{
+    FirtreeAffineTransform *ret;
+
+    /* This needs overriding to correctly unref the return value after
+     * we've passed it to pygobject_new(). */
+    
+    ret = firtree_affine_transform_clone(FIRTREE_AFFINE_TRANSFORM(self->obj));
+    
+    /* pygobject_new handles NULL checking */
+    PyObject* new_obj = pygobject_new((GObject *)ret);
+
+    if(ret) {
+        g_object_unref(ret);
+    }
+
+    return new_obj;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

@@ -1,0 +1,35 @@
+%%
+override firtree_kernel_sampler_set_kernel kwargs
+static PyObject *
+_wrap_firtree_kernel_sampler_set_kernel(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "kernel", NULL };
+    PyGObject *kernel;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O:FirtreeKernelSampler.set_kernel", kwlist,
+                &kernel))
+        return NULL;
+
+    /* Check input is None or a kernel. */
+    if((PyObject*)kernel == Py_None) {
+        firtree_kernel_sampler_set_kernel(FIRTREE_KERNEL_SAMPLER(self->obj), NULL);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if(((PyObject*)kernel)->ob_type != &PyFirtreeKernel_Type) {
+        PyErr_SetString(PyExc_TypeError,
+                "Argument 1 must be a pyfirtree.Kernel or None.");
+        return NULL;
+    }
+
+    firtree_kernel_sampler_set_kernel(FIRTREE_KERNEL_SAMPLER(self->obj), 
+            FIRTREE_KERNEL(kernel->obj));
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

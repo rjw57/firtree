@@ -202,6 +202,21 @@
   (return-type "FirtreeKernelSampler*")
 )
 
+(define-method set_kernel
+  (of-object "FirtreeKernelSampler")
+  (c-name "firtree_kernel_sampler_set_kernel")
+  (return-type "none")
+  (parameters
+    '("FirtreeKernel*" "kernel")
+  )
+)
+
+(define-method get_kernel
+  (of-object "FirtreeKernelSampler")
+  (c-name "firtree_kernel_sampler_get_kernel")
+  (return-type "FirtreeKernel*")
+)
+
 
 
 ;; From firtree-kernel.h

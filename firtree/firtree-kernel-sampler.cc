@@ -32,7 +32,7 @@ G_DEFINE_TYPE (FirtreeKernelSampler, firtree_kernel_sampler, FIRTREE_TYPE_SAMPLE
 typedef struct _FirtreeKernelSamplerPrivate FirtreeKernelSamplerPrivate;
 
 struct _FirtreeKernelSamplerPrivate {
-    int dummy;
+    FirtreeKernel* kernel;
 };
 
 static void
@@ -59,6 +59,9 @@ static void
 firtree_kernel_sampler_dispose (GObject *object)
 {
     G_OBJECT_CLASS (firtree_kernel_sampler_parent_class)->dispose (object);
+
+    /* drop any references to any kernel we might have. */
+    firtree_kernel_sampler_set_kernel((FirtreeKernelSampler*)object, NULL);
 }
 
 static void
@@ -83,6 +86,8 @@ firtree_kernel_sampler_class_init (FirtreeKernelSamplerClass *klass)
 static void
 firtree_kernel_sampler_init (FirtreeKernelSampler *self)
 {
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    p->kernel = NULL;
 }
 
 FirtreeKernelSampler*
@@ -90,6 +95,32 @@ firtree_kernel_sampler_new (void)
 {
     return (FirtreeKernelSampler*)
         g_object_new (FIRTREE_TYPE_KERNEL_SAMPLER, NULL);
+}
+
+void
+firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
+        FirtreeKernel* kernel)
+{
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    /* unref any kernel we already have. */
+
+    if(p->kernel) {
+        g_object_unref(p->kernel);
+        p->kernel = NULL;
+    }
+
+    if(kernel) {
+        g_assert(FIRTREE_IS_KERNEL(kernel));
+        g_object_ref(kernel);
+        p->kernel = kernel;
+    }
+}
+
+FirtreeKernel*
+firtree_kernel_sampler_get_kernel (FirtreeKernelSampler* self)
+{
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    return p->kernel;
 }
 
 /* vim:sw=4:ts=4:et:cindent

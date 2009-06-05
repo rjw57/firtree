@@ -74,6 +74,37 @@ GType firtree_kernel_sampler_get_type (void);
 FirtreeKernelSampler* 
 firtree_kernel_sampler_new (void);
 
+/**
+ * firtree_kernel_sampler_set_kernel:
+ * @self: A FirtreeKernelSampler.
+ * @kernel: A FirtreeKernel.
+ *
+ * Set @kernel as the kernel associated with this sampler. Drop any references
+ * to any other kernel previously associated. The sampler increments the 
+ * reference count of the passed kernel to 'claim' it.
+ *
+ * Pass NULL in order to desociate this sampler with any kernel.
+ */
+void
+firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
+        FirtreeKernel* kernel);
+
+/**
+ * firtree_kernel_sampler_get_kernel:
+ * @self: A FirtreeKernelSampler.
+ *
+ * Retrieve the kernel previously associated with this sampler via
+ * firtree_kernel_sampler_set_kernel(). If no kernel is associated,
+ * NULL is returned.
+ *
+ * If the caller wishes to maintain a long-lived reference to the kernel,
+ * its reference count should be increased.
+ *
+ * Returns: The kernel associated with the sampler or NULL if there is none.
+ */
+FirtreeKernel*
+firtree_kernel_sampler_get_kernel (FirtreeKernelSampler* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_KERNEL_SAMPLER */

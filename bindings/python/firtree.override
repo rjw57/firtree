@@ -104,6 +104,7 @@ ignore-glob
 include
     firtree-affine-transform.override
     firtree-kernel.override
+    firtree-kernel-sampler.override
     firtree-sampler.override
 %%
 // vim:sw=4:ts=4:cindent:et:filetype=c

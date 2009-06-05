@@ -20,7 +20,7 @@
 
 #include <llvm/Module.h>
 
-#include <glib.h>
+#include <glib-object.h>
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -29,7 +29,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <firtree/internal/firtree-kernel-intl.hh>
+#include <firtree/firtree.h>
 
 //=============================================================================
 static GOptionEntry opt_entries[] =
@@ -100,8 +100,8 @@ main(int argc, char** argv)
 
     g_option_context_free(context);
 
-    if(argc < 3) {
-        g_print("Must have input and output file.\n");
+    if(argc < 2) {
+        g_print("Must have input file.\n");
         exit(2);
     }
 
@@ -142,6 +142,16 @@ main(int argc, char** argv)
     }
 
     if(firtree_kernel_get_compile_status(kernel)) {
+        GString* dump_str = firtree_debug_dump_kernel_function(kernel);
+
+        if(!dump_str) {
+            g_debug("Error dumping kernel.");
+        } else {
+            g_print("%s", dump_str->str);
+            g_string_free(dump_str, TRUE);
+        }
+
+        /*
         std::ofstream output(argv[2]);
 
         llvm::Function* func = firtree_kernel_get_function(kernel);
@@ -163,6 +173,7 @@ main(int argc, char** argv)
             output << " (is static: " << spec->is_static << ") \n";
             ++current_arg;
         }
+        */
     }
 
     g_object_unref(kernel);

@@ -10,6 +10,9 @@ class Creation(unittest.TestCase):
     def tearDown(self):
         self._s = None
 
+    def testDefaultFunction(self):
+        self.assertEqual(debug_dump_sampler_function(self._s), None)
+
     def testDefaultExtent(self):
         extent = self._s.get_extent()
         self.assertEqual(len(extent), 4)

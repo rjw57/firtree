@@ -103,6 +103,7 @@ ignore-glob
 %%
 include
     firtree-affine-transform.override
+    firtree-debug.override
     firtree-kernel.override
     firtree-kernel-sampler.override
     firtree-sampler.override

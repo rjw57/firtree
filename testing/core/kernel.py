@@ -21,6 +21,9 @@ class SimpleGood(unittest.TestCase):
     def tearDown(self):
         self._k = None
 
+    def testDebug(self):
+        self.assertNotEqual(debug_dump_kernel_function(self._k), None)
+
     def modChange(self, kernel):
         self.assertEqual(kernel, self._k)
         self._mod_changed_called = True
@@ -65,6 +68,9 @@ class SimpleBad(unittest.TestCase):
     def modChange(self, kernel):
         self.assertEqual(kernel, self._k)
         self._mod_changed_called = True
+
+    def testDebug(self):
+        self.assertEqual(debug_dump_kernel_function(self._k), None)
 
     def testValidity(self):
         self.assertEqual(self._k.is_valid(), False)

@@ -189,6 +189,26 @@
 
 
 
+;; From firtree-debug.h
+
+(define-function debug_dump_kernel_function
+  (c-name "firtree_debug_dump_kernel_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeKernel*" "kernel")
+  )
+)
+
+(define-function debug_dump_sampler_function
+  (c-name "firtree_debug_dump_sampler_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeSampler*" "sampler")
+  )
+)
+
+
+
 ;; From firtree-kernel-sampler.h
 
 (define-function kernel_sampler_get_type
@@ -350,6 +370,30 @@
   (of-object "FirtreeSampler")
   (c-name "firtree_sampler_get_transform")
   (return-type "FirtreeAffineTransform*")
+)
+
+(define-method contents_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_contents_changed")
+  (return-type "none")
+)
+
+(define-method module_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_module_changed")
+  (return-type "none")
+)
+
+(define-method extents_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_extents_changed")
+  (return-type "none")
+)
+
+(define-method transform_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_transform_changed")
+  (return-type "none")
 )
 
 

@@ -30,6 +30,7 @@
  */
 
 #include "firtree-affine-transform.h"
+#include "firtree-debug.h"
 #include "firtree-kernel.h"
 #include "firtree-kernel-sampler.h"
 #include "firtree-sampler.h"

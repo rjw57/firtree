@@ -16,3 +16,10 @@
    fun:malloc
    fun:_PyObject_GC_NewVar
 }
+
+{
+   LLVM seems leaky here...
+   Memcheck:Leak
+   ...
+   fun:*getTypeDescription*
+}

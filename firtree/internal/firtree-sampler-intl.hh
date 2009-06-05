@@ -71,6 +71,11 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
  * 2d float vector specifying the sample co-ordinate and return a 4d float
  * vector giving the result. It's name should be globally unique. Ideally it is
  * the only external function defined in the module.
+ *
+ * Ownership of the function remains with the sampler. Callers should clone it
+ * if they wish to maintain a long-lived version.
+ *
+ * Returns: A pointer to a llvm::Function.
  */
 llvm::Function*
 firtree_sampler_get_function(FirtreeSampler* self);

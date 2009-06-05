@@ -36,17 +36,20 @@ G_BEGIN_DECLS
  */
 
 /**
- * firtree_kernel_get_llvm_function:
+ * firtree_kernel_get_function:
  * @self: A FirtreeKernel instance.
  *
  * Get a pointer to the LLVM function resulting from the last call to
  * firtree_kernel_compile_from_source(). If the kernel has not been
  * successfully compiled, NULL is returned.
  *
+ * Ownership of the function remains with the kernel. Callers should clone it
+ * if they wish to maintain a long-lived version.
+ *
  * Returns: NULL or an LLVM function.
  */
 llvm::Function*
-firtree_kernel_get_llvm_function(FirtreeKernel* self);
+firtree_kernel_get_function(FirtreeKernel* self);
 
 G_END_DECLS
 

@@ -483,7 +483,7 @@ firtree_kernel_module_changed (FirtreeKernel* self)
 }
 
 llvm::Function*
-firtree_kernel_get_llvm_function(FirtreeKernel* self)
+firtree_kernel_get_function(FirtreeKernel* self)
 {
     FirtreeKernelPrivate* p = GET_PRIVATE(self);
 

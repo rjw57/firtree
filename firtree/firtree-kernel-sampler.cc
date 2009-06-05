@@ -20,6 +20,12 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <llvm/Module.h>
+#include <llvm/Function.h>
+#include <llvm/DerivedTypes.h>
+
+#include <common/uuid.h>
+
 #include "internal/firtree-kernel-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
 #include "firtree-kernel-sampler.h"
@@ -32,7 +38,9 @@ G_DEFINE_TYPE (FirtreeKernelSampler, firtree_kernel_sampler, FIRTREE_TYPE_SAMPLE
 typedef struct _FirtreeKernelSamplerPrivate FirtreeKernelSamplerPrivate;
 
 struct _FirtreeKernelSamplerPrivate {
-    FirtreeKernel* kernel;
+    FirtreeKernel*  kernel;
+    llvm::Module* cached_module;
+    llvm::Function* cached_function;
 };
 
 gboolean
@@ -41,6 +49,20 @@ firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param,
 
 llvm::Function*
 firtree_kernel_sampler_get_function(FirtreeSampler* self);
+
+/* invalidate (and release) any cached LLVM modules/functions. This
+ * will cause them to be re-generated when ..._get_function() is next
+ * called. */
+static void
+_firtree_kernel_sampler_invalidate_llvm_cache(FirtreeKernelSampler* self)
+{
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    if(p && p->cached_module) {
+        delete p->cached_module;
+        p->cached_module = NULL;
+        p->cached_function = NULL;
+    }
+}
 
 static void
 firtree_kernel_sampler_get_property (GObject *object, guint property_id,
@@ -69,6 +91,9 @@ firtree_kernel_sampler_dispose (GObject *object)
 
     /* drop any references to any kernel we might have. */
     firtree_kernel_sampler_set_kernel((FirtreeKernelSampler*)object, NULL);
+
+    /* dispose of any LLVM modules we might have. */
+    _firtree_kernel_sampler_invalidate_llvm_cache((FirtreeKernelSampler*)object);
 }
 
 static void
@@ -101,6 +126,7 @@ firtree_kernel_sampler_init (FirtreeKernelSampler *self)
 {
     FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
     p->kernel = NULL;
+    p->cached_function = NULL;
 }
 
 FirtreeKernelSampler*
@@ -126,6 +152,8 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
         g_assert(FIRTREE_IS_KERNEL(kernel));
         g_object_ref(kernel);
         p->kernel = kernel;
+        
+        /* FIXME: Connect kernel changed signals. */
     }
 }
 
@@ -146,7 +174,35 @@ firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param,
 llvm::Function*
 firtree_kernel_sampler_get_function(FirtreeSampler* self)
 {
-    return NULL;
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    if(p->cached_function) {
+        return p->cached_function;
+    }
+
+    /* if we get here, we need to create our function. */
+    llvm::Module* m = new llvm::Module("sampler");
+    p->cached_module = m;
+
+    /* work out the function name. */
+    std::string func_name("sampler_");
+    gchar uuid[37];
+    generate_random_uuid(uuid, '_');
+    func_name += uuid;
+
+    /* create the function */
+    std::vector<const llvm::Type*> params;
+    params.push_back(llvm::VectorType::get(llvm::Type::FloatTy,2));
+    llvm::FunctionType* ft = llvm::FunctionType::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4), /* ret. type */
+            params, false);
+    llvm::Function* f = llvm::Function::Create( 
+            ft, llvm::Function::ExternalLinkage,
+            func_name.c_str(), m);
+    p->cached_function = f;
+
+    /* FIXME: implementation... */
+
+    return p->cached_function;
 }
 
 /* vim:sw=4:ts=4:et:cindent

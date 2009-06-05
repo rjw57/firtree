@@ -144,7 +144,7 @@ main(int argc, char** argv)
     if(firtree_kernel_get_compile_status(kernel)) {
         std::ofstream output(argv[2]);
 
-        llvm::Function* func = firtree_kernel_get_llvm_function(kernel);
+        llvm::Function* func = firtree_kernel_get_function(kernel);
             
         func->getParent()->print(output, NULL);
 

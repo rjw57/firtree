@@ -35,6 +35,13 @@ struct _FirtreeKernelSamplerPrivate {
     FirtreeKernel* kernel;
 };
 
+gboolean
+firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size);
+
+llvm::Function*
+firtree_kernel_sampler_get_function(FirtreeSampler* self);
+
 static void
 firtree_kernel_sampler_get_property (GObject *object, guint property_id,
         GValue *value, GParamSpec *pspec)
@@ -81,6 +88,12 @@ firtree_kernel_sampler_class_init (FirtreeKernelSamplerClass *klass)
     object_class->set_property = firtree_kernel_sampler_set_property;
     object_class->dispose = firtree_kernel_sampler_dispose;
     object_class->finalize = firtree_kernel_sampler_finalize;
+
+    /* override the sampler virtual functions with our own */
+    FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
+
+    sampler_class->intl_vtable->get_param = firtree_kernel_sampler_get_param;
+    sampler_class->intl_vtable->get_function = firtree_kernel_sampler_get_function;
 }
 
 static void
@@ -121,6 +134,19 @@ firtree_kernel_sampler_get_kernel (FirtreeKernelSampler* self)
 {
     FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
     return p->kernel;
+}
+
+gboolean
+firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size)
+{
+    return FALSE;
+}
+
+llvm::Function*
+firtree_kernel_sampler_get_function(FirtreeSampler* self)
+{
+    return NULL;
 }
 
 /* vim:sw=4:ts=4:et:cindent

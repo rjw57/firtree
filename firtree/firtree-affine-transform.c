@@ -19,6 +19,8 @@
 
 #include "firtree-affine-transform.h"
 
+#include <math.h>
+
 G_DEFINE_TYPE (FirtreeAffineTransform, firtree_affine_transform, G_TYPE_OBJECT)
 
 #define GET_PRIVATE(o) \
@@ -165,24 +167,40 @@ void
 firtree_affine_transform_rotate_by_degrees (FirtreeAffineTransform* self,
         float angle)
 {
+    FirtreeAffineTransform* tmp_trans = firtree_affine_transform_new();
+    firtree_affine_transform_set_rotation_by_degrees(tmp_trans, angle);
+    firtree_affine_transform_append_transform(self, tmp_trans);
+    g_object_unref(tmp_trans);
 }
 
 void
 firtree_affine_transform_rotate_by_radians (FirtreeAffineTransform* self,
         float angle)
 {
+    FirtreeAffineTransform* tmp_trans = firtree_affine_transform_new();
+    firtree_affine_transform_set_rotation_by_radians(tmp_trans, angle);
+    firtree_affine_transform_append_transform(self, tmp_trans);
+    g_object_unref(tmp_trans);
 }
 
 void
 firtree_affine_transform_scale_by (FirtreeAffineTransform* self, 
         float sx, float sy)
 {
+    FirtreeAffineTransform* tmp_trans = firtree_affine_transform_new();
+    firtree_affine_transform_set_scaling_by(tmp_trans, sx, sy);
+    firtree_affine_transform_append_transform(self, tmp_trans);
+    g_object_unref(tmp_trans);
 }
 
 void
 firtree_affine_transform_translate_by (FirtreeAffineTransform* self, 
         float tx, float ty)
 {
+    FirtreeAffineTransform* tmp_trans = firtree_affine_transform_new();
+    firtree_affine_transform_set_translation_by(tmp_trans, tx, ty);
+    firtree_affine_transform_append_transform(self, tmp_trans);
+    g_object_unref(tmp_trans);
 }
 
 FirtreeVec2
@@ -217,24 +235,37 @@ void
 firtree_affine_transform_set_rotation_by_degrees (FirtreeAffineTransform* self,
         float angle)
 {
+    const float deg2rad = 2.f * G_PI / 360.f;
+    firtree_affine_transform_set_rotation_by_radians(self, angle * deg2rad);
 }
 
 void
 firtree_affine_transform_set_rotation_by_radians (FirtreeAffineTransform* self,
         float angle)
 {
+    firtree_affine_transform_set_identity(self);
+    float s = sin(angle);
+    float c = cos(angle);
+    self->m11 = c; self->m12 = -s;
+    self->m21 = s; self->m22 = c;
 }
 
 void
 firtree_affine_transform_set_scaling_by (FirtreeAffineTransform* self, 
         float sx, float sy)
 {
+    firtree_affine_transform_set_identity(self);
+    self->m11 = sx;
+    self->m22 = sy;
 }
 
 void
 firtree_affine_transform_set_translation_by (FirtreeAffineTransform* self, 
         float tx, float ty)
 {
+    firtree_affine_transform_set_identity(self);
+    self->tx = tx;
+    self->ty = ty;
 }
 
 void

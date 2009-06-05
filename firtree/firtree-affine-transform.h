@@ -124,7 +124,7 @@ firtree_affine_transform_append_transform (FirtreeAffineTransform* self,
         FirtreeAffineTransform* trans);
 
 /**
- * firtree_affine_transform_append_transform:
+ * firtree_affine_transform_prepend_transform:
  * @self: An affine transform.
  * @trans: An affine transform.
  *
@@ -146,18 +146,53 @@ firtree_affine_transform_prepend_transform (FirtreeAffineTransform* self,
 gboolean
 firtree_affine_transform_invert (FirtreeAffineTransform* self);
 
+/**
+ * firtree_affine_transform_rotate_by_degrees:
+ * @self: An affine transform.
+ * @angle: An angle in degrees.
+ *
+ * Modifies @self so that it represents the transform @self *followed* by
+ * a rotation about the origin of @angle degrees.
+ */
 void
 firtree_affine_transform_rotate_by_degrees (FirtreeAffineTransform* self,
         float angle);
 
+/**
+ * firtree_affine_transform_rotate_by_radians:
+ * @self: An affine transform.
+ * @angle: An angle in radians.
+ *
+ * Modifies @self so that it represents the transform @self *followed* by
+ * a rotation about the origin of @angle radians.
+ */
 void
 firtree_affine_transform_rotate_by_radians (FirtreeAffineTransform* self,
         float angle);
 
+/**
+ * firtree_affine_transform_scale_by:
+ * @self: An affine transform.
+ * @sx: Scale factor in the x-direction.
+ * @sy: Scale factor in the y-direction.
+ *
+ * Modifies @self so that it represents the transform @self *followed* by
+ * a scaling about the origin of @sx along the x-direction and @sy along
+ * the y-direction.
+ */
 void
 firtree_affine_transform_scale_by (FirtreeAffineTransform* self, 
         float sx, float sy);
 
+/**
+ * firtree_affine_transform_translate_by:
+ * @self: An affine transform.
+ * @tx: Offset along the x-direction.
+ * @ty: Offset along the y-direction.
+ *
+ * Modifies @self so that it represents the transform @self *followed* by
+ * a translation of @tx along the x-direction and @ty along the y-direction.
+ */
 void
 firtree_affine_transform_translate_by (FirtreeAffineTransform* self, 
         float tx, float ty);
@@ -188,7 +223,7 @@ firtree_affine_transform_transform_point (FirtreeAffineTransform* self,
  *
  * Performs the mapping
  *
- * (x,y) -> (m11*x+m21*y, m21*x+m22*y)
+ * (x,y) -> (m11*width+m21*height, m21*width+m22*height)
  *
  * This effectively 'applies' the transform to the size. This is
  * the same as applying the transform to a point but without the translational
@@ -210,18 +245,52 @@ firtree_affine_transform_transform_size (FirtreeAffineTransform* self,
 void
 firtree_affine_transform_set_identity (FirtreeAffineTransform* self);
 
+/**
+ * firtree_affine_transform_set_rotation_by_degrees:
+ * @self: An affine transform.
+ * @angle: An angle in degrees.
+ *
+ * Set the elements of @self so that it represents a rotation anti-clockwise
+ * about the origin by @angle degrees.
+ */
 void
 firtree_affine_transform_set_rotation_by_degrees (FirtreeAffineTransform* self,
         float angle);
 
+/**
+ * firtree_affine_transform_set_rotation_by_radians:
+ * @self: An affine transform.
+ * @angle: An angle in radians.
+ *
+ * Set the elements of @self so that it represents a rotation anti-clockwise
+ * about the origin by @angle radians.
+ */
 void
 firtree_affine_transform_set_rotation_by_radians (FirtreeAffineTransform* self,
         float angle);
 
+/**
+ * firtree_affine_transform_set_scaling_by:
+ * @self: An affine transform.
+ * @sx: Scale factor in the x-direction.
+ * @sy: Scale factor in the y-direction.
+ *
+ * Set the elements of @self so that it represents a scaling about the origin
+ * of @sx in the x-direction and @sy in the y-direction.
+ */
 void
 firtree_affine_transform_set_scaling_by (FirtreeAffineTransform* self, 
         float sx, float sy);
 
+/**
+ * firtree_affine_transform_set_translation_by:
+ * @self: An affine transform.
+ * @tx: Translation in the x-direction.
+ * @ty: Translation in the y-direction.
+ *
+ * Set the elements of @self so that it represents a translation of
+ * @tx along the x-direction and @ty along the y-direction.
+ */
 void
 firtree_affine_transform_set_translation_by (FirtreeAffineTransform* self, 
         float tx, float ty);

@@ -1,5 +1,6 @@
 import unittest
 import gobject
+import math
 from pyfirtree import *
 
 class ElementAccess(unittest.TestCase):
@@ -218,6 +219,206 @@ class TestTransform(unittest.TestCase):
     def testSize2(self):
         self._t.set_elements(1,2,3,4,5,6)
         self.assertEqual(self._t.transform_size(4,5), (14,32))
+
+class TestScaling(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def testScale1(self):
+        self._t.set_scaling_by(3,4)
+        self.assertEqual(self._t.transform_point(5,6), (15,24))
+        self.assertEqual(self._t.transform_size(3,4), (9,16))
+
+class TestTranslation(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def testTranslate1(self):
+        self._t.set_translation_by(3,4)
+        self.assertEqual(self._t.transform_point(5,6), (8,10))
+        self.assertEqual(self._t.transform_size(3,4), (3,4))
+
+class TestRotation(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def toPolar(self, x, y):
+        return ( math.hypot(x, y), math.atan2(y, x) )
+
+    def assertAlmostEqualTuples(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(0, len(a)):
+            self.assertAlmostEqual(a[i], b[i], 4)
+
+    def testRotate1(self):
+        self._t.set_rotation_by_radians(0)
+        self.assertEqual(self._t.transform_point(5,6), (5,6))
+        self.assertEqual(self._t.transform_size(3,4), (3,4))
+
+    def testRotate2(self):
+        self._t.set_rotation_by_radians(3)
+        
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0], p_pol[1]+3))
+
+    def testRotate3(self):
+        self._t.set_rotation_by_radians(-1.4)
+        
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0], p_pol[1]-1.4))
+
+    def testRotate4(self):
+        self._t.set_rotation_by_degrees(0)
+        self.assertEqual(self._t.transform_point(5,6), (5,6))
+        self.assertEqual(self._t.transform_size(3,4), (3,4))
+
+    def testRotate5(self):
+        r = math.radians(31)
+        self._t.set_rotation_by_degrees(31)
+        
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0], p_pol[1]+r))
+
+    def testRotate6(self):
+        r = math.radians(-128)
+        self._t.set_rotation_by_degrees(-128)
+        
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0], p_pol[1]+r))
+
+class TestCombined(unittest.TestCase):
+    def setUp(self):
+        self._t = AffineTransform()
+        self.failIfEqual(self._t, None)
+        self.assert_(self._t.is_identity())
+
+    def tearDown(self):
+        self._t = None
+
+    def toPolar(self, x, y):
+        return ( math.hypot(x, y), math.atan2(y, x) )
+
+    def assertAlmostEqualTuples(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(0, len(a)):
+            self.assertAlmostEqual(a[i], b[i], 4)
+
+    def testRotateAndScale1(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.rotate_by_radians(3)
+        self.assert_(not self._t.is_identity())
+        self._t.scale_by(4,4)
+        self.assert_(not self._t.is_identity())
+
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0]*4, p_pol[1]+3))
+
+    def testRotateAndScale2(self):
+        r = math.radians(34)
+            
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.scale_by(4,4)
+        self.assert_(not self._t.is_identity())
+        self._t.rotate_by_degrees(34)
+        self.assert_(not self._t.is_identity())
+
+        p = (3,-2.4)
+        p_pol = self.toPolar(*p)
+        p_prime = self._t.transform_point(*p)
+        p_prime_pol = self.toPolar(*p_prime)
+
+        self.assertAlmostEqualTuples(p_prime_pol, (p_pol[0]*4, p_pol[1]+r))
+
+    def testTranslateAndScale1(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.scale_by(3,4)
+        self.assert_(not self._t.is_identity())
+        self._t.translate_by(1,2)
+        self.assert_(not self._t.is_identity())
+
+        self.assertEqual(self._t.transform_point(1,2), (4,10))
+        self.assertEqual(self._t.transform_size(1,2), (3,8))
+
+    def testTranslateAndScale2(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.translate_by(1,2)
+        self.assert_(not self._t.is_identity())
+        self._t.scale_by(3,4)
+        self.assert_(not self._t.is_identity())
+
+        self.assertEqual(self._t.transform_point(1,2), (6,16))
+        self.assertEqual(self._t.transform_size(1,2), (3,8))
+
+    def testInverse1(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.translate_by(7,4)
+        self.assert_(not self._t.is_identity())
+        self._t.translate_by(-7,-4)
+        self.assert_(self._t.is_identity())
+
+    def testInverse2(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.scale_by(7,4)
+        self.assert_(not self._t.is_identity())
+        self._t.scale_by(1.0/7.0, 1.0/4.0)
+        self.assertAlmostEqualTuples(self._t.get_elements(), (1,0,0,1,0,0))
+
+    def testInverse3(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.rotate_by_degrees(10)
+        self.assert_(not self._t.is_identity())
+        self._t.rotate_by_degrees(-10)
+        self.assertAlmostEqualTuples(self._t.get_elements(), (1,0,0,1,0,0))
+
+    def testInverse4(self):
+        self._t.set_identity()
+        self.assert_(self._t.is_identity())
+        self._t.rotate_by_radians(1.2)
+        self.assert_(not self._t.is_identity())
+        self._t.rotate_by_radians(-1.2)
+        self.assertAlmostEqualTuples(self._t.get_elements(), (1,0,0,1,0,0))
 
 # vim:sw=4:ts=4:et:autoindent
 

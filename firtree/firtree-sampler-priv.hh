@@ -1,4 +1,4 @@
-/* firtree-sampler-priv.hpp */
+/* firtree-sampler-priv.hh */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -27,12 +27,47 @@
 /**
  * SECTION:firtree-sampler-priv
  * @short_description: Internal sampler interface
- * @include: firtree/firtree-sampler-priv.hpp
+ * @include: firtree/firtree-sampler-priv.hh
  *
- * 
+ * The private interface of a sampler.
  */
 
 G_BEGIN_DECLS
+
+/**
+ * firtree_sampler_get_param:
+ * @self: A FirtreeSampler instance.
+ * @param: An index describing which parameter needs retrieving.
+ * @dest: A pointer to a destination to write the parameter value.
+ * @dest_size: The expected size of this parameter.
+ *
+ * A sampler may define parameters which it references in the LLVM module
+ * it provides to implement it. These are retrieved through the builtin
+ * sampler_get_param() function which has the following signature:
+ *
+ *    void sampler_get_param(FirtreeSampler* sampler, int param, void* dest);
+ *
+ * Ultimately, this is mapped into calls to this function. If @param does
+ * not correspond to any parameters associated with this function or @dest_size
+ * is incorrect, return FALSE. Otherwise, return TRUE.
+ *
+ * Returns: A flag indicating if the parameter was successfully retrieved.
+ */
+gboolean
+firtree_sampler_get_param(FirtreeSampler* self, guint param, 
+        gpointer dest, guint dest_size);
+
+/**
+ * firtree_sampler_get_function:
+ * @self: A FirtreeSampler instance.
+ *
+ * Return an LLVM function which implements this sampler. It should take a 
+ * 2d float vector specifying the sample co-ordinate and return a 4d float
+ * vector giving the result. It's name should be globally unique. Ideally it is
+ * the only external function defined in the module.
+ */
+llvm::Function*
+firtree_sampler_get_function(FirtreeSampler* self);
 
 G_END_DECLS
 

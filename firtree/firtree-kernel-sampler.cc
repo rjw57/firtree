@@ -41,7 +41,6 @@ typedef struct _FirtreeKernelSamplerPrivate FirtreeKernelSamplerPrivate;
 
 struct _FirtreeKernelSamplerPrivate {
     FirtreeKernel*  kernel;
-    llvm::Module* cached_module;
     llvm::Function* cached_function;
 };
 
@@ -59,9 +58,8 @@ static void
 _firtree_kernel_sampler_invalidate_llvm_cache(FirtreeKernelSampler* self)
 {
     FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
-    if(p && p->cached_module) {
-        delete p->cached_module;
-        p->cached_module = NULL;
+    if(p && p->cached_function) {
+        delete p->cached_function->getParent();
         p->cached_function = NULL;
     }
 }
@@ -160,6 +158,8 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
         
         /* FIXME: Connect kernel changed signals. */
     }
+
+    _firtree_kernel_sampler_invalidate_llvm_cache(self);
 }
 
 FirtreeKernel*
@@ -186,7 +186,6 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
 
     /* if we get here, we need to create our function. */
     llvm::Module* m = new llvm::Module("sampler");
-    p->cached_module = m;
 
     /* work out the function name. */
     std::string func_name("sampler_");

@@ -54,11 +54,31 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 #define GET_PRIVATE(o) \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_CPU_ENGINE, FirtreeCpuEnginePrivate))
 
+typedef void (* RenderFunc) (unsigned char* buffer,
+    unsigned int width, unsigned int height,
+    unsigned int row_stride, float* extents);
+
 typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
 
 struct _FirtreeCpuEnginePrivate {
-    FirtreeSampler* sampler;
+    FirtreeSampler*             sampler;
+    RenderFunc                  cached_function;
+    llvm::ExecutionEngine*      cached_engine;
 };
+
+/* invalidate (and release) any cached LLVM modules/functions. This
+ * will cause them to be re-generated when ..._get_function() is next
+ * called. */
+static void
+_firtree_cpu_engine_invalidate_llvm_cache(FirtreeCpuEngine* self)
+{
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self);
+    if(p && p->cached_engine) {
+        delete p->cached_engine;
+        p->cached_engine = NULL;
+        p->cached_function = NULL;
+    }
+}
 
 static void
 firtree_cpu_engine_get_property (GObject *object, guint property_id,
@@ -88,6 +108,7 @@ firtree_cpu_engine_dispose (GObject *object)
 
     FirtreeCpuEngine* cpu_engine = FIRTREE_CPU_ENGINE(object);
     firtree_cpu_engine_set_sampler(cpu_engine, NULL);
+    _firtree_cpu_engine_invalidate_llvm_cache(cpu_engine);
 }
 
 static void
@@ -114,6 +135,8 @@ firtree_cpu_engine_init (FirtreeCpuEngine *self)
 {
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     p->sampler = NULL;
+    p->cached_engine = NULL;
+    p->cached_function = NULL;
 }
 
 FirtreeCpuEngine*
@@ -138,6 +161,8 @@ firtree_cpu_engine_set_sampler (FirtreeCpuEngine* self,
         p->sampler = sampler;
         g_object_ref(p->sampler);
     }
+
+    _firtree_cpu_engine_invalidate_llvm_cache(self);
 }
 
 FirtreeSampler*
@@ -147,9 +172,44 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
     return p->sampler;
 }
 
-llvm::Function*
-generate_renderer(FirtreeCpuEngine* self, llvm::Function* sampler_function)
+/* optimise a llvm module by internalising all but the
+ * named function and agressively inlining. */
+void optimise_module(llvm::Module* m, const char* func_name)
 {
+	if(m == NULL)
+	{
+		return;
+	}
+
+    llvm::PassManager PM;
+
+	PM.add(new llvm::TargetData(m));
+
+    std::vector<const char*> export_list;
+    export_list.push_back(func_name);
+
+    PM.add(llvm::createInternalizePass(export_list));
+	PM.add(llvm::createFunctionInliningPass(32768)); 
+
+	PM.add(llvm::createAggressiveDCEPass()); 
+
+	PM.run(*m);
+}
+
+RenderFunc
+get_renderer(FirtreeCpuEngine* self)
+{
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
+    if(p->cached_function) {
+        return p->cached_function;
+    }
+
+    llvm::Function* sampler_function = 
+        firtree_sampler_get_function(p->sampler);
+    if(sampler_function == NULL) {
+        return NULL;
+    }
+
     /* create an LLVM module from the bitcode in 
      * _firtee_cpu_engine_render_buffer_mod */
     llvm::MemoryBuffer* mem_buf = 
@@ -181,35 +241,27 @@ generate_renderer(FirtreeCpuEngine* self, llvm::Function* sampler_function)
     llvm::Function* render_function = linked_module->getFunction(
             "render_buffer_uc_4");
 
-    return render_function;
-}
+    m = render_function->getParent();
 
-typedef void (* RenderFunc) (unsigned char* buffer,
-    unsigned int width, unsigned int height,
-    unsigned int row_stride, float* extents);
+    optimise_module(m, render_function->getName().c_str());
 
-/* optimise a llvm module by internalising all but the
- * named function and agressively inlining. */
-void optimise_module(llvm::Module* m, const char* func_name)
-{
-	if(m == NULL)
-	{
-		return;
-	}
+    llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 
-    llvm::PassManager PM;
+    std::string err;
+    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::createJIT(mp, &err);
+    p->cached_engine = engine;
 
-	PM.add(new llvm::TargetData(m));
+    if(!engine) {
+        g_debug("Error JIT-ing render: %s\n", err.c_str());
+        delete mp;
+        return NULL;
+    }
 
-    std::vector<const char*> export_list;
-    export_list.push_back(func_name);
+    RenderFunc render = (RenderFunc)engine->getPointerToFunction(render_function);
+    g_assert(render);
 
-    PM.add(llvm::createInternalizePass(export_list));
-	PM.add(llvm::createFunctionInliningPass(32768)); 
-
-	PM.add(llvm::createAggressiveDCEPass()); 
-
-	PM.run(*m);
+    p->cached_function = render;
+    return p->cached_function;
 }
 
 gboolean
@@ -235,37 +287,10 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    llvm::Function* sampler_function = 
-        firtree_sampler_get_function(p->sampler);
-    if(sampler_function == NULL) {
-        return FALSE;
-    }
-
-    llvm::Function* render_f = generate_renderer(self, sampler_function);
-    g_assert(render_f);
-
-    llvm::Module* m = render_f->getParent();
-
-    optimise_module(m, render_f->getName().c_str());
-
-    llvm::ModuleProvider* mp = 
-        new llvm::ExistingModuleProvider(m);
-
-    std::string err;
-    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::createJIT(mp, &err);
-    if(!engine) {
-        g_debug("Error JIT-ing render: %s\n", err.c_str());
-        delete mp;
-        return FALSE;
-    }
-
-    RenderFunc render = (RenderFunc)
-        engine->getPointerToFunction(render_f);
+    RenderFunc render = get_renderer(self);
     g_assert(render);
 
     render(pixels, width, height, stride, (float*)extents);
-
-    delete engine;
 
     return TRUE;
 }

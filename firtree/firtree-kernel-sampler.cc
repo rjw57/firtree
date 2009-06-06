@@ -23,6 +23,8 @@
 #include <llvm/Module.h>
 #include <llvm/Function.h>
 #include <llvm/DerivedTypes.h>
+#include <llvm/Instructions.h>
+#include <llvm/Constants.h>
 
 #include <common/uuid.h>
 
@@ -200,7 +202,19 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
             func_name.c_str(), m);
     p->cached_function = f;
 
-    /* FIXME: implementation... */
+    /* FIXME: this is a stub */
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
+
+    std::vector<llvm::Constant*> elements;
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    llvm::Constant* rv = llvm::ConstantVector::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4),
+            elements);
+
+    llvm::ReturnInst::Create(rv, bb);
 
     return p->cached_function;
 }

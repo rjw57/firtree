@@ -227,19 +227,27 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
             func_name.c_str(), m);
     p->cached_function = f;
 
-    /* FIXME: this is a stub */
     llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
 
-    std::vector<llvm::Constant*> elements;
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
-    llvm::Constant* rv = llvm::ConstantVector::get(
-            llvm::VectorType::get(llvm::Type::FloatTy, 4),
-            elements);
+    llvm::Value* dest_coord = f->arg_begin();
 
-    llvm::ReturnInst::Create(rv, bb);
+    guint n_arguments = 0;
+    firtree_kernel_list_arguments(p->kernel, &n_arguments);
+    if(n_arguments > 0) {
+        g_error("FIXME: Argument support not yet written.");
+    }
+
+    std::vector<llvm::Value*> arguments;
+    arguments.push_back(dest_coord);
+
+    llvm::Value* new_kernel_func = m->getFunction(kernel_name);
+    g_assert(new_kernel_func);
+
+    llvm::Value* function_call = llvm::CallInst::Create(
+            new_kernel_func, arguments.begin(), arguments.end(),
+            "kernel_call", bb);
+
+    llvm::ReturnInst::Create(function_call, bb);
 
     return p->cached_function;
 }

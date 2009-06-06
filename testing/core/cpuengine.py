@@ -41,7 +41,11 @@ class RenderKernelSampler(unittest.TestCase):
 
         k = Kernel()
         k.compile_from_source("""
-            kernel vec4 simple() { return vec4(0,1,0,1); }""")
+            kernel vec4 simple() { 
+                // vec4 out_val = vec4(destCoord().yx, 0, 1);
+                vec4 out_val = vec4(0, 1, 1, 1);
+                return out_val;
+            }""")
         self.assert_(k.get_compile_status())
         ks.set_kernel(k)
 
@@ -50,7 +54,7 @@ class RenderKernelSampler(unittest.TestCase):
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)
         pb.fill(0x0000ff)
         pb.save('foo1.png', 'png')
-        rv = self._e.render_into_pixbuf((-10, -10, 20, 20), pb)
+        rv = self._e.render_into_pixbuf((0, 0, 1, 1), pb)
         self.assert_(rv)
         pb.save('foo2.png', 'png')
 

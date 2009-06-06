@@ -32,3 +32,19 @@
    ...
    fun:PyImport_ImportModuleLevel
 }
+
+{
+   gdk_display_open keeps some long-lived structure around
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:gdk_display_open
+}
+
+{
+   g_get_home_dir keeps a cach
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:g_get_home_dir
+}

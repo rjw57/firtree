@@ -30,6 +30,13 @@
   (gtype-id "FIRTREE_TYPE_AFFINE_TRANSFORM")
 )
 
+(define-object CpuEngine
+  (in-module "Firtree")
+  (parent "GObject")
+  (c-name "FirtreeCpuEngine")
+  (gtype-id "FIRTREE_TYPE_CPU_ENGINE")
+)
+
 (define-object Kernel
   (in-module "Firtree")
   (parent "GObject")

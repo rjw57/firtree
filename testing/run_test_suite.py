@@ -20,12 +20,14 @@ sys.path.append(bindings_path)
 
 # Now import the tests
 import core.affinetransform
+import core.cpuengine
 import core.kernel
 import core.sampler
 import core.kernelsampler
 
 suite = unittest.TestSuite()
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.affinetransform))
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.cpuengine))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernel))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.sampler))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernelsampler))

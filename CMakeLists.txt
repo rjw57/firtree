@@ -29,7 +29,7 @@ if(NOT APPLE)
     # We use pkg-config to fing glib et al
     find_package(PkgConfig)
     # Find glib et al
-    pkg_check_modules(GLIB REQUIRED glib-2.0 gobject-2.0)
+    pkg_check_modules(GLIB REQUIRED glib-2.0 gobject-2.0 gdk-pixbuf-2.0)
     include_directories(${GLIB_INCLUDE_DIRS})
 else(NOT APPLE)
     find_library(GLIB_LIBRARIES GLib)
@@ -61,9 +61,6 @@ add_subdirectory(tools)
 
 # The Firtree library itself
 add_subdirectory(firtree)
-
-# The various rendering engines
-add_subdirectory(engines)
 
 # Build the library bindings
 add_subdirectory(bindings)

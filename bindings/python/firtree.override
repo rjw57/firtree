@@ -4,7 +4,11 @@ headers
 #include <pyglib.h> 
 #include <pygobject.h> 
 
+#include <numpy/arrayobject.h>
+
 #include <firtree/firtree.h>
+
+extern PyTypeObject PyGdkPixbuf_Type;
 
 static PyObject* 
 _wrap_firtree_kernel_mp_subscript(PyObject *self, PyObject *arg_obj);
@@ -86,6 +90,10 @@ VEC_CONVERSION(4)
 
 %%
 init
+
+/* initialise numpy */
+import_array();
+
 /* Register boxed types */
 pyg_register_gtype_custom(FIRTREE_TYPE_VEC2, _from_vec2, _to_vec2);
 pyg_register_gtype_custom(FIRTREE_TYPE_VEC3, _from_vec3, _to_vec3);
@@ -94,6 +102,7 @@ pyg_register_gtype_custom(FIRTREE_TYPE_VEC4, _from_vec4, _to_vec4);
 modulename pyfirtree
 %%
 import gobject.GObject as PyGObject_Type
+import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore-glob
   *_get_type                            
@@ -103,6 +112,7 @@ ignore-glob
 %%
 include
     firtree-affine-transform.override
+    firtree-cpu-engine.override
     firtree-debug.override
     firtree-kernel.override
     firtree-kernel-sampler.override

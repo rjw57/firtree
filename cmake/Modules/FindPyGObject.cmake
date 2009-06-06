@@ -106,8 +106,8 @@ endif(PYGOBJECT_FOUND)
 # You should add the required libraries corresponding to each header manually via
 # target_link_libraries().
 macro(pygobject_target_add_bindings _prefix _file_prefix)
-    set(_list_names "MODULEPREFIX" "DEFS" "OVERRIDE")
-    set(_list_variables "_module_prefix" "_defs" "_overrides")
+    set(_list_names "MODULEPREFIX" "DEFS" "OVERRIDE" "REGISTER")
+    set(_list_variables "_module_prefix" "_defs" "_overrides" "_register")
     parse_options(_list_names _list_variables ${ARGN})
 
     list(LENGTH _module_prefix _module_prefix_length)
@@ -144,6 +144,10 @@ macro(pygobject_target_add_bindings _prefix _file_prefix)
         if(_overrides)
             list(APPEND _codegen_opts "--override" ${_overrides})
         endif(_overrides)
+
+        foreach(_reg ${_register})
+            list(APPEND _codegen_opts "--register" ${_reg})
+        endforeach(_reg in _register)
 
         # Generate a target to output overall defs
         add_custom_command(OUTPUT "${_output_defs}"

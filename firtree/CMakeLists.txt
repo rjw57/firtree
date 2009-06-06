@@ -4,6 +4,9 @@
 #
 # See LICENSE file for distribution rights.
 
+# The various rendering engines
+add_subdirectory(engines)
+
 add_library(firtree SHARED
     firtree-affine-transform.c  firtree-affine-transform.h
     firtree-debug.cc            firtree-debug.h
@@ -11,6 +14,9 @@ add_library(firtree SHARED
     firtree-kernel-sampler.cc   firtree-kernel-sampler.h
     firtree-sampler.cc          firtree-sampler.h
     firtree-vector.h            firtree-vector.c
+
+    engines/cpu/firtree-cpu-engine.h
+    engines/cpu/firtree-cpu-engine.cc
 
     internal/firtree-kernel-intl.hh
     internal/firtree-sampler-intl.hh
@@ -27,7 +33,7 @@ set_target_properties(firtree
     )
 
 target_link_libraries(firtree
-    common llvm-frontend
+    common llvm-frontend 
     ${GLIB_LIBRARIES})
 
 # vim:sw=4:ts=4:autoindent:et

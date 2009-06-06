@@ -23,3 +23,12 @@
    ...
    fun:*getTypeDescription*
 }
+
+{
+   import_array seems to cause this
+   Memcheck:Leak
+   fun:malloc
+   fun:PyString_FromStringAndSize
+   ...
+   fun:PyImport_ImportModuleLevel
+}

@@ -18,7 +18,7 @@ _wrap_firtree_kernel_sampler_set_kernel(PyGObject *self, PyObject *args, PyObjec
         return Py_None;
     }
 
-    if(((PyObject*)kernel)->ob_type != &PyFirtreeKernel_Type) {
+    if(!PyObject_TypeCheck((PyObject*)kernel, &PyFirtreeKernel_Type)) {
         PyErr_SetString(PyExc_TypeError,
                 "Argument 1 must be a pyfirtree.Kernel or None.");
         return NULL;

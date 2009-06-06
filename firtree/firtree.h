@@ -36,6 +36,10 @@
 #include "firtree-sampler.h"
 #include "firtree-vector.h"
 
+/* Engines */
+
+#include "engines/cpu/firtree-cpu-engine.h"
+
 #endif /* _FIRTREE_MAIN_INCLUDE */
 
 /* vim:sw=4:ts=4:et:cindent

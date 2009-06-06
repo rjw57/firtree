@@ -1,0 +1,57 @@
+%%
+override firtree_cpu_engine_set_sampler kwargs
+static PyObject *
+_wrap_firtree_cpu_engine_set_sampler(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "sampler", NULL };
+    PyGObject *sampler;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O:FirtreeCpuEngine.set_sampler", kwlist,
+                &sampler))
+        return NULL;
+
+    /* Check input is None or a sampler. */
+    if((PyObject*)sampler == Py_None) {
+        firtree_cpu_engine_set_sampler(FIRTREE_CPU_ENGINE(self->obj), NULL);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if(!PyObject_TypeCheck((PyObject*)sampler, &PyFirtreeSampler_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Argument 1 must be a pyfirtree.Sampler or None.");
+        return NULL;
+    }
+
+    firtree_cpu_engine_set_sampler(FIRTREE_CPU_ENGINE(self->obj), 
+            FIRTREE_SAMPLER(sampler->obj));
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+override firtree_cpu_engine_render_into_pixbuf
+static PyObject *
+_wrap_firtree_cpu_engine_render_into_pixbuf(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "extents", "pixbuf", NULL };
+    PyGObject *pixbuf;
+    float extents[4];
+    int ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "(ffff)O!:FirtreeCpuEngine.render_into_pixbuf", kwlist,
+                &extents[0], &extents[1], &extents[2], &extents[3],
+                &PyGdkPixbuf_Type, &pixbuf))
+        return NULL;
+    
+    ret = firtree_cpu_engine_render_into_pixbuf(FIRTREE_CPU_ENGINE(self->obj), 
+            (FirtreeVec4*)extents, GDK_PIXBUF(pixbuf->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

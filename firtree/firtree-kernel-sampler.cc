@@ -104,6 +104,8 @@ firtree_kernel_sampler_finalize (GObject *object)
     G_OBJECT_CLASS (firtree_kernel_sampler_parent_class)->finalize (object);
 }
 
+static FirtreeSamplerIntlVTable _firtree_kernel_sampler_class_vtable;
+
 static void
 firtree_kernel_sampler_class_init (FirtreeKernelSamplerClass *klass)
 {
@@ -119,6 +121,7 @@ firtree_kernel_sampler_class_init (FirtreeKernelSamplerClass *klass)
     /* override the sampler virtual functions with our own */
     FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
 
+    sampler_class->intl_vtable = &_firtree_kernel_sampler_class_vtable;
     sampler_class->intl_vtable->get_param = firtree_kernel_sampler_get_param;
     sampler_class->intl_vtable->get_function = firtree_kernel_sampler_get_function;
 }

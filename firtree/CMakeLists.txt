@@ -4,8 +4,11 @@
 #
 # See LICENSE file for distribution rights.
 
-# The various rendering engines
-add_subdirectory(engines)
+set(LLVM_CONFIG_COMPONENTS core 
+    codegen linker bitreader
+    jit native)
+
+find_package(LLVM)
 
 add_library(firtree SHARED
     firtree-affine-transform.c  firtree-affine-transform.h
@@ -20,6 +23,8 @@ add_library(firtree SHARED
 
     internal/firtree-kernel-intl.hh
     internal/firtree-sampler-intl.hh
+
+    ${LLVM_STATIC_OBJS}
     
     firtree.h)
 
@@ -34,7 +39,8 @@ set_target_properties(firtree
 
 target_link_libraries(firtree
     common llvm-frontend 
-    ${GLIB_LIBRARIES})
+    ${GLIB_LIBRARIES}
+    ${LLVM_STATIC_LIBS})
 
 # vim:sw=4:ts=4:autoindent:et
 

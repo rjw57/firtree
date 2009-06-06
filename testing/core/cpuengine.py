@@ -43,10 +43,10 @@ class RenderKernelSampler(unittest.TestCase):
 
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)
         pb.fill(0x0000ff)
-        #pb.save('foo1.png', 'png')
+        pb.save('foo1.png', 'png')
         rv = self._e.render_into_pixbuf((-10, -10, 20, 20), pb)
         self.assert_(rv)
-        #pb.save('foo2.png', 'png')
+        pb.save('foo2.png', 'png')
 
 # vim:sw=4:ts=4:et:autoindent
 

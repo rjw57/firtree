@@ -7,9 +7,10 @@
 # Build the parser
 add_subdirectory(styx-parser)
 
+set(LLVM_CONFIG_COMPONENTS ipo instrumentation)
+
 # We need the styx libraries and LLVM
 find_package(Styx)
-set(LLVM_CONFIG_COMPONENTS backend ipo instrumentation)
 find_package(LLVM)
 
 # Moan if we can't find our dependencies
@@ -41,6 +42,8 @@ set(LLVM_FRONTEND_SOURCES
   llvm-emit-function-call.cc  llvm-type-cast.cc
   llvm-emit-loop.cc           symbol-table.cc
   llvm-emit-negate.cc
+
+  ${LLVM_STATIC_OBJS}
 )
 
 include_directories(${STYX_INCLUDE_DIR})
@@ -55,7 +58,8 @@ add_library(llvm-frontend ${LLVM_FRONTEND_SOURCES})
 target_link_libraries(llvm-frontend
     styx-parser common 
     -ldl
-    ${LLVM_LIBRARIES} ${GLIB_LIBRARIES})
+    ${GLIB_LIBRARIES}
+    ${LLVM_STATIC_LIBS})
 
 # vim:sw=4:ts=4:autoindent:et
 

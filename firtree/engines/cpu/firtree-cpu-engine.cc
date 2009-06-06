@@ -22,6 +22,29 @@
 
 #include "firtree-cpu-engine.h"
 
+#include <llvm/Module.h>
+#include <llvm/ModuleProvider.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/Linker.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/JIT.h>
+
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Analysis/LoopPass.h>
+#include <llvm/Analysis/CallGraph.h>
+#include <llvm/Target/TargetData.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/LinkAllPasses.h>
+
+#include <llvm/DerivedTypes.h>
+#include <llvm/Instructions.h>
+#include <llvm/Constants.h>
+
+#define bindata _firtee_cpu_engine_render_buffer_mod
+#include "render-buffer.llvm.bc.h"
+#undef bindata
+
 G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 
 #define GET_PRIVATE(o) \
@@ -56,6 +79,7 @@ firtree_cpu_engine_set_property (GObject *object, guint property_id,
 static void
 firtree_cpu_engine_dispose (GObject *object)
 {
+    /* FirtreeCpuEnginePrivate* p = GET_PRIVATE(object); */
     G_OBJECT_CLASS (firtree_cpu_engine_parent_class)->dispose (object);
 
     FirtreeCpuEngine* cpu_engine = FIRTREE_CPU_ENGINE(object);
@@ -119,6 +143,55 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
     return p->sampler;
 }
 
+llvm::Function*
+generate_renderer(FirtreeCpuEngine* self)
+{
+    /* create an LLVM module from the bitcode in 
+     * _firtee_cpu_engine_render_buffer_mod */
+    llvm::MemoryBuffer* mem_buf = 
+        llvm::MemoryBuffer::getMemBuffer(
+                (const char*)_firtee_cpu_engine_render_buffer_mod,
+                (const char*)(_firtee_cpu_engine_render_buffer_mod + 
+                    sizeof(_firtee_cpu_engine_render_buffer_mod) - 1));
+    llvm::Module* m = llvm::ParseBitcodeFile(mem_buf);
+    delete mem_buf;
+    
+    llvm::Linker* linker = new llvm::Linker("sampler", m);
+    llvm::Function* sample_function = 
+        linker->releaseModule()->getFunction("render_buffer_uc_4");
+    delete linker;
+
+    return sample_function;
+}
+
+typedef void (* RenderFunc) (unsigned char* buffer,
+    unsigned int width, unsigned int height,
+    unsigned int row_stride, float* extents);
+
+/* optimise a llvm module by internalising all but the
+ * named function and agressively inlining. */
+void optimise_module(llvm::Module* m, const char* func_name)
+{
+	if(m == NULL)
+	{
+		return;
+	}
+
+    llvm::PassManager PM;
+
+	PM.add(new llvm::TargetData(m));
+
+    std::vector<const char*> export_list;
+    export_list.push_back(func_name);
+
+    PM.add(llvm::createInternalizePass(export_list));
+	PM.add(llvm::createFunctionInliningPass(32768)); 
+
+	PM.add(llvm::createAggressiveDCEPass()); 
+
+	PM.run(*m);
+}
+
 gboolean
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf)
@@ -136,17 +209,48 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    for(guint row=0; row<height; ++row)
-    {
-        guchar* pixel_ptr = pixels + (row * stride);
-        for(guint col=0; col<width; ++col, pixel_ptr+=channels)
-        {
-            pixel_ptr[0] = 0xff;
-            pixel_ptr[1] = 0x00;
-            pixel_ptr[2] = 0x80;
-            pixel_ptr[3] = 0xff;
-        }
+    llvm::Function* render_f = generate_renderer(self);
+    g_assert(render_f);
+
+    llvm::Module* m = render_f->getParent();
+
+    /* implement the function */
+    llvm::Function* f = m->getFunction("sample");
+
+    /* FIXME: this is a stub */
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
+
+    std::vector<llvm::Constant*> elements;
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    llvm::Constant* rv = llvm::ConstantVector::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4),
+            elements);
+
+    llvm::ReturnInst::Create(rv, bb);
+
+    optimise_module(m, render_f->getName().c_str());
+
+    llvm::ModuleProvider* mp = 
+        new llvm::ExistingModuleProvider(m);
+
+    std::string err;
+    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::createJIT(mp, &err);
+    if(!engine) {
+        g_debug("Error JIT-ing render: %s\n", err.c_str());
+        delete mp;
+        return FALSE;
     }
+
+    RenderFunc render = (RenderFunc)
+        engine->getPointerToFunction(render_f);
+    g_assert(render);
+
+    render(pixels, width, height, stride, (float*)extents);
+
+    delete engine;
 
     return TRUE;
 }

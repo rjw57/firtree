@@ -62,6 +62,9 @@ add_subdirectory(tools)
 # The Firtree library itself
 add_subdirectory(firtree)
 
+# The various rendering engines
+add_subdirectory(engines)
+
 # Build the library bindings
 add_subdirectory(bindings)
 

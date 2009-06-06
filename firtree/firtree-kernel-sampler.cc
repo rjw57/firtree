@@ -209,8 +209,8 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
     llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
 
     std::vector<llvm::Constant*> elements;
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     llvm::Constant* rv = llvm::ConstantVector::get(

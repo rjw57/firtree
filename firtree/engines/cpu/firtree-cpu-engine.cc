@@ -41,6 +41,10 @@
 #include <llvm/Instructions.h>
 #include <llvm/Constants.h>
 
+#include <llvm/Transforms/Utils/Cloning.h>
+
+#include <firtree/internal/firtree-sampler-intl.hh>
+
 #define bindata _firtee_cpu_engine_render_buffer_mod
 #include "render-buffer.llvm.bc.h"
 #undef bindata
@@ -144,7 +148,7 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
 }
 
 llvm::Function*
-generate_renderer(FirtreeCpuEngine* self)
+generate_renderer(FirtreeCpuEngine* self, llvm::Function* sampler_function)
 {
     /* create an LLVM module from the bitcode in 
      * _firtee_cpu_engine_render_buffer_mod */
@@ -157,11 +161,27 @@ generate_renderer(FirtreeCpuEngine* self)
     delete mem_buf;
     
     llvm::Linker* linker = new llvm::Linker("sampler", m);
-    llvm::Function* sample_function = 
-        linker->releaseModule()->getFunction("render_buffer_uc_4");
+
+    llvm::Module* sampler_mod = sampler_function->getParent();
+    std::string err_str;
+    bool was_error = linker->LinkInModule(sampler_mod, &err_str);
+    if(was_error) {
+        g_error("Error linking in sampler: %s\n", err_str.c_str());
+    }
+
+    llvm::Module* linked_module = linker->releaseModule();
     delete linker;
 
-    return sample_function;
+    llvm::Function* new_sampler_func = linked_module->getFunction(
+            sampler_function->getName());
+
+    linked_module->getFunction("sample")->
+        replaceAllUsesWith(new_sampler_func);
+
+    llvm::Function* render_function = linked_module->getFunction(
+            "render_buffer_uc_4");
+
+    return render_function;
 }
 
 typedef void (* RenderFunc) (unsigned char* buffer,
@@ -196,6 +216,8 @@ gboolean
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf)
 {
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
+
     if(!extents) { return FALSE; }
     if(!pixbuf) { return FALSE; }
 
@@ -209,27 +231,20 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    llvm::Function* render_f = generate_renderer(self);
+    if(p->sampler == NULL) {
+        return FALSE;
+    }
+
+    llvm::Function* sampler_function = 
+        firtree_sampler_get_function(p->sampler);
+    if(sampler_function == NULL) {
+        return FALSE;
+    }
+
+    llvm::Function* render_f = generate_renderer(self, sampler_function);
     g_assert(render_f);
 
     llvm::Module* m = render_f->getParent();
-
-    /* implement the function */
-    llvm::Function* f = m->getFunction("sample");
-
-    /* FIXME: this is a stub */
-    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
-
-    std::vector<llvm::Constant*> elements;
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
-    llvm::Constant* rv = llvm::ConstantVector::get(
-            llvm::VectorType::get(llvm::Type::FloatTy, 4),
-            elements);
-
-    llvm::ReturnInst::Create(rv, bb);
 
     optimise_module(m, render_f->getName().c_str());
 

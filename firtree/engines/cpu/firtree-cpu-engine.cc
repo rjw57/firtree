@@ -207,6 +207,7 @@ get_renderer(FirtreeCpuEngine* self)
     llvm::Function* sampler_function = 
         firtree_sampler_get_function(p->sampler);
     if(sampler_function == NULL) {
+        g_debug("No sampler function.\n");
         return NULL;
     }
 
@@ -288,7 +289,9 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     }
 
     RenderFunc render = get_renderer(self);
-    g_assert(render);
+    if(!render) {
+        return FALSE;
+    }
 
     render(pixels, width, height, stride, (float*)extents);
 

@@ -39,6 +39,12 @@ class RenderKernelSampler(unittest.TestCase):
         self._e.set_sampler(ks)
         self.assertEqual(self._e.get_sampler(), ks)
 
+        k = Kernel()
+        k.compile_from_source("""
+            kernel vec4 simple() { return vec4(0,1,0,1); }""")
+        self.assert_(k.get_compile_status())
+        ks.set_kernel(k)
+
         # fixme. no way of testing this...
 
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)

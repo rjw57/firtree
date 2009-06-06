@@ -25,6 +25,7 @@
 #include <llvm/DerivedTypes.h>
 #include <llvm/Instructions.h>
 #include <llvm/Constants.h>
+#include <llvm/Linker.h>
 
 #include <common/uuid.h>
 
@@ -184,8 +185,30 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
         return p->cached_function;
     }
 
+    if(!p->kernel) {
+        g_debug("No kernel associated with sampler.\n");
+        return NULL;
+    }
+
     /* if we get here, we need to create our function. */
-    llvm::Module* m = new llvm::Module("sampler");
+
+    llvm::Function* kernel_func = firtree_kernel_get_function(p->kernel);
+    if(!kernel_func) {
+        g_debug("No kernel function.\n");
+        return NULL;
+    }
+    
+    std::string kernel_name = kernel_func->getName();
+
+    llvm::Linker* linker = new llvm::Linker("kernel-sampler", "module");
+    std::string err_str;
+    if(linker->LinkInModule(kernel_func->getParent(), &err_str))
+    {
+        g_error("Error linking function: %s\n", err_str.c_str());
+    }
+
+    llvm::Module* m = linker->releaseModule();
+    delete linker;
 
     /* work out the function name. */
     std::string func_name("sampler_");
@@ -209,8 +232,8 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
 
     std::vector<llvm::Constant*> elements;
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
-    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
     llvm::Constant* rv = llvm::ConstantVector::get(
             llvm::VectorType::get(llvm::Type::FloatTy, 4),

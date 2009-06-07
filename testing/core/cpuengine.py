@@ -66,7 +66,7 @@ class RenderKernelSampler(unittest.TestCase):
         k = Kernel()
         k.compile_from_source("""
             kernel vec4 simple() { 
-                vec4 out_vec = vec4(0.5 + 0.5*sin(destCoord().xyx + vec3(0,0,3.14159)),1);
+                vec4 out_vec = vec4(0.5 + 0.5*sin(destCoord().xy), 0, 1);
                 return out_vec;
             }""")
         self.assert_(k.get_compile_status())

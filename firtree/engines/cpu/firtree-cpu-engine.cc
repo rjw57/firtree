@@ -42,6 +42,7 @@
 #include <llvm/Constants.h>
 
 #include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Support/CommandLine.h>
 
 #include <firtree/internal/firtree-sampler-intl.hh>
 
@@ -249,12 +250,12 @@ get_renderer(FirtreeCpuEngine* self)
 
     optimise_module(m, render_function->getName().c_str());
 
-    // m->dump(); 
+    m->dump(); 
 
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 
     std::string err;
-    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::createJIT(mp, &err);
+    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::create(mp, false, &err);
     p->cached_engine = engine;
 
     if(!engine) {

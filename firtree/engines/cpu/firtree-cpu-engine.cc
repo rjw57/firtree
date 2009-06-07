@@ -212,6 +212,19 @@ get_renderer(FirtreeCpuEngine* self)
         return NULL;
     }
 
+	/* Nasty, nasty hack to set an option to disable MMX *
+     * This is really horrible but is required by:       *
+     *   http://llvm.org/bugs/show_bug.cgi?id=3287       */
+	static bool set_opt = false;
+	static const char* opts[] = {
+        "progname",
+		"-disable-mmx",
+	};
+	if(!set_opt) {
+        llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(opts));
+		set_opt = true;
+	}
+
     /* create an LLVM module from the bitcode in 
      * _firtee_cpu_engine_render_buffer_mod */
     llvm::MemoryBuffer* mem_buf = 
@@ -250,7 +263,7 @@ get_renderer(FirtreeCpuEngine* self)
 
     optimise_module(m, render_function->getName().c_str());
 
-    m->dump(); 
+    // m->dump(); 
 
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 

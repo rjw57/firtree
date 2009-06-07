@@ -249,7 +249,7 @@ get_renderer(FirtreeCpuEngine* self)
 
     optimise_module(m, render_function->getName().c_str());
 
-    m->dump();
+    /* m->dump(); */
 
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 

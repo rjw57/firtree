@@ -243,11 +243,35 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
     llvm::Value* new_kernel_func = m->getFunction(kernel_name);
     g_assert(new_kernel_func);
 
+#if 1
     llvm::Value* function_call = llvm::CallInst::Create(
             new_kernel_func, arguments.begin(), arguments.end(),
             "kernel_call", bb);
 
     llvm::ReturnInst::Create(function_call, bb);
+#else
+    std::vector<llvm::Constant*> elements;
+
+    llvm::Value* dest_x = new llvm::ExtractElementInst(
+            dest_coord, 0u, "dest_x", bb);
+    llvm::Value* dest_y = new llvm::ExtractElementInst(
+            dest_coord, 1u, "dest_y", bb);
+
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.0));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 0.5));
+    elements.push_back(llvm::ConstantFP::get(llvm::Type::FloatTy, 1.0));
+    llvm::Constant* rv = llvm::ConstantVector::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4),
+            elements);
+
+    llvm::Value* ov1 = llvm::InsertElementInst::Create(
+            rv, dest_x, 1u, "ov", bb);
+    llvm::Value* ov2 = llvm::InsertElementInst::Create(
+            ov1, dest_y, 0u, "ov", bb);
+
+    llvm::ReturnInst::Create(ov2, bb);
+#endif
 
     return p->cached_function;
 }

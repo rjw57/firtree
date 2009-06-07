@@ -42,16 +42,14 @@ class RenderKernelSampler(unittest.TestCase):
         k = Kernel()
         k.compile_from_source("""
             kernel vec4 simple() { 
-                vec2 dc = destCoord();
-                // vec4 out_val = vec4(destCoord().yx, 0, 1);
-                vec4 out_val = vec4(0, 1, 1, 1);
-                out_val.xy = dc;
-                return out_val;
+                return vec4(destCoord(), 0, 1);
             }""")
         self.assert_(k.get_compile_status())
         ks.set_kernel(k)
 
         # fixme. no way of testing this...
+
+        # print(debug_dump_sampler_function(ks))
 
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)
         pb.fill(0x0000ff)

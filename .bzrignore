@@ -12,3 +12,4 @@ doc/internal/doxy.config
 doc/public/firtree/
 firtree/libfirtree.so.*
 bindings/python/firtree.generated.*
+firtree/engines/cpu/render-buffer.llvm.opt.bc

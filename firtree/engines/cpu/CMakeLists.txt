@@ -9,13 +9,13 @@ find_package(PythonInterp)
 
 include_directories(${LLVM_INCLUDE_DIRS})
 
-find_program(LLVM_GCC llvm-gcc)
+find_program(LLVM_GCC_EXECUTABLE llvm-gcc)
 
 set(_add_custom 1)
-if(NOT LLVM_GCC)
+if(NOT LLVM_GCC_EXECUTABLE)
     message(STATUS "llvm-gcc not found, some changes to source wont be noticed.")
     set(_add_custom 0)
-endif(NOT LLVM_GCC)
+endif(NOT LLVM_GCC_EXECUTABLE)
 
 if(NOT PYTHONINTERP_FOUND)
     message(STATUS "Python interpreter not found, some changes to source wont be noticed.")
@@ -25,15 +25,17 @@ endif(NOT PYTHONINTERP_FOUND)
 if(_add_custom)
     add_custom_command(
         OUTPUT 
-            render-buffer.llvm.bc render-buffer.llvm.bc.h
-        COMMAND ${LLVM_GCC} -O9
-            render-buffer.c -c -emit-llvm -o render-buffer.llvm.bc
+            render-buffer.o render-buffer.llvm.opt.bc render-buffer.llvm.bc.h
+        COMMAND ${LLVM_GCC_EXECUTABLE} 
+            -o render-buffer.o
+            -c -emit-llvm
+            render-buffer.c
+        COMMAND ${LLVM_OPT_EXECUTABLE} 
+            -f -std-compile-opts -o render-buffer.llvm.opt.bc render-buffer.o
         COMMAND ${PYTHON_EXECUTABLE} ../../../tools/bin2h.py 
-            render-buffer.llvm.bc render-buffer.llvm.bc.h
+            render-buffer.llvm.opt.bc render-buffer.llvm.bc.h
         DEPENDS
             render-buffer.c)
-    set_source_files_properties(render-buffer.llvm.bc.h
-        PROPERTIES GENERATED TRUE)
 endif(_add_custom)
 
 # Build the CPU renderer
@@ -41,5 +43,7 @@ add_library(cpu-engine
     render-buffer.llvm.bc.h
     firtree-cpu-engine.h
     firtree-cpu-engine.cc)
+
+set_source_files_properties(render-buffer.llvm.bc.h PROPERTIES GENERATED TRUE)
 
 # vim:sw=4:ts=4:autoindent:et

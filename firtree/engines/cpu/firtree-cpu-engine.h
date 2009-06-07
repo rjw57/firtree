@@ -94,9 +94,24 @@ gboolean
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf);
 
+/**
+ * firtree_cpu_engine_set_sampler:
+ * @self: A FirtreeCpuEngine object.
+ * @sampler: A FirtreeSampler to associate with the engine.
+ *
+ * Associate the sampler @sampler with the engine.
+ */
 void
 firtree_cpu_engine_set_sampler (FirtreeCpuEngine* self, FirtreeSampler* sampler);
 
+/**
+ * firtree_cpu_engine_get_sampler:
+ * @self: A FirtreeCpuEngine object.
+ *
+ * Retrieve the FirtreeSampler associated with the engine. 
+ *
+ * Returns: The sampler related with the engine.
+ */
 FirtreeSampler*
 firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self);
 

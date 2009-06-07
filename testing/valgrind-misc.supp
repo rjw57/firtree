@@ -48,3 +48,10 @@
    ...
    fun:g_get_home_dir
 }
+
+{
+   LLVM leaks here
+   Memcheck:Leak
+   ...
+   fun:*getConstantPool*
+}

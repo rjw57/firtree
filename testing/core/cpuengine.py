@@ -42,7 +42,7 @@ class RenderKernelSampler(unittest.TestCase):
         k = Kernel()
         k.compile_from_source("""
             kernel vec4 simple() { 
-                return vec4(destCoord(), 0, 1);
+                return vec4(destCoord().yx, 0.5, 1);
             }""")
         self.assert_(k.get_compile_status())
         ks.set_kernel(k)

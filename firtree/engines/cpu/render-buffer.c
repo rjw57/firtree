@@ -22,8 +22,9 @@ void render_buffer_uc_4(unsigned char* buffer,
     float dx = extents[2] / (float)width;
     float dy = extents[3] / (float)height;
 
+
     for(row=0; row<height; ++row, y+=dy) {
-        unsigned char* pixel = buffer + (row*row_stride);
+        unsigned char* pixel = buffer + (row * row_stride);
         float x = start_x;
         for(col=0; col<width; ++col, pixel+=4, x+=dx) {
             vec2 dest_coord;

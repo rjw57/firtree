@@ -4,7 +4,7 @@
 #
 # See LICENSE file for distribution rights.
 
-# Build the CPU JIT engine
+# Build the CPU renderer
 add_subdirectory(cpu)
 
 # vim:sw=4:ts=4:autoindent:et

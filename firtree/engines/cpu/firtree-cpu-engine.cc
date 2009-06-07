@@ -236,8 +236,11 @@ get_renderer(FirtreeCpuEngine* self)
     llvm::Function* new_sampler_func = linked_module->getFunction(
             sampler_function->getName());
 
-    linked_module->getFunction("sample")->replaceAllUsesWith(new_sampler_func);
-    linked_module->getFunction("sample")->removeFromParent();
+    llvm::Function* existing_sample_func = linked_module->getFunction("sample");
+    if(existing_sample_func) {
+        existing_sample_func->replaceAllUsesWith(new_sampler_func);
+        existing_sample_func->removeFromParent();
+    }
 
     llvm::Function* render_function = linked_module->getFunction(
             "render_buffer_uc_4");

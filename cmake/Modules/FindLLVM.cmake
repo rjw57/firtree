@@ -11,6 +11,7 @@
 #  LLVM_CONFIG_EXECUTABLE - the path to the llvm-config executable
 #  LLVM_AS_EXECUTABLE - the path to the llvm-as executable
 #  LLVM_OPT_EXECUTABLE - the path to the llvm opt executable
+#  LLVM_LINK_EXECUTABLE - the path to the llvm opt executable
 #  LLVM_HOST_TARGET - Target triple used to configure LLVM.
 #  LLVM_INCLUDE_DIR - where to find the LLVM headers.
 #  LLVM_LIBRARY_DIR - the LLVM library directory
@@ -20,6 +21,7 @@
 FIND_PROGRAM(LLVM_CONFIG_EXECUTABLE llvm-config)
 FIND_PROGRAM(LLVM_AS_EXECUTABLE llvm-as)
 FIND_PROGRAM(LLVM_OPT_EXECUTABLE opt)
+FIND_PROGRAM(LLVM_LINK_EXECUTABLE llvm-link)
 
 MACRO(LLVM_RUN_CONFIG arg outvar)
   EXECUTE_PROCESS(COMMAND "${LLVM_CONFIG_EXECUTABLE}" ${LLVM_CONFIG_COMPONENTS} "${arg}"

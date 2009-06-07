@@ -34,7 +34,7 @@ class RenderKernelSampler(unittest.TestCase):
     def tearDown(self):
         self._e = None
 
-    def testKernelSampler(self):
+    def footestKernelSampler(self):
         ks = KernelSampler()
         self._e.set_sampler(ks)
         self.assertEqual(self._e.get_sampler(), ks)
@@ -55,6 +55,31 @@ class RenderKernelSampler(unittest.TestCase):
         pb.fill(0x0000ff)
         pb.save('foo1.png', 'png')
         rv = self._e.render_into_pixbuf((0, 0, 1, 1), pb)
+        self.assert_(rv)
+        pb.save('foo2.png', 'png')
+
+    def testKernelSampler(self):
+        ks = KernelSampler()
+        self._e.set_sampler(ks)
+        self.assertEqual(self._e.get_sampler(), ks)
+
+        k = Kernel()
+        k.compile_from_source("""
+            kernel vec4 simple() { 
+                vec4 out_vec = vec4(0.5 + 0.5*sin(destCoord().xyx + vec3(0,0,3.14159)),1);
+                return out_vec;
+            }""")
+        self.assert_(k.get_compile_status())
+        ks.set_kernel(k)
+
+        # fixme. no way of testing this...
+
+        # print(debug_dump_sampler_function(ks))
+
+        pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)
+        pb.fill(0x0000ff)
+        pb.save('foo1.png', 'png')
+        rv = self._e.render_into_pixbuf((0, 0, 51, 51), pb)
         self.assert_(rv)
         pb.save('foo2.png', 'png')
 

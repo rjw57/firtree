@@ -46,7 +46,7 @@
 #include <firtree/internal/firtree-sampler-intl.hh>
 
 #define bindata _firtee_cpu_engine_render_buffer_mod
-#include "render-buffer.llvm.bc.h"
+#include "llvm-cpu-support.bc.h"
 #undef bindata
 
 G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
@@ -249,7 +249,7 @@ get_renderer(FirtreeCpuEngine* self)
 
     optimise_module(m, render_function->getName().c_str());
 
-    /* m->dump(); */
+    // m->dump(); 
 
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 

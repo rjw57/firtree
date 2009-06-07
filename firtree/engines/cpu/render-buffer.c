@@ -16,19 +16,6 @@ void render_buffer_uc_4(unsigned char* buffer,
     unsigned int width, unsigned int height,
     unsigned int row_stride, float* extents)
 {
-#if 0
-    vec2 dest_coord = (vec2){0.f, 0.f};
-
-    ELEMENT(dest_coord, 0) = extents[0];
-    ELEMENT(dest_coord, 1) = extents[1];
-
-    vec4 pix_val = sample(dest_coord);
-
-    buffer[0] = ELEMENT(pix_val, 0) * 255.f;
-    buffer[1] = ELEMENT(pix_val, 1) * 255.f;
-    buffer[2] = ELEMENT(pix_val, 2) * 255.f;
-    buffer[3] = ELEMENT(pix_val, 3) * 255.f;
-#else
     unsigned int row, col;
     float start_x = extents[0];
     float y = extents[1];
@@ -45,20 +32,12 @@ void render_buffer_uc_4(unsigned char* buffer,
             ELEMENT(dest_coord, 1) = y;
 
             vec4 pix_val = sample(dest_coord);
-#if 0
-            pixel[0] = x * 255.f;
-            pixel[1] = y * 255.f;
-            pixel[2] = 0;
-            pixel[3] = 0xff;
-#else
             pixel[0] = ELEMENT(pix_val, 0) * 255.f;
             pixel[1] = ELEMENT(pix_val, 1) * 255.f;
             pixel[2] = ELEMENT(pix_val, 2) * 255.f;
             pixel[3] = ELEMENT(pix_val, 3) * 255.f;
-#endif
         }
     }
-#endif
 }
 
 /* vim:sw=4:ts=4:cindent:et

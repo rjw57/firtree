@@ -80,9 +80,10 @@ const llvm::Type* FullType::ToLLVMType( LLVMContext* ctx ) const
 		case TySpecFloat:
 			return Type::FloatTy;
 
-		case TySpecInt:
-
 		case TySpecSampler:
+			return PointerType::get(Type::Int8Ty, 0);
+
+		case TySpecInt:
 			return Type::Int32Ty;
 
 		case TySpecBool:

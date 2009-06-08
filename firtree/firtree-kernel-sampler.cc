@@ -225,9 +225,11 @@ firtree_kernel_sampler_optimise_cached_function(FirtreeSampler* self)
 
 void
 firtree_kernel_sampler_implement_sample_function(FirtreeSampler* self,
-        llvm::Function* sample_func, GData** sampler_function_list,
-        GQuark* id_list, guint n_id)
+        llvm::Function* sample_func,
+        GData** sampler_func_map)
 {
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+
     llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", sample_func);
 
     llvm::Function::arg_iterator args = sample_func->arg_begin();
@@ -248,29 +250,41 @@ firtree_kernel_sampler_implement_sample_function(FirtreeSampler* self,
                 llvm::VectorType::get(llvm::Type::FloatTy, 4)),
             default_bb);
 
+    guint n_arguments = 0;
+    GQuark* arg_list = firtree_kernel_list_arguments(p->kernel, &n_arguments);
+
     /* For each possible input id, add a case to a switch which calls
      * the appropriate sampler. */
     llvm::SwitchInst* sampler_switch = llvm::SwitchInst::Create(
-            sampler_id, default_bb, n_id, bb);
-    for(guint i=0; i<n_id; ++i) {
-        GQuark id_quark = id_list[i];
-        llvm::Function* sampler_f = (llvm::Function*)
-            g_datalist_id_get_data(sampler_function_list, id_quark);
-        g_assert(sampler_f);
+            sampler_id, default_bb, 1, bb);
+    for(guint i=0; i<n_arguments; ++i) {
+        GQuark arg_quark = arg_list[i];
+        FirtreeKernelArgumentSpec* spec = 
+            firtree_kernel_get_argument_spec(p->kernel, arg_quark);
+        if(spec->type == FIRTREE_TYPE_SAMPLER) {
+            FirtreeSampler* sampler = (FirtreeSampler*)
+                g_value_get_object(
+                        firtree_kernel_get_argument_value(p->kernel, arg_quark));
+            g_assert(sampler);
 
-        llvm::BasicBlock* sample_bb = llvm::BasicBlock::Create("id",
-                sample_func);
+            llvm::Function* sampler_f = (llvm::Function*)
+                g_datalist_id_get_data(sampler_func_map, arg_quark);
+            g_assert(sampler_f);
 
-        llvm::Value* ret_val = llvm::CallInst::Create(
-                sampler_f, 
-                remaining_args.begin(), remaining_args.end(),
-                "rv", sample_bb);
+            llvm::BasicBlock* sample_bb = llvm::BasicBlock::Create("id",
+                    sample_func);
 
-        llvm::ReturnInst::Create(ret_val, sample_bb);
+            llvm::Value* ret_val = llvm::CallInst::Create(
+                    sampler_f, 
+                    remaining_args.begin(), remaining_args.end(),
+                    "rv", sample_bb);
 
-        sampler_switch->addCase(
-                llvm::ConstantInt::get(llvm::Type::Int32Ty, id_quark, false),
-                sample_bb);
+            llvm::ReturnInst::Create(ret_val, sample_bb);
+
+            sampler_switch->addCase(
+                    llvm::ConstantInt::get(llvm::Type::Int32Ty, arg_quark, false),
+                    sample_bb);
+        }
     }
 }
 
@@ -374,9 +388,8 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
      * function. */
     llvm::Function* sample_sv2_f = m->getFunction("sample_sv2");
     if(sample_sv2_f) {
-        firtree_kernel_sampler_implement_sample_function(self,
-                sample_sv2_f, &sampler_function_list,
-                arg_list, n_arguments);
+        firtree_kernel_sampler_implement_sample_function(self, sample_sv2_f,
+                &sampler_function_list);
     }
 
     g_datalist_clear(&sampler_function_list);

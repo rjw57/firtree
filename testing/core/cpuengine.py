@@ -95,7 +95,7 @@ class RenderKernelSampler(unittest.TestCase):
             kernel vec4 simple(sampler src) { 
                 vec4 src_val = sample(src, 
                     samplerTransform(src,
-                        destCoord() + 20*sin(destCoord())));
+                        destCoord() + cos(0.2 * destCoord()*2)));
                 return src_val;
             }""")
         if(not k.get_compile_status()):
@@ -106,7 +106,7 @@ class RenderKernelSampler(unittest.TestCase):
         k2 = Kernel()
         k2.compile_from_source("""
             kernel vec4 simple() { 
-                return vec4(0.5 + 0.5 * sin(0.2 * destCoord()), 0, 1);
+                return vec4(0.5 + 0.5 * sin(destCoord()), 0, 1);
             }""")
         if(not k2.get_compile_status()):
             print(k.get_compile_log())

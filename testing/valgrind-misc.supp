@@ -42,7 +42,7 @@
 }
 
 {
-   g_get_home_dir keeps a cach
+   g_get_home_dir keeps a cache
    Memcheck:Leak
    fun:malloc
    ...
@@ -55,3 +55,11 @@
    ...
    fun:*getConstantPool*
 }
+
+{
+   LLVM's optimisation passes are leaky as sh*t.
+   Memcheck:Addr1
+   ...
+   fun:*createInternalizePass*
+}
+

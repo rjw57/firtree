@@ -27,6 +27,13 @@
 #include <llvm/Constants.h>
 #include <llvm/Linker.h>
 
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Analysis/LoopPass.h>
+#include <llvm/Analysis/CallGraph.h>
+#include <llvm/Target/TargetData.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/LinkAllPasses.h>
+
 #include <common/uuid.h>
 
 #include "internal/firtree-kernel-intl.hh"
@@ -50,7 +57,7 @@ firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param,
         gpointer dest, guint dest_size);
 
 llvm::Function*
-firtree_kernel_sampler_get_function(FirtreeSampler* self);
+firtree_kernel_sampler_get_sample_function(FirtreeSampler* self);
 
 /* invalidate (and release) any cached LLVM modules/functions. This
  * will cause them to be re-generated when ..._get_function() is next
@@ -122,7 +129,8 @@ firtree_kernel_sampler_class_init (FirtreeKernelSamplerClass *klass)
 
     sampler_class->intl_vtable = &_firtree_kernel_sampler_class_vtable;
     sampler_class->intl_vtable->get_param = firtree_kernel_sampler_get_param;
-    sampler_class->intl_vtable->get_function = firtree_kernel_sampler_get_function;
+    sampler_class->intl_vtable->get_sample_function = 
+        firtree_kernel_sampler_get_sample_function;
 }
 
 static void
@@ -177,8 +185,97 @@ firtree_kernel_sampler_get_param(FirtreeSampler* self, guint param,
     return FALSE;
 }
 
+void
+firtree_kernel_sampler_optimise_cached_function(FirtreeSampler* self)
+{
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p->cached_function) {
+        return;
+    }
+
+    llvm::Module* m = p->cached_function->getParent();
+    
+    llvm::PassManager PM;
+	PM.add(new llvm::TargetData(m));
+    
+    /* Firstly internalise all the functions apart from our sampler
+     * function. */
+    std::vector<const char*> export_list;
+    export_list.push_back(p->cached_function->getName().c_str());
+    PM.add(llvm::createInternalizePass(export_list));
+
+    /* Now inline functions. */
+	PM.add(llvm::createFunctionInliningPass(32768)); 
+
+    /* Agressively remove dead code. */
+	PM.add(llvm::createAggressiveDCEPass()); 
+
+    /* Now do some compile optimisations. */
+	PM.add(llvm::createStripDeadPrototypesPass());
+
+	PM.add(llvm::createIPConstantPropagationPass());
+	PM.add(llvm::createInstructionCombiningPass());
+	PM.add(llvm::createCFGSimplificationPass());
+
+	PM.add(llvm::createCondPropagationPass());
+	PM.add(llvm::createReassociatePass());
+    
+	PM.run(*m);
+}
+
+void
+firtree_kernel_sampler_implement_sample_function(FirtreeSampler* self,
+        llvm::Function* sample_func, GData** sampler_function_list,
+        GQuark* id_list, guint n_id)
+{
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", sample_func);
+
+    llvm::Function::arg_iterator args = sample_func->arg_begin();
+    
+    llvm::Value* sampler_id = args;
+    ++args;
+    
+    std::vector<llvm::Value*> remaining_args;
+    for(; args != sample_func->arg_end(); ++args) {
+        remaining_args.push_back(args);
+    }
+
+    /* default return value. */
+    llvm::BasicBlock* default_bb = llvm::BasicBlock::Create("default_id", 
+            sample_func);
+    llvm::ReturnInst::Create(
+            llvm::ConstantAggregateZero::get(
+                llvm::VectorType::get(llvm::Type::FloatTy, 4)),
+            default_bb);
+
+    /* For each possible input id, add a case to a switch which calls
+     * the appropriate sampler. */
+    llvm::SwitchInst* sampler_switch = llvm::SwitchInst::Create(
+            sampler_id, default_bb, n_id, bb);
+    for(guint i=0; i<n_id; ++i) {
+        GQuark id_quark = id_list[i];
+        llvm::Function* sampler_f = (llvm::Function*)
+            g_datalist_id_get_data(sampler_function_list, id_quark);
+        g_assert(sampler_f);
+
+        llvm::BasicBlock* sample_bb = llvm::BasicBlock::Create("id",
+                sample_func);
+
+        llvm::Value* ret_val = llvm::CallInst::Create(
+                sampler_f, 
+                remaining_args.begin(), remaining_args.end(),
+                "rv", sample_bb);
+
+        llvm::ReturnInst::Create(ret_val, sample_bb);
+
+        sampler_switch->addCase(
+                llvm::ConstantInt::get(llvm::Type::Int32Ty, id_quark, false),
+                sample_bb);
+    }
+}
+
 llvm::Function*
-firtree_kernel_sampler_get_function(FirtreeSampler* self)
+firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 {
     FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
     if(p->cached_function) {
@@ -190,8 +287,14 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
         return NULL;
     }
 
+    if(!firtree_kernel_is_valid(p->kernel)) {
+        g_debug("firtree_kernel_is_valid() returns false for associated kernel.\n");
+        return NULL;
+    }
+
     /* if we get here, we need to create our function. */
 
+    /* get our associate kernel's function. */
     llvm::Function* kernel_func = firtree_kernel_get_function(p->kernel);
     if(!kernel_func) {
         g_debug("No kernel function.\n");
@@ -200,6 +303,7 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
     
     std::string kernel_name = kernel_func->getName();
 
+    /* Link the kernel function into a new module. */
     llvm::Linker* linker = new llvm::Linker("kernel-sampler", "module");
     std::string err_str;
     if(linker->LinkInModule(kernel_func->getParent(), &err_str))
@@ -207,8 +311,75 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
         g_error("Error linking function: %s\n", err_str.c_str());
     }
 
+    guint n_arguments = 0;
+    GQuark* arg_list = firtree_kernel_list_arguments(p->kernel, &n_arguments);
+
+    /* A list which maps sampler argument quarks to their associated function
+     * in our new module. */
+    GData* sampler_function_list = NULL;
+    g_datalist_init(&sampler_function_list);
+
+    /* For each sampler parameter, get the associated sampler function
+     * and link that in too. */
+    for(guint arg_i=0; arg_i<n_arguments; ++arg_i)
+    {
+        GQuark arg_quark = arg_list[arg_i];
+        FirtreeKernelArgumentSpec* arg_spec =
+            firtree_kernel_get_argument_spec(p->kernel, arg_quark);
+        g_assert(arg_spec);
+
+        if(arg_spec->type == FIRTREE_TYPE_SAMPLER) {
+            GValue* val = firtree_kernel_get_argument_value(p->kernel, arg_quark);
+            g_assert(val);
+            FirtreeSampler* sampler = (FirtreeSampler*)g_value_get_object(val);
+            g_assert(sampler);
+
+            llvm::Function* sampler_f = firtree_sampler_get_sample_function(sampler);
+            g_assert(sampler_f);
+
+            //sampler_f->getParent()->dump();
+
+            if(linker->LinkInModule(sampler_f->getParent(), &err_str))
+            {
+                g_error("Error linking function: %s\n", err_str.c_str());
+            }
+
+            llvm::Function* new_f = linker->getModule()->getFunction(
+                    sampler_f->getName());
+            g_assert(new_f);
+
+            /* record the new function in the sampler function list. */
+            g_datalist_id_set_data(&sampler_function_list, arg_quark, new_f);
+        }
+
+    }
+
     llvm::Module* m = linker->releaseModule();
     delete linker;
+
+    llvm::Function* trans_fun = m->getFunction("samplerTransform_sv2");
+    if(trans_fun) {
+        llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", trans_fun);
+        
+        llvm::Function::const_arg_iterator argit = trans_fun->arg_begin();
+        ++argit;
+
+        const llvm::Value* trans_vec = argit;
+
+        llvm::ReturnInst::Create(const_cast<llvm::Value*>(trans_vec), bb);
+    }
+
+    /* If we have any calls to sample(), replace them with calls to the
+     * apropriate sampler function. We do this by implementing the @sample_sv2
+     * function. */
+    llvm::Function* sample_sv2_f = m->getFunction("sample_sv2");
+    if(sample_sv2_f) {
+        firtree_kernel_sampler_implement_sample_function(self,
+                sample_sv2_f, &sampler_function_list,
+                arg_list, n_arguments);
+    }
+
+    g_datalist_clear(&sampler_function_list);
 
     /* work out the function name. */
     std::string func_name("sampler_");
@@ -231,14 +402,41 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
 
     llvm::Value* dest_coord = f->arg_begin();
 
-    guint n_arguments = 0;
-    firtree_kernel_list_arguments(p->kernel, &n_arguments);
-    if(n_arguments > 0) {
-        g_error("FIXME: Argument support not yet written.");
-    }
-
     std::vector<llvm::Value*> arguments;
     arguments.push_back(dest_coord);
+
+    for(guint arg_i=0; arg_i<n_arguments; ++arg_i)
+    {
+        GQuark arg_quark = arg_list[arg_i];
+        FirtreeKernelArgumentSpec* arg_spec =
+            firtree_kernel_get_argument_spec(p->kernel, arg_quark);
+        g_assert(arg_spec);
+
+        if(!arg_spec->is_static) {
+            g_error("FIXME: Non-static argument support not yet written.");
+        } else {
+            GValue* kernel_arg = firtree_kernel_get_argument_value(p->kernel,
+                    arg_quark);
+            g_assert(kernel_arg);
+
+            /*
+            g_debug("Argument %s is of type %s.\n",
+                    g_quark_to_string(arg_list[arg_i]),
+                    G_VALUE_TYPE_NAME(kernel_arg));
+                    */
+
+            /* Can't use a switch here because the FIRTREE_TYPE_SAMPLER macro
+             * doesn't expand to a constant. */
+            if(arg_spec->type == FIRTREE_TYPE_SAMPLER) {
+                llvm::Value* arg_quark_val = llvm::ConstantInt::get(
+                        llvm::Type::Int32Ty, arg_quark, false);
+                arguments.push_back(arg_quark_val);
+            } else {
+                g_error("Don't know how to deal with argument of type %s.\n",
+                        g_type_name(arg_spec->type));
+            }
+        }
+    }
 
     llvm::Value* new_kernel_func = m->getFunction(kernel_name);
     g_assert(new_kernel_func);
@@ -248,6 +446,15 @@ firtree_kernel_sampler_get_function(FirtreeSampler* self)
             "kernel_call", bb);
 
     llvm::ReturnInst::Create(function_call, bb);
+
+    //p->cached_function->getParent()->dump();
+
+    /* run an agressive inlining pass over the function */
+    firtree_kernel_sampler_optimise_cached_function(self);
+
+    //g_debug("*************************\n");
+
+    g_assert(m->getFunction("sample_sv2") == NULL);
 
     return p->cached_function;
 }

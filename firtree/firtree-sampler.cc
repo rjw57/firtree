@@ -20,7 +20,14 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <llvm/Module.h>
 #include <llvm/Function.h>
+#include <llvm/DerivedTypes.h>
+#include <llvm/Instructions.h>
+#include <llvm/Constants.h>
+#include <llvm/Linker.h>
+
+#include <common/uuid.h>
 
 #include "internal/firtree-sampler-intl.hh"
 
@@ -42,7 +49,7 @@ G_DEFINE_TYPE (FirtreeSampler, firtree_sampler, G_TYPE_OBJECT)
 typedef struct _FirtreeSamplerPrivate FirtreeSamplerPrivate;
 
 struct _FirtreeSamplerPrivate {
-        int dummy;
+    llvm::Function*     transform_function;
 };
 
 gboolean
@@ -50,7 +57,17 @@ firtree_sampler_get_param_default(FirtreeSampler* self, guint param,
         gpointer dest, guint dest_size);
 
 llvm::Function*
-firtree_sampler_get_function_default(FirtreeSampler* self);
+firtree_sampler_get_sample_function_default(FirtreeSampler* self);
+
+static void
+_firtree_sampler_invalidate_llvm_cache(FirtreeSampler* self)
+{
+    FirtreeSamplerPrivate* p = GET_PRIVATE(self);
+    if(p && p->transform_function) {
+        delete p->transform_function->getParent();
+        p->transform_function = NULL;
+    }
+}
 
 static void
 firtree_sampler_get_property (GObject *object, guint property_id,
@@ -76,6 +93,8 @@ static void
 firtree_sampler_dispose (GObject *object)
 {
     G_OBJECT_CLASS (firtree_sampler_parent_class)->dispose (object);
+
+    _firtree_sampler_invalidate_llvm_cache((FirtreeSampler*)object);
 }
 
 static void
@@ -105,7 +124,7 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
 
     klass->intl_vtable = &_firtree_sampler_class_vtable;
     klass->intl_vtable->get_param = firtree_sampler_get_param_default;
-    klass->intl_vtable->get_function = firtree_sampler_get_function_default;
+    klass->intl_vtable->get_sample_function = firtree_sampler_get_sample_function_default;
 
     /**
      * FirtreeSampler::contents-changed:
@@ -173,6 +192,9 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
 static void
 firtree_sampler_init (FirtreeSampler *self)
 {
+    FirtreeSamplerPrivate* p = GET_PRIVATE(self);
+
+    p->transform_function = NULL;
 }
 
 FirtreeSampler*
@@ -238,16 +260,52 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
 }
 
 llvm::Function*
-firtree_sampler_get_function(FirtreeSampler* self)
+firtree_sampler_get_sample_function(FirtreeSampler* self)
 {
-    return FIRTREE_SAMPLER_GET_CLASS(self)->intl_vtable->get_function(self);
+    return FIRTREE_SAMPLER_GET_CLASS(self)->intl_vtable->get_sample_function(self);
 }
 
 llvm::Function*
-firtree_sampler_get_function_default(FirtreeSampler* self)
+firtree_sampler_get_sample_function_default(FirtreeSampler* self)
 {
     return NULL;
 }
+
+#if 0
+llvm::Function*
+firtree_sampler_get_transform_function(FirtreeSampler* self)
+{
+    FirtreeSamplerPrivate* p = GET_PRIVATE(self);
+    if(p->transform_function) {
+        return p->transform_function;
+    }
+
+    llvm::Module* m = new llvm::Module("sampler");
+
+    /* work out the function name. */
+    std::string func_name("sampler_transform_");
+    gchar uuid[37];
+    generate_random_uuid(uuid, '_');
+    func_name += uuid;
+
+    std::vector<const llvm::Type*> params;
+    params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2));
+    llvm::FunctionType* ft = llvm::FunctionType::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4), /* ret. type */
+            params, false);
+
+    llvm::Function* f = llvm::Function::Create( 
+            ft, llvm::Function::ExternalLinkage,
+            func_name.c_str(), m);
+
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
+
+    llvm::ReturnInst::Create(f->arg_begin(), bb);
+
+    p->transform_function = f;
+    return p->transform_function;
+}
+#endif
 
 /* vim:sw=4:ts=4:et:cindent
  */

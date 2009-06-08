@@ -37,7 +37,7 @@ G_BEGIN_DECLS
 struct _FirtreeSamplerIntlVTable {
     gboolean (* get_param) (FirtreeSampler* self, guint param, 
         gpointer dest, guint dest_size);
-    llvm::Function* (* get_function) (FirtreeSampler* self);
+    llvm::Function* (* get_sample_function) (FirtreeSampler* self);
 };
 
 /**
@@ -64,7 +64,7 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
         gpointer dest, guint dest_size);
 
 /**
- * firtree_sampler_get_function:
+ * firtree_sampler_get_sample_function:
  * @self: A FirtreeSampler instance.
  *
  * Return an LLVM function which implements this sampler. It should take a 
@@ -75,10 +75,12 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
  * Ownership of the function remains with the sampler. Callers should clone it
  * if they wish to maintain a long-lived version.
  *
+ * The default implementation returns NULL.
+ *
  * Returns: A pointer to a llvm::Function.
  */
 llvm::Function*
-firtree_sampler_get_function(FirtreeSampler* self);
+firtree_sampler_get_sample_function(FirtreeSampler* self);
 
 G_END_DECLS
 

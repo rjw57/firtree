@@ -9,7 +9,7 @@ typedef float vec4 __attribute__ ((vector_size(16)));
 
 /* this is the function which acually calculates the sampler
  * value. */
-extern vec4 sample(vec2 dest_coord);
+extern vec4 sampler_output(vec2 dest_coord);
 
 /* this is the function which renders the buffer. */
 void render_buffer_uc_4(unsigned char* buffer,
@@ -31,7 +31,7 @@ void render_buffer_uc_4(unsigned char* buffer,
             ELEMENT(dest_coord, 0) = x;
             ELEMENT(dest_coord, 1) = y;
 
-            vec4 pix_val = sample(dest_coord);
+            vec4 pix_val = sampler_output(dest_coord);
             pixel[0] = ELEMENT(pix_val, 0) * 255.f;
             pixel[1] = ELEMENT(pix_val, 1) * 255.f;
             pixel[2] = ELEMENT(pix_val, 2) * 255.f;

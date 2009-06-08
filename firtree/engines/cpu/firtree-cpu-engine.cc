@@ -206,7 +206,7 @@ get_renderer(FirtreeCpuEngine* self)
     }
 
     llvm::Function* sampler_function = 
-        firtree_sampler_get_function(p->sampler);
+        firtree_sampler_get_sample_function(p->sampler);
     if(sampler_function == NULL) {
         g_debug("No sampler function.\n");
         return NULL;
@@ -250,10 +250,17 @@ get_renderer(FirtreeCpuEngine* self)
     llvm::Function* new_sampler_func = linked_module->getFunction(
             sampler_function->getName());
 
-    llvm::Function* existing_sample_func = linked_module->getFunction("sample");
+    llvm::Function* existing_sample_func = linked_module->getFunction("sampler_output");
     if(existing_sample_func) {
-        existing_sample_func->replaceAllUsesWith(new_sampler_func);
-        existing_sample_func->removeFromParent();
+        llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
+                existing_sample_func);
+        std::vector<llvm::Value*> args;
+        args.push_back(existing_sample_func->arg_begin());
+        llvm::Value* sample_val = llvm::CallInst::Create(
+                new_sampler_func,
+                args.begin(), args.end(),
+                "rv", bb);
+        llvm::ReturnInst::Create(sample_val, bb);
     }
 
     llvm::Function* render_function = linked_module->getFunction(
@@ -263,12 +270,11 @@ get_renderer(FirtreeCpuEngine* self)
 
     optimise_module(m, render_function->getName().c_str());
 
-    // m->dump(); 
-
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 
     std::string err;
-    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::create(mp, false, &err);
+    llvm::ExecutionEngine* engine = llvm::ExecutionEngine::create(mp,
+            false, &err);
     p->cached_engine = engine;
 
     if(!engine) {
@@ -279,8 +285,8 @@ get_renderer(FirtreeCpuEngine* self)
 
     RenderFunc render = (RenderFunc)engine->getPointerToFunction(render_function);
     g_assert(render);
-
     p->cached_function = render;
+
     return p->cached_function;
 }
 

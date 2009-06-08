@@ -65,7 +65,7 @@ firtree_debug_dump_sampler_function(FirtreeSampler* sampler)
         return NULL;
     }
 
-    llvm::Function* f = firtree_sampler_get_function(sampler);
+    llvm::Function* f = firtree_sampler_get_sample_function(sampler);
     if(!f) {
         return NULL;
     }

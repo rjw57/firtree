@@ -227,10 +227,10 @@ const char* _firtree_builtins =
 	"    return samplerTransform(s, destCoord());\n"
 	"}\n"
 	"vec2 samplerOrigin(static sampler s) {\n"
-	"  return samplerExtent(s).zw;\n"
+	"  return samplerExtent(s).xy;\n"
 	"}\n"
 	"vec2 samplerSize(static sampler s) {\n"
-	"  return samplerExtent(s).xy;\n"
+	"  return samplerExtent(s).zw;\n"
 	"}\n"
 
 	"";

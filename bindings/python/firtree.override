@@ -4,11 +4,14 @@ headers
 #include <pyglib.h> 
 #include <pygobject.h> 
 
-#include <numpy/arrayobject.h>
-
 #include <firtree/firtree.h>
 
 extern PyTypeObject PyGdkPixbuf_Type;
+
+#if FIRTREE_HAVE_CAIRO
+#   include <pycairo/pycairo.h>
+    static Pycairo_CAPI_t *Pycairo_CAPI;
+#endif /* FIRTREE_HAVE_CAIRO */
 
 static PyObject* 
 _wrap_firtree_kernel_mp_subscript(PyObject *self, PyObject *arg_obj);
@@ -91,8 +94,9 @@ VEC_CONVERSION(4)
 %%
 init
 
-/* initialise numpy */
-import_array();
+#if FIRTREE_HAVE_CAIRO
+    Pycairo_IMPORT;
+#endif /* FIRTREE_HAVE_CAIRO */
 
 /* Register boxed types */
 pyg_register_gtype_custom(FIRTREE_TYPE_VEC2, _from_vec2, _to_vec2);

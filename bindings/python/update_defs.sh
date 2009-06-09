@@ -1,4 +1,10 @@
 #!/bin/bash
 
-python codegen/defsgen.py -m firtree -l ../../firtree/libfirtree.so -f firtree-overriden.defs -s firtree -p ../../firtree/*.h ../../firtree/engines/*/*.h
+python codegen/defsgen.py \
+	-m firtree \
+	-f firtree-overriden.defs \
+	-l ../../firtree/libfirtree.so \
+	-s firtree -p \
+	../../firtree/engines/*/*.h \
+	../../firtree/*.h 
 

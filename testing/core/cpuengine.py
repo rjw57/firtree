@@ -1,6 +1,7 @@
 import unittest
 import gobject
 import gtk.gdk
+import cairo
 from pyfirtree import *
 
 class Creation(unittest.TestCase):
@@ -129,6 +130,31 @@ class RenderKernelSampler(unittest.TestCase):
         rv = self._e.render_into_pixbuf((0, 0, 51, 51), pb)
         self.assert_(rv)
         pb.save('foo6.png', 'png')
+
+    def testComplexKernelSamplerCairo(self):
+        ks = KernelSampler()
+        self._e.set_sampler(ks)
+        self.assertEqual(self._e.get_sampler(), ks)
+
+        k = Kernel()
+        k.compile_from_source("""
+            kernel vec4 simple() { 
+                vec4 out_vec = 0.5 + 0.5 * 
+                    vec4(sincos(destCoord().x), cossin(destCoord().x));
+                out_vec.a = 1;
+                out_vec = out_vec * (0.5 + 0.5*sin(destCoord().y));
+                return out_vec;
+            }""")
+        self.assert_(k.get_compile_status())
+        ks.set_kernel(k)
+
+        # fixme. no way of testing this...
+
+        surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, 512, 512)
+        surf.write_to_png('foo7.png')
+        rv = self._e.render_into_cairo_surface((0, 0, 51, 51), surf)
+        self.assert_(rv)
+        surf.write_to_png('foo8.png')
 
 # vim:sw=4:ts=4:et:autoindent
 

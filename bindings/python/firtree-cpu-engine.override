@@ -53,5 +53,29 @@ _wrap_firtree_cpu_engine_render_into_pixbuf(PyGObject *self, PyObject *args, PyO
 
 }
 %%
+override firtree_cpu_engine_render_into_cairo_surface
+static PyObject *
+_wrap_firtree_cpu_engine_render_into_cairo_surface(PyGObject *self,
+        PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "extents", "surface", NULL };
+    PycairoSurface* cairo_surface;
+    float extents[4];
+    int ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "(ffff)O!:FirtreeCpuEngine.render_into_cairo_surface", kwlist,
+                &extents[0], &extents[1], &extents[2], &extents[3],
+                &PycairoSurface_Type, &cairo_surface))
+        return NULL;
+    
+    ret = firtree_cpu_engine_render_into_cairo_surface(
+            FIRTREE_CPU_ENGINE(self->obj), 
+            (FirtreeVec4*)extents, cairo_surface->surface);
+    
+    return PyBool_FromLong(ret);
+
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

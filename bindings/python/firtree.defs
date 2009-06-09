@@ -22,6 +22,16 @@
   )
 )
 
+(define-method render_into_cairo_surface
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_cairo_surface")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("cairo_surface_t*" "surface")
+  )
+)
+
 (define-method set_sampler
   (of-object "FirtreeCpuEngine")
   (c-name "firtree_cpu_engine_set_sampler")
@@ -36,6 +46,10 @@
   (c-name "firtree_cpu_engine_get_sampler")
   (return-type "FirtreeSampler*")
 )
+
+
+
+;; From llvm-cpu-support.bc.h
 
 
 

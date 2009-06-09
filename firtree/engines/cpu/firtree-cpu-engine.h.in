@@ -26,6 +26,18 @@
 #include <firtree/firtree-sampler.h>
 
 /**
+ * FIRTREE_HAVE_CAIRO:
+ *
+ * Defined to be 1 if Cairo support is compiled into the library, defined
+ * to be zero otherwise.
+ */
+#define FIRTREE_HAVE_CAIRO @FIRTREE_HAVE_CAIRO@
+
+#if FIRTREE_HAVE_CAIRO
+#   include <cairo/cairo.h>
+#endif
+
+/**
  * SECTION:firtree-cpu-engine
  * @short_description: A rendering engine which uses a CPU JIT.
  * @include: firtree/engines/cpu/firtree-cpu-engine.h
@@ -93,6 +105,26 @@ firtree_cpu_engine_new (void);
 gboolean 
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf);
+
+#if FIRTREE_HAVE_CAIRO
+
+/**
+ * firtree_cpu_engine_render_into_cairo_surface:
+ * @self: A FirtreeCpuEngine object.
+ * @extents: The extents of the sampler to render.
+ * @surface: The Cairo surface to render into
+ *
+ * Render the engine's sampler into the passed surface. The surface
+ * must be a Cairo image surface and should be either in ARGB32 or
+ * RGB24 format.
+ *
+ * Returns: TRUE if rendereding succeeded.
+ */
+gboolean 
+firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
+        FirtreeVec4* extents, cairo_surface_t* surface);
+
+#endif
 
 /**
  * firtree_cpu_engine_set_sampler:

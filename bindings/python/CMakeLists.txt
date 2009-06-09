@@ -7,10 +7,15 @@
 # Attempt to find pygobject
 find_package(PyGObject)
 
-# For finding things like glib, etc.
-find_package(PkgConfig)
-
 set(BUILD_PYTHON_BINDINGS 1)
+
+if(NOT APPLE)
+    find_package(PkgConfig)
+    pkg_check_modules(CAIRO cairo)
+    if(CAIRO_FOUND)
+        pkg_check_modules(PYCAIRO REQUIRED pycairo)
+    endif(CAIRO_FOUND)
+endif(NOT APPLE)
 
 if(NOT PYGOBJECT_FOUND)
 	message(STATUS "PyGObject could not be found, Python bindings will not be built.")
@@ -24,14 +29,20 @@ if(BUILD_PYTHON_BINDINGS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-long-long")
     endif(CMAKE_COMPILER_IS_GNUCC)
 
-	pygobject_target_add_bindings(SVFBINDINGS firtree MODULEPREFIX pyfirtree
+	pygobject_target_add_bindings(FIRTREE_BINDINGS firtree MODULEPREFIX pyfirtree
         DEFS firtree-types.defs firtree.defs firtree-overriden.defs 
         REGISTER /usr/share/pygtk/2.0/defs/gdk-types.defs
         OVERRIDE firtree.override)
-	include_directories(${SVFBINDINGS_INCLUDE_DIRS} ${PYGOBJECT_PYGTK_INCLUDE_DIRS})
-	add_library(pyfirtree MODULE firtreemodule.c ${SVFBINDINGS_SOURCES})
+	include_directories(
+        ${FIRTREE_BINDINGS_INCLUDE_DIRS}
+        ${PYGOBJECT_PYGTK_INCLUDE_DIRS}
+        ${PYCAIRO_INCLUDE_DIRS})
+	add_library(pyfirtree MODULE firtreemodule.c
+        ${FIRTREE_BINDINGS_SOURCES})
 	link_directories(${SVFBINDINGS_LINK_DIRS})
-	target_link_libraries(pyfirtree firtree ${SVFBINDINGS_LIBRARIES})
+	target_link_libraries(pyfirtree firtree 
+        ${FIRTREE_BINDINGS_LIBRARIES}
+        ${PYCAIRO_LIBRARIES})
     set_target_properties(pyfirtree PROPERTIES PREFIX "")
 endif(BUILD_PYTHON_BINDINGS)
 

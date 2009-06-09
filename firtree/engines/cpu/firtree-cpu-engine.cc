@@ -55,6 +55,38 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 #define GET_PRIVATE(o) \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_CPU_ENGINE, FirtreeCpuEnginePrivate))
 
+enum {
+    RENDER_FUNC_32_ABGR_PREMUL,
+    RENDER_FUNC_32_ABGR_NON_PREMUL,
+    RENDER_FUNC_32_ABGR_IGNORE_ALPHA,
+
+    RENDER_FUNC_32_ARGB_PREMUL,
+    RENDER_FUNC_32_ARGB_NON_PREMUL,
+    RENDER_FUNC_32_ARGB_IGNORE_ALPHA,
+
+    RENDER_FUNC_24_BGR,
+    RENDER_FUNC_24_RGB,
+    
+    RENDER_FUNC_COUNT,
+};
+
+const char* _function_names[] = {
+    "render_buffer_32_abgr_pre",
+    "render_buffer_32_abgr_non",
+    "render_buffer_32_abgr_ign",
+
+    "render_buffer_32_argb_pre",
+    "render_buffer_32_argb_non",
+    "render_buffer_32_argb_ign",
+
+    "render_buffer_24_bgr",
+    "render_buffer_24_rgb",
+
+    NULL,
+};
+
+#define RENDER_FUNC_NAME(id) (_function_names[(id)])
+
 typedef void (* RenderFunc) (unsigned char* buffer,
     unsigned int width, unsigned int height,
     unsigned int row_stride, float* extents);
@@ -265,10 +297,9 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     }
 
     std::vector<const char*> render_functions;
-    render_functions.push_back("render_buffer_uc_4_p");
-    render_functions.push_back("render_buffer_uc_4_np");
-    render_functions.push_back("render_buffer_uc_4_na");
-    render_functions.push_back("render_buffer_uc_3_np");
+    for(int fi = 0; fi < RENDER_FUNC_COUNT; ++fi) {
+        render_functions.push_back(RENDER_FUNC_NAME(fi));
+    }
     optimise_module(linked_module, render_functions);
 
     /* linked_module->dump(); */
@@ -287,6 +318,11 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     }
 
     llvm::Function* render_function = p->cached_engine->FindFunctionNamed(name);
+    if(!render_function) {
+        g_debug("JIT engine has no function named %s.", name);
+        return NULL;
+    }
+    g_assert(render_function);
     void* render = engine->getPointerToFunction(render_function);
     g_assert(render);
 
@@ -322,11 +358,11 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     if(gdk_pixbuf_get_has_alpha(pixbuf)) {
         /* GdkPixbufs use non-premultiplied alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                "render_buffer_uc_4_np");
+                RENDER_FUNC_NAME(RENDER_FUNC_32_ABGR_NON_PREMUL));
     } else {
         /* Use the render function optimised for ignored alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                "render_buffer_uc_3_np");
+                RENDER_FUNC_NAME(RENDER_FUNC_24_BGR));
     }
 
     if(!render) {
@@ -337,6 +373,52 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
 
     return TRUE;
 }
+
+#if FIRTREE_HAVE_CAIRO
+gboolean 
+firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
+        FirtreeVec4* extents, cairo_surface_t* surface)
+{
+    if(!extents) { return FALSE; }
+    if(!surface) { return FALSE; }
+
+    guchar* data = cairo_image_surface_get_data(surface);
+    if(!data) {
+        g_debug("Surface is not an image surface with data.");
+        return FALSE;
+    }
+
+    cairo_format_t format = cairo_image_surface_get_format(surface);
+    guint width = cairo_image_surface_get_width(surface);
+    guint height = cairo_image_surface_get_height(surface);
+    guint stride = cairo_image_surface_get_stride(surface);
+
+    RenderFunc render = NULL;
+
+    switch(format) {
+        case CAIRO_FORMAT_ARGB32:
+            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+                    RENDER_FUNC_NAME(RENDER_FUNC_32_ARGB_PREMUL));
+            break;
+        case CAIRO_FORMAT_RGB24:
+            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+                    RENDER_FUNC_NAME(RENDER_FUNC_32_ARGB_IGNORE_ALPHA));
+            break;
+        default:
+            g_debug("Invalid Cairo format.");
+            return FALSE;
+            break;
+    }
+
+    if(!render) {
+        return FALSE;
+    }
+
+    render(data, width, height, stride, (float*)extents);
+
+    return TRUE;
+}
+#endif
 
 /* vim:sw=4:ts=4:et:cindent
  */

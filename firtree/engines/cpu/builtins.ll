@@ -31,6 +31,9 @@ entry:
 define <4 x float> @unpremultiply_v4( <4 x float> ) {
 entry:
 	%alpha = extractelement <4 x float> %0, i32 3
+	%is_zero = fcmp oeq float %alpha, zeroinitializer
+	br i1 %is_zero, label %pass_through, label %continue
+continue:
 	%ooalpha = fdiv float %alpha, 1.0
 	%alpha_v1 = insertelement <4 x float> zeroinitializer, float %ooalpha, i32 0
 	%alpha_v2 = insertelement <4 x float> %alpha_v1, float %ooalpha, i32 1
@@ -38,6 +41,8 @@ entry:
 	%alpha_v4 = insertelement <4 x float> %alpha_v3, float 1.0, i32 3
 	%rv = mul <4 x float> %alpha_v4, %0
 	ret <4 x float> %rv
+pass_through:
+	ret <4 x float> %0
 }
 
 ;; sin() intrinsic function 

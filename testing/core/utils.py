@@ -1,4 +1,5 @@
 import unittest, subprocess, os
+import StringIO
 
 class FirtreeTestCase(unittest.TestCase):
     def assertCairoSurfaceMatches(self, surface, tag):
@@ -32,10 +33,15 @@ def images_match(im1, im2):
     if(not os.path.exists(im2)):
         raise RuntimeError('Could not find image %s for comparison.' % im2)
 
-    pass_flag = subprocess.call((diff_prog, im1, im2), 
+    diff_process = subprocess.Popen((diff_prog, im1, im2), 
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    return (pass_flag != 0)
+    (stdout, stderr) = diff_process.communicate()
+
+    if(diff_process.returncode == 0):
+        print(stdout)
+
+    return (diff_process.returncode != 0)
     
 
 # vim:sw=4:ts=4:et:autoindent

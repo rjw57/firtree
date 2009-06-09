@@ -96,8 +96,39 @@ void render_buffer_uc_4_np(unsigned char* buffer,
 }
 
 /* this is the function which renders the buffer. The buffer is
+ * an array of packed 32-bit values which are assumed to be alpha=1,
+ * the upper 8 bits is ignored. */
+void render_buffer_uc_4_na(unsigned char* buffer,
+    unsigned int width, unsigned int height,
+    unsigned int row_stride, float* extents)
+{
+    unsigned int row, col;
+    float start_x = extents[0];
+    float y = extents[1];
+    float dx = extents[2] / (float)width;
+    float dy = extents[3] / (float)height;
+
+    for(row=0; row<height; ++row, y+=dy) {
+        unsigned char* pixel = buffer + (row * row_stride);
+        float x = start_x;
+        for(col=0; col<width; ++col, pixel+=4, x+=dx) {
+            uint32_t in_val = *((uint32_t*)pixel);
+            in_val |= 0xff << 24;
+            vec4 in_vec = uint32_to_vec(in_val);
+            vec2 dest_coord = {x, y};
+            vec4 sample_vec = sampler_output(dest_coord);
+            float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
+            vec4 one_minus_alpha_vec = {
+                one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
+            vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
+            *((uint32_t*)pixel) = vec_to_uint32(out_vec);
+        }
+    }
+}
+
+/* this is the function which renders the buffer. The buffer is
  * an array of packed 8-bit values with the alpha value ignored. */
-void render_buffer_uc_3_na(unsigned char* buffer,
+void render_buffer_uc_3_np(unsigned char* buffer,
     unsigned int width, unsigned int height,
     unsigned int row_stride, float* extents)
 {

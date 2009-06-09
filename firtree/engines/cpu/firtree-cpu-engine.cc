@@ -267,7 +267,8 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     std::vector<const char*> render_functions;
     render_functions.push_back("render_buffer_uc_4_p");
     render_functions.push_back("render_buffer_uc_4_np");
-    render_functions.push_back("render_buffer_uc_3_na");
+    render_functions.push_back("render_buffer_uc_4_na");
+    render_functions.push_back("render_buffer_uc_3_np");
     optimise_module(linked_module, render_functions);
 
     /* linked_module->dump(); */
@@ -325,7 +326,7 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     } else {
         /* Use the render function optimised for ignored alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                "render_buffer_uc_3_na");
+                "render_buffer_uc_3_np");
     }
 
     if(!render) {

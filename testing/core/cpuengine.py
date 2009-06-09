@@ -215,6 +215,12 @@ class KernelTests(FirtreeTestCase):
         cr.paint()
         cr = None
 
+    def clearSurfaceRGBA(self,r,g,b,a):
+        cr = cairo.Context(self._s)
+        cr.set_source_rgba(r,g,b,a)
+        cr.paint()
+        cr = None
+
     def testSin(self):
         k = Kernel()
         k.compile_from_source('''
@@ -267,6 +273,59 @@ class KernelTests(FirtreeTestCase):
 
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
         self.assertCairoSurfaceMatches(self._s, 'cpu-sin-2')
+
+    def testDistortedAndInverted(self):
+        inv_k = Kernel()
+        inv_k.compile_from_source('''
+            kernel vec4 invKernel(sampler src) {
+                vec4 incol = sample(src, samplerCoord(src));
+                incol = unpremultiply(incol);
+                incol.rgb = 1 - incol.rgb;
+                return premultiply(incol);
+            }
+        ''')
+        self.assertKernelCompiled(inv_k)
+
+        dist_k = Kernel()
+        dist_k.compile_from_source('''
+            kernel vec4 distKernel(sampler src) {
+                vec2 sample_coord = destCoord() +
+                    10 * sin(destCoord().yx * 0.05);
+                return sample(src, samplerTransform(src, sample_coord));
+            }''')
+        self.assertKernelCompiled(dist_k)
+
+        k = Kernel()
+        k.compile_from_source('''
+            kernel vec4 sinKernel() {
+                float alpha = 0.5 + 0.5*cos(destCoord().y * 0.05);
+                return premultiply(
+                    vec4(0.5 + 0.5 * sin(destCoord() * 0.2), 0, alpha));
+            }
+            ''')
+        self.assertKernelCompiled(k)
+        self.assert_(k.is_valid())
+
+        ks = KernelSampler()
+        ks.set_kernel(k)
+
+        dist_k['src'] = ks
+        self.assert_(dist_k.is_valid())
+
+        dks = KernelSampler()
+        dks.set_kernel(dist_k)
+
+        inv_k['src'] = dks
+        self.assert_(inv_k.is_valid())
+
+        iks = KernelSampler()
+        iks.set_kernel(inv_k)
+        self._e.set_sampler(iks)
+
+        self.clearSurfaceRGBA(1,0,0,1)
+
+        rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+        self.assertCairoSurfaceMatches(self._s, 'cpu-sin-3')
 
 # vim:sw=4:ts=4:et:autoindent
 

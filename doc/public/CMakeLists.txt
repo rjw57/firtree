@@ -18,7 +18,6 @@ else(NOT GTKDOC_FOUND)
         SUFFIXES h c hh cc # <- what files to scan
         LDFLAGS
             -L${CMAKE_CURRENT_SOURCE_DIR}/../../firtree -lfirtree
-            -L${CMAKE_CURRENT_SOURCE_DIR}/../../firtree/engines/cpu -lcpu-engine
         LDPATH ${CMAKE_CURRENT_SOURCE_DIR}/../../firtree
 		DEPENDS firtree)
 endif(NOT GTKDOC_FOUND)

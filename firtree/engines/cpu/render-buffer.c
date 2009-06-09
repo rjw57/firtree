@@ -111,9 +111,18 @@ void render_buffer_uc_3_na(unsigned char* buffer,
         unsigned char* pixel = buffer + (row * row_stride);
         float x = start_x;
         for(col=0; col<width; ++col, pixel+=3, x+=dx) {
+            uint32_t in_val = pixel[0];
+            in_val |= pixel[1] << 8;
+            in_val |= pixel[2] << 16;
+            in_val |= 0xff << 24;
+            vec4 in_vec = uint32_to_vec(in_val);
             vec2 dest_coord = {x, y};
             vec4 sample_vec = sampler_output(dest_coord);
-            uint32_t pix_val = vec_to_uint32(unpremultiply_v4(sample_vec));
+            float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
+            vec4 one_minus_alpha_vec = {
+                one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
+            vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
+            uint32_t pix_val = vec_to_uint32(unpremultiply_v4(out_vec));
             pixel[0] = (pix_val) & 0xff;
             pixel[1] = (pix_val>>8) & 0xff;
             pixel[2] = (pix_val>>16) & 0xff;

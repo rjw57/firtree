@@ -174,21 +174,20 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
  * named function and agressively inlining. */
 void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
 {
-	if(m == NULL)
-	{
-		return;
-	}
+    if(m == NULL) {
+    	return;
+    }
 
     llvm::PassManager PM;
 
-	PM.add(new llvm::TargetData(m));
+    PM.add(new llvm::TargetData(m));
 
     PM.add(llvm::createInternalizePass(export_list));
-	PM.add(llvm::createFunctionInliningPass(32768)); 
+    PM.add(llvm::createFunctionInliningPass(32768)); 
 
-	PM.add(llvm::createAggressiveDCEPass()); 
+    PM.add(llvm::createAggressiveDCEPass()); 
 
-	PM.run(*m);
+    PM.run(*m);
 }
 
 void*
@@ -213,18 +212,18 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
         return NULL;
     }
 
-	/* Nasty, nasty hack to set an option to disable MMX *
+    /* Nasty, nasty hack to set an option to disable MMX *
      * This is really horrible but is required by:       *
      *   http://llvm.org/bugs/show_bug.cgi?id=3287       */
-	static bool set_opt = false;
-	static const char* opts[] = {
+    static bool set_opt = false;
+    static const char* opts[] = {
         "progname",
-		"-disable-mmx",
-	};
-	if(!set_opt) {
+    	"-disable-mmx",
+    };
+    if(!set_opt) {
         llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(opts));
-		set_opt = true;
-	}
+    	set_opt = true;
+    }
 
     /* create an LLVM module from the bitcode in 
      * _firtee_cpu_engine_render_buffer_mod */
@@ -251,7 +250,8 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     llvm::Function* new_sampler_func = linked_module->getFunction(
             sampler_function->getName());
 
-    llvm::Function* existing_sample_func = linked_module->getFunction("sampler_output");
+    llvm::Function* existing_sample_func = linked_module->getFunction(
+            "sampler_output");
     if(existing_sample_func) {
         llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
                 existing_sample_func);

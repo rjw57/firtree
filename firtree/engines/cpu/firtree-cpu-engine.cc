@@ -63,7 +63,6 @@ typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
 
 struct _FirtreeCpuEnginePrivate {
     FirtreeSampler*             sampler;
-    RenderFunc                  cached_function;
     llvm::ExecutionEngine*      cached_engine;
 };
 
@@ -77,7 +76,6 @@ _firtree_cpu_engine_invalidate_llvm_cache(FirtreeCpuEngine* self)
     if(p && p->cached_engine) {
         delete p->cached_engine;
         p->cached_engine = NULL;
-        p->cached_function = NULL;
     }
 }
 
@@ -137,7 +135,6 @@ firtree_cpu_engine_init (FirtreeCpuEngine *self)
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     p->sampler = NULL;
     p->cached_engine = NULL;
-    p->cached_function = NULL;
 }
 
 FirtreeCpuEngine*
@@ -175,7 +172,7 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
 
 /* optimise a llvm module by internalising all but the
  * named function and agressively inlining. */
-void optimise_module(llvm::Module* m, const char* func_name)
+void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
 {
 	if(m == NULL)
 	{
@@ -186,9 +183,6 @@ void optimise_module(llvm::Module* m, const char* func_name)
 
 	PM.add(new llvm::TargetData(m));
 
-    std::vector<const char*> export_list;
-    export_list.push_back(func_name);
-
     PM.add(llvm::createInternalizePass(export_list));
 	PM.add(llvm::createFunctionInliningPass(32768)); 
 
@@ -197,12 +191,19 @@ void optimise_module(llvm::Module* m, const char* func_name)
 	PM.run(*m);
 }
 
-RenderFunc
-get_renderer(FirtreeCpuEngine* self)
+void*
+firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
 {
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
-    if(p->cached_function) {
-        return p->cached_function;
+    if(p->cached_engine) {
+        llvm::Function* render_function = p->cached_engine->FindFunctionNamed(
+                name);
+        if(!render_function) {
+            g_error("Cached module has no render function.");
+        }
+        void* render = p->cached_engine->getPointerToFunction(render_function);
+        g_assert(render);
+        return render;
     }
 
     llvm::Function* sampler_function = 
@@ -263,12 +264,13 @@ get_renderer(FirtreeCpuEngine* self)
         llvm::ReturnInst::Create(sample_val, bb);
     }
 
-    llvm::Function* render_function = linked_module->getFunction(
-            "render_buffer_uc_4");
+    std::vector<const char*> render_functions;
+    render_functions.push_back("render_buffer_uc_4_p");
+    render_functions.push_back("render_buffer_uc_4_np");
+    render_functions.push_back("render_buffer_uc_3_na");
+    optimise_module(linked_module, render_functions);
 
-    m = render_function->getParent();
-
-    optimise_module(m, render_function->getName().c_str());
+    /* linked_module->dump(); */
 
     llvm::ModuleProvider* mp = new llvm::ExistingModuleProvider(m);
 
@@ -283,11 +285,11 @@ get_renderer(FirtreeCpuEngine* self)
         return NULL;
     }
 
-    RenderFunc render = (RenderFunc)engine->getPointerToFunction(render_function);
+    llvm::Function* render_function = p->cached_engine->FindFunctionNamed(name);
+    void* render = engine->getPointerToFunction(render_function);
     g_assert(render);
-    p->cached_function = render;
 
-    return p->cached_function;
+    return render;
 }
 
 gboolean
@@ -305,7 +307,8 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     guint stride = gdk_pixbuf_get_rowstride(pixbuf);
     guint channels = gdk_pixbuf_get_n_channels(pixbuf);
 
-    if(channels != 4) {
+    if((channels != 4) && (channels != 3)) {
+        g_debug("Only 3 and 4 channel GdkPixbufs supported.");
         return FALSE;
     }
 
@@ -313,7 +316,18 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    RenderFunc render = get_renderer(self);
+    RenderFunc render = NULL;
+
+    if(gdk_pixbuf_get_has_alpha(pixbuf)) {
+        /* GdkPixbufs use non-premultiplied alpha. */
+        render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+                "render_buffer_uc_4_np");
+    } else {
+        /* Use the render function optimised for ignored alpha. */
+        render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+                "render_buffer_uc_3_na");
+    }
+
     if(!render) {
         return FALSE;
     }

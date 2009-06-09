@@ -256,7 +256,7 @@ firtree_kernel_sampler_implement_sample_function(FirtreeSampler* self,
     /* For each possible input id, add a case to a switch which calls
      * the appropriate sampler. */
     llvm::SwitchInst* sampler_switch = llvm::SwitchInst::Create(
-            sampler_id, default_bb, 1, bb);
+            sampler_id, default_bb, 0, bb);
     for(guint i=0; i<n_arguments; ++i) {
         GQuark arg_quark = arg_list[i];
         FirtreeKernelArgumentSpec* spec = 
@@ -288,6 +288,75 @@ firtree_kernel_sampler_implement_sample_function(FirtreeSampler* self,
     }
 }
 
+void
+firtree_kernel_sampler_implement_transform_function(FirtreeSampler* self,
+        llvm::Function* transform_func)
+{
+    FirtreeKernelSamplerPrivate* p = GET_PRIVATE(self);
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", transform_func);
+
+    /* extract the input arguments. */
+    llvm::Function::const_arg_iterator argit = transform_func->arg_begin();
+    const llvm::Value* input_id = argit;
+    ++argit;
+    const llvm::Value* input_vector = argit;
+
+    /* construct a basic block that 'implements' an identity transform
+     * (the default). */
+    llvm::BasicBlock* id_bb = llvm::BasicBlock::Create("identity", transform_func);
+    llvm::ReturnInst::Create(const_cast<llvm::Value*>(input_vector), id_bb);
+
+    /* Now make a switch statement for each sampler argument. */
+
+    guint n_arguments = 0;
+    GQuark* arg_list = firtree_kernel_list_arguments(p->kernel, &n_arguments);
+
+    llvm::SwitchInst* sampler_switch = llvm::SwitchInst::Create(
+            const_cast<llvm::Value*>(input_id), id_bb, 0, bb);
+    for(guint i=0; i<n_arguments; ++i) {
+        GQuark arg_quark = arg_list[i];
+        FirtreeKernelArgumentSpec* spec = 
+            firtree_kernel_get_argument_spec(p->kernel, arg_quark);
+        if(spec->type == FIRTREE_TYPE_SAMPLER) {
+            FirtreeSampler* sampler = (FirtreeSampler*)
+                g_value_get_object(
+                        firtree_kernel_get_argument_value(p->kernel, arg_quark));
+            g_assert(sampler);
+
+            FirtreeAffineTransform* transform = 
+                firtree_sampler_get_transform(sampler);
+
+            if(firtree_affine_transform_is_identity(transform)) {
+                sampler_switch->addCase(
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                            arg_quark, false),
+                        id_bb);
+            } else {
+                g_error("Non-identity transforms not yet implemented.");
+                /*
+                llvm::BasicBlock* trans_bb = llvm::BasicBlock::Create("trans",
+                        sample_func);
+
+                llvm::Value* ret_val = llvm::CallInst::Create(
+                        sampler_f, 
+                        remaining_args.begin(), remaining_args.end(),
+                        "rv", sample_bb);
+
+                llvm::ReturnInst::Create(ret_val, sample_bb);
+
+                sampler_switch->addCase(
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                            arg_quark, false),
+                        sample_bb);
+                        */
+            }
+
+            g_object_unref(transform);
+        }
+    }
+
+}
+
 llvm::Function*
 firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 {
@@ -315,8 +384,6 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
         return NULL;
     }
     
-    std::string kernel_name = kernel_func->getName();
-
     /* Link the kernel function into a new module. */
     llvm::Linker* linker = new llvm::Linker("kernel-sampler", "module");
     std::string err_str;
@@ -324,6 +391,10 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
     {
         g_error("Error linking function: %s\n", err_str.c_str());
     }
+
+    llvm::Value* new_kernel_func = linker->getModule()->getFunction(
+            kernel_func->getName());
+    g_assert(new_kernel_func);
 
     guint n_arguments = 0;
     GQuark* arg_list = firtree_kernel_list_arguments(p->kernel, &n_arguments);
@@ -351,8 +422,6 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
             llvm::Function* sampler_f = firtree_sampler_get_sample_function(sampler);
             g_assert(sampler_f);
 
-            //sampler_f->getParent()->dump();
-
             if(linker->LinkInModule(sampler_f->getParent(), &err_str))
             {
                 g_error("Error linking function: %s\n", err_str.c_str());
@@ -368,20 +437,9 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 
     }
 
+    /* We've finished all our linking, release the linker. */
     llvm::Module* m = linker->releaseModule();
     delete linker;
-
-    llvm::Function* trans_fun = m->getFunction("samplerTransform_sv2");
-    if(trans_fun) {
-        llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", trans_fun);
-        
-        llvm::Function::const_arg_iterator argit = trans_fun->arg_begin();
-        ++argit;
-
-        const llvm::Value* trans_vec = argit;
-
-        llvm::ReturnInst::Create(const_cast<llvm::Value*>(trans_vec), bb);
-    }
 
     /* If we have any calls to sample(), replace them with calls to the
      * apropriate sampler function. We do this by implementing the @sample_sv2
@@ -390,6 +448,12 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
     if(sample_sv2_f) {
         firtree_kernel_sampler_implement_sample_function(self, sample_sv2_f,
                 &sampler_function_list);
+    }
+
+    /* Similarly, we implement the samplerTransform_sv2 function. */
+    llvm::Function* trans_f = m->getFunction("samplerTransform_sv2");
+    if(trans_f) {
+        firtree_kernel_sampler_implement_transform_function(self, trans_f);
     }
 
     g_datalist_clear(&sampler_function_list);
@@ -450,9 +514,6 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
             }
         }
     }
-
-    llvm::Value* new_kernel_func = m->getFunction(kernel_name);
-    g_assert(new_kernel_func);
 
     llvm::Value* function_call = llvm::CallInst::Create(
             new_kernel_func, arguments.begin(), arguments.end(),

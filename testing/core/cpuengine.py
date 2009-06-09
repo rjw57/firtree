@@ -106,7 +106,7 @@ class RenderKernelSampler(unittest.TestCase):
         k2 = Kernel()
         k2.compile_from_source("""
             kernel vec4 simple() { 
-                return vec4(0.5 + 0.5 * sin(destCoord()), 0, 1);
+                return 0.75 * vec4(0.5 + 0.5 * sin(destCoord()), 0, 1);
             }""")
         if(not k2.get_compile_status()):
             print(k.get_compile_log())
@@ -122,8 +122,8 @@ class RenderKernelSampler(unittest.TestCase):
 
         # print(debug_dump_sampler_function(ks))
 
-        pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, 512, 512)
-        pb.fill(0x0000ff)
+        pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, False, 8, 512, 512)
+        pb.fill(0xff000000)
         pb.save('foo5.png', 'png')
         rv = self._e.render_into_pixbuf((0, 0, 51, 51), pb)
         self.assert_(rv)

@@ -28,6 +28,18 @@ entry:
 	ret <4 x float> %rv
 }
 
+define <4 x float> @unpremultiply_v4( <4 x float> ) {
+entry:
+	%alpha = extractelement <4 x float> %0, i32 3
+	%ooalpha = fdiv float %alpha, 1.0
+	%alpha_v1 = insertelement <4 x float> zeroinitializer, float %ooalpha, i32 0
+	%alpha_v2 = insertelement <4 x float> %alpha_v1, float %ooalpha, i32 1
+	%alpha_v3 = insertelement <4 x float> %alpha_v2, float %ooalpha, i32 2
+	%alpha_v4 = insertelement <4 x float> %alpha_v3, float 1.0, i32 3
+	%rv = mul <4 x float> %alpha_v4, %0
+	ret <4 x float> %rv
+}
+
 ;; sin() intrinsic function 
 
 define float @sin_f(float) {

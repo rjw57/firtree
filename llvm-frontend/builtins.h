@@ -184,7 +184,6 @@ const char* _firtree_builtins =
 
 	/* Geometric functions */
 	
-    "__builtin__ float length(float);\n"
     "__builtin__ float length(vec2);\n"
     "__builtin__ float length(vec3);\n"
     "__builtin__ float length(vec4);\n"
@@ -195,12 +194,10 @@ const char* _firtree_builtins =
 
     "__builtin__ vec3 cross(vec3,vec3);\n"
 	
-    "__builtin__ float normalize(float);\n"
     "__builtin__ vec2 normalize(vec2);\n"
     "__builtin__ vec3 normalize(vec3);\n"
 	"__builtin__ vec4 normalize(vec4);\n"
 
-    "__builtin__ float reflect(float,float);\n"
     "__builtin__ vec2 reflect(vec2,vec2);\n"
     "__builtin__ vec3 reflect(vec3,vec3);\n"
     "__builtin__ vec4 reflect(vec4,vec4);\n"

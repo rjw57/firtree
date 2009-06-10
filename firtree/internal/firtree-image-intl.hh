@@ -32,6 +32,50 @@ G_BEGIN_DECLS
  * The private interface for images.
  */
 
+/**
+ * firtree_image_lock_into_memory:
+ * @self: The FirtreeImage to lock.
+ * @preferred_format: The format the caller would prefer the image in.
+ * @buffer: On exit, this is updated to point to the image buffer.
+ * @width: On exit, this is updated to point to the image width in pixels.
+ * @height: On exit, this is updated to point to the image height in pixels.
+ * @stride: On exit, this is updated to point to the image row stride in bytes.
+ * @format: On exit, this is updated to point to the format the buffer has been
+ * locked into memory as.
+ *
+ * Locks the image into memory and returns information on the buffer. The
+ * caller may request the image in a certain format the function is not
+ * mandated to return the buffer in that format. Instead the caller should check
+ * the value placed into @format on exit.
+ *
+ * If the image could not be locked into memory, this returns NULL otherwise
+ * it returns a pointer to an opaque handle which should be passed to 
+ * firtree_image_unlock_from_memory() when the caller is finished with the image.
+ *
+ * This call may call an implicit image to be rendered and so should only be 
+ * used when necessary.
+ *
+ * Returns: NULL or a handle which should be passed to
+ * firtree_image_unlock_from_memory().
+ */
+gpointer
+firtree_image_lock_into_memory(FirtreeImage* self,
+        FirtreeImageFormat preferred_format,
+        guchar** buffer, guint* width, guint* height, guint* stride,
+        FirtreeImageFormat* format);
+
+/**
+ * firtree_image_unlock_from_memory:
+ * @self: The FirtreeImage to lock.
+ * @handle: A handle returned from firtree_image_lock_into_memory().
+ * 
+ * After the image buffer returned from firtree_image_lock_into_memory() is
+ * finished with, this function should be called to let the image know that
+ * the buffer is no-longer required.
+ */
+void
+firtree_image_unlock_from_memory(FirtreeImage* self, gpointer handle);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_IMAGE_INTL */

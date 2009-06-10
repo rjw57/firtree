@@ -68,6 +68,44 @@ typedef struct {
 GType firtree_image_get_type (void);
 
 /**
+ * FirtreeImageFormat:
+ * @FIRTREE_FORMAT_ARGB32: Packed buffer of 32-bit native endian integers of
+ * the form 0xAARRGGBB.
+ * @FIRTREE_FORMAT_ARGB32_PREMULTIPLIED: Packed buffer of 32-bit native endian 
+ * integers of the form 0xAARRGGBB where the alpha has been pre-multiplied 
+ * into R, G and B.
+ * @FIRTREE_FORMAT_XRGB32: Packed buffer of 32-bit native endian integers of
+ * the form 0x??RRGGBB where the upper 8 bits of alpha is ignored and alpha
+ * is implcitly 1.0.
+ * @FIRTREE_FORMAT_ABGR32: Packed buffer of 32-bit native endian integers of
+ * the form 0xAABBGGRR.
+ * @FIRTREE_FORMAT_ABGR32_PREMULTIPLIED: Packed buffer of 32-bit native endian 
+ * integers of the form 0xAABBGGRR where the alpha has been pre-multiplied 
+ * into R, G and B.
+ * @FIRTREE_FORMAT_XBGR32: Packed buffer of 32-bit native endian integers of
+ * the form 0x??BBGGRR where the upper 8 bits of alpha is ignored and alpha
+ * is implcitly 1.0.
+ * @FIRTREE_FORMAT_RGB24: Packed buffer of 24-bit native endian integers of
+ * the form 0xRRGGBB. Alpha is implicitly 1.0.
+ * @FIRTREE_FORMAT_RGB24: Packed buffer of 24-bit native endian integers of
+ * the form 0xBBGGRR. Alpha is implicitly 1.0.
+ * 
+ * A set of possible formats memory buffers can be in.
+ */
+typedef enum {
+    FIRTREE_FORMAT_ARGB32, 
+    FIRTREE_FORMAT_ARGB32_PREMULTIPLIED, 
+    FIRTREE_FORMAT_XRGB32, 
+    FIRTREE_FORMAT_ABGR32, 
+    FIRTREE_FORMAT_ABGR32_PREMULTIPLIED, 
+    FIRTREE_FORMAT_XBGR32, 
+    FIRTREE_FORMAT_RGB24,
+    FIRTREE_FORMAT_BGR24,
+
+    FIRTREE_FORMAT_LAST
+} FirtreeImageFormat;
+
+/**
  * firtree_image_new:
  *
  * Create a firtree image. Call firtree_image_compile_from_source() to

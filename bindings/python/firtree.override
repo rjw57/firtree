@@ -120,6 +120,7 @@ include
     firtree-debug.override
     firtree-kernel.override
     firtree-kernel-sampler.override
+    firtree-pixbuf-sampler.override
     firtree-sampler.override
 %%
 // vim:sw=4:ts=4:cindent:et:filetype=c

@@ -4,6 +4,19 @@
 
 #include <stdint.h>
 
+typedef enum {
+    FIRTREE_FORMAT_ARGB32					= 0x00, 
+    FIRTREE_FORMAT_ARGB32_PREMULTIPLIED		= 0x01, 
+    FIRTREE_FORMAT_XRGB32					= 0x02, 
+    FIRTREE_FORMAT_ABGR32					= 0x03, 
+    FIRTREE_FORMAT_ABGR32_PREMULTIPLIED		= 0x04, 
+    FIRTREE_FORMAT_XBGR32					= 0x05, 
+    FIRTREE_FORMAT_RGB24					= 0x06,
+    FIRTREE_FORMAT_BGR24					= 0x07,
+
+    FIRTREE_FORMAT_LAST
+} FirtreeEngineBufferFormat;
+
 typedef float vec2 __attribute__ ((vector_size(8)));
 typedef float vec4 __attribute__ ((vector_size(16)));
 
@@ -59,6 +72,49 @@ uint32_t vec_to_uint32_argb(vec4 pix_val) {
     rv |= ((uint32_t)(ELEMENT(pix_val, 0) * 255.f) & 0xff) << 16;
     rv |= ((uint32_t)(ELEMENT(pix_val, 3) * 255.f) & 0xff) << 24;
     return rv;
+}
+
+/* Image buffer sampler functions */
+
+static
+vec4 sample_image_buffer_bgr24(uint8_t* buffer,
+        unsigned int width, unsigned int height, unsigned int stride,
+        vec2 location)
+{
+    vec4 rv = { 0, 0, 0, 0 };
+
+    int x = (int)(ELEMENT(location, 0));
+    int y = (int)(ELEMENT(location, 1));
+
+    if((x < 0) || (x >= width)) { return rv; }
+    if((y < 0) || (y >= height)) { return rv; }
+
+    uint8_t* pixel = buffer + (x * 3) + (y * stride);
+
+    uint32_t pixel_val = pixel[0];
+    pixel_val |= pixel[1] << 8;
+    pixel_val |= pixel[2] << 16;
+    pixel_val |= 0xff << 24;
+    vec4 pixel_vec = uint32_to_vec_abgr(pixel_val);
+
+    return pixel_vec;
+}
+
+vec4 sample_image_buffer(uint8_t* buffer,
+        FirtreeEngineBufferFormat format, 
+        unsigned int width, unsigned int height, unsigned int stride,
+        vec2 location)
+{
+    vec4 default_rv = { 1, 0, 0, 1 };
+    switch(format) {
+        case FIRTREE_FORMAT_BGR24:
+            return sample_image_buffer_bgr24(buffer, 
+                    width, height, stride, location);
+        default:
+            /* do nothing */
+            break;
+    }
+    return default_rv;
 }
 
 /* Macros to make writing rendering functions easier */

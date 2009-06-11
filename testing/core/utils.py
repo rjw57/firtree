@@ -1,3 +1,4 @@
+import gtk.gdk
 import unittest, subprocess, os
 import StringIO
 
@@ -7,6 +8,16 @@ class FirtreeTestCase(unittest.TestCase):
         exp_name = 'expected/%s.png' % tag
         surface.write_to_png(out_name)
         self.assert_(images_match(out_name, exp_name))
+    
+    def artworkFile(self, name):
+        art_file = '../artwork/%s' % name
+        self.assert_(os.path.exists(art_file))
+        return art_file
+
+    def loadPixbuf(self, name):
+        pb = gtk.gdk.pixbuf_new_from_file(self.artworkFile(name))
+        self.assertNotEqual(pb, None)
+        return pb
 
     def assertPixbufMatches(self, pb, tag):
         out_name = 'outputs/%s.png' % tag

@@ -261,6 +261,14 @@
   )
 )
 
+(define-function debug_dump_cpu_engine_function
+  (c-name "firtree_debug_dump_cpu_engine_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuEngine*" "engine")
+  )
+)
+
 
 
 ;; From firtree-kernel-sampler.h

@@ -34,8 +34,7 @@
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/LinkAllPasses.h>
 
-#include <common/uuid.h>
-
+#include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-kernel-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
 #include "firtree-kernel-sampler.h"
@@ -458,21 +457,8 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 
     g_datalist_clear(&sampler_function_list);
 
-    /* work out the function name. */
-    std::string func_name("sampler_");
-    gchar uuid[37];
-    generate_random_uuid(uuid, '_');
-    func_name += uuid;
-
     /* create the function */
-    std::vector<const llvm::Type*> params;
-    params.push_back(llvm::VectorType::get(llvm::Type::FloatTy,2));
-    llvm::FunctionType* ft = llvm::FunctionType::get(
-            llvm::VectorType::get(llvm::Type::FloatTy, 4), /* ret. type */
-            params, false);
-    llvm::Function* f = llvm::Function::Create( 
-            ft, llvm::Function::ExternalLinkage,
-            func_name.c_str(), m);
+    llvm::Function* f = firtree_engine_create_sample_function_prototype(m);
     p->cached_function = f;
 
     llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);

@@ -24,6 +24,7 @@ import core.cpuengine
 import core.kernel
 import core.sampler
 import core.kernelsampler
+import core.pixbufsampler
 
 suite = unittest.TestSuite()
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.affinetransform))
@@ -31,6 +32,7 @@ suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.cpuengine))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernel))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.sampler))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernelsampler))
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.pixbufsampler))
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()

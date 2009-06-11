@@ -24,6 +24,7 @@
 
 #include "firtree-kernel.h"
 #include "firtree-sampler.h"
+#include "engines/cpu/firtree-cpu-engine.h"
 
 /**
  * SECTION:firtree-debug
@@ -65,6 +66,21 @@ firtree_debug_dump_kernel_function(FirtreeKernel* kernel);
  */
 GString*
 firtree_debug_dump_sampler_function(FirtreeSampler* sampler);
+
+/**
+ * firtree_debug_dump_cpu_engine_function:
+ * @engine: A FirtreeCpuEngine.
+ *
+ * Dump the compiled LLVM associated with @engine into a string and
+ * return it. The string must be released via g_string_free() after use.
+ *
+ * If the engine is invalid, or there is no LLVM function, this returns
+ * NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString*
+firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* engine);
 
 G_END_DECLS
 

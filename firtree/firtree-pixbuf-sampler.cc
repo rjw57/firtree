@@ -28,6 +28,7 @@
 
 #include <common/uuid.h>
 
+#include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
 #include "firtree-pixbuf-sampler.h"
 
@@ -42,6 +43,12 @@ struct _FirtreePixbufSamplerPrivate {
     GdkPixbuf*          pixbuf;
     llvm::Function*     cached_function;
 };
+
+llvm::Function*
+firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self);
+
+llvm::Function*
+_firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self);
 
 /* invalidate (and release) any cached LLVM modules/functions. This
  * will cause them to be re-generated when ..._get_function() is next
@@ -113,11 +120,8 @@ firtree_pixbuf_sampler_class_init (FirtreePixbufSamplerClass *klass)
 
     sampler_class->intl_vtable = &_firtree_pixbuf_sampler_class_vtable;
 
-    /*
-    sampler_class->intl_vtable->get_param = firtree_pixbuf_sampler_get_param;
     sampler_class->intl_vtable->get_sample_function = 
         firtree_pixbuf_sampler_get_sample_function;
-        */
 }
 
 static void
@@ -160,6 +164,89 @@ firtree_pixbuf_sampler_get_pixbuf (FirtreePixbufSampler* self)
 {
     FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
     return p->pixbuf;
+}
+
+llvm::Function*
+firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self)
+{
+    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    if(p->cached_function) {
+        return p->cached_function;
+    }
+
+    return _firtree_pixbuf_sampler_create_sample_function(
+            FIRTREE_PIXBUF_SAMPLER(self));
+}
+
+/* Create the sampler function */
+llvm::Function*
+_firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
+{
+    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p->pixbuf) {
+        return NULL;
+    }
+
+    _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
+
+    llvm::Module* m = new llvm::Module("pixbuf");
+
+    /* declare the sample_image_buffer() function which will be implemented
+     * by the engine. */
+    llvm::Function* sample_buffer_func = 
+        firtree_engine_create_sample_image_buffer_prototype(m);
+    g_assert(sample_buffer_func);
+
+    /* declare the sample() function which we shall implement. */
+    llvm::Function* sample_func = 
+        firtree_engine_create_sample_function_prototype(m);
+    g_assert(sample_func);
+
+    /* Work out the width, height, stride, etc of the buffer. */
+    int channels = gdk_pixbuf_get_n_channels(p->pixbuf);
+    if((channels != 3) && (channels != 4)) {
+        g_debug("FirtreePixbufSampler only supports 3 and 4 channel pixbufs.");
+        return FALSE;
+    }
+    int width = gdk_pixbuf_get_width(p->pixbuf);
+    int height = gdk_pixbuf_get_height(p->pixbuf);
+    int stride = gdk_pixbuf_get_rowstride(p->pixbuf);
+    guchar* data = gdk_pixbuf_get_pixels(p->pixbuf);
+
+    llvm::Value* llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+            (uint64_t)width, false);
+    llvm::Value* llvm_height = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+            (uint64_t)height, false);
+    llvm::Value* llvm_stride = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+            (uint64_t)stride, false);
+    llvm::Value* llvm_format = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+            (uint64_t)FIRTREE_FORMAT_BGR24, false);
+
+    /* This looks dirty but is apparently valid.
+     *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
+    llvm::Constant* llvm_data_int = llvm::ConstantInt::get(llvm::Type::Int64Ty, 
+            (uint64_t)data, false);
+    llvm::Value* llvm_data = llvm::ConstantExpr::getIntToPtr(llvm_data_int,
+            llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
+
+    /* Implement the sample function. */
+    llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", sample_func);
+    
+    std::vector<llvm::Value*> func_args;
+    func_args.push_back(llvm_data);
+    func_args.push_back(llvm_format);
+    func_args.push_back(llvm_width);
+    func_args.push_back(llvm_height);
+    func_args.push_back(llvm_stride);
+    func_args.push_back(sample_func->arg_begin());
+
+    llvm::Value* ret_val = llvm::CallInst::Create(sample_buffer_func,
+            func_args.begin(), func_args.end(), "rv", bb);
+
+    llvm::ReturnInst::Create(ret_val, bb);
+
+    p->cached_function = sample_func;
+    return sample_func;
 }
 
 /* vim:sw=4:ts=4:et:cindent

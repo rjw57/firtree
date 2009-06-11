@@ -77,6 +77,9 @@ add_library(firtree SHARED
     firtree-sampler.cc          firtree-sampler.h
     firtree-vector.h            firtree-vector.c
 
+    firtree-engine.cc
+
+    internal/firtree-engine-intl.hh
     internal/firtree-kernel-intl.hh
     internal/firtree-sampler-intl.hh
 

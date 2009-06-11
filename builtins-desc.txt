@@ -1,0 +1,143 @@
+/* These are functions which are implemented by various engines. */
+
+/**
+ * ImageBufferFormat:
+ * @FIRTREE_FORMAT_ARGB32: Packed buffer of 32-bit native endian integers of
+ * the form 0xAARRGGBB.
+ * @FIRTREE_FORMAT_ARGB32_PREMULTIPLIED: Packed buffer of 32-bit native endian 
+ * integers of the form 0xAARRGGBB where the alpha has been pre-multiplied 
+ * into R, G and B.
+ * @FIRTREE_FORMAT_XRGB32: Packed buffer of 32-bit native endian integers of
+ * the form 0x??RRGGBB where the upper 8 bits of alpha is ignored and alpha
+ * is implcitly 1.0.
+ * @FIRTREE_FORMAT_ABGR32: Packed buffer of 32-bit native endian integers of
+ * the form 0xAABBGGRR.
+ * @FIRTREE_FORMAT_ABGR32_PREMULTIPLIED: Packed buffer of 32-bit native endian 
+ * integers of the form 0xAABBGGRR where the alpha has been pre-multiplied 
+ * into R, G and B.
+ * @FIRTREE_FORMAT_XBGR32: Packed buffer of 32-bit native endian integers of
+ * the form 0x??BBGGRR where the upper 8 bits of alpha is ignored and alpha
+ * is implcitly 1.0.
+ * @FIRTREE_FORMAT_RGB24: Packed buffer of 24-bit native endian integers of
+ * the form 0xRRGGBB. Alpha is implicitly 1.0.
+ * @FIRTREE_FORMAT_RGB24: Packed buffer of 24-bit native endian integers of
+ * the form 0xBBGGRR. Alpha is implicitly 1.0.
+ * 
+ * A set of possible formats memory buffers can be in.
+ */
+typedef enum {
+    FIRTREE_FORMAT_ARGB32					= 0x00, 
+    FIRTREE_FORMAT_ARGB32_PREMULTIPLIED		= 0x01, 
+    FIRTREE_FORMAT_XRGB32					= 0x02, 
+    FIRTREE_FORMAT_ABGR32					= 0x03, 
+    FIRTREE_FORMAT_ABGR32_PREMULTIPLIED		= 0x04, 
+    FIRTREE_FORMAT_XBGR32					= 0x05, 
+    FIRTREE_FORMAT_RGB24					= 0x06,
+    FIRTREE_FORMAT_BGR24					= 0x07,
+} ImageBufferFormat;
+
+/* Sample from a buffer in memory. The arguments buffer, format, width, height
+ * and stride must be compile-time constants. Format must be one of the
+ * constants described in ImageBufferFormat.
+ */
+vec4 sample_image_buffer(void* buffer, int format, 
+		unsigned int width, unsigned int height, unsigned int stride,
+		vec2 location);
+
+/* These are the builtins available to kernels. The special 'genType' type is
+ * used to indicate any floating point or floating point vector type. Their
+ * names are mangled. See firtree/engines/cpu/builtins.ll for an example.
+ */
+
+/* Angle and Trigonometric Functions. */
+genType radians(genType);
+genType degrees(genType);
+
+genType sin(genType);
+genType cos(genType);
+genType tan(genType);
+
+vec2 sincos(float);
+vec2 cossin(float);
+
+/* The '_' variants expect their input to be in the range (-pi, pi]. */
+genType sin_(genType);
+genType cos_(genType);
+genType tan_(genType);
+
+vec2 sincos_(float);
+vec2 cossin_(float);
+
+genType asin(genType);
+genType acos(genType);
+genType atan(genType);
+
+/* This is the equivalent of atan2 in other languages... */
+genType atan(genType,genType);
+
+/* Exponential functions */
+
+genType pow(genType,genType);
+genType exp(genType);
+genType log(genType);
+genType exp2(genType);
+genType log2(genType);
+
+/* Square-root functions. */
+        
+genType sqrt(genType);
+genType inversesqrt(genType);
+
+/* Common maths functions. */
+
+genType abs(genType);
+genType sign(genType);
+genType floor(genType);
+genType ceil(genType);
+genType fract(genType);
+genType mod(genType,float);
+genType mod(genType,genType);
+genType min(genType,float);
+genType min(genType,genType);
+genType max(genType,float);
+genType max(genType,genType);
+genType clamp(genType,float,float);
+genType clamp(genType,genType,genType);
+genType mix(genType,genType,float);
+genType mix(genType,genType,genType);
+genType step(float,genType);
+
+/* Geometric functions */
+    
+float length(genType);
+float dot(genType,genType);
+vec3 cross(vec3,vec3);
+genType normalize(genType);
+genType reflect(genType,genType);
+
+/* Misc. functions */
+
+genType compare(genType,genType,genType);
+vec4 premultiply(vec4);
+vec4 unpremultiply(vec4);
+
+/* Sampler functions */
+
+vec2 destCoord();
+
+vec2 samplerTransform(static sampler,vec2);
+static vec4 samplerExtent(static sampler);
+vec4 sample(static sampler,vec2);
+
+vec2 samplerCoord(static sampler s) {
+    return samplerTransform(s, destCoord());
+}
+vec2 samplerOrigin(static sampler s) {
+	return samplerExtent(s).xy
+}
+vec2 samplerSize(static sampler s) {
+	return samplerExtent(s).zw
+}
+
+/* vim:sw=4:ts=4:cindent:et:filetype=c
+ */

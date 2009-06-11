@@ -51,6 +51,13 @@
   (gtype-id "FIRTREE_TYPE_KERNEL_SAMPLER")
 )
 
+(define-object PixbufSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreePixbufSampler")
+  (gtype-id "FIRTREE_TYPE_PIXBUF_SAMPLER")
+)
+
 (define-object Sampler
   (in-module "Firtree")
   (parent "GObject")

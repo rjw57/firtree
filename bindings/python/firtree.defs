@@ -401,6 +401,36 @@
 
 
 
+;; From firtree-pixbuf-sampler.h
+
+(define-function pixbuf_sampler_get_type
+  (c-name "firtree_pixbuf_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function pixbuf_sampler_new
+  (c-name "firtree_pixbuf_sampler_new")
+  (is-constructor-of "FirtreePixbufSampler")
+  (return-type "FirtreePixbufSampler*")
+)
+
+(define-method set_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_pixbuf")
+  (return-type "none")
+  (parameters
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-method get_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_pixbuf")
+  (return-type "GdkPixbuf*")
+)
+
+
+
 ;; From firtree-sampler.h
 
 (define-function sampler_get_type

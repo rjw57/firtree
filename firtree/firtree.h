@@ -33,6 +33,7 @@
 #include "firtree-debug.h"
 #include "firtree-kernel.h"
 #include "firtree-kernel-sampler.h"
+#include "firtree-pixbuf-sampler.h"
 #include "firtree-sampler.h"
 #include "firtree-vector.h"
 

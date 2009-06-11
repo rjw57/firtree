@@ -71,10 +71,9 @@ add_custom_command(
 add_library(firtree SHARED
     firtree-affine-transform.c  firtree-affine-transform.h
     firtree-debug.cc            firtree-debug.h
-    firtree-image.c             firtree-image.h
-    firtree-image-sampler.cc    firtree-image-sampler.h
     firtree-kernel.cc           firtree-kernel.h
     firtree-kernel-sampler.cc   firtree-kernel-sampler.h
+    firtree-pixbuf-sampler.cc   firtree-pixbuf-sampler.h
     firtree-sampler.cc          firtree-sampler.h
     firtree-vector.h            firtree-vector.c
 

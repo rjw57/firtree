@@ -76,29 +76,71 @@ uint32_t vec_to_uint32_argb(vec4 pix_val) {
 
 /* Image buffer sampler functions */
 
-static
-vec4 sample_image_buffer_bgr24(uint8_t* buffer,
-        unsigned int width, unsigned int height, unsigned int stride,
-        vec2 location)
-{
-    vec4 rv = { 0, 0, 0, 0 };
+#define START_SAMPLE_FUNCTION(name, pix_size)                           \
+static                                                                  \
+vec4 name(uint8_t* buffer,                                               \
+        unsigned int width, unsigned int height, unsigned int stride,   \
+        vec2 location)                                                  \
+{                                                                       \
+    vec4 rv = { 0, 0, 0, 0 };                                           \
+    int x = (int)(ELEMENT(location, 0));                                \
+    int y = (int)(ELEMENT(location, 1));                                \
+    if((x < 0) || (x >= width)) { return rv; }                          \
+    if((y < 0) || (y >= height)) { return rv; }                         \
+    uint8_t* pixel = buffer + (x * pix_size) + (y * stride);            \
+    vec4 pixel_vec = { 0, 0, 0, 0 };
 
-    int x = (int)(ELEMENT(location, 0));
-    int y = (int)(ELEMENT(location, 1));
+#define END_SAMPLE_FUNCTION                                             \
+    return pixel_vec;                                                   \
+}  
 
-    if((x < 0) || (x >= width)) { return rv; }
-    if((y < 0) || (y >= height)) { return rv; }
+START_SAMPLE_FUNCTION(sample_image_buffer_argb32, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_vec = premultiply_v4(uint32_to_vec_argb(pixel_val));
+} END_SAMPLE_FUNCTION
 
-    uint8_t* pixel = buffer + (x * 3) + (y * stride);
+START_SAMPLE_FUNCTION(sample_image_buffer_argb32_pre, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_vec = uint32_to_vec_argb(pixel_val);
+} END_SAMPLE_FUNCTION
 
+START_SAMPLE_FUNCTION(sample_image_buffer_xrgb32, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_val |= 0xff000000;
+    pixel_vec = uint32_to_vec_argb(pixel_val);
+} END_SAMPLE_FUNCTION
+
+START_SAMPLE_FUNCTION(sample_image_buffer_abgr32, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_vec = premultiply_v4(uint32_to_vec_abgr(pixel_val));
+} END_SAMPLE_FUNCTION
+
+START_SAMPLE_FUNCTION(sample_image_buffer_abgr32_pre, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_vec = uint32_to_vec_abgr(pixel_val);
+} END_SAMPLE_FUNCTION
+
+START_SAMPLE_FUNCTION(sample_image_buffer_xbgr32, 4) {
+    uint32_t pixel_val = *((uint32_t*)pixel);
+    pixel_val |= 0xff000000;
+    pixel_vec = uint32_to_vec_abgr(pixel_val);
+} END_SAMPLE_FUNCTION
+
+START_SAMPLE_FUNCTION(sample_image_buffer_rgb24, 3) {
     uint32_t pixel_val = pixel[0];
     pixel_val |= pixel[1] << 8;
     pixel_val |= pixel[2] << 16;
     pixel_val |= 0xff << 24;
-    vec4 pixel_vec = uint32_to_vec_abgr(pixel_val);
+    pixel_vec = uint32_to_vec_argb(pixel_val);
+} END_SAMPLE_FUNCTION
 
-    return pixel_vec;
-}
+START_SAMPLE_FUNCTION(sample_image_buffer_bgr24, 3) {
+    uint32_t pixel_val = pixel[0];
+    pixel_val |= pixel[1] << 8;
+    pixel_val |= pixel[2] << 16;
+    pixel_val |= 0xff << 24;
+    pixel_vec = uint32_to_vec_abgr(pixel_val);
+} END_SAMPLE_FUNCTION
 
 vec4 sample_image_buffer(uint8_t* buffer,
         FirtreeEngineBufferFormat format, 
@@ -107,6 +149,27 @@ vec4 sample_image_buffer(uint8_t* buffer,
 {
     vec4 default_rv = { 1, 0, 0, 1 };
     switch(format) {
+        case FIRTREE_FORMAT_ARGB32:
+            return sample_image_buffer_argb32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED:
+            return sample_image_buffer_argb32_pre(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_XRGB32:
+            return sample_image_buffer_xrgb32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_ABGR32:
+            return sample_image_buffer_abgr32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED:
+            return sample_image_buffer_abgr32_pre(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_XBGR32:
+            return sample_image_buffer_xbgr32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_RGB24:
+            return sample_image_buffer_rgb24(buffer, 
+                    width, height, stride, location);
         case FIRTREE_FORMAT_BGR24:
             return sample_image_buffer_bgr24(buffer, 
                     width, height, stride, location);
@@ -118,7 +181,7 @@ vec4 sample_image_buffer(uint8_t* buffer,
 }
 
 /* Macros to make writing rendering functions easier */
-#define START_FUNCTION(name, pix_size) \
+#define START_RENDER_FUNCTION(name, pix_size) \
     void name(unsigned char* buffer,    \
         unsigned int width, unsigned int height,    \
         unsigned int row_stride, float* extents)    \
@@ -134,9 +197,9 @@ vec4 sample_image_buffer(uint8_t* buffer,
             float x = start_x;    \
             for(col=0; col<width; ++col, pixel+=pix_size, x+=dx) {
 
-#define END_FUNCTION } } }
+#define END_RENDER_FUNCTION } } }
 
-START_FUNCTION(render_buffer_32_abgr_pre, 4) {
+START_RENDER_FUNCTION(render_buffer_32_abgr_pre, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     vec4 in_vec = uint32_to_vec_abgr(in_val);
     vec2 dest_coord = {x, y};
@@ -146,9 +209,9 @@ START_FUNCTION(render_buffer_32_abgr_pre, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_abgr(out_vec);
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_32_abgr_non, 4) {
+START_RENDER_FUNCTION(render_buffer_32_abgr_non, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     vec4 in_vec = premultiply_v4(uint32_to_vec_abgr(in_val));
     vec2 dest_coord = {x, y};
@@ -158,9 +221,9 @@ START_FUNCTION(render_buffer_32_abgr_non, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_abgr(unpremultiply_v4(out_vec));
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_32_abgr_ign, 4) {
+START_RENDER_FUNCTION(render_buffer_32_abgr_ign, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     in_val |= (0xff << 24);
     vec4 in_vec = premultiply_v4(uint32_to_vec_abgr(in_val));
@@ -171,9 +234,9 @@ START_FUNCTION(render_buffer_32_abgr_ign, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_abgr(unpremultiply_v4(out_vec));
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_32_argb_pre, 4) {
+START_RENDER_FUNCTION(render_buffer_32_argb_pre, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     vec4 in_vec = uint32_to_vec_argb(in_val);
     vec2 dest_coord = {x, y};
@@ -183,9 +246,9 @@ START_FUNCTION(render_buffer_32_argb_pre, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_argb(out_vec);
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_32_argb_non, 4) {
+START_RENDER_FUNCTION(render_buffer_32_argb_non, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     vec4 in_vec = premultiply_v4(uint32_to_vec_argb(in_val));
     vec2 dest_coord = {x, y};
@@ -195,9 +258,9 @@ START_FUNCTION(render_buffer_32_argb_non, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_argb(unpremultiply_v4(out_vec));
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_32_argb_ign, 4) {
+START_RENDER_FUNCTION(render_buffer_32_argb_ign, 4) {
     uint32_t in_val = *((uint32_t*)pixel);
     in_val |= (0xff << 24);
     vec4 in_vec = premultiply_v4(uint32_to_vec_argb(in_val));
@@ -208,9 +271,9 @@ START_FUNCTION(render_buffer_32_argb_ign, 4) {
         one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
     vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
     *((uint32_t*)pixel) = vec_to_uint32_argb(unpremultiply_v4(out_vec));
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_24_bgr, 3) {
+START_RENDER_FUNCTION(render_buffer_24_bgr, 3) {
     uint32_t in_val = pixel[0];
     in_val |= pixel[1] << 8;
     in_val |= pixel[2] << 16;
@@ -226,9 +289,9 @@ START_FUNCTION(render_buffer_24_bgr, 3) {
     pixel[0] = (pix_val) & 0xff;
     pixel[1] = (pix_val>>8) & 0xff;
     pixel[2] = (pix_val>>16) & 0xff;
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
-START_FUNCTION(render_buffer_24_rgb, 3) {
+START_RENDER_FUNCTION(render_buffer_24_rgb, 3) {
     uint32_t in_val = pixel[0];
     in_val |= pixel[1] << 8;
     in_val |= pixel[2] << 16;
@@ -244,7 +307,7 @@ START_FUNCTION(render_buffer_24_rgb, 3) {
     pixel[0] = (pix_val) & 0xff;
     pixel[1] = (pix_val>>8) & 0xff;
     pixel[2] = (pix_val>>16) & 0xff;
-} END_FUNCTION
+} END_RENDER_FUNCTION
 
 /* vim:sw=4:ts=4:cindent:et
  */

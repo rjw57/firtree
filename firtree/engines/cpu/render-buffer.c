@@ -78,13 +78,15 @@ uint32_t vec_to_uint32_argb(vec4 pix_val) {
 
 #define START_SAMPLE_FUNCTION(name, pix_size)                           \
 static                                                                  \
-vec4 name(uint8_t* buffer,                                               \
+vec4 name(uint8_t* buffer,                                              \
         unsigned int width, unsigned int height, unsigned int stride,   \
         vec2 location)                                                  \
 {                                                                       \
     vec4 rv = { 0, 0, 0, 0 };                                           \
     int x = (int)(ELEMENT(location, 0));                                \
     int y = (int)(ELEMENT(location, 1));                                \
+    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */             \
+    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */             \
     if((x < 0) || (x >= width)) { return rv; }                          \
     if((y < 0) || (y >= height)) { return rv; }                         \
     uint8_t* pixel = buffer + (x * pix_size) + (y * stride);            \
@@ -190,6 +192,10 @@ vec4 sample_image_buffer_lerp(uint8_t* buffer,
     int x = (int)(ELEMENT(location, 0)); /* default rounding is */ 
     int y = (int)(ELEMENT(location, 1)); /* towards zero        */
 
+    /* Correct rounding to rounding down. */
+    if(ELEMENT(location, 0) < 0.f) { x--; }
+    if(ELEMENT(location, 1) < 0.f) { y--; }
+
     vec2 bl_loc = { x, y };
     vec4 bl = sample_image_buffer_nn(buffer, format, width, height,
             stride, bl_loc);
@@ -232,6 +238,7 @@ vec4 sample_image_buffer_lerp(uint8_t* buffer,
         float y = extents[1];    \
         float dx = extents[2] / (float)width;    \
         float dy = extents[3] / (float)height;    \
+        start_x += 0.5f*dx; y += 0.5f*dy; \
     \
         for(row=0; row<height; ++row, y+=dy) {    \
             unsigned char* pixel = buffer + (row * row_stride);    \

@@ -125,6 +125,43 @@ class Creation(FirtreeTestCase):
         self.assert_(rv)
         self.assertCairoSurfaceMatches(cs, 'cpu-pixbuf-5')
         self._s.set_do_interpolation(False)
+ 
+    def testSimpleRender6(self):
+        self._s.set_pixbuf(None)
+        self.assertEqual(self._s.get_pixbuf(), None)
+        pb = self.loadPixbuf('bricks.jpg')
+        self._s.set_pixbuf(pb)
+        self.assertEqual(self._s.get_pixbuf(), pb)
+
+        cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self.clearSurface(cs)
+        self._s.set_do_interpolation(True)
+
+        engine = CpuEngine()
+        engine.set_sampler(self._s)
+
+        rv = engine.render_into_cairo_surface((0, 0, width, height), cs)
+        self.assert_(rv)
+        self.assertCairoSurfaceMatches(cs, 'cpu-pixbuf-6')
+        self._s.set_do_interpolation(False)
+ 
+    def testSimpleRender7(self):
+        self._s.set_pixbuf(None)
+        self.assertEqual(self._s.get_pixbuf(), None)
+        pb = self.loadPixbuf('bricks.jpg')
+        self._s.set_pixbuf(pb)
+        self.assertEqual(self._s.get_pixbuf(), pb)
+
+        cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self.clearSurface(cs)
+        self._s.set_do_interpolation(False)
+
+        engine = CpuEngine()
+        engine.set_sampler(self._s)
+
+        rv = engine.render_into_cairo_surface((0, 0, width, height), cs)
+        self.assert_(rv)
+        self.assertCairoSurfaceMatches(cs, 'cpu-pixbuf-7')
 
     def testDistorted(self):
         dist_k = Kernel()

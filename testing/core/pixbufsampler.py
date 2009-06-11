@@ -70,6 +70,23 @@ class Creation(FirtreeTestCase):
         rv = engine.render_into_cairo_surface((-10, -10, 630, 470), cs)
         self.assert_(rv)
         self.assertCairoSurfaceMatches(cs, 'cpu-pixbuf-2')
+ 
+    def testSimpleRender3(self):
+        self._s.set_pixbuf(None)
+        self.assertEqual(self._s.get_pixbuf(), None)
+        pb = self.loadPixbuf('painting.jpg')
+        self._s.set_pixbuf(pb)
+        self.assertEqual(self._s.get_pixbuf(), pb)
+
+        cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self.clearSurface(cs)
+
+        engine = CpuEngine()
+        engine.set_sampler(self._s)
+
+        rv = engine.render_into_cairo_surface((10, 10, 64, 48), cs)
+        self.assert_(rv)
+        self.assertCairoSurfaceMatches(cs, 'cpu-pixbuf-3')
 
     def testDistorted(self):
         dist_k = Kernel()

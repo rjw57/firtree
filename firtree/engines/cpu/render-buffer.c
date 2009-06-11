@@ -142,7 +142,7 @@ START_SAMPLE_FUNCTION(sample_image_buffer_bgr24, 3) {
     pixel_vec = uint32_to_vec_abgr(pixel_val);
 } END_SAMPLE_FUNCTION
 
-vec4 sample_image_buffer(uint8_t* buffer,
+vec4 sample_image_buffer_nn(uint8_t* buffer,
         FirtreeEngineBufferFormat format, 
         unsigned int width, unsigned int height, unsigned int stride,
         vec2 location)
@@ -178,6 +178,47 @@ vec4 sample_image_buffer(uint8_t* buffer,
             break;
     }
     return default_rv;
+}
+
+vec4 sample_image_buffer_lerp(uint8_t* buffer,
+        FirtreeEngineBufferFormat format, 
+        unsigned int width, unsigned int height, unsigned int stride,
+        vec2 location)
+{
+    vec2 offset = {-0.5f, -0.5f};
+    location += offset;
+    int x = (int)(ELEMENT(location, 0)); /* default rounding is */ 
+    int y = (int)(ELEMENT(location, 1)); /* towards zero        */
+
+    vec2 bl_loc = { x, y };
+    vec4 bl = sample_image_buffer_nn(buffer, format, width, height,
+            stride, bl_loc);
+    vec2 br_loc = { x+1, y };
+    vec4 br = sample_image_buffer_nn(buffer, format, width, height,
+            stride, br_loc);
+    vec2 tl_loc = { x, y+1 };
+    vec4 tl = sample_image_buffer_nn(buffer, format, width, height,
+            stride, tl_loc);
+    vec2 tr_loc = { x+1, y+1 };
+    vec4 tr = sample_image_buffer_nn(buffer, format, width, height,
+            stride, tr_loc);
+
+    float lambda_x = ELEMENT(location, 0) - (float)x;
+    float lambda_y = ELEMENT(location, 1) - (float)y;
+
+    if(lambda_x<0.f) { lambda_x = -lambda_x; }
+    if(lambda_y<0.f) { lambda_y = -lambda_y; }
+
+    vec4 one = { 1, 1, 1, 1 };
+    vec4 lambda_x_vec = { lambda_x, lambda_x, lambda_x, lambda_x };
+    vec4 lambda_y_vec = { lambda_y, lambda_y, lambda_y, lambda_y };
+
+    vec4 at = lambda_x_vec * tr + (one - lambda_x_vec) * tl;
+    vec4 ab = lambda_x_vec * br + (one - lambda_x_vec) * bl;
+
+    vec4 rv = lambda_y_vec * at + (one - lambda_y_vec) * ab;
+
+    return rv;
 }
 
 /* Macros to make writing rendering functions easier */

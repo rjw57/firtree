@@ -32,9 +32,12 @@
 #include "internal/firtree-engine-intl.hh"
 
 llvm::Function*
-firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module)
+firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module, 
+        gboolean interp)
 {
-    static const char* function_name = "sample_image_buffer";
+    static const char* nn_function_name = "sample_image_buffer_nn";
+    static const char* interp_function_name = "sample_image_buffer_lerp";
+    const char* function_name = interp ? interp_function_name : nn_function_name;
 
     g_assert(module);
     g_assert(module->getFunction(function_name) == NULL);

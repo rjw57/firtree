@@ -41,6 +41,7 @@ typedef struct _FirtreePixbufSamplerPrivate FirtreePixbufSamplerPrivate;
 
 struct _FirtreePixbufSamplerPrivate {
     GdkPixbuf*          pixbuf;
+    gboolean            do_interp;
     llvm::Function*     cached_function;
 };
 
@@ -129,6 +130,7 @@ firtree_pixbuf_sampler_init (FirtreePixbufSampler *self)
 {
     FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
     p->pixbuf = NULL;
+    p->do_interp = FALSE;
     p->cached_function = NULL;
 }
 
@@ -166,6 +168,24 @@ firtree_pixbuf_sampler_get_pixbuf (FirtreePixbufSampler* self)
     return p->pixbuf;
 }
 
+gboolean
+firtree_pixbuf_sampler_get_do_interpolation (FirtreePixbufSampler* self)
+{
+    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    return p->do_interp;
+}
+
+void
+firtree_pixbuf_sampler_set_do_interpolation (FirtreePixbufSampler* self,
+        gboolean do_interpolation)
+{
+    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    if(do_interpolation != p->do_interp) {
+        p->do_interp = do_interpolation;
+        _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
+    }
+}
+
 llvm::Function*
 firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self)
 {
@@ -194,7 +214,7 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
     /* declare the sample_image_buffer() function which will be implemented
      * by the engine. */
     llvm::Function* sample_buffer_func = 
-        firtree_engine_create_sample_image_buffer_prototype(m);
+        firtree_engine_create_sample_image_buffer_prototype(m, p->do_interp);
     g_assert(sample_buffer_func);
 
     /* declare the sample() function which we shall implement. */

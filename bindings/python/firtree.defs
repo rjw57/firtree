@@ -437,6 +437,21 @@
   (return-type "GdkPixbuf*")
 )
 
+(define-method get_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
 
 
 ;; From firtree-sampler.h

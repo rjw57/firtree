@@ -112,6 +112,30 @@ firtree_pixbuf_sampler_set_pixbuf (FirtreePixbufSampler* self,
 GdkPixbuf*
 firtree_pixbuf_sampler_get_pixbuf (FirtreePixbufSampler* self);
 
+/**
+ * firtree_pixbuf_sampler_get_do_interpolation:
+ * @self:  A FirtreePixbufSampler.
+ *
+ * Get a flag which indicates if the sampler should attempt linear interpolation
+ * of the pixel values.
+ *
+ * Returns: A flag indicating if interpolation is performed.
+ */
+gboolean
+firtree_pixbuf_sampler_get_do_interpolation (FirtreePixbufSampler* self);
+
+/**
+ * firtree_pixbuf_sampler_set_do_interpolation:
+ * @self:  A FirtreePixbufSampler.
+ * @do_interpolation: A flag indicating if interpolation is performed.
+ *
+ * Set a flag which indicates if the sampler should attempt linear interpolation
+ * of the pixel values.
+ */
+void
+firtree_pixbuf_sampler_set_do_interpolation (FirtreePixbufSampler* self,
+        gboolean do_interpolation);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_PIXBUF_SAMPLER */

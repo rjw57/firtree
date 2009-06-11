@@ -75,6 +75,7 @@ typedef enum {
 /**
  * firtree_engine_create_sample_image_buffer_prototype:
  * @module: An LLVM module.
+ * @interp: Whether to use linear interpolation.
  *
  * Create a prototype for the sample_image_buffer() engine intrinsic
  * described in builtins-desc.txt. The C-style ptototype would be:
@@ -86,7 +87,8 @@ typedef enum {
  * Returns: A new LLVM function.
  */
 llvm::Function*
-firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module);
+firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module,
+        gboolean interp);
 
 /**
  * firtree_engine_create_sample_function_prototype:

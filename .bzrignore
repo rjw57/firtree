@@ -15,5 +15,5 @@ bindings/python/firtree.generated.*
 firtree/engines/cpu/builtins.bc
 firtree/engines/cpu/llvm-cpu-support.bc*
 firtree/engines/cpu/llvm-cpu-support.opt.bc
-firtree/engines/cpu/firtree-cpu-engine.h
 testing/outputs/*
+firtree/firtree.h

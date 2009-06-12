@@ -38,8 +38,8 @@ if(CAIRO_FOUND)
 endif(CAIRO_FOUND)
 
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/engines/cpu/firtree-cpu-engine.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/engines/cpu/firtree-cpu-engine.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h"
     @ONLY)
 
 add_custom_command(
@@ -69,13 +69,14 @@ add_custom_command(
         engines/cpu/render-buffer.c)
 
 add_library(firtree SHARED
-    firtree-affine-transform.c  firtree-affine-transform.h
-    firtree-debug.cc            firtree-debug.h
-    firtree-kernel.cc           firtree-kernel.h
-    firtree-kernel-sampler.cc   firtree-kernel-sampler.h
-    firtree-pixbuf-sampler.cc   firtree-pixbuf-sampler.h
-    firtree-sampler.cc          firtree-sampler.h
-    firtree-vector.h            firtree-vector.c
+    firtree-affine-transform.c          firtree-affine-transform.h
+    firtree-cairo-surface-sampler.cc    firtree-cairo-surface-sampler.h
+    firtree-debug.cc                    firtree-debug.h
+    firtree-kernel.cc                   firtree-kernel.h
+    firtree-kernel-sampler.cc           firtree-kernel-sampler.h
+    firtree-pixbuf-sampler.cc           firtree-pixbuf-sampler.h
+    firtree-sampler.cc                  firtree-sampler.h
+    firtree-vector.h                    firtree-vector.c
 
     firtree-engine.cc
 

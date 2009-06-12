@@ -23,15 +23,8 @@
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#include <firtree/firtree.h>
 #include <firtree/firtree-sampler.h>
-
-/**
- * FIRTREE_HAVE_CAIRO:
- *
- * Defined to be 1 if Cairo support is compiled into the library, defined
- * to be zero otherwise.
- */
-#define FIRTREE_HAVE_CAIRO @FIRTREE_HAVE_CAIRO@
 
 #if FIRTREE_HAVE_CAIRO
 #   include <cairo/cairo.h>

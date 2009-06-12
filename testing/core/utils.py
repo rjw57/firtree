@@ -1,4 +1,5 @@
 import gtk.gdk
+import cairo
 import unittest, subprocess, os
 import StringIO
 

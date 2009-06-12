@@ -119,11 +119,11 @@ CoglHandle
 firtree_cogl_texture_sampler_get_cogl_texture (FirtreeCoglTextureSampler* self);
 
 /**
- * firtree_cogl_texture_sampler_set_cogl_texture:
+ * firtree_cogl_texture_sampler_set_clutter_texture:
  * @self: A FirtreeCoglTextureSampler.
- * @cogl_texture: A cogl_texture_t.
+ * @texture: A Clutter texture.
  *
- * Set @clutter_texture as the clutter texture associated with this sampler.
+ * Set @texture as the clutter texture associated with this sampler.
  * Drop any references to any other texture previously associated. The sampler
  * increments the reference count of the passed clutter texture to 'claim' it.
  * 
@@ -133,7 +133,7 @@ void firtree_cogl_texture_sampler_set_clutter_texture (
         FirtreeCoglTextureSampler* self, ClutterTexture* texture);
 
 /**
- * firtree_cogl_texture_sampler_get_cogl_texture:
+ * firtree_cogl_texture_sampler_get_clutter_texture:
  * @self: A FirtreeCoglTextureSampler.
  *
  * Retrieve the clutter texture previously associated with this sampler via

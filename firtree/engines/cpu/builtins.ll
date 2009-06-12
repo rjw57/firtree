@@ -237,7 +237,7 @@ entry:
 
 ;; dot() intrinsic function 
 
-define float @dot_v2( <2 x float>, <2 x float> ) {
+define float @dot_v2v2( <2 x float>, <2 x float> ) {
 entry:
 	%mul_val = mul <2 x float> %0, %1
 	%x = extractelement <2 x float> %mul_val, i32 0
@@ -246,7 +246,7 @@ entry:
 	ret float %rv
 }
 
-define float @dot_v3( <3 x float>, <3 x float> ) {
+define float @dot_v3v3( <3 x float>, <3 x float> ) {
 entry:
 	%mul_val = mul <3 x float> %0, %1
 	%x = extractelement <3 x float> %mul_val, i32 0
@@ -257,7 +257,7 @@ entry:
 	ret float %rv2
 }
 
-define float @dot_v4( <4 x float>, <4 x float> ) {
+define float @dot_v4v4( <4 x float>, <4 x float> ) {
 entry:
 	%mul_val = mul <4 x float> %0, %1
 	%x = extractelement <4 x float> %mul_val, i32 0
@@ -272,7 +272,7 @@ entry:
 
 ;; compare (%0 < 0.f ? %1 : %2) for each element
 
-define float @compare_f( float, float, float ) {
+define float @compare_ffff( float, float, float ) {
 entry:
 	%flag = fcmp olt float %0, zeroinitializer
 	br i1 %flag, label %true, label %false

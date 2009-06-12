@@ -12,9 +12,13 @@ set(BUILD_PYTHON_BINDINGS 1)
 if(NOT APPLE)
     find_package(PkgConfig)
     pkg_check_modules(CAIRO cairo)
+    pkg_check_modules(CLUTTER clutter-0.8)
     if(CAIRO_FOUND)
-        pkg_check_modules(PYCAIRO REQUIRED pycairo)
+        pkg_check_modules(PYCAIRO REQUIRED pycairo-0.8)
     endif(CAIRO_FOUND)
+    if(CLUTTER_FOUND)
+        pkg_check_modules(PYCLUTTER REQUIRED pyclutter)
+    endif(CLUTTER_FOUND)
 endif(NOT APPLE)
 
 if(NOT PYGOBJECT_FOUND)
@@ -36,12 +40,14 @@ if(BUILD_PYTHON_BINDINGS)
 	include_directories(
         ${FIRTREE_BINDINGS_INCLUDE_DIRS}
         ${PYGOBJECT_PYGTK_INCLUDE_DIRS}
+        ${PYCLUTTER_INCLUDE_DIRS}
         ${PYCAIRO_INCLUDE_DIRS})
 	add_library(pyfirtree MODULE firtreemodule.c
         ${FIRTREE_BINDINGS_SOURCES})
 	link_directories(${SVFBINDINGS_LINK_DIRS})
 	target_link_libraries(pyfirtree firtree 
         ${FIRTREE_BINDINGS_LIBRARIES}
+        ${PYCLUTTER_LIBRARIES}
         ${PYCAIRO_LIBRARIES})
     set_target_properties(pyfirtree PROPERTIES PREFIX "")
 endif(BUILD_PYTHON_BINDINGS)

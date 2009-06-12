@@ -37,6 +37,14 @@
  */
 #define FIRTREE_HAVE_CAIRO @FIRTREE_HAVE_CAIRO@
 
+/**
+ * FIRTREE_HAVE_CLUTTER:
+ *
+ * Defined to be 1 if Clutter support is compiled into the library, defined
+ * to be zero otherwise.
+ */
+#define FIRTREE_HAVE_CLUTTER @FIRTREE_HAVE_CLUTTER@
+
 #include "firtree-affine-transform.h"
 #include "firtree-cairo-surface-sampler.h"
 #include "firtree-debug.h"

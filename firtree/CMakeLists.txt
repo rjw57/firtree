@@ -26,6 +26,7 @@ include_directories(${LLVM_INCLUDE_DIRS})
 if(NOT APPLE)
     find_package(PkgConfig)
     pkg_check_modules(CAIRO cairo)
+    pkg_check_modules(CLUTTER clutter-0.8)
 endif(NOT APPLE)
 
 set(ENGINE_EXTRA_LIBS "")
@@ -36,6 +37,13 @@ if(CAIRO_FOUND)
     include_directories(${CAIRO_INCLUDE_DIRS})
     set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${CAIRO_LIBRARIES})
 endif(CAIRO_FOUND)
+
+set(FIRTREE_HAVE_CLUTTER 0)
+if(CLUTTER_FOUND)
+    set(FIRTREE_HAVE_CLUTTER 1)
+    include_directories(${CLUTTER_INCLUDE_DIRS})
+    set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${CLUTTER_LIBRARIES})
+endif(CLUTTER_FOUND)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h.in"

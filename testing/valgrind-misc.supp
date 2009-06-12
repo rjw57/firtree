@@ -63,3 +63,23 @@
    fun:*createInternalizePass*
 }
 
+{ 
+   libGL is leaky as poo
+   Memcheck:Leak
+   ...
+   obj:*/libGL.so.*
+}
+
+{ 
+   The bane of my life...
+   Memcheck:Leak
+   ...
+   obj:*/libselinux.so.*
+}
+
+{ 
+   The bane of my pt 2...
+   Memcheck:Addr4
+   ...
+   obj:*/libselinux.so.*
+}

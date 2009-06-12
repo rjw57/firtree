@@ -89,6 +89,7 @@ add_library(firtree SHARED
 
     firtree-engine.cc
 
+    internal/firtree-cogl-texture-sampler-intl.hh
     internal/firtree-engine-intl.hh
     internal/firtree-kernel-intl.hh
     internal/firtree-sampler-intl.hh

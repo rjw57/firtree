@@ -28,9 +28,9 @@
 
 #include <common/uuid.h>
 
+#include "internal/firtree-cogl-texture-sampler-intl.hh"
 #include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
-#include "firtree-cogl-texture-sampler.h"
 
 G_DEFINE_TYPE (FirtreeCoglTextureSampler, firtree_cogl_texture_sampler, FIRTREE_TYPE_SAMPLER)
 
@@ -43,6 +43,11 @@ struct _FirtreeCoglTextureSamplerPrivate {
     CoglHandle          cogl_texture;
     ClutterTexture*     clutter_texture;
     llvm::Function*     cached_function;
+
+    guchar*             cached_data;
+    guint               cached_data_size;
+    guint               cached_data_stride;
+    FirtreeEngineBufferFormat   cached_data_format;
 };
 
 llvm::Function*
@@ -61,6 +66,14 @@ _firtree_cogl_texture_sampler_invalidate_llvm_cache(FirtreeCoglTextureSampler* s
     if(p && p->cached_function) {
         delete p->cached_function->getParent();
         p->cached_function = NULL;
+    }
+
+    if(p && p->cached_data) {
+        g_slice_free1(p->cached_data_size, p->cached_data);
+        p->cached_data = NULL;
+        p->cached_data_size = 0;
+        p->cached_data_stride = 0;
+        p->cached_data_format = FIRTREE_FORMAT_LAST;
     }
 }
 
@@ -134,6 +147,10 @@ firtree_cogl_texture_sampler_init (FirtreeCoglTextureSampler *self)
     p->cogl_texture = NULL;
     p->clutter_texture = NULL;
     p->cached_function = NULL;
+    p->cached_data = NULL;
+    p->cached_data_size = 0;
+    p->cached_data_stride = 0;
+    p->cached_data_format = FIRTREE_FORMAT_LAST;
 }
 
 FirtreeCoglTextureSampler*
@@ -211,6 +228,96 @@ firtree_cogl_texture_sampler_get_clutter_texture (FirtreeCoglTextureSampler* sel
     return p->clutter_texture;
 }
 
+guint
+firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
+        guchar** data, guint* rowstride, FirtreeEngineBufferFormat* out_format)
+{
+    FirtreeCoglTextureSamplerPrivate* p = GET_PRIVATE(self);
+
+    CoglHandle texture = firtree_cogl_texture_sampler_get_cogl_texture(self);
+    if(!texture) {
+        g_debug("Internal firtree_cogl_texture_sampler_get_data() function "
+                "called on invalid sampler.");
+        return 0;
+    }
+
+    if(p->cached_data) {
+        if(data) {
+            *data = p->cached_data;
+        }
+        if(rowstride) {
+            *rowstride = p->cached_data_stride;
+        }
+        if(out_format) {
+            *out_format = p->cached_data_format;
+        }
+        return p->cached_data_size;
+    }
+
+    guint width = cogl_texture_get_width(texture);
+    guint stride = cogl_texture_get_rowstride(texture);
+    CoglPixelFormat format = cogl_texture_get_format(texture);
+
+    FirtreeEngineBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
+
+    /* FIXME: This implicitly assumes a little-endian machine. */
+
+    switch(format) {
+        case COGL_PIXEL_FORMAT_BGRA_8888:
+            firtree_format = FIRTREE_FORMAT_ARGB32;
+            break;
+        case COGL_PIXEL_FORMAT_BGRA_8888_PRE:
+            firtree_format = FIRTREE_FORMAT_ARGB32_PREMULTIPLIED;
+            break;
+        case COGL_PIXEL_FORMAT_RGBA_8888:
+            firtree_format = FIRTREE_FORMAT_ABGR32;
+            break;
+        case COGL_PIXEL_FORMAT_RGBA_8888_PRE:
+            firtree_format = FIRTREE_FORMAT_ABGR32_PREMULTIPLIED;
+            break;
+        case COGL_PIXEL_FORMAT_RGB_888:
+            firtree_format = FIRTREE_FORMAT_BGR24;
+            break;
+        case COGL_PIXEL_FORMAT_BGR_888:
+            firtree_format = FIRTREE_FORMAT_RGB24;
+            break;
+        default:
+            g_debug("Warning, converting Cogl texture format from %i. May be slow.",
+                    format);
+            format = COGL_PIXEL_FORMAT_BGRA_8888;
+            firtree_format = FIRTREE_FORMAT_ARGB32;
+            stride = 4*width;
+            break;
+    }
+
+    guint data_size = cogl_texture_get_data(texture,
+            format, stride, NULL);
+    g_assert(data_size != 0);
+
+    if(rowstride) { 
+        *rowstride = stride;
+    }
+
+    if(out_format) {
+        *out_format = firtree_format;
+    }
+
+    /* If no output buffer was specified, shortcut the actual copy. */
+    if(!data) {
+        return data_size;
+    }
+
+    p->cached_data_size = data_size;
+    p->cached_data_stride = stride;
+    p->cached_data_format = firtree_format;
+    p->cached_data = (guchar*)g_slice_alloc(p->cached_data_size);
+    cogl_texture_get_data(texture, format, stride, p->cached_data);
+
+    *data = p->cached_data;
+
+    return p->cached_data_size;
+}
+
 llvm::Function*
 firtree_cogl_texture_sampler_get_sample_function(FirtreeSampler* self)
 {
@@ -251,7 +358,7 @@ _firtree_cogl_texture_sampler_create_sample_function(FirtreeCoglTextureSampler* 
     /* This looks dirty but is apparently valid.
      *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
     llvm::Constant* llvm_tex_int = llvm::ConstantInt::get(llvm::Type::Int64Ty, 
-            (uint64_t)texture, false);
+            (uint64_t)self, false);
     llvm::Value* llvm_tex = llvm::ConstantExpr::getIntToPtr(llvm_tex_int,
             llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
 

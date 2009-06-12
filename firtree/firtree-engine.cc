@@ -40,7 +40,9 @@ firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module,
     const char* function_name = interp ? interp_function_name : nn_function_name;
 
     g_assert(module);
-    g_assert(module->getFunction(function_name) == NULL);
+    if(module->getFunction(function_name) != NULL) {
+        return module->getFunction(function_name);
+    }
 
     std::vector<const llvm::Type*> params;
     params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); /* buffer */
@@ -67,7 +69,9 @@ firtree_engine_create_sample_cogl_texture_prototype(llvm::Module* module)
     static const char* function_name = "sample_cogl_texture";
 
     g_assert(module);
-    g_assert(module->getFunction(function_name) == NULL);
+    if(module->getFunction(function_name) != NULL) {
+        return module->getFunction(function_name);
+    }
     
     std::vector<const llvm::Type*> params;
     params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); /* handle */

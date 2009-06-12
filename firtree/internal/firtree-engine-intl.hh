@@ -91,6 +91,20 @@ firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module,
         gboolean interp);
 
 /**
+ * firtree_engine_create_sample_cogl_texture_prototype:
+ * @module: An LLVM module.
+ *
+ * Create a prototype for the sample_cogl_texture() engine intrinsic
+ * described in builtins-desc.txt. The C-style ptototype would be:
+ *
+ *   vec4 sample_cogl_texture(CoglHandle texture, vec2 location);
+ *
+ * Returns: A new LLVM function.
+ */
+llvm::Function*
+firtree_engine_create_sample_cogl_texture_prototype(llvm::Module* module);
+
+/**
  * firtree_engine_create_sample_function_prototype:
  * @module: An LLVM module.
  *

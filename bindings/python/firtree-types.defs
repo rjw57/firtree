@@ -37,6 +37,13 @@
   (gtype-id "FIRTREE_TYPE_CAIRO_SURFACE_SAMPLER")
 )
 
+(define-object CoglTextureSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreeCoglTextureSampler")
+  (gtype-id "FIRTREE_TYPE_COGL_TEXTURE_SAMPLER")
+)
+
 (define-object CpuEngine
   (in-module "Firtree")
   (parent "GObject")

@@ -6,8 +6,6 @@ headers
 
 #include <firtree/firtree.h>
 
-extern PyTypeObject PyGdkPixbuf_Type;
-
 #if FIRTREE_HAVE_CAIRO
 #   include <pycairo/pycairo.h>
     static Pycairo_CAPI_t *Pycairo_CAPI;
@@ -107,6 +105,7 @@ modulename pyfirtree
 %%
 import gobject.GObject as PyGObject_Type
 import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
+import clutter.Texture as PyClutterTexture_Type
 %%
 ignore-glob
   *_get_type                            
@@ -116,6 +115,7 @@ ignore-glob
 %%
 include
     firtree-affine-transform.override
+    firtree-cogl-texture-sampler.override
     firtree-cairo-surface-sampler.override
     firtree-cpu-engine.override
     firtree-debug.override

@@ -288,6 +288,51 @@
 
 
 
+;; From firtree-cogl-texture-sampler.h
+
+(define-function cogl_texture_sampler_get_type
+  (c-name "firtree_cogl_texture_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function cogl_texture_sampler_new
+  (c-name "firtree_cogl_texture_sampler_new")
+  (is-constructor-of "FirtreeCoglTextureSampler")
+  (return-type "FirtreeCoglTextureSampler*")
+)
+
+(define-method set_cogl_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_set_cogl_texture")
+  (return-type "none")
+  (parameters
+    '("CoglHandle" "texture")
+  )
+)
+
+(define-method get_cogl_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_get_cogl_texture")
+  (return-type "CoglHandle")
+)
+
+(define-method set_clutter_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_set_clutter_texture")
+  (return-type "none")
+  (parameters
+    '("ClutterTexture*" "texture")
+  )
+)
+
+(define-method get_clutter_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_get_clutter_texture")
+  (return-type "ClutterTexture*")
+)
+
+
+
 ;; From firtree-debug.h
 
 (define-function debug_dump_kernel_function

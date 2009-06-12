@@ -46,6 +46,7 @@
 #define FIRTREE_HAVE_CLUTTER @FIRTREE_HAVE_CLUTTER@
 
 #include "firtree-affine-transform.h"
+#include "firtree-cogl-texture-sampler.h"
 #include "firtree-cairo-surface-sampler.h"
 #include "firtree-debug.h"
 #include "firtree-kernel.h"

@@ -79,6 +79,7 @@ add_custom_command(
 add_library(firtree SHARED
     firtree-affine-transform.c          firtree-affine-transform.h
     firtree-cairo-surface-sampler.cc    firtree-cairo-surface-sampler.h
+    firtree-cogl-texture-sampler.cc     firtree-cogl-texture-sampler.h
     firtree-debug.cc                    firtree-debug.h
     firtree-kernel.cc                   firtree-kernel.h
     firtree-kernel-sampler.cc           firtree-kernel-sampler.h

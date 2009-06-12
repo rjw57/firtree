@@ -62,6 +62,29 @@ firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module,
 }
 
 llvm::Function*
+firtree_engine_create_sample_cogl_texture_prototype(llvm::Module* module)
+{
+    static const char* function_name = "sample_cogl_texture";
+
+    g_assert(module);
+    g_assert(module->getFunction(function_name) == NULL);
+    
+    std::vector<const llvm::Type*> params;
+    params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); /* handle */
+    params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2)); /* location */
+    llvm::FunctionType* ft = llvm::FunctionType::get(
+            llvm::VectorType::get(llvm::Type::FloatTy, 4), /* ret. type */
+            params, false);
+    llvm::Function* f = llvm::Function::Create( 
+            ft, llvm::Function::ExternalLinkage,
+            function_name, module);
+
+    g_assert(f);
+
+    return f;
+}
+
+llvm::Function*
 firtree_engine_create_sample_function_prototype(llvm::Module* module)
 {
     /* work out the function name. */

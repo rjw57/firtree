@@ -35,11 +35,15 @@ if(BUILD_PYTHON_BINDINGS)
 
 	pygobject_target_add_bindings(FIRTREE_BINDINGS firtree MODULEPREFIX pyfirtree
         DEFS firtree-types.defs firtree.defs firtree-overriden.defs 
-        REGISTER /usr/share/pygtk/2.0/defs/gdk-types.defs
+        REGISTER 
+            /usr/share/pygtk/2.0/defs/gdk-types.defs
+            /usr/share/pyclutter/1.0/defs/clutter-types.defs
         OVERRIDE firtree.override)
 	include_directories(
         ${FIRTREE_BINDINGS_INCLUDE_DIRS}
         ${PYGOBJECT_PYGTK_INCLUDE_DIRS}
+        ${CLUTTER_INCLUDE_DIRS}
+        ${CAIRO_INCLUDE_DIRS}
         ${PYCLUTTER_INCLUDE_DIRS}
         ${PYCAIRO_INCLUDE_DIRS})
 	add_library(pyfirtree MODULE firtreemodule.c
@@ -47,6 +51,8 @@ if(BUILD_PYTHON_BINDINGS)
 	link_directories(${SVFBINDINGS_LINK_DIRS})
 	target_link_libraries(pyfirtree firtree 
         ${FIRTREE_BINDINGS_LIBRARIES}
+        ${CAIRO_LIBRARIES}
+        ${CLUTTER_LIBRARIES}
         ${PYCLUTTER_LIBRARIES}
         ${PYCAIRO_LIBRARIES})
     set_target_properties(pyfirtree PROPERTIES PREFIX "")

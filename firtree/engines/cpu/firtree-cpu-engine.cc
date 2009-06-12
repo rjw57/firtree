@@ -45,6 +45,7 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Support/CommandLine.h>
 
+#include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 
 #include <sstream>
@@ -58,32 +59,18 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 #define GET_PRIVATE(o) \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_CPU_ENGINE, FirtreeCpuEnginePrivate))
 
-enum {
-    RENDER_FUNC_32_ABGR_PREMUL,
-    RENDER_FUNC_32_ABGR_NON_PREMUL,
-    RENDER_FUNC_32_ABGR_IGNORE_ALPHA,
-
-    RENDER_FUNC_32_ARGB_PREMUL,
-    RENDER_FUNC_32_ARGB_NON_PREMUL,
-    RENDER_FUNC_32_ARGB_IGNORE_ALPHA,
-
-    RENDER_FUNC_24_BGR,
-    RENDER_FUNC_24_RGB,
-    
-    RENDER_FUNC_COUNT,
-};
-
+/* Indexed by FirtreeEngineBufferFormat */
 const char* _function_names[] = {
-    "render_buffer_32_abgr_pre",
-    "render_buffer_32_abgr_non",
-    "render_buffer_32_abgr_ign",
-
-    "render_buffer_32_argb_pre",
     "render_buffer_32_argb_non",
+    "render_buffer_32_argb_pre",
     "render_buffer_32_argb_ign",
 
-    "render_buffer_24_bgr",
+    "render_buffer_32_abgr_non",
+    "render_buffer_32_abgr_pre",
+    "render_buffer_32_abgr_ign",
+
     "render_buffer_24_rgb",
+    "render_buffer_24_bgr",
 
     NULL,
 };
@@ -389,7 +376,7 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     }
 
     std::vector<const char*> render_functions;
-    for(int fi = 0; fi < RENDER_FUNC_COUNT; ++fi) {
+    for(int fi = 0; fi < FIRTREE_FORMAT_LAST; ++fi) {
         render_functions.push_back(RENDER_FUNC_NAME(fi));
     }
     optimise_module(linked_module, render_functions);
@@ -426,13 +413,13 @@ firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* self)
 {
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     void* rf = firtree_cpu_engine_get_renderer_func(self,
-            RENDER_FUNC_NAME(RENDER_FUNC_32_ABGR_PREMUL));
+            RENDER_FUNC_NAME(FIRTREE_FORMAT_ABGR32_PREMULTIPLIED));
     if(!p->cached_engine || !rf) {
         return NULL;
     }
 
     llvm::Module* m = p->cached_engine->FindFunctionNamed(
-            RENDER_FUNC_NAME(RENDER_FUNC_32_ABGR_PREMUL))->getParent();
+            RENDER_FUNC_NAME(FIRTREE_FORMAT_ABGR32_PREMULTIPLIED))->getParent();
     
     std::ostringstream out;
 
@@ -472,11 +459,11 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     if(gdk_pixbuf_get_has_alpha(pixbuf)) {
         /* GdkPixbufs use non-premultiplied alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                RENDER_FUNC_NAME(RENDER_FUNC_32_ABGR_NON_PREMUL));
+                RENDER_FUNC_NAME(FIRTREE_FORMAT_ABGR32));
     } else {
         /* Use the render function optimised for ignored alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                RENDER_FUNC_NAME(RENDER_FUNC_24_BGR));
+                RENDER_FUNC_NAME(FIRTREE_FORMAT_BGR24));
     }
 
     if(!render) {
@@ -512,11 +499,11 @@ firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
     switch(format) {
         case CAIRO_FORMAT_ARGB32:
             render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                    RENDER_FUNC_NAME(RENDER_FUNC_32_ARGB_PREMUL));
+                    RENDER_FUNC_NAME(FIRTREE_FORMAT_ARGB32_PREMULTIPLIED));
             break;
         case CAIRO_FORMAT_RGB24:
             render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                    RENDER_FUNC_NAME(RENDER_FUNC_32_ARGB_IGNORE_ALPHA));
+                    RENDER_FUNC_NAME(FIRTREE_FORMAT_XRGB32));
             break;
         default:
             g_debug("Invalid Cairo format.");

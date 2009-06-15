@@ -127,5 +127,28 @@ class StaticArgs(FirtreeTestCase):
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
         self.assertCairoSurfaceMatches(self._s, 'arg-test-static-vec4')
 
+    def testChangeStatic(self):
+        k = Kernel()
+        k.compile_from_source('''kernel vec4 colour(static vec4 col) { 
+            return premultiply(col);
+        }''')
+        self.assertKernelCompiled(k)
+
+        ks = KernelSampler()
+        ks.set_kernel(k)
+        self._e.set_sampler(ks)
+
+        k['col'] = (1,0,0,1)
+        rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+        self.assertCairoSurfaceMatches(self._s, 'arg-test-static-red')
+
+        k['col'] = (0,1,0,1)
+        rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+        self.assertCairoSurfaceMatches(self._s, 'arg-test-static-green')
+
+        k['col'] = (0,0,1,1)
+        rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+        self.assertCairoSurfaceMatches(self._s, 'arg-test-static-blue')
+
 # vim:sw=4:ts=4:et:autoindent
 

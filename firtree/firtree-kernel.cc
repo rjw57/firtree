@@ -20,7 +20,6 @@ enum {
 
 enum {
     ARGUMENT_CHANGED,
-    ARGUMENT_CHANGED_QUARK,
     MODULE_CHANGED,
     LAST_SIGNAL
 };
@@ -40,6 +39,7 @@ struct _FirtreeKernelPrivate {
     KernelFunctionList::const_iterator  preferred_function;
 
     GArray*                             arg_names;
+    GData*                              arg_cb_list;
     GData*                              arg_spec_list;
     GData*                              arg_value_list;
 };
@@ -103,6 +103,9 @@ _firtree_kernel_reset_compile_status (FirtreeKernel *self)
     }
     if(p->arg_spec_list) {
         g_datalist_clear(&(p->arg_spec_list));
+    }
+    if(p->arg_cb_list) {
+        g_datalist_clear(&(p->arg_cb_list));
     }
     if(p->arg_value_list) {
         g_datalist_clear(&(p->arg_value_list));
@@ -179,29 +182,13 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     _firtree_kernel_signals[ARGUMENT_CHANGED] = 
         g_signal_new("argument-changed",
                 G_OBJECT_CLASS_TYPE(klass),
-                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE | 
+                    G_SIGNAL_DETAILED),
                 G_STRUCT_OFFSET(FirtreeKernelClass, argument_changed),
                 NULL, NULL,
                 g_cclosure_marshal_VOID__STRING,
                 G_TYPE_NONE, 1, G_TYPE_STRING);
     
-    /**
-     * FirtreeKernel::argument-changed-quark:
-     * @kernel: The kernel whose argument has changed.
-     * @arg_name: A quark indicating the argument name.
-     *
-     * The ::argument-changed-quark signal is emitted each time a @kernel 's argument
-     * is modified via firtree_kernel_set_argument_value().
-     */
-    _firtree_kernel_signals[ARGUMENT_CHANGED_QUARK] = 
-        g_signal_new("argument-changed-quark",
-                G_OBJECT_CLASS_TYPE(klass),
-                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE),
-                G_STRUCT_OFFSET(FirtreeKernelClass, argument_changed_quark),
-                NULL, NULL,
-                g_cclosure_marshal_VOID__INT,
-                G_TYPE_NONE, 1, G_TYPE_INT);
-     
     /**
      * FirtreeKernel::module-changed:
      * @kernel: The kernel whose module has changed.
@@ -232,6 +219,7 @@ firtree_kernel_init (FirtreeKernel *self)
 
     p->arg_names = NULL;
     g_datalist_init(&(p->arg_spec_list));
+    g_datalist_init(&(p->arg_cb_list));
     g_datalist_init(&(p->arg_value_list));
 
     _firtree_kernel_reset_compile_status(self);
@@ -403,6 +391,13 @@ _firtree_kernel_value_destroy_func (gpointer value)
     g_slice_free(GValue, value);
 }
 
+static void
+_firteee_kernel_sampler_module_changed_cb(FirtreeSampler* sampler,
+        FirtreeKernel* self)
+{
+    firtree_kernel_module_changed(self);
+}
+
 gboolean
 firtree_kernel_set_argument_value (FirtreeKernel* self,
         GQuark arg_name, GValue* value)
@@ -429,6 +424,34 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
         return FALSE;
     }
 
+    /* Special case: for sampler arguments, we care about when their
+     * module changes since we link them in. Register handlers for
+     * this. */
+    if(spec->type == FIRTREE_TYPE_SAMPLER) {
+        /* see if we have a handler for this already */
+        gpointer p_handler = g_datalist_id_get_data(&p->arg_cb_list,
+                arg_name);
+        GValue* p_value = (GValue*)g_datalist_id_get_data(&p->arg_value_list,
+                arg_name);
+        if(p_handler && p_value) {
+            /* unregister it */
+            gulong handler_id = *((gulong*)p_handler);
+            g_signal_handler_disconnect(g_value_get_object(p_value),
+                    handler_id);
+            g_datalist_id_remove_data(&p->arg_cb_list,
+                arg_name);
+        }
+
+        /* register the new handler if necessary. */
+        if(value) {
+            FirtreeSampler* new_sampler = FIRTREE_SAMPLER(
+                    g_value_get_object(value));
+            g_signal_connect(new_sampler, "module-changed", 
+                    G_CALLBACK(_firteee_kernel_sampler_module_changed_cb),
+                    self);
+        }
+    }
+
     /* Create a new GValue to store a copy of the passed value. */
     GValue* new_val = (GValue*)g_slice_alloc0(sizeof(GValue));
     g_value_init(new_val, spec->type);
@@ -437,7 +460,7 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
     /* Insert the GValue into the arg value list. */
     g_datalist_id_set_data_full(&p->arg_value_list, arg_name,
             new_val, _firtree_kernel_value_destroy_func);
-    
+
     firtree_kernel_argument_changed(self, arg_name);
 
     return TRUE;
@@ -447,9 +470,8 @@ void
 firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name)
 {
     g_return_if_fail(FIRTREE_IS_KERNEL(self));
-    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED], 0, 
+    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED], arg_name, 
             g_quark_to_string(arg_name));
-    g_signal_emit(self, _firtree_kernel_signals[ARGUMENT_CHANGED_QUARK], 0, arg_name);
 }
 
 gboolean

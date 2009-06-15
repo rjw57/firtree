@@ -62,6 +62,8 @@ _firtree_cairo_surface_sampler_invalidate_llvm_cache(FirtreeCairoSurfaceSampler*
         delete p->cached_function->getParent();
         p->cached_function = NULL;
     }
+    firtree_sampler_module_changed(FIRTREE_SAMPLER(self));
+    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
 }
 
 static void
@@ -159,6 +161,7 @@ firtree_cairo_surface_sampler_set_cairo_surface (FirtreeCairoSurfaceSampler* sel
     }
 
     _firtree_cairo_surface_sampler_invalidate_llvm_cache(self);
+    firtree_sampler_extents_changed(FIRTREE_SAMPLER(self));
 }
 
 cairo_surface_t*

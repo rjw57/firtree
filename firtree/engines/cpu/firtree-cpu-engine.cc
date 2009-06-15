@@ -92,6 +92,7 @@ typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
 
 struct _FirtreeCpuEnginePrivate {
     FirtreeSampler*             sampler;
+    gulong                      sampler_handler_id;
     llvm::ExecutionEngine*      cached_engine;
     GThreadPool*                thread_pool;
     GAsyncQueue*                response_queue;
@@ -338,6 +339,14 @@ firtree_cpu_engine_new (void)
         g_object_new (FIRTREE_TYPE_CPU_ENGINE, NULL);
 }
 
+static void
+firtree_cpu_engine_sampler_module_changed_cb(gpointer sampler,
+        gpointer data)
+{
+    FirtreeCpuEngine* self = FIRTREE_CPU_ENGINE(data);
+    _firtree_cpu_engine_invalidate_llvm_cache(self);
+}
+
 void
 firtree_cpu_engine_set_sampler (FirtreeCpuEngine* self,
         FirtreeSampler* sampler)
@@ -345,6 +354,9 @@ firtree_cpu_engine_set_sampler (FirtreeCpuEngine* self,
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
 
     if(p->sampler) {
+        /* disconnect the original handler */
+        g_signal_handler_disconnect(p->sampler, p->sampler_handler_id);
+
         g_object_unref(p->sampler);
         p->sampler = NULL;
     }
@@ -352,6 +364,10 @@ firtree_cpu_engine_set_sampler (FirtreeCpuEngine* self,
     if(sampler) {
         p->sampler = sampler;
         g_object_ref(p->sampler);
+
+        p->sampler_handler_id = g_signal_connect(p->sampler, 
+                "module-changed",
+                G_CALLBACK(firtree_cpu_engine_sampler_module_changed_cb), self);
     }
 
     _firtree_cpu_engine_invalidate_llvm_cache(self);
@@ -524,12 +540,14 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     
     llvm::Linker* linker = new llvm::Linker("sampler", m);
 
-    llvm::Module* sampler_mod = sampler_function->getParent();
+    llvm::Module* sampler_mod = llvm::CloneModule(sampler_function->getParent());
     std::string err_str;
     bool was_error = linker->LinkInModule(sampler_mod, &err_str);
     if(was_error) {
         g_error("Error linking in sampler: %s\n", err_str.c_str());
     }
+    delete sampler_mod;
+    sampler_mod = NULL;
 
     llvm::Module* linked_module = linker->releaseModule();
     delete linker;

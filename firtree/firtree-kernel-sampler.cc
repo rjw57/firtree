@@ -34,6 +34,8 @@
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/LinkAllPasses.h>
 
+#include <llvm/Transforms/Utils/Cloning.h>
+
 #include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-kernel-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
@@ -48,6 +50,8 @@ typedef struct _FirtreeKernelSamplerPrivate FirtreeKernelSamplerPrivate;
 
 struct _FirtreeKernelSamplerPrivate {
     FirtreeKernel*  kernel;
+    gulong          kernel_mod_ch_handler_id;
+    gulong          kernel_arg_ch_handler_id;
     llvm::Function* cached_function;
 };
 
@@ -69,6 +73,7 @@ _firtree_kernel_sampler_invalidate_llvm_cache(FirtreeKernelSampler* self)
         delete p->cached_function->getParent();
         p->cached_function = NULL;
     }
+    firtree_sampler_module_changed(FIRTREE_SAMPLER(self));
 }
 
 static void
@@ -147,6 +152,26 @@ firtree_kernel_sampler_new (void)
         g_object_new (FIRTREE_TYPE_KERNEL_SAMPLER, NULL);
 }
 
+static void
+_firteee_kernel_sampler_module_changed_cb(FirtreeKernel* kernel,
+        FirtreeKernelSampler* self)
+{
+    _firtree_kernel_sampler_invalidate_llvm_cache(self);
+}
+
+static void
+_firteee_kernel_sampler_argument_changed_cb(FirtreeKernel* kernel,
+        const gchar* arg_name, FirtreeKernelSampler* self)
+{
+    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
+    if(firtree_kernel_get_argument_spec(kernel, 
+                g_quark_from_string(arg_name))->is_static) 
+    {
+        /* If the argument is static, we need to force a new function. */
+        _firtree_kernel_sampler_invalidate_llvm_cache(self);
+    }
+}
+
 void
 firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
         FirtreeKernel* kernel)
@@ -155,6 +180,8 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
     /* unref any kernel we already have. */
 
     if(p->kernel) {
+        g_signal_handler_disconnect(p->kernel, p->kernel_mod_ch_handler_id);
+        g_signal_handler_disconnect(p->kernel, p->kernel_arg_ch_handler_id);
         g_object_unref(p->kernel);
         p->kernel = NULL;
     }
@@ -164,7 +191,13 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
         g_object_ref(kernel);
         p->kernel = kernel;
         
-        /* FIXME: Connect kernel changed signals. */
+        /* Connect kernel changed signals. */
+        p->kernel_mod_ch_handler_id = g_signal_connect(kernel, "module-changed", 
+                G_CALLBACK(_firteee_kernel_sampler_module_changed_cb),
+                self);
+        p->kernel_arg_ch_handler_id = g_signal_connect(kernel, "argument-changed", 
+                G_CALLBACK(_firteee_kernel_sampler_argument_changed_cb),
+                self);
     }
 
     _firtree_kernel_sampler_invalidate_llvm_cache(self);
@@ -382,14 +415,16 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
         g_debug("No kernel function.\n");
         return NULL;
     }
-    
+
     /* Link the kernel function into a new module. */
     llvm::Linker* linker = new llvm::Linker("kernel-sampler", "module");
     std::string err_str;
-    if(linker->LinkInModule(kernel_func->getParent(), &err_str))
+    llvm::Module* new_mod = llvm::CloneModule(kernel_func->getParent());
+    if(linker->LinkInModule(new_mod, &err_str))
     {
         g_error("Error linking function: %s\n", err_str.c_str());
     }
+    delete new_mod;
 
     llvm::Value* new_kernel_func = linker->getModule()->getFunction(
             kernel_func->getName());
@@ -421,10 +456,12 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
             llvm::Function* sampler_f = firtree_sampler_get_sample_function(sampler);
             g_assert(sampler_f);
 
+            llvm::Module* new_mod = llvm::CloneModule(sampler_f->getParent());
             if(linker->LinkInModule(sampler_f->getParent(), &err_str))
             {
                 g_error("Error linking function: %s\n", err_str.c_str());
             }
+            delete new_mod;
 
             llvm::Function* new_f = linker->getModule()->getFunction(
                     sampler_f->getName());
@@ -501,7 +538,7 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 
     llvm::ReturnInst::Create(function_call, bb);
 
-    //p->cached_function->getParent()->dump();
+    // p->cached_function->getParent()->dump();
 
     /* run an agressive inlining pass over the function */
     firtree_kernel_sampler_optimise_cached_function(self);

@@ -239,7 +239,7 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
  * @arg_name: A quark corresponding to an argument name.
  *
  * Emit an ::argument-changed signal indicating that the value of
- * @arg_name has changed.
+ * @arg_name has changed. The detail parameter is set to @arg_name.
  */
 void
 firtree_kernel_argument_changed (FirtreeKernel* self, GQuark arg_name);

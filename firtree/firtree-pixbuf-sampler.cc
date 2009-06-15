@@ -62,6 +62,8 @@ _firtree_pixbuf_sampler_invalidate_llvm_cache(FirtreePixbufSampler* self)
         delete p->cached_function->getParent();
         p->cached_function = NULL;
     }
+    firtree_sampler_module_changed(FIRTREE_SAMPLER(self));
+    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
 }
 
 static void
@@ -159,6 +161,8 @@ firtree_pixbuf_sampler_set_pixbuf (FirtreePixbufSampler* self,
     }
 
     _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
+
+    firtree_sampler_extents_changed(FIRTREE_SAMPLER(self));
 }
 
 GdkPixbuf*

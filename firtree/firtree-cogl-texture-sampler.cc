@@ -75,6 +75,8 @@ _firtree_cogl_texture_sampler_invalidate_llvm_cache(FirtreeCoglTextureSampler* s
         p->cached_data_stride = 0;
         p->cached_data_format = FIRTREE_FORMAT_LAST;
     }
+
+    firtree_sampler_module_changed(FIRTREE_SAMPLER(self));
 }
 
 static void
@@ -183,6 +185,8 @@ firtree_cogl_texture_sampler_set_cogl_texture (FirtreeCoglTextureSampler* self,
     }
 
     _firtree_cogl_texture_sampler_invalidate_llvm_cache(self);
+
+    firtree_sampler_extents_changed(FIRTREE_SAMPLER(self));
 }
 
 CoglHandle

@@ -150,5 +150,16 @@ class StaticArgs(FirtreeTestCase):
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
         self.assertCairoSurfaceMatches(self._s, 'arg-test-static-blue')
 
+        k2 = Kernel()
+        k2.compile_from_source('''kernel vec4 yellow() {
+            return vec4(1,1,0,1);
+        }''')
+        self.assertKernelCompiled(k2)
+        ks.set_kernel(k2)
+
+        rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+        self.assertCairoSurfaceMatches(self._s, 'arg-test-static-yellow')
+
+
 # vim:sw=4:ts=4:et:autoindent
 

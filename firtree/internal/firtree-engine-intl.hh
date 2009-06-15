@@ -24,6 +24,8 @@
 
 #include <llvm/Module.h>
 #include <llvm/Function.h>
+#include <llvm/Instructions.h>
+#include <llvm/LinkAllPasses.h>
 
 /**
  * SECTION:firtree-engine-intl
@@ -120,6 +122,24 @@ firtree_engine_create_sample_cogl_texture_prototype(llvm::Module* module);
  */
 llvm::Function*
 firtree_engine_create_sample_function_prototype(llvm::Module* module);
+
+namespace Firtree {
+
+/**
+ * FunctionCallReplacementPass
+ */
+class FunctionCallReplacementPass : public llvm::BasicBlockPass {
+    public:
+        FunctionCallReplacementPass(char* ID);
+        virtual bool runOnBasicBlock(llvm::BasicBlock& bb);
+
+    protected:
+        /* Override these */
+        virtual bool         interestedInCallToFunction(const std::string& name) = 0;
+        virtual llvm::Value* getReplacementForCallInst(llvm::CallInst& instruction) = 0;
+};
+
+} /* namespace Firtree */
 
 G_END_DECLS
 

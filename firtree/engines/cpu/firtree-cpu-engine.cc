@@ -112,125 +112,108 @@ namespace {
 
 #if FIRTREE_HAVE_CLUTTER
 
-struct CanonicaliseCoglCallsPass : public llvm::BasicBlockPass {
+class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
+    public:
+
     static char ID;
 
     CanonicaliseCoglCallsPass() 
-        : llvm::BasicBlockPass(&ID) 
+        : Firtree::FunctionCallReplacementPass(&ID) 
     { }
 
-    virtual bool runOnBasicBlock(llvm::BasicBlock& bb) 
-    {
-        llvm::BasicBlock::iterator inst_it = bb.begin();
-        std::vector<llvm::CallInst*> insts_to_process;
-        for( ; inst_it != bb.end(); ++inst_it) {
-            llvm::CallInst* call_inst = llvm::dyn_cast<llvm::CallInst>(inst_it);
-            if(call_inst) {
-                llvm::Function* called_function =
-                    call_inst->getCalledFunction();
-                if(called_function->getName() == "sample_cogl_texture") {
-                    insts_to_process.push_back(call_inst);
-                }
-            }
+    protected:
+
+    virtual bool interestedInCallToFunction(const std::string& name) {
+        return (name == "sample_cogl_texture");
+    }
+
+    virtual llvm::Value* getReplacementForCallInst(llvm::CallInst& instruction) {
+        llvm::CallInst* call_inst = &instruction;
+        llvm::Module* m = call_inst->getParent()->getParent()->getParent();
+
+        /* this is a call we need to replace. */
+        llvm::Value* tex_handle = call_inst->getOperand(1);
+        llvm::Value* location = call_inst->getOperand(2);
+
+        if(!llvm::isa<llvm::ConstantExpr>(tex_handle) || 
+                !llvm::isa<llvm::PointerType>(tex_handle->getType())) {
+            g_assert(false &&
+                    "Texture handles passed to sample_cogl_texture() "
+                    "must be constant pointers.");
         }
 
-        std::vector<llvm::CallInst*>::iterator cinst_it = insts_to_process.begin();
-        for(; cinst_it != insts_to_process.end(); ++cinst_it) {
-            llvm::CallInst* call_inst = *cinst_it;
+        llvm::ConstantExpr* const_expr = 
+            llvm::cast<llvm::ConstantExpr>(tex_handle);
+        g_assert(const_expr->isCast());
 
-            /* this is a call we need to replace. */
-            llvm::Value* tex_handle = call_inst->getOperand(1);
-            llvm::Value* location = call_inst->getOperand(2);
+        llvm::ConstantInt* tex_handle_int_val =
+            llvm::cast<llvm::ConstantInt>(const_expr->getOperand(0));
 
-            if(!llvm::isa<llvm::ConstantExpr>(tex_handle) || 
-                    !llvm::isa<llvm::PointerType>(tex_handle->getType())) {
-                g_assert(false &&
-                        "Texture handles passed to sample_cogl_texture() "
-                        "must be constant pointers.");
-            }
+        FirtreeCoglTextureSampler* sampler = 
+            (FirtreeCoglTextureSampler*)
+            tex_handle_int_val->getZExtValue();
+        g_assert(FIRTREE_IS_COGL_TEXTURE_SAMPLER(sampler));
 
-            llvm::ConstantExpr* const_expr = 
-                llvm::cast<llvm::ConstantExpr>(tex_handle);
-            g_assert(const_expr->isCast());
+        CoglHandle cogl_tex_handle = 
+            firtree_cogl_texture_sampler_get_cogl_texture(sampler);
 
-            llvm::ConstantInt* tex_handle_int_val =
-                llvm::cast<llvm::ConstantInt>(const_expr->getOperand(0));
+        guint width = cogl_texture_get_width(cogl_tex_handle);
+        guint height = cogl_texture_get_height(cogl_tex_handle);
 
-            FirtreeCoglTextureSampler* sampler = 
-                (FirtreeCoglTextureSampler*)
-                    tex_handle_int_val->getZExtValue();
-            g_assert(FIRTREE_IS_COGL_TEXTURE_SAMPLER(sampler));
+        guint stride = 0;
+        FirtreeEngineBufferFormat format = FIRTREE_FORMAT_LAST;
+        guchar* data = NULL;
 
-            CoglHandle cogl_tex_handle = 
-                firtree_cogl_texture_sampler_get_cogl_texture(sampler);
+        guint data_size = firtree_cogl_texture_sampler_get_data(sampler,
+                &data, &stride, &format);
+        g_assert(format != FIRTREE_FORMAT_LAST);
+        g_assert(data != NULL);
+        g_assert(data_size != 0);
 
-            guint width = cogl_texture_get_width(cogl_tex_handle);
-            guint height = cogl_texture_get_height(cogl_tex_handle);
+        gboolean do_interp =
+            (cogl_texture_get_mag_filter(cogl_tex_handle) == CGL_LINEAR);
 
-            guint stride = 0;
-            FirtreeEngineBufferFormat format = FIRTREE_FORMAT_LAST;
-            guchar* data = NULL;
+        llvm::Function* sample_buffer_func = 
+            firtree_engine_create_sample_image_buffer_prototype(
+                    m, do_interp);
+        g_assert(sample_buffer_func);
 
-            guint data_size = firtree_cogl_texture_sampler_get_data(sampler,
-                    &data, &stride, &format);
-            g_assert(format != FIRTREE_FORMAT_LAST);
-            g_assert(data != NULL);
-            g_assert(data_size != 0);
+        llvm::Value* llvm_width = llvm::ConstantInt::get(
+                llvm::Type::Int32Ty, 
+                (uint64_t)width, false);
+        llvm::Value* llvm_height = llvm::ConstantInt::get(
+                llvm::Type::Int32Ty,
+                (uint64_t)height, false);
+        llvm::Value* llvm_stride = llvm::ConstantInt::get(
+                llvm::Type::Int32Ty,
+                (uint64_t)stride, false);
+        llvm::Value* llvm_format = llvm::ConstantInt::get(
+                llvm::Type::Int32Ty,
+                (uint64_t)format, false);
 
-            gboolean do_interp =
-                (cogl_texture_get_mag_filter(cogl_tex_handle) == CGL_LINEAR);
+        /* This looks dirty but is apparently valid.
+         *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
+        llvm::Constant* llvm_data_int = llvm::ConstantInt::get(
+                llvm::Type::Int64Ty, 
+                (uint64_t)data, false);
+        llvm::Value* llvm_data = llvm::ConstantExpr::getIntToPtr(
+                llvm_data_int,
+                llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
 
-            llvm::Function* sample_buffer_func = 
-                firtree_engine_create_sample_image_buffer_prototype(
-                        bb.getParent()->getParent(),
-                        do_interp);
-            g_assert(sample_buffer_func);
-                    
-            llvm::Value* llvm_width = llvm::ConstantInt::get(
-                    llvm::Type::Int32Ty, 
-                    (uint64_t)width, false);
-            llvm::Value* llvm_height = llvm::ConstantInt::get(
-                    llvm::Type::Int32Ty,
-                    (uint64_t)height, false);
-            llvm::Value* llvm_stride = llvm::ConstantInt::get(
-                    llvm::Type::Int32Ty,
-                    (uint64_t)stride, false);
-            llvm::Value* llvm_format = llvm::ConstantInt::get(
-                    llvm::Type::Int32Ty,
-                    (uint64_t)format, false);
+        std::vector<llvm::Value*> func_args;
+        func_args.push_back(llvm_data);
+        func_args.push_back(llvm_format);
+        func_args.push_back(llvm_width);
+        func_args.push_back(llvm_height);
+        func_args.push_back(llvm_stride);
+        func_args.push_back(location);
 
-            /* This looks dirty but is apparently valid.
-             *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
-            llvm::Constant* llvm_data_int = llvm::ConstantInt::get(
-                    llvm::Type::Int64Ty, 
-                    (uint64_t)data, false);
-            llvm::Value* llvm_data = llvm::ConstantExpr::getIntToPtr(
-                    llvm_data_int,
-                    llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
-             
-            std::vector<llvm::Value*> func_args;
-            func_args.push_back(llvm_data);
-            func_args.push_back(llvm_format);
-            func_args.push_back(llvm_width);
-            func_args.push_back(llvm_height);
-            func_args.push_back(llvm_stride);
-            func_args.push_back(location);
+        llvm::Value* new_call = llvm::CallInst::Create(
+                sample_buffer_func,
+                func_args.begin(), func_args.end(), "sample", 
+                call_inst);
 
-            llvm::Value* new_call = llvm::CallInst::Create(
-                    sample_buffer_func,
-                    func_args.begin(), func_args.end(), "sample", 
-                    call_inst);
-
-            call_inst->replaceAllUsesWith(new_call);
-            call_inst->eraseFromParent();
-
-            /*
-            g_debug("Data: %p (%ix%i, stride: %i, size: %i)\n",
-                    data, width, height, stride, data_size);
-                    */
-        }
-
-        return false;
+        return new_call;
     }
 };
 

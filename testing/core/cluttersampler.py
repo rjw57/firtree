@@ -179,37 +179,65 @@ class Creation(FirtreeTestCase):
 
         rv = engine.render_into_cairo_surface((0, 0, 320, 240), cs)
         self.assert_(rv)
-        self.assertCairoSurfaceMatches(cs, 'cpu-clutter-distort-1')
+        self.assertCairoSurfaceMatches(cs, 'cpu-clutter-distort-2')
 
-    def testDistorted(self):
-        dist_k = Kernel()
-        dist_k.compile_from_source('''
-            kernel vec4 distKernel(sampler src) {
-                vec2 sample_coord = destCoord() +
-                    10 * sin(destCoord().yx * 0.05);
-                return sample(src, samplerTransform(src, sample_coord));
-            }''')
-        self.assertKernelCompiled(dist_k)
+    def testMexicanHat(self):
+        hat_k = Kernel()
+        hat_k.compile_from_source('''
+            kernel vec4 hatKernel(sampler src) {
+                vec2 pos = (destCoord() - vec2(250,200)) * 0.1;
+                float r = sqrt(dot(pos,pos));
+                vec2 pos_norm = pos / r;
+                float z = cos(r);
+                float dz = -sin(r);
+                if(r > 1) {
+                    z /= r;
+                    dz = (r*dz) / (r*r); // quotient rule
+                }
+                
+                vec4 norm = vec4(pos_norm * dz, 0.3, 0);
+                norm = norm / sqrt(dot(norm,norm));
 
-        self._s.set_clutter_texture(self._source_texture)
-        self.assertNotEqual(self._s.get_clutter_texture(), None)
+                vec4 view_vec = vec4(0,0,-1,0);
+                vec4 refl_vec = view_vec - (2*dot(view_vec,norm))*norm;
+                // refl_vec /= sqrt(dot(refl_vec, refl_vec));
 
-        dist_k['src'] = self._s
-        self.assert_(dist_k.is_valid())
+                vec4 light_vec = vec4(-1,1,1,0);
+                light_vec /= sqrt(dot(light_vec, light_vec));
 
-        dks = KernelSampler()
-        dks.set_kernel(dist_k)
+                float diff = dot(refl_vec, light_vec);
+                diff = diff * diff;
+                diff = diff * diff;
+                diff = diff * diff;
+                if(diff < 0) { diff = 0; }
 
-        cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+                vec4 highlight = vec4(diff,diff,diff,diff);
+
+                vec4 src_col = (sample(src, 
+                    samplerTransform(src, destCoord()+10*norm.xy)));
+
+                // This is the OVER operator with premultiplied alpha
+                return (1-diff)*src_col + highlight;
+            }
+        ''')
+        self.assertKernelCompiled(hat_k)
+        hat_s = KernelSampler()
+        hat_s.set_kernel(hat_k)
+
+        hat_k['src'] = CoglTextureSampler()
+        self.assert_(hat_k.is_valid())
+        hat_k['src'].set_clutter_texture(self._source_texture)
+        self.assertNotEqual(hat_k['src'].get_clutter_texture(), None)
+
+        cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 300)
         self.clearSurface(cs)
 
         engine = CpuEngine()
-        engine.set_sampler(self._s)
-        engine.set_sampler(dks)
+        engine.set_sampler(hat_s)
 
-        rv = engine.render_into_cairo_surface((0, 0, 320, 240), cs)
+        rv = engine.render_into_cairo_surface((50, 50, 400, 300), cs)
         self.assert_(rv)
-        self.assertCairoSurfaceMatches(cs, 'cpu-clutter-distort-2')
+        self.assertCairoSurfaceMatches(cs, 'cpu-mexican-hat')
 
 
 # vim:sw=4:ts=4:et:autoindent

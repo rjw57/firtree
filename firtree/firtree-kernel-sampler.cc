@@ -482,69 +482,15 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
                     arg_quark);
             g_assert(kernel_arg);
 
-            /*
-            g_debug("Argument %s is of type %s.\n",
-                    g_quark_to_string(arg_list[arg_i]),
-                    G_VALUE_TYPE_NAME(kernel_arg));
-                    */
-
             /* Can't use a switch here because the FIRTREE_TYPE_SAMPLER macro
              * doesn't expand to a constant. */
             if(arg_spec->type == FIRTREE_TYPE_SAMPLER) {
                 llvm::Value* arg_quark_val = llvm::ConstantInt::get(
                         llvm::Type::Int32Ty, arg_quark, false);
                 arguments.push_back(arg_quark_val);
-            } else if(arg_spec->type == G_TYPE_FLOAT) {
-                gfloat float_val = g_value_get_float(kernel_arg);
-                llvm::Value* llvm_float = llvm::ConstantFP::get(
-                        llvm::Type::FloatTy, (double)float_val);
-                arguments.push_back(llvm_float);
-            } else if(arg_spec->type == G_TYPE_INT) {
-                gint int_val = g_value_get_int(kernel_arg);
-                llvm::Value* llvm_int = llvm::ConstantInt::get(
-                        llvm::Type::Int32Ty, (int64_t)int_val, true);
-                arguments.push_back(llvm_int);
-            } else if(arg_spec->type == G_TYPE_BOOLEAN) {
-                gboolean bool_val = g_value_get_boolean(kernel_arg);
-                llvm::Value* llvm_bool = llvm::ConstantInt::get(
-                        llvm::Type::Int1Ty, (uint64_t)bool_val, false);
-                arguments.push_back(llvm_bool);
-            } else if(arg_spec->type == FIRTREE_TYPE_VEC2) {
-                FirtreeVec2* vec_box = (FirtreeVec2*)g_value_get_boxed(kernel_arg);
-                std::vector<llvm::Constant*> vec_vals;
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->x));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->y));
-                llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
-                arguments.push_back(vec_val);
-            } else if(arg_spec->type == FIRTREE_TYPE_VEC3) {
-                FirtreeVec3* vec_box = (FirtreeVec3*)g_value_get_boxed(kernel_arg);
-                std::vector<llvm::Constant*> vec_vals;
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->x));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->y));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->z));
-                llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
-                arguments.push_back(vec_val);
-            } else if(arg_spec->type == FIRTREE_TYPE_VEC4) {
-                FirtreeVec4* vec_box = (FirtreeVec4*)g_value_get_boxed(kernel_arg);
-                std::vector<llvm::Constant*> vec_vals;
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->x));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->y));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->z));
-                vec_vals.push_back(llvm::ConstantFP::get(
-                            llvm::Type::FloatTy, (double)vec_box->w));
-                llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
-                arguments.push_back(vec_val);
             } else {
-                g_error("Don't know how to deal with argument of type %s.\n",
-                        g_type_name(arg_spec->type));
+                arguments.push_back(
+                        firtree_engine_get_constant_for_kernel_argument(kernel_arg));
             }
         }
     }

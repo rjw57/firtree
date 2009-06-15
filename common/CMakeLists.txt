@@ -5,6 +5,7 @@
 # See LICENSE file for distribution rights.
 
 add_library(common
+    system-info.h   system-info.c
     uuid.h          uuid.cpp
     common.h        common.cpp)
 

@@ -31,6 +31,8 @@
 
 #include "internal/firtree-engine-intl.hh"
 
+#include <firtree/firtree-vector.h>
+
 llvm::Function*
 firtree_engine_create_sample_image_buffer_prototype(llvm::Module* module, 
         gboolean interp)
@@ -112,6 +114,69 @@ firtree_engine_create_sample_function_prototype(llvm::Module* module)
     g_assert(f);
 
     return f;
+}
+
+llvm::Value*
+firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg)
+{
+    GType type = G_VALUE_TYPE(kernel_arg);
+
+    /* Can't use a switch here because the FIRTREE_TYPE_SAMPLER macro
+     * doesn't expand to a constant. */
+    if(type == G_TYPE_FLOAT) {
+        gfloat float_val = g_value_get_float(kernel_arg);
+        llvm::Value* llvm_float = llvm::ConstantFP::get(
+                llvm::Type::FloatTy, (double)float_val);
+        return llvm_float;
+    } else if(type == G_TYPE_INT) {
+        gint int_val = g_value_get_int(kernel_arg);
+        llvm::Value* llvm_int = llvm::ConstantInt::get(
+                llvm::Type::Int32Ty, (int64_t)int_val, true);
+        return llvm_int;
+    } else if(type == G_TYPE_BOOLEAN) {
+        gboolean bool_val = g_value_get_boolean(kernel_arg);
+        llvm::Value* llvm_bool = llvm::ConstantInt::get(
+                llvm::Type::Int1Ty, (uint64_t)bool_val, false);
+        return llvm_bool;
+    } else if(type == FIRTREE_TYPE_VEC2) {
+        FirtreeVec2* vec_box = (FirtreeVec2*)g_value_get_boxed(kernel_arg);
+        std::vector<llvm::Constant*> vec_vals;
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->x));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->y));
+        llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
+        return vec_val;
+    } else if(type == FIRTREE_TYPE_VEC3) {
+        FirtreeVec3* vec_box = (FirtreeVec3*)g_value_get_boxed(kernel_arg);
+        std::vector<llvm::Constant*> vec_vals;
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->x));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->y));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->z));
+        llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
+        return vec_val;
+    } else if(type == FIRTREE_TYPE_VEC4) {
+        FirtreeVec4* vec_box = (FirtreeVec4*)g_value_get_boxed(kernel_arg);
+        std::vector<llvm::Constant*> vec_vals;
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->x));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->y));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->z));
+        vec_vals.push_back(llvm::ConstantFP::get(
+                    llvm::Type::FloatTy, (double)vec_box->w));
+        llvm::Value* vec_val = llvm::ConstantVector::get(vec_vals);
+        return vec_val;
+    } else {
+        g_error("Don't know how to deal with argument of type %s.\n",
+                g_type_name(type));
+    }
+
+    return NULL;
 }
 
 namespace Firtree {

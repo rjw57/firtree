@@ -53,6 +53,8 @@
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 
+#include <common/system-info.h>
+
 #include <sstream>
 
 #define bindata _firtee_cpu_engine_render_buffer_mod
@@ -83,7 +85,7 @@ const char* _function_names[] = {
 #define RENDER_FUNC_NAME(id) (_function_names[(id)])
 
 typedef void (* RenderFunc) (unsigned char* buffer,
-    unsigned int width, unsigned int height,
+    unsigned int row_width, unsigned int num_rows,
     unsigned int row_stride, float* extents);
 
 typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
@@ -91,6 +93,8 @@ typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
 struct _FirtreeCpuEnginePrivate {
     FirtreeSampler*             sampler;
     llvm::ExecutionEngine*      cached_engine;
+    GThreadPool*                thread_pool;
+    GAsyncQueue*                response_queue;
 };
 
 /* invalidate (and release) any cached LLVM modules/functions. This
@@ -104,6 +108,34 @@ _firtree_cpu_engine_invalidate_llvm_cache(FirtreeCpuEngine* self)
         delete p->cached_engine;
         p->cached_engine = NULL;
     }
+}
+
+struct FirtreeCpuEngineRenderRequest {
+    RenderFunc      func;
+    unsigned char*  buffer;
+    unsigned int    row_width;
+    unsigned int    num_rows;
+    unsigned int    row_stride;
+    float           extents[4];
+};
+
+static void
+_firtree_cpu_engine_thread_func(gpointer data, gpointer user_data)
+{
+    FirtreeCpuEngine* self = FIRTREE_CPU_ENGINE(user_data);
+    g_assert(self);
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
+    g_assert(p);
+
+    FirtreeCpuEngineRenderRequest* request = (FirtreeCpuEngineRenderRequest*)data;
+
+    /* do stuff */
+    g_assert(request->func);
+    request->func(request->buffer, request->row_width, request->num_rows, 
+            request->row_stride, request->extents);
+
+    /* signal we've finished this request. */
+    g_async_queue_push(p->response_queue, request);
 }
 
 /* This is a LLVM pass which replaces calls to sample_cogl_texture with
@@ -248,8 +280,18 @@ firtree_cpu_engine_set_property (GObject *object, guint property_id,
 static void
 firtree_cpu_engine_dispose (GObject *object)
 {
-    /* FirtreeCpuEnginePrivate* p = GET_PRIVATE(object); */
     G_OBJECT_CLASS (firtree_cpu_engine_parent_class)->dispose (object);
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(object); 
+
+    if(p && p->thread_pool) {
+        g_thread_pool_free(p->thread_pool, FALSE, TRUE);
+        p->thread_pool = NULL;
+    }
+
+    if(p && p->response_queue) {
+        g_async_queue_unref(p->response_queue);
+        p->response_queue = NULL;
+    }
 
     FirtreeCpuEngine* cpu_engine = FIRTREE_CPU_ENGINE(object);
     firtree_cpu_engine_set_sampler(cpu_engine, NULL);
@@ -281,6 +323,12 @@ firtree_cpu_engine_init (FirtreeCpuEngine *self)
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     p->sampler = NULL;
     p->cached_engine = NULL;
+    p->thread_pool = g_thread_pool_new(
+            _firtree_cpu_engine_thread_func,
+            self, system_info_cpu_cores(),
+            TRUE, NULL);
+    g_assert(p->thread_pool);
+    p->response_queue = g_async_queue_new();
 }
 
 FirtreeCpuEngine*
@@ -556,6 +604,67 @@ firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* self)
     return g_string_new(out.str().c_str());
 }
 
+static void
+firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
+        RenderFunc func, unsigned char* buffer, unsigned int row_width, 
+        unsigned int num_rows, unsigned int row_stride, 
+        float* extents) 
+{
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
+
+    /* Create an array of render requests. */
+    GPtrArray* request_array = g_ptr_array_new();
+
+    float dy = extents[3] / (float)num_rows;
+    int slice_rows = 8;
+    guint row = 0;
+    float y = extents[1];
+    float slice_height = dy * (float)slice_rows;
+
+    while(row < num_rows) {
+        FirtreeCpuEngineRenderRequest* request =
+            g_slice_new(FirtreeCpuEngineRenderRequest);
+
+        request->func = func;
+        request->buffer = buffer + (row_stride * row);
+        request->row_width = row_width;
+        if(row + slice_rows <= num_rows) {
+            request->num_rows = slice_rows;
+        } else {
+            request->num_rows = num_rows - row;
+        }
+        request->row_stride = row_stride;
+
+        request->extents[0] = extents[0];
+        request->extents[1] = y;
+        request->extents[2] = extents[2];
+        request->extents[3] = dy * (float)(request->num_rows);
+
+        g_ptr_array_add(request_array, request);
+
+        g_thread_pool_push(p->thread_pool, request, NULL);
+
+        row += slice_rows;
+        y += slice_height;
+    }
+
+    /* wait for responses */
+    while(request_array->len > 0)
+    {
+        gpointer finished_req = g_async_queue_pop(p->response_queue);
+
+        /* look for request and remove it */
+        if(!g_ptr_array_remove_fast(request_array, finished_req)) 
+        {
+            g_error("Unexpected response from worker thread.");
+        }
+
+        g_slice_free(FirtreeCpuEngineRenderRequest, finished_req);
+    }
+
+    g_ptr_array_free(request_array, TRUE);
+}
+
 gboolean
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf)
@@ -596,7 +705,8 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    render(pixels, width, height, stride, (float*)extents);
+    firtree_cpu_engine_perform_render(self, render,
+            pixels, width, height, stride, (float*)extents);
 
     return TRUE;
 }
@@ -641,7 +751,8 @@ firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    render(data, width, height, stride, (float*)extents);
+    firtree_cpu_engine_perform_render(self, render,
+            data, width, height, stride, (float*)extents);
 
     return TRUE;
 }

@@ -123,6 +123,15 @@ firtree_engine_create_sample_cogl_texture_prototype(llvm::Module* module);
 llvm::Function*
 firtree_engine_create_sample_function_prototype(llvm::Module* module);
 
+/**
+ * firtree_engine_get_constant_for_kernel_argument:
+ * @kernel_arg: The value of the kernel's argument.
+ *
+ * Return a LLVM constant which has the value in @kernel_arg.
+ */
+llvm::Value*
+firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg);
+
 namespace Firtree {
 
 /**

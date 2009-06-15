@@ -14,6 +14,7 @@ initpyfirtree(void)
     PyObject *m, *d;
 	
     init_pygobject ();
+    g_thread_init (NULL);
 
     m = Py_InitModule ("pyfirtree", pyfirtree_functions);
     d = PyModule_GetDict (m);

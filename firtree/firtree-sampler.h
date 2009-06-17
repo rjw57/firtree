@@ -80,6 +80,9 @@ typedef struct {
     void (* extents_changed) (FirtreeSampler *kernel);
     void (* transform_changed) (FirtreeSampler *kernel);
 
+    /* Publically overridable virtual methods. */
+    FirtreeVec4 (* get_extent) (FirtreeSampler* self);
+
     /* internal table of virtual methods. These are not publically
      * overridable. */
     FirtreeSamplerIntlVTable*   intl_vtable; 

@@ -59,6 +59,9 @@ firtree_sampler_get_param_default(FirtreeSampler* self, guint param,
 llvm::Function*
 firtree_sampler_get_sample_function_default(FirtreeSampler* self);
 
+FirtreeVec4
+firtree_sampler_get_extent_default(FirtreeSampler* self);
+
 static void
 _firtree_sampler_invalidate_llvm_cache(FirtreeSampler* self)
 {
@@ -121,6 +124,8 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
     klass->module_changed = NULL;
     klass->extents_changed = NULL;
     klass->transform_changed = NULL;
+
+    klass->get_extent = firtree_sampler_get_extent_default;
 
     klass->intl_vtable = &_firtree_sampler_class_vtable;
     klass->intl_vtable->get_param = firtree_sampler_get_param_default;
@@ -204,10 +209,17 @@ firtree_sampler_new (void)
 }
 
 FirtreeVec4
+firtree_sampler_get_extent_default (FirtreeSampler* self)
+{
+    /* an 'infinite' extent. */
+    FirtreeVec4 extent = { -0.5 * G_MAXFLOAT, -0.5 * G_MAXFLOAT, G_MAXFLOAT, G_MAXFLOAT };
+    return extent;
+}
+
+FirtreeVec4
 firtree_sampler_get_extent (FirtreeSampler* self)
 {
-    FirtreeVec4 extent = { 0, 0, 0, 0 };
-    return extent;
+    return FIRTREE_SAMPLER_GET_CLASS(self)->get_extent(self);
 }
 
 FirtreeAffineTransform*

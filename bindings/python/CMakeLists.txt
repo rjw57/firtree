@@ -56,6 +56,17 @@ if(BUILD_PYTHON_BINDINGS)
         ${PYCLUTTER_LIBRARIES}
         ${PYCAIRO_LIBRARIES})
     set_target_properties(pyfirtree PROPERTIES PREFIX "")
+
+    # Find where to install python libraries.
+    execute_process(
+      COMMAND
+      ${PYTHON_EXECUTABLE} -c 
+      "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+      OUTPUT_VARIABLE PYTHON_INSTDIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    install(TARGETS pyfirtree DESTINATION ${PYTHON_INSTDIR})
 endif(BUILD_PYTHON_BINDINGS)
 
 # vim:sw=4:ts=4:autoindent:et

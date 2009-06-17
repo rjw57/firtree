@@ -17,3 +17,5 @@ firtree/engines/cpu/llvm-cpu-support.bc*
 firtree/engines/cpu/llvm-cpu-support.opt.bc
 testing/outputs/*
 firtree/firtree.h
+install_manifest.txt
+firtree/firtree.pc

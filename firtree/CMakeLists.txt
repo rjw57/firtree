@@ -76,16 +76,33 @@ add_custom_command(
         engines/cpu/builtins.ll
         engines/cpu/render-buffer.c)
 
+set(_firtree_public_headers 
+    engines/cpu/firtree-cpu-engine.h
+
+    firtree-affine-transform.h
+    firtree-cairo-surface-sampler.h
+    firtree-cogl-texture-sampler.h
+    firtree-debug.h
+    firtree-kernel.h
+    firtree-kernel-sampler.h
+    firtree-pixbuf-sampler.h
+    firtree-sampler.h
+    firtree-vector.h
+    firtree.h)
+    
+
 add_library(firtree SHARED
-    firtree-affine-transform.c          firtree-affine-transform.h
-    firtree-cairo-surface-sampler.cc    firtree-cairo-surface-sampler.h
-    firtree-cogl-texture-sampler.cc     firtree-cogl-texture-sampler.h
-    firtree-debug.cc                    firtree-debug.h
-    firtree-kernel.cc                   firtree-kernel.h
-    firtree-kernel-sampler.cc           firtree-kernel-sampler.h
-    firtree-pixbuf-sampler.cc           firtree-pixbuf-sampler.h
-    firtree-sampler.cc                  firtree-sampler.h
-    firtree-vector.h                    firtree-vector.c
+    ${_firtree_public_headers}
+
+    firtree-affine-transform.c
+    firtree-cairo-surface-sampler.cc
+    firtree-cogl-texture-sampler.cc
+    firtree-debug.cc
+    firtree-kernel.cc
+    firtree-kernel-sampler.cc
+    firtree-pixbuf-sampler.cc
+    firtree-sampler.cc
+    firtree-vector.c
 
     firtree-engine.cc
 
@@ -96,13 +113,10 @@ add_library(firtree SHARED
 
     # CPU rendering library
     engines/cpu/llvm-cpu-support.bc.h
-    engines/cpu/firtree-cpu-engine.h
     engines/cpu/firtree-cpu-engine.cc
 
-    ${LLVM_STATIC_OBJS}
+    ${LLVM_STATIC_OBJS})
     
-    firtree.h)
-
 set_source_files_properties(
     engines/cpu/llvm-cpu-support.bc.h
     engines/cpu/firtree-cpu-engine.h
@@ -122,6 +136,25 @@ target_link_libraries(firtree
     ${GLIB_LIBRARIES}
     ${ENGINE_EXTRA_LIBS}
     ${LLVM_STATIC_LIBS})
+
+# The magic runes required to install a library.
+install(TARGETS firtree
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+# Install the public headers
+install(FILES ${_firtree_public_headers} DESTINATION include/firtree)
+
+# Update the firtree pkg-config file
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc"
+        @ONLY)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig)
 
 # vim:sw=4:ts=4:autoindent:et
 

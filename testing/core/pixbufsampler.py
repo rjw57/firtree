@@ -12,6 +12,8 @@ height = 120
 class Creation(FirtreeTestCase):
     def setUp(self):
         self._s = PixbufSampler()
+        self.assertEqual(self._s.get_extent()[2], 0)
+        self.assertEqual(self._s.get_extent()[3], 0)
         self.failIfEqual(self._s, None)
         self.assertEqual(self._s.get_pixbuf(), None)
 
@@ -27,6 +29,8 @@ class Creation(FirtreeTestCase):
         self.assertEqual(self._s.get_pixbuf(), None)
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, width, height)
         self._s.set_pixbuf(pb)
+        self.assertEqual(self._s.get_extent()[2], width)
+        self.assertEqual(self._s.get_extent()[3], height)
         self.assertEqual(self._s.get_pixbuf(), pb)
         self._s.set_pixbuf(None)
         self.assertEqual(self._s.get_pixbuf(), None)

@@ -56,6 +56,25 @@ firtree_cogl_texture_sampler_get_sample_function(FirtreeSampler* self);
 llvm::Function*
 _firtree_cogl_texture_sampler_create_sample_function(FirtreeCoglTextureSampler* self);
 
+FirtreeVec4
+firtree_cogl_texture_surface_sampler_get_extent(FirtreeSampler* self)
+{
+    FirtreeCoglTextureSamplerPrivate* p = GET_PRIVATE(self);
+    CoglHandle tex = firtree_cogl_texture_sampler_get_cogl_texture(
+            FIRTREE_COGL_TEXTURE_SAMPLER(self));
+
+    if(!p || !tex) {
+        /* return 'NULL' extent */
+        FirtreeVec4 rv = { 0, 0, 0, 0 };
+        return rv;
+    }
+
+    FirtreeVec4 rv = { 0, 0, 
+        cogl_texture_get_width(tex),
+        cogl_texture_get_height(tex) };
+    return rv;
+}
+
 /* invalidate (and release) any cached LLVM modules/functions. This
  * will cause them to be re-generated when ..._get_function() is next
  * called. */
@@ -135,6 +154,8 @@ firtree_cogl_texture_sampler_class_init (FirtreeCoglTextureSamplerClass *klass)
 
     /* override the sampler virtual functions with our own */
     FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
+
+    sampler_class->get_extent = firtree_cogl_texture_surface_sampler_get_extent;
 
     sampler_class->intl_vtable = &_firtree_cogl_texture_sampler_class_vtable;
 

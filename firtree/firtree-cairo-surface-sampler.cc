@@ -40,7 +40,7 @@ G_DEFINE_TYPE (FirtreeCairoSurfaceSampler, firtree_cairo_surface_sampler, FIRTRE
 typedef struct _FirtreeCairoSurfaceSamplerPrivate FirtreeCairoSurfaceSamplerPrivate;
 
 struct _FirtreeCairoSurfaceSamplerPrivate {
-    cairo_surface_t*          cairo_surface;
+    cairo_surface_t*    cairo_surface;
     gboolean            do_interp;
     llvm::Function*     cached_function;
 };
@@ -50,6 +50,22 @@ firtree_cairo_surface_sampler_get_sample_function(FirtreeSampler* self);
 
 llvm::Function*
 _firtree_cairo_surface_sampler_create_sample_function(FirtreeCairoSurfaceSampler* self);
+
+FirtreeVec4
+firtree_cairo_surface_sampler_get_extent(FirtreeSampler* self)
+{
+    FirtreeCairoSurfaceSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p || !p->cairo_surface) {
+        /* return 'NULL' extent */
+        FirtreeVec4 rv = { 0, 0, 0, 0 };
+        return rv;
+    }
+
+    FirtreeVec4 rv = { 0, 0, 
+        cairo_image_surface_get_width(p->cairo_surface),
+        cairo_image_surface_get_height(p->cairo_surface) };
+    return rv;
+}
 
 /* invalidate (and release) any cached LLVM modules/functions. This
  * will cause them to be re-generated when ..._get_function() is next
@@ -120,6 +136,8 @@ firtree_cairo_surface_sampler_class_init (FirtreeCairoSurfaceSamplerClass *klass
 
     /* override the sampler virtual functions with our own */
     FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
+
+    sampler_class->get_extent = firtree_cairo_surface_sampler_get_extent;
 
     sampler_class->intl_vtable = &_firtree_cairo_surface_sampler_class_vtable;
 

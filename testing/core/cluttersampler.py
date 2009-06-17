@@ -13,6 +13,8 @@ class Creation(FirtreeTestCase):
     def setUp(self):
         self._s = CoglTextureSampler()
         self.failIfEqual(self._s, None)
+        self.assertEqual(self._s.get_extent()[2], 0)
+        self.assertEqual(self._s.get_extent()[3], 0)
         self.assertEqual(self._s.get_clutter_texture(), None)
 
         self._source_texture = clutter.texture_new_from_file('../artwork/bricks.jpg')
@@ -30,6 +32,8 @@ class Creation(FirtreeTestCase):
         self.assertEqual(self._s.get_clutter_texture(), None)
         self._s.set_clutter_texture(self._source_texture)
         self.assertNotEqual(self._s.get_clutter_texture(), None)
+        self.assertEqual(self._s.get_extent()[2], 600)
+        self.assertEqual(self._s.get_extent()[3], 450)
         self._s.set_clutter_texture(None)
         self.assertEqual(self._s.get_clutter_texture(), None)
 

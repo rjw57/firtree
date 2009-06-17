@@ -51,6 +51,22 @@ firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self);
 llvm::Function*
 _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self);
 
+FirtreeVec4
+firtree_puxbuf_surface_sampler_get_extent(FirtreeSampler* self)
+{
+    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p || !p->pixbuf) {
+        /* return 'NULL' extent */
+        FirtreeVec4 rv = { 0, 0, 0, 0 };
+        return rv;
+    }
+
+    FirtreeVec4 rv = { 0, 0, 
+        gdk_pixbuf_get_width(p->pixbuf),
+        gdk_pixbuf_get_height(p->pixbuf) };
+    return rv;
+}
+
 /* invalidate (and release) any cached LLVM modules/functions. This
  * will cause them to be re-generated when ..._get_function() is next
  * called. */
@@ -120,6 +136,8 @@ firtree_pixbuf_sampler_class_init (FirtreePixbufSamplerClass *klass)
 
     /* override the sampler virtual functions with our own */
     FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
+
+    sampler_class->get_extent = firtree_puxbuf_surface_sampler_get_extent;
 
     sampler_class->intl_vtable = &_firtree_pixbuf_sampler_class_vtable;
 

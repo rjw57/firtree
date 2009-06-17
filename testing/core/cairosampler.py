@@ -11,6 +11,8 @@ height = 120
 class Creation(FirtreeTestCase):
     def setUp(self):
         self._s = CairoSurfaceSampler()
+        self.assertEqual(self._s.get_extent()[2], 0)
+        self.assertEqual(self._s.get_extent()[3], 0)
         self.failIfEqual(self._s, None)
         self.assertEqual(self._s.get_cairo_surface(), None)
 
@@ -52,6 +54,8 @@ class Creation(FirtreeTestCase):
         self.assertEqual(self._s.get_cairo_surface(), None)
         self._s.set_cairo_surface(self._source_surface)
         self.assertNotEqual(self._s.get_cairo_surface(), None)
+        self.assertEqual(self._s.get_extent()[2], 320)
+        self.assertEqual(self._s.get_extent()[3], 240)
 
         cs = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
         self.clearSurface(cs)

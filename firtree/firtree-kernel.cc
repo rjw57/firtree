@@ -392,10 +392,12 @@ _firtree_kernel_value_destroy_func (gpointer value)
 }
 
 static void
-_firteee_kernel_sampler_module_changed_cb(FirtreeSampler* sampler,
+_firtree_kernel_sampler_module_changed_cb(FirtreeSampler* sampler,
         FirtreeKernel* self)
 {
-    firtree_kernel_module_changed(self);
+    if(FIRTREE_IS_KERNEL(self)) {
+        firtree_kernel_module_changed(self);
+    }
 }
 
 gboolean
@@ -447,7 +449,7 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
             FirtreeSampler* new_sampler = FIRTREE_SAMPLER(
                     g_value_get_object(value));
             g_signal_connect(new_sampler, "module-changed", 
-                    G_CALLBACK(_firteee_kernel_sampler_module_changed_cb),
+                    G_CALLBACK(_firtree_kernel_sampler_module_changed_cb),
                     self);
         }
     }

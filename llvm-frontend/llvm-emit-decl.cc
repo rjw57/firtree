@@ -347,6 +347,11 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		{
 			LLVM::KernelParameter kernel_param_record;
 
+			if(!it->Name) {
+				FIRTREE_LLVM_ERROR( m_Context, func, 
+						"Kernel perameters must be named.");
+			}
+
 			kernel_param_record.Name = symbolToString(it->Name);
 			kernel_param_record.Type = it->Type.Specifier;
 			kernel_param_record.IsStatic = it->Type.IsStatic();

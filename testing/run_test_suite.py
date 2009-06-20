@@ -16,7 +16,7 @@ import unittest
 # loaded correctly.
 root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 bindings_path = os.path.join(root_path, 'bindings', 'python')
-sys.path.append(bindings_path)
+sys.path.insert(0, bindings_path)
 
 # Now import the tests
 import core.affinetransform

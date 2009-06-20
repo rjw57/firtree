@@ -86,6 +86,18 @@ class SimpleBad(unittest.TestCase):
         self.assertNotEqual(log, None)
         self.assertEqual(len(log), 1)
 
+class CommonErrors(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def testNoArgs(self):
+        k = Kernel()
+        k.compile_from_source('''kernel vec4 foo(sampler) { }''')
+        self.assert_(not k.get_compile_status())
+
 class SimpleLines(unittest.TestCase):
     def setUp(self):
         self._k = Kernel()

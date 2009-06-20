@@ -457,7 +457,7 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
             g_assert(sampler_f);
 
             llvm::Module* new_mod = llvm::CloneModule(sampler_f->getParent());
-            if(linker->LinkInModule(sampler_f->getParent(), &err_str))
+            if(linker->LinkInModule(new_mod, &err_str))
             {
                 g_error("Error linking function: %s\n", err_str.c_str());
             }

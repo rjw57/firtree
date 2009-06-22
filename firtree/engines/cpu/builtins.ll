@@ -15,6 +15,26 @@ declare <2 x float> @llvm.sqrt.v2f32( <2 x float> )
 declare <3 x float> @llvm.sqrt.v3f32( <3 x float> )
 declare <4 x float> @llvm.sqrt.v4f32( <4 x float> )
 
+define float @round_to_zero( float ) {
+entry:
+	%I = fptosi float %0 to i32
+	%F = sitofp i32 %I to float
+	ret float %F
+}
+
+;; Return the floating-point remainder of dividing x by y.  The return 
+;; value is x - n * y, where n is the quotient of x / y, rounded towards 
+;; zero to an integer.
+
+define float @mod_f( float %x, float %y ) {
+entry:
+	%nf = fdiv float %x, %y
+	%nr = call float @round_to_zero( float %nf )
+	%ny = mul float %nr, %y
+	%rv = sub float %x, %ny
+	ret float %rv
+}
+
 ;; conversion functions to radians.
 ;; the 0x3F91DF46A0000000 magic number represents 2 * pi / 360
 

@@ -449,28 +449,38 @@ firtree_kernel_sampler_get_sample_function(FirtreeSampler* self)
 
         if(arg_spec->type == FIRTREE_TYPE_SAMPLER) {
             GValue* val = firtree_kernel_get_argument_value(p->kernel, arg_quark);
-            g_assert(val);
-            FirtreeSampler* sampler = (FirtreeSampler*)g_value_get_object(val);
-            g_assert(sampler);
+            FirtreeSampler* sampler = NULL;
+            llvm::Function* sampler_f = NULL;
 
-            llvm::Function* sampler_f = firtree_sampler_get_sample_function(sampler);
-            g_assert(sampler_f);
-
-            llvm::Module* new_mod = llvm::CloneModule(sampler_f->getParent());
-            if(linker->LinkInModule(new_mod, &err_str))
-            {
-                g_error("Error linking function: %s\n", err_str.c_str());
+            if(val) {
+                sampler = (FirtreeSampler*)g_value_get_object(val);
             }
-            delete new_mod;
 
-            llvm::Function* new_f = linker->getModule()->getFunction(
-                    sampler_f->getName());
-            g_assert(new_f);
+            if(sampler) {
+                sampler_f = firtree_sampler_get_sample_function(sampler);
+            }
 
-            /* record the new function in the sampler function list. */
-            g_datalist_id_set_data(&sampler_function_list, arg_quark, new_f);
+            if(sampler_f) {
+                llvm::Module* new_mod = llvm::CloneModule(sampler_f->getParent());
+                if(linker->LinkInModule(new_mod, &err_str))
+                {
+                    g_error("Error linking function: %s\n", err_str.c_str());
+                }
+                delete new_mod;
+
+                llvm::Function* new_f = linker->getModule()->getFunction(
+                        sampler_f->getName());
+                g_assert(new_f);
+
+                /* record the new function in the sampler function list. */
+                g_datalist_id_set_data(&sampler_function_list, arg_quark, new_f);
+            } else {
+                /* bail from function, connected sampler is invalid. */
+                delete linker;
+                g_datalist_clear(&sampler_function_list);
+                return NULL;
+            }
         }
-
     }
 
     /* We've finished all our linking, release the linker. */

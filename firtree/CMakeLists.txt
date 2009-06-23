@@ -77,7 +77,6 @@ add_custom_command(
         engines/cpu/render-buffer.c)
 
 set(_firtree_public_headers 
-    engines/cpu/firtree-cpu-engine.h
 
     firtree-affine-transform.h
     firtree-cairo-surface-sampler.h
@@ -93,6 +92,8 @@ set(_firtree_public_headers
 
 add_library(firtree SHARED
     ${_firtree_public_headers}
+
+    engines/cpu/firtree-cpu-engine.h
 
     firtree-affine-transform.c
     firtree-cairo-surface-sampler.cc
@@ -146,6 +147,7 @@ install(TARGETS firtree
 
 # Install the public headers
 install(FILES ${_firtree_public_headers} DESTINATION include/firtree)
+install(FILES engines/cpu/firtree-cpu-engine.h DESTINATION include/firtree/engines/cpu)
 
 # Update the firtree pkg-config file
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")

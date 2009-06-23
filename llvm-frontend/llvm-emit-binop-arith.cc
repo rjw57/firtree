@@ -75,6 +75,35 @@ class BinaryOpArithEmitter : ExpressionEmitter
 					                    "operator." );
 				}
 
+				/* Special case division, scalar division is *always* done
+				 * as a floating point division. */
+				if(op == Instruction::FDiv) {
+					KernelTypeSpecifier left_spec = left_val->GetType().Specifier;
+					if((left_spec == Firtree::TySpecInt) || 
+							(left_spec == Firtree::TySpecBool)) {
+						ExpressionValue* left_cast = NULL;
+						ExpressionValue* right_cast = NULL;
+						try {
+							// Attempt to cast both sides.
+							left_cast = TypeCaster::CastValue( context,
+									expression,
+									left_val, Firtree::TySpecFloat );
+							right_cast = TypeCaster::CastValue( context,
+									expression,
+									right_val, Firtree::TySpecFloat );
+
+							FIRTREE_SAFE_RELEASE( left_val );
+							left_val = left_cast;
+							FIRTREE_SAFE_RELEASE( right_val );
+							right_val = right_cast;
+						} catch ( CompileErrorException e ) {
+							FIRTREE_SAFE_RELEASE( left_cast );
+							FIRTREE_SAFE_RELEASE( right_cast );
+							throw e;
+						}
+					}
+				}
+
 				llvm::Value* result_val = BinaryOperator::Create( op,
 				                          left_val->GetLLVMValue(),
 				                          right_val->GetLLVMValue(),

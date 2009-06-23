@@ -255,6 +255,9 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
     int stride = gdk_pixbuf_get_rowstride(p->pixbuf);
     guchar* data = gdk_pixbuf_get_pixels(p->pixbuf);
 
+    FirtreeEngineBufferFormat firtree_format =
+        (channels == 3) ? FIRTREE_FORMAT_BGR24 : FIRTREE_FORMAT_ABGR32;
+
     llvm::Value* llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
             (uint64_t)width, false);
     llvm::Value* llvm_height = llvm::ConstantInt::get(llvm::Type::Int32Ty,
@@ -262,7 +265,7 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
     llvm::Value* llvm_stride = llvm::ConstantInt::get(llvm::Type::Int32Ty,
             (uint64_t)stride, false);
     llvm::Value* llvm_format = llvm::ConstantInt::get(llvm::Type::Int32Ty,
-            (uint64_t)FIRTREE_FORMAT_BGR24, false);
+            (uint64_t)firtree_format, false);
 
     /* This looks dirty but is apparently valid.
      *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */

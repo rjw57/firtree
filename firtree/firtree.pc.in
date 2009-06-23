@@ -5,5 +5,6 @@ includedir=${prefix}/include
 Name: firtree
 Description: The Firtree image processing library.
 Version: @FIRTREE_VERSION_MAJOR@.@FIRTREE_VERSION_MINOR@.@FIRTREE_VERSION_PATCH@
+Requires: cairo clutter-0.8 gdk-pixbuf-2.0
 Libs: -L${libdir} -lfirtree
 Cflags: -I${includedir} 

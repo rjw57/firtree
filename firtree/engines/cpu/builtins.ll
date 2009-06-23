@@ -229,6 +229,53 @@ entry:
 	ret <2 x float> %rv2
 }
 
+;; exp() intrinsic function 
+
+;; Mapped by the CPU engine into the standard math library's expf() function.
+declare float @exp_f( float );
+
+define <2 x float> @exp_v2( <2 x float> ) {
+entry:
+	%x = extractelement <2 x float> %0, i32 0
+	%y = extractelement <2 x float> %0, i32 1
+	%ex = call float @exp_f( float %x )
+	%ey = call float @exp_f( float %y )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @exp_v3( <3 x float> ) {
+entry:
+	%x = extractelement <3 x float> %0, i32 0
+	%y = extractelement <3 x float> %0, i32 1
+	%z = extractelement <3 x float> %0, i32 2
+	%ex = call float @exp_f( float %x )
+	%ey = call float @exp_f( float %y )
+	%ez = call float @exp_f( float %z )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @exp_v4( <4 x float> ) {
+entry:
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
+	%w = extractelement <4 x float> %0, i32 3
+	%ex = call float @exp_f( float %x )
+	%ey = call float @exp_f( float %y )
+	%ez = call float @exp_f( float %z )
+	%ew = call float @exp_f( float %w )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+
 ;; sqrt() intrinsic function 
 
 define float @sqrt_f(float) {

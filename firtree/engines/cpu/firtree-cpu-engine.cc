@@ -139,6 +139,15 @@ _firtree_cpu_engine_thread_func(gpointer data, gpointer user_data)
     g_async_queue_push(p->response_queue, request);
 }
 
+static void*
+_firtree_cpu_lazy_function_creator(const std::string& name) {
+    if(name == "exp_f") {
+        return (void*)expf;
+    }
+    g_debug("Do not know what function to use for '%s'.", name.c_str());
+    return NULL;
+}
+
 /* This is a LLVM pass which replaces calls to sample_cogl_texture with
  * calls to sample_image_buffer_nn() or sample_image_buffer_lerp(). */
 namespace {
@@ -580,6 +589,7 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     std::string err;
     llvm::ExecutionEngine* engine = llvm::ExecutionEngine::create(mp,
             false, &err);
+    engine->InstallLazyFunctionCreator(_firtree_cpu_lazy_function_creator);
     p->cached_engine = engine;
 
     if(!engine) {

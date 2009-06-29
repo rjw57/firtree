@@ -52,6 +52,7 @@ struct _FirtreeKernelSamplerPrivate {
     FirtreeKernel*  kernel;
     gulong          kernel_mod_ch_handler_id;
     gulong          kernel_arg_ch_handler_id;
+    gulong          kernel_cont_ch_handler_id;
     llvm::Function* cached_function;
 };
 
@@ -163,13 +164,20 @@ static void
 _firteee_kernel_sampler_argument_changed_cb(FirtreeKernel* kernel,
         const gchar* arg_name, FirtreeKernelSampler* self)
 {
-    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
     if(firtree_kernel_get_argument_spec(kernel, 
                 g_quark_from_string(arg_name))->is_static) 
     {
         /* If the argument is static, we need to force a new function. */
         _firtree_kernel_sampler_invalidate_llvm_cache(self);
     }
+    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
+}
+
+static void
+_firteee_kernel_sampler_contents_changed_cb(FirtreeKernel* kernel,
+        FirtreeKernelSampler* self)
+{
+    firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
 }
 
 void
@@ -182,6 +190,7 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
     if(p->kernel) {
         g_signal_handler_disconnect(p->kernel, p->kernel_mod_ch_handler_id);
         g_signal_handler_disconnect(p->kernel, p->kernel_arg_ch_handler_id);
+        g_signal_handler_disconnect(p->kernel, p->kernel_cont_ch_handler_id);
         g_object_unref(p->kernel);
         p->kernel = NULL;
     }
@@ -197,6 +206,9 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
                 self);
         p->kernel_arg_ch_handler_id = g_signal_connect(kernel, "argument-changed", 
                 G_CALLBACK(_firteee_kernel_sampler_argument_changed_cb),
+                self);
+        p->kernel_cont_ch_handler_id = g_signal_connect(kernel, "contents-changed", 
+                G_CALLBACK(_firteee_kernel_sampler_contents_changed_cb),
                 self);
     }
 

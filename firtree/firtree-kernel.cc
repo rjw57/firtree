@@ -21,6 +21,7 @@ enum {
 enum {
     ARGUMENT_CHANGED,
     MODULE_CHANGED,
+    CONTENTS_CHANGED,
     LAST_SIGNAL
 };
 
@@ -39,7 +40,6 @@ struct _FirtreeKernelPrivate {
     KernelFunctionList::const_iterator  preferred_function;
 
     GArray*                             arg_names;
-    GData*                              arg_cb_list;
     GData*                              arg_spec_list;
     GData*                              arg_value_list;
 };
@@ -104,9 +104,6 @@ _firtree_kernel_reset_compile_status (FirtreeKernel *self)
     if(p->arg_spec_list) {
         g_datalist_clear(&(p->arg_spec_list));
     }
-    if(p->arg_cb_list) {
-        g_datalist_clear(&(p->arg_cb_list));
-    }
     if(p->arg_value_list) {
         g_datalist_clear(&(p->arg_value_list));
     }
@@ -147,8 +144,8 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
     object_class->finalize = firtree_kernel_finalize;
 
     klass->argument_changed = NULL;
-    klass->argument_changed_quark = NULL;
     klass->module_changed = NULL;
+    klass->contents_changed = NULL;
 
     param_spec = g_param_spec_boolean(
             "compile-status",
@@ -206,7 +203,25 @@ firtree_kernel_class_init (FirtreeKernelClass *klass)
                 NULL, NULL,
                 g_cclosure_marshal_VOID__VOID,
                 G_TYPE_NONE, 0);
+    /**
+     * FirtreeKernel::contents-changed:
+     * @kernel: The kernel whose argument has changed.
+     *
+     * The ::contents-changed signal is emitted each time the contents
+     * of a kernel changes (i.e. when the contents of a dependent 
+     * sampler changes).
+     */
+    _firtree_kernel_signals[CONTENTS_CHANGED] = 
+        g_signal_new("contents-changed",
+                G_OBJECT_CLASS_TYPE(klass),
+                (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_NO_RECURSE | 
+                    G_SIGNAL_DETAILED),
+                G_STRUCT_OFFSET(FirtreeKernelClass, contents_changed),
+                NULL, NULL,
+                g_cclosure_marshal_VOID__VOID,
+                G_TYPE_NONE, 0);
 }
+
 
 static void
 firtree_kernel_init (FirtreeKernel *self)
@@ -219,7 +234,6 @@ firtree_kernel_init (FirtreeKernel *self)
 
     p->arg_names = NULL;
     g_datalist_init(&(p->arg_spec_list));
-    g_datalist_init(&(p->arg_cb_list));
     g_datalist_init(&(p->arg_value_list));
 
     _firtree_kernel_reset_compile_status(self);
@@ -400,6 +414,15 @@ _firtree_kernel_sampler_module_changed_cb(FirtreeSampler* sampler,
     }
 }
 
+static void
+_firtree_kernel_sampler_contents_changed_cb(FirtreeSampler* sampler,
+        FirtreeKernel* self)
+{
+    if(FIRTREE_IS_KERNEL(self)) {
+        firtree_kernel_contents_changed(self);
+    }
+}
+
 gboolean
 firtree_kernel_set_argument_value (FirtreeKernel* self,
         GQuark arg_name, GValue* value)
@@ -430,26 +453,15 @@ firtree_kernel_set_argument_value (FirtreeKernel* self,
      * module changes since we link them in. Register handlers for
      * this. */
     if(spec->type == FIRTREE_TYPE_SAMPLER) {
-        /* see if we have a handler for this already */
-        gpointer p_handler = g_datalist_id_get_data(&p->arg_cb_list,
-                arg_name);
-        GValue* p_value = (GValue*)g_datalist_id_get_data(&p->arg_value_list,
-                arg_name);
-        if(p_handler && p_value) {
-            /* unregister it */
-            gulong handler_id = *((gulong*)p_handler);
-            g_signal_handler_disconnect(g_value_get_object(p_value),
-                    handler_id);
-            g_datalist_id_remove_data(&p->arg_cb_list,
-                arg_name);
-        }
-
         /* register the new handler if necessary. */
         if(value) {
             FirtreeSampler* new_sampler = FIRTREE_SAMPLER(
                     g_value_get_object(value));
             g_signal_connect(new_sampler, "module-changed", 
                     G_CALLBACK(_firtree_kernel_sampler_module_changed_cb),
+                    self);
+            g_signal_connect(new_sampler, "contents-changed", 
+                    G_CALLBACK(_firtree_kernel_sampler_contents_changed_cb),
                     self);
         }
     }
@@ -504,6 +516,13 @@ firtree_kernel_module_changed (FirtreeKernel* self)
 {
     g_return_if_fail(FIRTREE_IS_KERNEL(self));
     g_signal_emit(self, _firtree_kernel_signals[MODULE_CHANGED], 0);
+}
+
+void
+firtree_kernel_contents_changed (FirtreeKernel* self)
+{
+    g_return_if_fail(FIRTREE_IS_KERNEL(self));
+    g_signal_emit(self, _firtree_kernel_signals[CONTENTS_CHANGED], 0);
 }
 
 llvm::Function*

@@ -115,6 +115,7 @@ ignore-glob
 %%
 include
     firtree-affine-transform.override
+    firtree-buffer-sampler.override
     firtree-cogl-texture-sampler.override
     firtree-cairo-surface-sampler.override
     firtree-cpu-engine.override

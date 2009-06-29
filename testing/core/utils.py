@@ -2,6 +2,7 @@ import gtk.gdk
 import cairo
 import unittest, subprocess, os
 import StringIO
+import Image
 
 class FirtreeTestCase(unittest.TestCase):
     def assertCairoSurfaceMatches(self, surface, tag):
@@ -14,6 +15,11 @@ class FirtreeTestCase(unittest.TestCase):
         art_file = '../artwork/%s' % name
         self.assert_(os.path.exists(art_file))
         return art_file
+
+    def loadImage(self, name):
+        im = Image.open('../artwork/%s' % name)
+        self.assertNotEqual(im, None)
+        return im
 
     def loadPixbuf(self, name):
         pb = gtk.gdk.pixbuf_new_from_file(self.artworkFile(name))

@@ -82,6 +82,8 @@ typedef struct {
 
     /* Publically overridable virtual methods. */
     FirtreeVec4 (* get_extent) (FirtreeSampler* self);
+    gboolean (* lock) (FirtreeSampler* self);
+    void (* unlock) (FirtreeSampler* self);
 
     /* internal table of virtual methods. These are not publically
      * overridable. */

@@ -82,6 +82,35 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
 llvm::Function*
 firtree_sampler_get_sample_function(FirtreeSampler* self);
 
+/**
+ * firtree_sampler_lock:
+ * @self: A FirtreeSampler instance.
+ *
+ * Lock the sampler for rendering. What this does is dependent on the sampler
+ * but the Firtree engine will call firtree_sampler_lock() on all samplers
+ * before rendering and will call firtree_sampler_unlock() after rendering.
+ *
+ * Note that locking does not apply to calls to
+ * firtree_sampler_get_sample_function() which may occurr at any point.
+ *
+ * The default implementation just returns TRUE.
+ *
+ * Returns: TRUE if the locking succeeded, false otherwise.
+ */
+gboolean
+firtree_sampler_lock(FirtreeSampler* self);
+
+/**
+ * firtree_sampler_unlock:
+ * @self: A FirtreeSampler instance.
+ *
+ * Unlock the sampler after a call to firtree_sampler_lock().
+ *
+ * The default implementation is a NOP.
+ */
+void
+firtree_sampler_unlock(FirtreeSampler* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_SAMPLER_INTL */

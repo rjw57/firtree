@@ -30,6 +30,13 @@
   (gtype-id "FIRTREE_TYPE_AFFINE_TRANSFORM")
 )
 
+(define-object BufferSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreeBufferSampler")
+  (gtype-id "FIRTREE_TYPE_BUFFER_SAMPLER")
+)
+
 (define-object CairoSurfaceSampler
   (in-module "Firtree")
   (parent "FirtreeSampler")
@@ -82,4 +89,21 @@
 ; pointer definitions ...
 
 ;; Enumerations and Flags ...
+
+(define-enum BufferFormat
+  (in-module "Firtree")
+  (c-name "FirtreeBufferFormat")
+  (gtype-id "FIRTREE_TYPE_BUFFER_FORMAT")
+  (values
+    '("argb32" "FIRTREE_FORMAT_ARGB32")
+    '("argb32-premultiplied" "FIRTREE_FORMAT_ARGB32_PREMULTIPLIED")
+    '("xrgb32" "FIRTREE_FORMAT_XRGB32")
+    '("abgr32" "FIRTREE_FORMAT_ABGR32")
+    '("abgr32-premultiplied" "FIRTREE_FORMAT_ABGR32_PREMULTIPLIED")
+    '("xbgr32" "FIRTREE_FORMAT_XBGR32")
+    '("rgb24" "FIRTREE_FORMAT_RGB24")
+    '("bgr24" "FIRTREE_FORMAT_BGR24")
+    '("last" "FIRTREE_FORMAT_LAST")
+  )
+)
 

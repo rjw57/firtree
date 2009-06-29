@@ -19,3 +19,5 @@ testing/outputs/*
 firtree/firtree.h
 install_manifest.txt
 firtree/firtree.pc
+firtree/firtree-type-builtins.*
+

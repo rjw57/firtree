@@ -1,0 +1,41 @@
+%%
+override firtree_buffer_sampler_set_buffer kwargs
+static PyObject *
+_wrap_firtree_buffer_sampler_set_buffer(PyGObject *self, PyObject *args, 
+        PyObject *kwargs)
+{
+    static char *kwlist[] = { "buffer", "width", "height", "stride", "format", NULL };
+
+    char* buffer = NULL;
+    int buffer_len = 0;
+    unsigned long width, height, stride;
+    PyObject *format;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "z#kkkO!:FirtreePixbufSampler.set_buffer", kwlist,
+                &buffer, &buffer_len, &width, &height, &stride, 
+                &PyGEnum_Type, &format))
+        return NULL;
+
+    if((buffer == NULL) || (buffer_len == 0)) {
+        firtree_buffer_sampler_set_buffer(FIRTREE_BUFFER_SAMPLER(self->obj),
+                NULL, 0, 0, 0, FIRTREE_FORMAT_LAST);
+
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    gint format_val;
+    if(0 != pyg_enum_get_value(FIRTREE_TYPE_BUFFER_FORMAT, format, &format_val)) {
+        return NULL;
+    }
+
+    firtree_buffer_sampler_set_buffer(FIRTREE_BUFFER_SAMPLER(self->obj),
+            buffer, width, height, stride, (FirtreeBufferFormat)format_val);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

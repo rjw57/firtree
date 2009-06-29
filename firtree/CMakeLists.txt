@@ -13,6 +13,12 @@ find_package(PythonInterp)
 
 find_program(LLVM_GCC_EXECUTABLE llvm-gcc)
 
+find_program(GLIB_MKENUMS glib-mkenums PATHS "${GLIB_PREFIX}/bin")
+
+if(NOT GLIB_MKENUMS)
+	message(SEND_ERROR "Could not find glib-mkenums which is required for firtree.")
+endif(NOT GLIB_MKENUMS)
+
 if(NOT LLVM_GCC_EXECUTABLE)
     message(SEND_ERROR "llvm-gcc not found.")
 endif(NOT LLVM_GCC_EXECUTABLE)
@@ -77,8 +83,8 @@ add_custom_command(
         engines/cpu/render-buffer.c)
 
 set(_firtree_public_headers 
-
     firtree-affine-transform.h
+    firtree-buffer-sampler.h
     firtree-cairo-surface-sampler.h
     firtree-cogl-texture-sampler.h
     firtree-debug.h
@@ -86,16 +92,33 @@ set(_firtree_public_headers
     firtree-kernel-sampler.h
     firtree-pixbuf-sampler.h
     firtree-sampler.h
+    firtree-types.h
     firtree-vector.h
     firtree.h)
     
+add_custom_command(OUTPUT firtree-type-builtins.h firtree-type-builtins.c
+	COMMAND ${GLIB_MKENUMS} 
+		--template firtree-type-builtins.h.template 
+		${_firtree_public_headers} > firtree-type-builtins.h
+	COMMAND ${GLIB_MKENUMS} 
+		--template firtree-type-builtins.c.template
+		${_firtree_public_headers} > firtree-type-builtins.c
+	DEPENDS 
+		${_firtree_public_headers}
+		firtree-type-builtins.h.template 
+		firtree-type-builtins.c.template
+	VERBATIM)
 
 add_library(firtree SHARED
     ${_firtree_public_headers}
+    
+    firtree-type-builtins.h
+    firtree-type-builtins.c
 
     engines/cpu/firtree-cpu-engine.h
 
     firtree-affine-transform.c
+    firtree-buffer-sampler.cc
     firtree-cairo-surface-sampler.cc
     firtree-cogl-texture-sampler.cc
     firtree-debug.cc
@@ -121,6 +144,8 @@ add_library(firtree SHARED
 set_source_files_properties(
     engines/cpu/llvm-cpu-support.bc.h
     engines/cpu/firtree-cpu-engine.h
+    firtree-type-builtins.h
+    firtree-type-builtins.c
     PROPERTIES GENERATED TRUE)
 
 # set the library version.
@@ -146,7 +171,7 @@ install(TARGETS firtree
 )
 
 # Install the public headers
-install(FILES ${_firtree_public_headers} DESTINATION include/firtree)
+install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION include/firtree)
 install(FILES engines/cpu/firtree-cpu-engine.h DESTINATION include/firtree/engines/cpu)
 
 # Update the firtree pkg-config file

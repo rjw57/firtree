@@ -62,6 +62,12 @@ firtree_sampler_get_sample_function_default(FirtreeSampler* self);
 FirtreeVec4
 firtree_sampler_get_extent_default(FirtreeSampler* self);
 
+gboolean
+firtree_sampler_lock_default(FirtreeSampler* self);
+
+void
+firtree_sampler_unlock_default(FirtreeSampler* self);
+
 static void
 _firtree_sampler_invalidate_llvm_cache(FirtreeSampler* self)
 {
@@ -126,6 +132,8 @@ firtree_sampler_class_init (FirtreeSamplerClass *klass)
     klass->transform_changed = NULL;
 
     klass->get_extent = firtree_sampler_get_extent_default;
+    klass->lock = firtree_sampler_lock_default;
+    klass->unlock = firtree_sampler_unlock_default;
 
     klass->intl_vtable = &_firtree_sampler_class_vtable;
     klass->intl_vtable->get_param = firtree_sampler_get_param_default;
@@ -269,6 +277,30 @@ firtree_sampler_get_param(FirtreeSampler* self, guint param,
 {
     return FIRTREE_SAMPLER_GET_CLASS(self)->intl_vtable->
         get_param(self, param, dest, dest_size);
+}
+
+gboolean
+firtree_sampler_lock_default(FirtreeSampler* self)
+{
+    return TRUE;
+}
+
+gboolean
+firtree_sampler_lock(FirtreeSampler* self)
+{
+    return FIRTREE_SAMPLER_GET_CLASS(self)->lock(self);
+}
+
+void
+firtree_sampler_unlock_default(FirtreeSampler* self)
+{
+    /* nop */
+}
+
+void
+firtree_sampler_unlock(FirtreeSampler* self)
+{
+    FIRTREE_SAMPLER_GET_CLASS(self)->unlock(self);
 }
 
 llvm::Function*

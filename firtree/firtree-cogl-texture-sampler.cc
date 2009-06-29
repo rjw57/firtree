@@ -47,7 +47,7 @@ struct _FirtreeCoglTextureSamplerPrivate {
     guchar*             cached_data;
     guint               cached_data_size;
     guint               cached_data_stride;
-    FirtreeEngineBufferFormat   cached_data_format;
+    FirtreeBufferFormat   cached_data_format;
 };
 
 llvm::Function*
@@ -255,7 +255,7 @@ firtree_cogl_texture_sampler_get_clutter_texture (FirtreeCoglTextureSampler* sel
 
 guint
 firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
-        guchar** data, guint* rowstride, FirtreeEngineBufferFormat* out_format)
+        guchar** data, guint* rowstride, FirtreeBufferFormat* out_format)
 {
     FirtreeCoglTextureSamplerPrivate* p = GET_PRIVATE(self);
 
@@ -283,7 +283,7 @@ firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
     guint stride = cogl_texture_get_rowstride(texture);
     CoglPixelFormat format = cogl_texture_get_format(texture);
 
-    FirtreeEngineBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
+    FirtreeBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
 
     /* FIXME: This implicitly assumes a little-endian machine. */
 

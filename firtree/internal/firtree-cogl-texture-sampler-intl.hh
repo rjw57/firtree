@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 guint
 firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
         guchar** data, guint* rowstride,
-        FirtreeEngineBufferFormat* format);
+        FirtreeBufferFormat* format);
 
 G_END_DECLS
 

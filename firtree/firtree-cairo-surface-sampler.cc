@@ -241,7 +241,7 @@ _firtree_cairo_surface_sampler_create_sample_function(FirtreeCairoSurfaceSampler
 
     cairo_format_t format = cairo_image_surface_get_format(p->cairo_surface);
 
-    FirtreeEngineBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
+    FirtreeBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
     switch(format) {
         case CAIRO_FORMAT_ARGB32:
             firtree_format = FIRTREE_FORMAT_ARGB32_PREMULTIPLIED;

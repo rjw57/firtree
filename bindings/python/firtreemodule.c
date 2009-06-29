@@ -20,7 +20,7 @@ initpyfirtree(void)
     d = PyModule_GetDict (m);
 	
     pyfirtree_register_classes (d);
-    /* pyfirtree_add_constants(m, "FIRTREE_"); */
+    pyfirtree_add_constants(m, "FIRTREE_"); 
 }
 
 /* vim:sw=4:ts=4:cindent:et

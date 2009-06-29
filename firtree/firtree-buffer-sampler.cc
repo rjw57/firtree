@@ -1,6 +1,6 @@
-/* firtree-pixbuf-sampler.cc */
+/* firtree-buffer-sampler.cc */
 
-/* Firtree - A generic pixbuf processing library
+/* Firtree - A generic buffer processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,41 +30,42 @@
 
 #include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
-#include "firtree-pixbuf-sampler.h"
-#include "firtree-types.h"
+#include "firtree-buffer-sampler.h"
 
-G_DEFINE_TYPE (FirtreePixbufSampler, firtree_pixbuf_sampler, FIRTREE_TYPE_SAMPLER)
+G_DEFINE_TYPE (FirtreeBufferSampler, firtree_buffer_sampler, FIRTREE_TYPE_SAMPLER)
 
 #define GET_PRIVATE(o) \
-    (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_PIXBUF_SAMPLER, FirtreePixbufSamplerPrivate))
+    (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_BUFFER_SAMPLER, FirtreeBufferSamplerPrivate))
 
-typedef struct _FirtreePixbufSamplerPrivate FirtreePixbufSamplerPrivate;
+typedef struct _FirtreeBufferSamplerPrivate FirtreeBufferSamplerPrivate;
 
-struct _FirtreePixbufSamplerPrivate {
-    GdkPixbuf*          pixbuf;
+struct _FirtreeBufferSamplerPrivate {
     gboolean            do_interp;
     llvm::Function*     cached_function;
+    gpointer            cached_buffer;
+    guint               cached_width;
+    guint               cached_height;
+    guint               cached_stride;
+    FirtreeBufferFormat cached_format;
 };
 
 llvm::Function*
-firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self);
+firtree_buffer_sampler_get_sample_function(FirtreeSampler* self);
 
 llvm::Function*
-_firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self);
+_firtree_buffer_sampler_create_sample_function(FirtreeBufferSampler* self);
 
 FirtreeVec4
-firtree_puxbuf_surface_sampler_get_extent(FirtreeSampler* self)
+firtree_buffer_sampler_get_extent(FirtreeSampler* self)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
-    if(!p || !p->pixbuf) {
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p || !p->cached_buffer) {
         /* return 'NULL' extent */
         FirtreeVec4 rv = { 0, 0, 0, 0 };
         return rv;
     }
 
-    FirtreeVec4 rv = { 0, 0, 
-        gdk_pixbuf_get_width(p->pixbuf),
-        gdk_pixbuf_get_height(p->pixbuf) };
+    FirtreeVec4 rv = { 0, 0, p->cached_width, p->cached_height };
     return rv;
 }
 
@@ -72,9 +73,9 @@ firtree_puxbuf_surface_sampler_get_extent(FirtreeSampler* self)
  * will cause them to be re-generated when ..._get_function() is next
  * called. */
 static void
-_firtree_pixbuf_sampler_invalidate_llvm_cache(FirtreePixbufSampler* self)
+_firtree_buffer_sampler_invalidate_llvm_cache(FirtreeBufferSampler* self)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
     if(p && p->cached_function) {
         delete p->cached_function->getParent();
         p->cached_function = NULL;
@@ -84,7 +85,7 @@ _firtree_pixbuf_sampler_invalidate_llvm_cache(FirtreePixbufSampler* self)
 }
 
 static void
-firtree_pixbuf_sampler_get_property (GObject *object, guint property_id,
+firtree_buffer_sampler_get_property (GObject *object, guint property_id,
         GValue *value, GParamSpec *pspec)
 {
     switch (property_id) {
@@ -94,7 +95,7 @@ firtree_pixbuf_sampler_get_property (GObject *object, guint property_id,
 }
 
 static void
-firtree_pixbuf_sampler_set_property (GObject *object, guint property_id,
+firtree_buffer_sampler_set_property (GObject *object, guint property_id,
         const GValue *value, GParamSpec *pspec)
 {
     switch (property_id) {
@@ -104,135 +105,142 @@ firtree_pixbuf_sampler_set_property (GObject *object, guint property_id,
 }
 
 static void
-firtree_pixbuf_sampler_dispose (GObject *object)
+firtree_buffer_sampler_dispose (GObject *object)
 {
-    G_OBJECT_CLASS (firtree_pixbuf_sampler_parent_class)->dispose (object);
-
-    /* drop any references to any pixbuf we might have. */
-    firtree_pixbuf_sampler_set_pixbuf((FirtreePixbufSampler*)object, NULL);
+    G_OBJECT_CLASS (firtree_buffer_sampler_parent_class)->dispose (object);
 
     /* dispose of any LLVM modules we might have. */
-    _firtree_pixbuf_sampler_invalidate_llvm_cache((FirtreePixbufSampler*)object);
+    _firtree_buffer_sampler_invalidate_llvm_cache((FirtreeBufferSampler*)object);
 }
 
 static void
-firtree_pixbuf_sampler_finalize (GObject *object)
+firtree_buffer_sampler_finalize (GObject *object)
 {
-    G_OBJECT_CLASS (firtree_pixbuf_sampler_parent_class)->finalize (object);
+    G_OBJECT_CLASS (firtree_buffer_sampler_parent_class)->finalize (object);
 }
 
-static FirtreeSamplerIntlVTable _firtree_pixbuf_sampler_class_vtable;
+static FirtreeSamplerIntlVTable _firtree_buffer_sampler_class_vtable;
 
 static void
-firtree_pixbuf_sampler_class_init (FirtreePixbufSamplerClass *klass)
+firtree_buffer_sampler_class_init (FirtreeBufferSamplerClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-    g_type_class_add_private (klass, sizeof (FirtreePixbufSamplerPrivate));
+    g_type_class_add_private (klass, sizeof (FirtreeBufferSamplerPrivate));
 
-    object_class->get_property = firtree_pixbuf_sampler_get_property;
-    object_class->set_property = firtree_pixbuf_sampler_set_property;
-    object_class->dispose = firtree_pixbuf_sampler_dispose;
-    object_class->finalize = firtree_pixbuf_sampler_finalize;
+    object_class->get_property = firtree_buffer_sampler_get_property;
+    object_class->set_property = firtree_buffer_sampler_set_property;
+    object_class->dispose = firtree_buffer_sampler_dispose;
+    object_class->finalize = firtree_buffer_sampler_finalize;
 
     /* override the sampler virtual functions with our own */
     FirtreeSamplerClass* sampler_class = FIRTREE_SAMPLER_CLASS(klass);
 
-    sampler_class->get_extent = firtree_puxbuf_surface_sampler_get_extent;
+    sampler_class->get_extent = firtree_buffer_sampler_get_extent;
 
-    sampler_class->intl_vtable = &_firtree_pixbuf_sampler_class_vtable;
+    sampler_class->intl_vtable = &_firtree_buffer_sampler_class_vtable;
 
     sampler_class->intl_vtable->get_sample_function = 
-        firtree_pixbuf_sampler_get_sample_function;
+        firtree_buffer_sampler_get_sample_function;
 }
 
 static void
-firtree_pixbuf_sampler_init (FirtreePixbufSampler *self)
+firtree_buffer_sampler_init (FirtreeBufferSampler *self)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
-    p->pixbuf = NULL;
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
     p->do_interp = FALSE;
     p->cached_function = NULL;
+    p->cached_buffer = NULL;
 }
 
-FirtreePixbufSampler*
-firtree_pixbuf_sampler_new (void)
+FirtreeBufferSampler*
+firtree_buffer_sampler_new (void)
 {
-    return (FirtreePixbufSampler*)
-        g_object_new (FIRTREE_TYPE_PIXBUF_SAMPLER, NULL);
-}
-
-void
-firtree_pixbuf_sampler_set_pixbuf (FirtreePixbufSampler* self,
-        GdkPixbuf* pixbuf)
-{
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
-    /* unref any pixbuf we already have. */
-
-    if(p->pixbuf) {
-        gdk_pixbuf_unref(p->pixbuf);
-        p->pixbuf = NULL;
-    }
-
-    if(pixbuf) {
-        gdk_pixbuf_ref(pixbuf);
-        p->pixbuf = pixbuf;
-    }
-
-    _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
-
-    firtree_sampler_extents_changed(FIRTREE_SAMPLER(self));
-}
-
-GdkPixbuf*
-firtree_pixbuf_sampler_get_pixbuf (FirtreePixbufSampler* self)
-{
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
-    return p->pixbuf;
+    return (FirtreeBufferSampler*)
+        g_object_new (FIRTREE_TYPE_BUFFER_SAMPLER, NULL);
 }
 
 gboolean
-firtree_pixbuf_sampler_get_do_interpolation (FirtreePixbufSampler* self)
+firtree_buffer_sampler_get_do_interpolation (FirtreeBufferSampler* self)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
     return p->do_interp;
 }
 
 void
-firtree_pixbuf_sampler_set_do_interpolation (FirtreePixbufSampler* self,
+firtree_buffer_sampler_set_do_interpolation (FirtreeBufferSampler* self,
         gboolean do_interpolation)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
     if(do_interpolation != p->do_interp) {
         p->do_interp = do_interpolation;
-        _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
+        _firtree_buffer_sampler_invalidate_llvm_cache(self);
     }
 }
 
-llvm::Function*
-firtree_pixbuf_sampler_get_sample_function(FirtreeSampler* self)
+void
+firtree_buffer_sampler_set_buffer (FirtreeBufferSampler* self,
+            gpointer buffer, guint width, guint height,
+            guint stride, FirtreeBufferFormat format)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
+ 
+    if((p->cached_buffer == buffer) && (p->cached_width == width) &&
+            (p->cached_height == height) && (p->cached_stride == stride) &&
+            (p->cached_format == format)) {
+        /* shortcut the case where nothing has changed. */
+        return;
+    }
+
+    p->cached_buffer = buffer;
+    p->cached_width = width;
+    p->cached_height = height;
+    p->cached_stride = stride;
+    p->cached_format = format;
+
+    _firtree_buffer_sampler_invalidate_llvm_cache(self);
+}
+
+void
+firtree_buffer_sampler_unset_buffer (FirtreeBufferSampler* self)
+{
+    firtree_buffer_sampler_set_buffer(self, NULL, 0, 0, 0,
+            FIRTREE_FORMAT_LAST);
+}
+
+llvm::Function*
+firtree_buffer_sampler_get_sample_function(FirtreeSampler* self)
+{
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
+
     if(p->cached_function) {
         return p->cached_function;
     }
 
-    return _firtree_pixbuf_sampler_create_sample_function(
-            FIRTREE_PIXBUF_SAMPLER(self));
+    return _firtree_buffer_sampler_create_sample_function(
+            FIRTREE_BUFFER_SAMPLER(self));
 }
 
 /* Create the sampler function */
 llvm::Function*
-_firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
+_firtree_buffer_sampler_create_sample_function(FirtreeBufferSampler* self)
 {
-    FirtreePixbufSamplerPrivate* p = GET_PRIVATE(self);
-    if(!p->pixbuf) {
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
+    if(!p->cached_buffer) {
         return NULL;
     }
 
-    _firtree_pixbuf_sampler_invalidate_llvm_cache(self);
+    unsigned char* data = (unsigned char*)(p->cached_buffer);
 
-    llvm::Module* m = new llvm::Module("pixbuf");
+    /* Work out the width, height, stride, etc of the buffer. */
+    int width = p->cached_width;
+    int height = p->cached_height;
+    int stride = p->cached_stride;
+    FirtreeBufferFormat firtree_format = p->cached_format;
+
+    _firtree_buffer_sampler_invalidate_llvm_cache(self);
+
+    llvm::Module* m = new llvm::Module("buffer");
 
     /* declare the sample_image_buffer() function which will be implemented
      * by the engine. */
@@ -244,20 +252,6 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
     llvm::Function* sample_func = 
         firtree_engine_create_sample_function_prototype(m);
     g_assert(sample_func);
-
-    /* Work out the width, height, stride, etc of the buffer. */
-    int channels = gdk_pixbuf_get_n_channels(p->pixbuf);
-    if((channels != 3) && (channels != 4)) {
-        g_debug("FirtreePixbufSampler only supports 3 and 4 channel pixbufs.");
-        return FALSE;
-    }
-    int width = gdk_pixbuf_get_width(p->pixbuf);
-    int height = gdk_pixbuf_get_height(p->pixbuf);
-    int stride = gdk_pixbuf_get_rowstride(p->pixbuf);
-    guchar* data = gdk_pixbuf_get_pixels(p->pixbuf);
-
-    FirtreeBufferFormat firtree_format =
-        (channels == 3) ? FIRTREE_FORMAT_BGR24 : FIRTREE_FORMAT_ABGR32;
 
     llvm::Value* llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
             (uint64_t)width, false);

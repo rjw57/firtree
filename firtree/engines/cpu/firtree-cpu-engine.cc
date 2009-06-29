@@ -66,7 +66,7 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 #define GET_PRIVATE(o) \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_CPU_ENGINE, FirtreeCpuEnginePrivate))
 
-/* Indexed by FirtreeEngineBufferFormat */
+/* Indexed by FirtreeBufferFormat */
 const char* _function_names[] = {
     "render_buffer_32_argb_non",
     "render_buffer_32_argb_pre",
@@ -203,7 +203,7 @@ class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
         guint height = cogl_texture_get_height(cogl_tex_handle);
 
         guint stride = 0;
-        FirtreeEngineBufferFormat format = FIRTREE_FORMAT_LAST;
+        FirtreeBufferFormat format = FIRTREE_FORMAT_LAST;
         guchar* data = NULL;
 
         guint data_size = firtree_cogl_texture_sampler_get_data(sampler,
@@ -640,6 +640,14 @@ firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
 {
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
 
+    if(!p->sampler)
+        return;
+
+    if(!firtree_sampler_lock(p->sampler)) {
+        g_debug("Failed to lock sampler.");
+        return;
+    }
+
     /* Create an array of render requests. */
     GPtrArray* request_array = g_ptr_array_new();
 
@@ -691,6 +699,8 @@ firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
     }
 
     g_ptr_array_free(request_array, TRUE);
+
+    firtree_sampler_unlock(p->sampler);
 }
 
 gboolean

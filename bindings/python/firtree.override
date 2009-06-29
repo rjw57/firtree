@@ -5,6 +5,9 @@ headers
 #include <pygobject.h> 
 
 #include <firtree/firtree.h>
+#include <firtree/firtree-cairo-surface-sampler.h>
+#include <firtree/firtree-cogl-texture-sampler.h>
+#include <firtree/firtree-pixbuf-sampler.h>
 
 #if FIRTREE_HAVE_CAIRO
 #   include <pycairo/pycairo.h>

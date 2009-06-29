@@ -9,6 +9,8 @@ headers
 #include <firtree/firtree-cogl-texture-sampler.h>
 #include <firtree/firtree-pixbuf-sampler.h>
 
+#include <firtree/engines/cpu/firtree-cpu-engine.h>
+
 #if FIRTREE_HAVE_CAIRO
 #   include <pycairo/pycairo.h>
     static Pycairo_CAPI_t *Pycairo_CAPI;

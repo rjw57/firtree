@@ -32,6 +32,8 @@
 #include "internal/firtree-sampler-intl.hh"
 #include "firtree-buffer-sampler.h"
 
+#include <string.h>
+
 G_DEFINE_TYPE (FirtreeBufferSampler, firtree_buffer_sampler, FIRTREE_TYPE_SAMPLER)
 
 #define GET_PRIVATE(o) \
@@ -43,6 +45,7 @@ struct _FirtreeBufferSamplerPrivate {
     gboolean            do_interp;
     llvm::Function*     cached_function;
     gpointer            cached_buffer;
+    guint               cached_buffer_len;
     guint               cached_width;
     guint               cached_height;
     guint               cached_stride;
@@ -107,10 +110,19 @@ firtree_buffer_sampler_set_property (GObject *object, guint property_id,
 static void
 firtree_buffer_sampler_dispose (GObject *object)
 {
-    G_OBJECT_CLASS (firtree_buffer_sampler_parent_class)->dispose (object);
+    FirtreeBufferSamplerPrivate* p = GET_PRIVATE(object);
 
     /* dispose of any LLVM modules we might have. */
     _firtree_buffer_sampler_invalidate_llvm_cache((FirtreeBufferSampler*)object);
+
+    /* dispose of any cached buffer */
+    if(p->cached_buffer) {
+        g_slice_free1(p->cached_buffer_len, p->cached_buffer);
+        p->cached_buffer = NULL;
+        p->cached_buffer_len = 0;
+    }
+
+    G_OBJECT_CLASS (firtree_buffer_sampler_parent_class)->dispose (object);
 }
 
 static void
@@ -151,6 +163,7 @@ firtree_buffer_sampler_init (FirtreeBufferSampler *self)
     p->do_interp = FALSE;
     p->cached_function = NULL;
     p->cached_buffer = NULL;
+    p->cached_buffer_len = 0;
 }
 
 FirtreeBufferSampler*
@@ -184,21 +197,35 @@ firtree_buffer_sampler_set_buffer (FirtreeBufferSampler* self,
             guint stride, FirtreeBufferFormat format)
 {
     FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
- 
-    if((p->cached_buffer == buffer) && (p->cached_width == width) &&
-            (p->cached_height == height) && (p->cached_stride == stride) &&
-            (p->cached_format == format)) {
-        /* shortcut the case where nothing has changed. */
-        return;
+
+    guint required_size = height * stride;
+    if(!p->cached_buffer || (required_size != p->cached_buffer_len)) {
+        /* dispose of any cached buffer */
+        if(p->cached_buffer) {
+            g_slice_free1(p->cached_buffer_len, p->cached_buffer);
+            p->cached_buffer = NULL;
+            p->cached_buffer_len = 0;
+        }
+
+        p->cached_buffer_len = required_size;
+        p->cached_buffer = g_slice_alloc(required_size);
+
+        _firtree_buffer_sampler_invalidate_llvm_cache(self);
     }
 
-    p->cached_buffer = buffer;
+    /* Also invalidate if the width/height/stride/format has changed. */
+    if((p->cached_width != width) || (p->cached_height != height) ||
+            (p->cached_stride != stride) || (p->cached_format != format)) {
+        _firtree_buffer_sampler_invalidate_llvm_cache(self);
+    }
+
     p->cached_width = width;
     p->cached_height = height;
     p->cached_stride = stride;
     p->cached_format = format;
 
-    _firtree_buffer_sampler_invalidate_llvm_cache(self);
+    /* copy the data */
+    memcpy(p->cached_buffer, buffer, required_size);
 }
 
 void

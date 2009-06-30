@@ -69,6 +69,8 @@ add_custom_command(
         -fno-math-errno
         -o render-buffer.o
         -c -emit-llvm
+        ${GLIB_CFLAGS}
+        -I "${CMAKE_CURRENT_SOURCE_DIR}/.."
         render-buffer.c
     COMMAND ${LLVM_LINK_EXECUTABLE}
         -f builtins.bc render-buffer.o -o llvm-cpu-support.bc

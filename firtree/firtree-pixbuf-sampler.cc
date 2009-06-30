@@ -257,7 +257,7 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler* self)
     guchar* data = gdk_pixbuf_get_pixels(p->pixbuf);
 
     FirtreeBufferFormat firtree_format =
-        (channels == 3) ? FIRTREE_FORMAT_BGR24 : FIRTREE_FORMAT_ABGR32;
+        (channels == 3) ? FIRTREE_FORMAT_RGB24 : FIRTREE_FORMAT_RGBA32;
 
     llvm::Value* llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
             (uint64_t)width, false);

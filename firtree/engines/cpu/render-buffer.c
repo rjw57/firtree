@@ -3,23 +3,13 @@
  * acually compiled via llvm-gcc. */
 
 #include <stdint.h>
+#include <firtree/firtree-types.h>
 
-typedef enum {
-    FIRTREE_FORMAT_ARGB32					= 0x00, 
-    FIRTREE_FORMAT_ARGB32_PREMULTIPLIED		= 0x01, 
-    FIRTREE_FORMAT_XRGB32					= 0x02, 
-    FIRTREE_FORMAT_ABGR32					= 0x03, 
-    FIRTREE_FORMAT_ABGR32_PREMULTIPLIED		= 0x04, 
-    FIRTREE_FORMAT_XBGR32					= 0x05, 
-    FIRTREE_FORMAT_RGB24					= 0x06,
-    FIRTREE_FORMAT_BGR24					= 0x07,
-
-    FIRTREE_FORMAT_LAST
-} FirtreeEngineBufferFormat;
-
+/* Vector types */
 typedef float vec2 __attribute__ ((vector_size(8)));
 typedef float vec4 __attribute__ ((vector_size(16)));
 
+/* Extract an element from a vector. */
 #define ELEMENT(a,i) (((float*)&(a))[i])
 
 /* this is the function which acually calculates the sampler
@@ -30,55 +20,197 @@ extern vec4 sampler_output(vec2 dest_coord);
 extern vec4 premultiply_v4(vec4);
 extern vec4 unpremultiply_v4(vec4);
 
-/* Convert data packed into 32-bit ints in the format
- * 0xAABBGGRR to/from (r,g,b,a) vectors. */
-static
-vec4 uint32_to_vec_abgr(uint32_t pixel) {
-    float r = (float)(pixel & (0xff)) / 255.f;
-    float g = (float)((pixel>>8) & (0xff)) / 255.f;
-    float b = (float)((pixel>>16) & (0xff)) / 255.f;
-    float a = (float)((pixel>>24) & (0xff)) / 255.f;
-    vec4 rv = { r, g, b, a};
-    return rv;
+/* Unpack a pixel from a memory location into a vector. */
+G_INLINE_FUNC
+vec4 unpack_pixel(void* p, FirtreeBufferFormat format)
+{
+    /* The components */
+    guint8 x=0, y=0, z=0, w=0;
+
+    switch(format) {
+        case FIRTREE_FORMAT_RGB24:
+        case FIRTREE_FORMAT_BGR24:
+            /* 24-bit value */
+            x = ((guint8*)p)[0];
+            y = ((guint8*)p)[1];
+            z = ((guint8*)p)[2];
+            w = 0xff;
+            break;
+
+        default: {
+            /* 32-bit value */
+
+            /* Load the pixel into a uint32 */
+            guint32 pix_val = *((guint32*)p);
+
+#           if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                /* value is 0xWWZZYYXX */
+                x = pix_val & 0xff;
+                y = (pix_val>>8) & 0xff;
+                z = (pix_val>>16) & 0xff;
+                w = (pix_val>>24) & 0xff;
+#           elif G_BYTE_ORDER == G_BIG_ENDIAN
+                /* value is 0xXXYYZZWW */
+                w = pix_val & 0xff;
+                z = (pix_val>>8) & 0xff;
+                y = (pix_val>>16) & 0xff;
+                x = (pix_val>>24) & 0xff;
+#           else
+#               error Unknown endian
+#           endif
+                 }
+    }
+
+    float fx = (float)x * (1.f/255.f);
+    float fy = (float)y * (1.f/255.f);
+    float fz = (float)z * (1.f/255.f);
+    float fw = (float)w * (1.f/255.f);
+
+    switch(format) {
+        case FIRTREE_FORMAT_ARGB32: {
+            vec4 rv = { fy, fz, fw, fx }; /* rgba */
+            return premultiply_v4(rv); }
+        case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED: {
+            vec4 rv = { fy, fz, fw, fx }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_XRGB32: {
+            vec4 rv = { fy, fz, fw, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_RGBA32: {
+            vec4 rv = { fx, fy, fz, fw }; /* rgba */
+            return premultiply_v4(rv); }
+        case FIRTREE_FORMAT_RGBA32_PREMULTIPLIED: {
+            vec4 rv = { fx, fy, fz, fw }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_ABGR32: {
+            vec4 rv = { fw, fz, fy, fx }; /* rgba */
+            return premultiply_v4(rv); }
+        case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED: {
+            vec4 rv = { fw, fz, fy, fx }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_XBGR32: {
+            vec4 rv = { fw, fz, fy, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_BGRA32: {
+            vec4 rv = { fz, fy, fx, fw }; /* rgba */
+            return premultiply_v4(rv); }
+        case FIRTREE_FORMAT_BGRA32_PREMULTIPLIED: {
+            vec4 rv = { fz, fy, fx, fw }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_RGB24: {
+            vec4 rv = { fx, fy, fz, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_BGR24: {
+            vec4 rv = { fz, fy, fx, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_RGBX32: {
+            vec4 rv = { fx, fy, fz, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_BGRX32: {
+            vec4 rv = { fz, fy, fx, 1.f }; /* rgba */
+            return rv; }
+    }
+
+    vec4 zero = {0,0,0,0};
+    return zero;
 }
 
-static
-uint32_t vec_to_uint32_abgr(vec4 pix_val) {
-    uint32_t rv;
-    rv = ((uint32_t)(ELEMENT(pix_val, 0) * 255.f) & 0xff);
-    rv |= ((uint32_t)(ELEMENT(pix_val, 1) * 255.f) & 0xff) << 8;
-    rv |= ((uint32_t)(ELEMENT(pix_val, 2) * 255.f) & 0xff) << 16;
-    rv |= ((uint32_t)(ELEMENT(pix_val, 3) * 255.f) & 0xff) << 24;
-    return rv;
-}
+/* Unpack a pixel from a memory location into a vector. */
+G_INLINE_FUNC
+void pack_pixel(vec4 pixel, void* p, FirtreeBufferFormat format)
+{
+    /* The components */
+    guint8 r=0, g=0, b=0, a=0, pr=0, pg=0, pb=0;
+    pr = (gint)(ELEMENT(pixel, 0) * 255.f) & 0xff;
+    pg = (gint)(ELEMENT(pixel, 1) * 255.f) & 0xff;
+    pb = (gint)(ELEMENT(pixel, 2) * 255.f) & 0xff;
+    r = (gint)((ELEMENT(pixel, 0) / ELEMENT(pixel, 3)) * 255.f) & 0xff;
+    g = (gint)((ELEMENT(pixel, 1) / ELEMENT(pixel, 3)) * 255.f) & 0xff;
+    b = (gint)((ELEMENT(pixel, 2) / ELEMENT(pixel, 3)) * 255.f) & 0xff;
+    a = (gint)(ELEMENT(pixel, 3) * 255.f) & 0xff;
 
-/* Convert data packed into 32-bit ints in the format
- * 0xAARRGGBB to/from (r,g,b,a) vectors. */
-static
-vec4 uint32_to_vec_argb(uint32_t pixel) {
-    float b = (float)(pixel & (0xff)) / 255.f;
-    float g = (float)((pixel>>8) & (0xff)) / 255.f;
-    float r = (float)((pixel>>16) & (0xff)) / 255.f;
-    float a = (float)((pixel>>24) & (0xff)) / 255.f;
-    vec4 rv = { r, g, b, a};
-    return rv;
-}
+    guint8 b1=0, b2=0, b3=0, b4=0;
 
-static
-uint32_t vec_to_uint32_argb(vec4 pix_val) {
-    uint32_t rv;
-    rv = ((uint32_t)(ELEMENT(pix_val, 2) * 255.f) & 0xff);
-    rv |= ((uint32_t)(ELEMENT(pix_val, 1) * 255.f) & 0xff) << 8;
-    rv |= ((uint32_t)(ELEMENT(pix_val, 0) * 255.f) & 0xff) << 16;
-    rv |= ((uint32_t)(ELEMENT(pix_val, 3) * 255.f) & 0xff) << 24;
-    return rv;
+    switch(format) {
+        case FIRTREE_FORMAT_ARGB32:
+        case FIRTREE_FORMAT_XRGB32:
+            b2= r; b3= g; b4= b;
+            break;
+        case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED:
+            b1= a; b2=pr; b3=pg; b4=pb;
+            break;
+        case FIRTREE_FORMAT_RGBA32:
+            b1= r; b2= g; b3= b; b4= a;
+            break;
+        case FIRTREE_FORMAT_RGBA32_PREMULTIPLIED:
+            b1=pr; b2=pg; b3=pb; b4= a;
+            break;
+        case FIRTREE_FORMAT_ABGR32:
+        case FIRTREE_FORMAT_XBGR32:
+            b2= b; b3= g; b4= r;
+            break;
+        case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED:
+            b1= a; b2=pb; b3=pg; b4=pr;
+            break;
+        case FIRTREE_FORMAT_BGRA32:
+            b1= b; b2= g; b3= r; b4= a;
+            break;
+        case FIRTREE_FORMAT_BGRA32_PREMULTIPLIED:
+            b1=pb; b2=pg; b3=pr; b4= a;
+            break;
+        case FIRTREE_FORMAT_RGB24:
+            b1=r; b2=g; b3=b;
+            break;
+        case FIRTREE_FORMAT_BGR24:
+            b1=b; b2=g; b3=r;
+            break;
+        case FIRTREE_FORMAT_RGBX32: 
+            b1=r; b2=g; b3=b;
+            break;
+        case FIRTREE_FORMAT_BGRX32: 
+            b1=b; b2=g; b3=r;
+            break;
+    }
+
+    switch(format) {
+        case FIRTREE_FORMAT_RGB24:
+        case FIRTREE_FORMAT_BGR24:
+            /* 24-bit value */
+            ((guint8*)p)[0] = b1;
+            ((guint8*)p)[1] = b2;
+            ((guint8*)p)[2] = b3;
+            break;
+
+        default: {
+            /* 32-bit value */
+            guint32 pix_val = 0;
+
+#           if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                /* value is 0x44332211 */
+                pix_val = b1;
+                pix_val |= ((guint32)b2)<<8;
+                pix_val |= ((guint32)b3)<<16;
+                pix_val |= ((guint32)b4)<<24;
+#           elif G_BYTE_ORDER == G_BIG_ENDIAN
+                /* value is 0x11223344 */
+                pix_val = b4;
+                pix_val |= ((guint32)b3)<<8;
+                pix_val |= ((guint32)b2)<<16;
+                pix_val |= ((guint32)b1)<<24;
+#           else
+#               error Unknown endian
+#           endif
+
+            /* Load the pixel into a uint32 */
+            *((guint32*)p) = pix_val;
+                 }
+    }
 }
 
 /* Image buffer sampler functions */
-
-#define START_SAMPLE_FUNCTION(name, pix_size)                           \
-static                                                                  \
-vec4 name(uint8_t* buffer,                                              \
+#define SAMPLE_FUNCTION(pix_size, format)                               \
+G_INLINE_FUNC                                                           \
+vec4 sample_##format(uint8_t* buffer,                                   \
         unsigned int width, unsigned int height, unsigned int stride,   \
         vec2 location)                                                  \
 {                                                                       \
@@ -90,90 +222,77 @@ vec4 name(uint8_t* buffer,                                              \
     if((x < 0) || (x >= width)) { return rv; }                          \
     if((y < 0) || (y >= height)) { return rv; }                         \
     uint8_t* pixel = buffer + (x * pix_size) + (y * stride);            \
-    vec4 pixel_vec = { 0, 0, 0, 0 };
-
-#define END_SAMPLE_FUNCTION                                             \
+    vec4 pixel_vec = { 0, 0, 0, 0 };                                    \
+    pixel_vec = unpack_pixel(pixel, format);                            \
     return pixel_vec;                                                   \
 }  
 
-START_SAMPLE_FUNCTION(sample_image_buffer_argb32, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_vec = premultiply_v4(uint32_to_vec_argb(pixel_val));
-} END_SAMPLE_FUNCTION
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ARGB32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ARGB32_PREMULTIPLIED)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_XRGB32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_RGBA32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_RGBA32_PREMULTIPLIED)
 
-START_SAMPLE_FUNCTION(sample_image_buffer_argb32_pre, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_vec = uint32_to_vec_argb(pixel_val);
-} END_SAMPLE_FUNCTION
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ABGR32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ABGR32_PREMULTIPLIED)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_XBGR32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_BGRA32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_BGRA32_PREMULTIPLIED)
 
-START_SAMPLE_FUNCTION(sample_image_buffer_xrgb32, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_val |= 0xff000000;
-    pixel_vec = uint32_to_vec_argb(pixel_val);
-} END_SAMPLE_FUNCTION
+SAMPLE_FUNCTION(3, FIRTREE_FORMAT_RGB24)
+SAMPLE_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 
-START_SAMPLE_FUNCTION(sample_image_buffer_abgr32, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_vec = premultiply_v4(uint32_to_vec_abgr(pixel_val));
-} END_SAMPLE_FUNCTION
-
-START_SAMPLE_FUNCTION(sample_image_buffer_abgr32_pre, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_vec = uint32_to_vec_abgr(pixel_val);
-} END_SAMPLE_FUNCTION
-
-START_SAMPLE_FUNCTION(sample_image_buffer_xbgr32, 4) {
-    uint32_t pixel_val = *((uint32_t*)pixel);
-    pixel_val |= 0xff000000;
-    pixel_vec = uint32_to_vec_abgr(pixel_val);
-} END_SAMPLE_FUNCTION
-
-START_SAMPLE_FUNCTION(sample_image_buffer_rgb24, 3) {
-    uint32_t pixel_val = pixel[0];
-    pixel_val |= pixel[1] << 8;
-    pixel_val |= pixel[2] << 16;
-    pixel_val |= 0xff << 24;
-    pixel_vec = uint32_to_vec_argb(pixel_val);
-} END_SAMPLE_FUNCTION
-
-START_SAMPLE_FUNCTION(sample_image_buffer_bgr24, 3) {
-    uint32_t pixel_val = pixel[0];
-    pixel_val |= pixel[1] << 8;
-    pixel_val |= pixel[2] << 16;
-    pixel_val |= 0xff << 24;
-    pixel_vec = uint32_to_vec_abgr(pixel_val);
-} END_SAMPLE_FUNCTION
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
+SAMPLE_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
 vec4 sample_image_buffer_nn(uint8_t* buffer,
-        FirtreeEngineBufferFormat format, 
+        FirtreeBufferFormat format, 
         unsigned int width, unsigned int height, unsigned int stride,
         vec2 location)
 {
     vec4 default_rv = { 1, 0, 0, 1 };
     switch(format) {
         case FIRTREE_FORMAT_ARGB32:
-            return sample_image_buffer_argb32(buffer, 
+            return sample_FIRTREE_FORMAT_ARGB32(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED:
-            return sample_image_buffer_argb32_pre(buffer, 
+            return sample_FIRTREE_FORMAT_ARGB32_PREMULTIPLIED(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_XRGB32:
-            return sample_image_buffer_xrgb32(buffer, 
+            return sample_FIRTREE_FORMAT_XRGB32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_RGBA32:
+            return sample_FIRTREE_FORMAT_RGBA32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_RGBA32_PREMULTIPLIED:
+            return sample_FIRTREE_FORMAT_RGBA32_PREMULTIPLIED(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_ABGR32:
-            return sample_image_buffer_abgr32(buffer, 
+            return sample_FIRTREE_FORMAT_ABGR32(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED:
-            return sample_image_buffer_abgr32_pre(buffer, 
+            return sample_FIRTREE_FORMAT_ABGR32_PREMULTIPLIED(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_XBGR32:
-            return sample_image_buffer_xbgr32(buffer, 
+            return sample_FIRTREE_FORMAT_XBGR32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_BGRA32:
+            return sample_FIRTREE_FORMAT_BGRA32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_BGRA32_PREMULTIPLIED:
+            return sample_FIRTREE_FORMAT_BGRA32_PREMULTIPLIED(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGB24:
-            return sample_image_buffer_rgb24(buffer, 
+            return sample_FIRTREE_FORMAT_RGB24(buffer, 
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGR24:
-            return sample_image_buffer_bgr24(buffer, 
+            return sample_FIRTREE_FORMAT_BGR24(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_RGBX32:
+            return sample_FIRTREE_FORMAT_RGBX32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_BGRX32:
+            return sample_FIRTREE_FORMAT_BGRX32(buffer, 
                     width, height, stride, location);
         default:
             /* do nothing */
@@ -183,7 +302,7 @@ vec4 sample_image_buffer_nn(uint8_t* buffer,
 }
 
 vec4 sample_image_buffer_lerp(uint8_t* buffer,
-        FirtreeEngineBufferFormat format, 
+        FirtreeBufferFormat format, 
         unsigned int width, unsigned int height, unsigned int stride,
         vec2 location)
 {
@@ -228,134 +347,51 @@ vec4 sample_image_buffer_lerp(uint8_t* buffer,
 }
 
 /* Macros to make writing rendering functions easier */
-#define START_RENDER_FUNCTION(name, pix_size) \
-    void name(unsigned char* buffer,    \
-        unsigned int width, unsigned int height,    \
-        unsigned int row_stride, float* extents)    \
-    {    \
-        unsigned int row, col;    \
-        float start_x = extents[0];    \
-        float y = extents[1];    \
-        float dx = extents[2] / (float)width;    \
-        float dy = extents[3] / (float)height;    \
-        start_x += 0.5f*dx; y += 0.5f*dy; \
-    \
-        for(row=0; row<height; ++row, y+=dy) {    \
-            unsigned char* pixel = buffer + (row * row_stride);    \
-            float x = start_x;    \
-            for(col=0; col<width; ++col, pixel+=pix_size, x+=dx) {
+#define RENDER_FUNCTION(pix_size, format)                               \
+void render_##format(unsigned char* buffer,                             \
+        unsigned int width, unsigned int height,                        \
+        unsigned int row_stride, float* extents)                        \
+{                                                                       \
+    unsigned int row, col;                                              \
+    float start_x = extents[0];                                         \
+    float y = extents[1];                                               \
+    float dx = extents[2] / (float)width;                               \
+    float dy = extents[3] / (float)height;                              \
+    start_x += 0.5f*dx; y += 0.5f*dy;                                   \
+    for(row=0; row<height; ++row, y+=dy) {                              \
+        unsigned char* pixel = buffer + (row * row_stride);             \
+        float x = start_x;                                              \
+        for(col=0; col<width; ++col, pixel+=pix_size, x+=dx) {          \
+            vec4 in_vec = unpack_pixel(pixel, format);                  \
+            vec2 dest_coord = {x, y};                                   \
+            vec4 sample_vec = sampler_output(dest_coord);               \
+            float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);       \
+            vec4 one_minus_alpha_vec = {                                \
+                one_minus_alpha, one_minus_alpha,                       \
+                one_minus_alpha, one_minus_alpha };                     \
+            vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;   \
+            pack_pixel(out_vec, pixel, format);                         \
+        }                                                               \
+    }                                                                   \
+}                                                                       \
 
-#define END_RENDER_FUNCTION } } }
+RENDER_FUNCTION(4, FIRTREE_FORMAT_ARGB32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_ARGB32_PREMULTIPLIED)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_XRGB32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBA32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBA32_PREMULTIPLIED)
 
-START_RENDER_FUNCTION(render_buffer_32_abgr_pre, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    vec4 in_vec = uint32_to_vec_abgr(in_val);
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_abgr(out_vec);
-} END_RENDER_FUNCTION
+RENDER_FUNCTION(4, FIRTREE_FORMAT_ABGR32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_ABGR32_PREMULTIPLIED)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_XBGR32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRA32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRA32_PREMULTIPLIED)
 
-START_RENDER_FUNCTION(render_buffer_32_abgr_non, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    vec4 in_vec = premultiply_v4(uint32_to_vec_abgr(in_val));
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_abgr(unpremultiply_v4(out_vec));
-} END_RENDER_FUNCTION
+RENDER_FUNCTION(3, FIRTREE_FORMAT_RGB24)
+RENDER_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 
-START_RENDER_FUNCTION(render_buffer_32_abgr_ign, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    in_val |= (0xff << 24);
-    vec4 in_vec = premultiply_v4(uint32_to_vec_abgr(in_val));
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_abgr(unpremultiply_v4(out_vec));
-} END_RENDER_FUNCTION
-
-START_RENDER_FUNCTION(render_buffer_32_argb_pre, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    vec4 in_vec = uint32_to_vec_argb(in_val);
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_argb(out_vec);
-} END_RENDER_FUNCTION
-
-START_RENDER_FUNCTION(render_buffer_32_argb_non, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    vec4 in_vec = premultiply_v4(uint32_to_vec_argb(in_val));
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_argb(unpremultiply_v4(out_vec));
-} END_RENDER_FUNCTION
-
-START_RENDER_FUNCTION(render_buffer_32_argb_ign, 4) {
-    uint32_t in_val = *((uint32_t*)pixel);
-    in_val |= (0xff << 24);
-    vec4 in_vec = premultiply_v4(uint32_to_vec_argb(in_val));
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    *((uint32_t*)pixel) = vec_to_uint32_argb(unpremultiply_v4(out_vec));
-} END_RENDER_FUNCTION
-
-START_RENDER_FUNCTION(render_buffer_24_bgr, 3) {
-    uint32_t in_val = pixel[0];
-    in_val |= pixel[1] << 8;
-    in_val |= pixel[2] << 16;
-    in_val |= 0xff << 24;
-    vec4 in_vec = uint32_to_vec_abgr(in_val);
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    uint32_t pix_val = vec_to_uint32_abgr(unpremultiply_v4(out_vec));
-    pixel[0] = (pix_val) & 0xff;
-    pixel[1] = (pix_val>>8) & 0xff;
-    pixel[2] = (pix_val>>16) & 0xff;
-} END_RENDER_FUNCTION
-
-START_RENDER_FUNCTION(render_buffer_24_rgb, 3) {
-    uint32_t in_val = pixel[0];
-    in_val |= pixel[1] << 8;
-    in_val |= pixel[2] << 16;
-    in_val |= 0xff << 24;
-    vec4 in_vec = uint32_to_vec_argb(in_val);
-    vec2 dest_coord = {x, y};
-    vec4 sample_vec = sampler_output(dest_coord);
-    float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);
-    vec4 one_minus_alpha_vec = {
-        one_minus_alpha, one_minus_alpha, one_minus_alpha, one_minus_alpha };
-    vec4 out_vec = sample_vec + one_minus_alpha_vec * in_vec;
-    uint32_t pix_val = vec_to_uint32_argb(unpremultiply_v4(out_vec));
-    pixel[0] = (pix_val) & 0xff;
-    pixel[1] = (pix_val>>8) & 0xff;
-    pixel[2] = (pix_val>>16) & 0xff;
-} END_RENDER_FUNCTION
+RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
+RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
 /* vim:sw=4:ts=4:cindent:et
  */

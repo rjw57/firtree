@@ -289,22 +289,22 @@ firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
 
     switch(format) {
         case COGL_PIXEL_FORMAT_BGRA_8888:
-            firtree_format = FIRTREE_FORMAT_ARGB32;
+            firtree_format = FIRTREE_FORMAT_BGRA32;
             break;
         case COGL_PIXEL_FORMAT_BGRA_8888_PRE:
-            firtree_format = FIRTREE_FORMAT_ARGB32_PREMULTIPLIED;
+            firtree_format = FIRTREE_FORMAT_BGRA32_PREMULTIPLIED;
             break;
         case COGL_PIXEL_FORMAT_RGBA_8888:
-            firtree_format = FIRTREE_FORMAT_ABGR32;
+            firtree_format = FIRTREE_FORMAT_RGBA32;
             break;
         case COGL_PIXEL_FORMAT_RGBA_8888_PRE:
-            firtree_format = FIRTREE_FORMAT_ABGR32_PREMULTIPLIED;
+            firtree_format = FIRTREE_FORMAT_RGBA32_PREMULTIPLIED;
             break;
         case COGL_PIXEL_FORMAT_RGB_888:
-            firtree_format = FIRTREE_FORMAT_BGR24;
+            firtree_format = FIRTREE_FORMAT_RGB24;
             break;
         case COGL_PIXEL_FORMAT_BGR_888:
-            firtree_format = FIRTREE_FORMAT_RGB24;
+            firtree_format = FIRTREE_FORMAT_BGR24;
             break;
         default:
             g_debug("Warning, converting Cogl texture format from %i. May be slow.",

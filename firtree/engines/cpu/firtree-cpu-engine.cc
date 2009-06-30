@@ -68,16 +68,23 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 
 /* Indexed by FirtreeBufferFormat */
 const char* _function_names[] = {
-    "render_buffer_32_argb_non",
-    "render_buffer_32_argb_pre",
-    "render_buffer_32_argb_ign",
+    "render_FIRTREE_FORMAT_ARGB32",
+    "render_FIRTREE_FORMAT_ARGB32_PREMULTIPLIED",
+    "render_FIRTREE_FORMAT_XRGB32",
+    "render_FIRTREE_FORMAT_RGBA32",
+    "render_FIRTREE_FORMAT_RGBA32_PREMULTIPLIED",
 
-    "render_buffer_32_abgr_non",
-    "render_buffer_32_abgr_pre",
-    "render_buffer_32_abgr_ign",
+    "render_FIRTREE_FORMAT_ABGR32",
+    "render_FIRTREE_FORMAT_ABGR32_PREMULTIPLIED",
+    "render_FIRTREE_FORMAT_XBGR32",
+    "render_FIRTREE_FORMAT_BGRA32",
+    "render_FIRTREE_FORMAT_BGRA32_PREMULTIPLIED",
 
-    "render_buffer_24_rgb",
-    "render_buffer_24_bgr",
+    "render_FIRTREE_FORMAT_RGB24",
+    "render_FIRTREE_FORMAT_BGR24",
+
+    "render_FIRTREE_FORMAT_RGBX32",
+    "render_FIRTREE_FORMAT_BGRX32",
 
     NULL,
 };
@@ -732,11 +739,11 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
     if(gdk_pixbuf_get_has_alpha(pixbuf)) {
         /* GdkPixbufs use non-premultiplied alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                RENDER_FUNC_NAME(FIRTREE_FORMAT_ABGR32));
+                RENDER_FUNC_NAME(FIRTREE_FORMAT_RGBA32));
     } else {
         /* Use the render function optimised for ignored alpha. */
         render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                RENDER_FUNC_NAME(FIRTREE_FORMAT_BGR24));
+                RENDER_FUNC_NAME(FIRTREE_FORMAT_RGB24));
     }
 
     if(!render) {
@@ -773,11 +780,11 @@ firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
     switch(format) {
         case CAIRO_FORMAT_ARGB32:
             render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                    RENDER_FUNC_NAME(FIRTREE_FORMAT_ARGB32_PREMULTIPLIED));
+                    RENDER_FUNC_NAME(FIRTREE_FORMAT_BGRA32_PREMULTIPLIED));
             break;
         case CAIRO_FORMAT_RGB24:
             render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
-                    RENDER_FUNC_NAME(FIRTREE_FORMAT_XRGB32));
+                    RENDER_FUNC_NAME(FIRTREE_FORMAT_BGRX32));
             break;
         default:
             g_debug("Invalid Cairo format.");

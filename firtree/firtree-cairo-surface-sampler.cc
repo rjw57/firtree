@@ -244,10 +244,10 @@ _firtree_cairo_surface_sampler_create_sample_function(FirtreeCairoSurfaceSampler
     FirtreeBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
     switch(format) {
         case CAIRO_FORMAT_ARGB32:
-            firtree_format = FIRTREE_FORMAT_ARGB32_PREMULTIPLIED;
+            firtree_format = FIRTREE_FORMAT_BGRA32_PREMULTIPLIED;
             break;
         case CAIRO_FORMAT_RGB24:
-            firtree_format = FIRTREE_FORMAT_XRGB32;
+            firtree_format = FIRTREE_FORMAT_XBGR32;
             break;
         default:
             g_debug("Unsupported Cairo image format.");

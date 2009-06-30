@@ -32,6 +32,24 @@
  *
  * A FirtreeSampler is the object assigned to sampler arguments on Firtree
  * kernels to specify image sources and a pixel pipeline.
+ *
+ * There are a number of sub-classes of FirtreeSampler who know how to sample from
+ * image buffers, textures, etc.
+ *
+ * A sampler has associated a set of extents which define the rectangle outside of
+ * which the sampler is guaranteed to return a transparent pixel. The extents are
+ * defined in *sampler co-ordinates*.
+ *
+ * The sampler co-ordinate is the result of applying the sampler transform to a 
+ * world co-ordinate.
+ *
+ * A sampler should emit a signal when the extents change and when the transform 
+ * changes.
+ *
+ * In addition to the signals described above, a sampler will emit a ::module-changed
+ * signal when the internal LLVM function which describes it has changed. It will
+ * emit a ::contents-changed signal when the contents of the sampler have changed and
+ * should be re-rendered by interested parties.
  */
 
 G_BEGIN_DECLS

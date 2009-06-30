@@ -29,6 +29,16 @@
  *
  * A FirtreeKernel encapsulates a kernel compiled from source code in the
  * Firtree kernel language.
+ *
+ * A kernel monitors the arguments connected to it and emits an ::argument-changed
+ * signal when their value alters. This is most useful for updating GUIs. For
+ * re-rendering pipelines, one is better off making use of the ::module-changed and
+ * ::contents-changed signals. The former is emitted when the LLVM code underlying
+ * the kernel has changed and is of most use to JIT-based render engines. The
+ * ::contents-changed signal is emitted when an argument has changed which
+ * necessitates a re-render but not a change in the LLVM module. This is different
+ * to the ::argument-changed signal in that the Kernel also aggregates any 
+ * ::contents-changed signals from samplers connected to it.
  */
 
 G_BEGIN_DECLS

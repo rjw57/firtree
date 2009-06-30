@@ -19,8 +19,8 @@ set(FIRTREE_VERSION_MINOR "1")
 set(FIRTREE_VERSION_PATCH "0")
 set(FIRTREE_VERSION "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}")
 
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -pthread)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -pthread)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 # Add the root source dir as an include dir
 include_directories("${CMAKE_SOURCE_DIR}")

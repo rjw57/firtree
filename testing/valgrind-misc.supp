@@ -1,0 +1,85 @@
+# A miscellaneous set of suppressions to deal with any leaks that aren't the fault
+# of firtree or are spurious.
+
+{
+   The annoying g_type_init() problem
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   ...
+   fun:g_type_init
+}
+
+{
+   Some long-lived structure allocated in the Python GC.
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyObject_GC_NewVar
+}
+
+{
+   LLVM seems leaky here...
+   Memcheck:Leak
+   ...
+   fun:*getTypeDescription*
+}
+
+{
+   import_array seems to cause this
+   Memcheck:Leak
+   fun:malloc
+   fun:PyString_FromStringAndSize
+   ...
+   fun:PyImport_ImportModuleLevel
+}
+
+{
+   gdk_display_open keeps some long-lived structure around
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:gdk_display_open
+}
+
+{
+   g_get_home_dir keeps a cache
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:g_get_home_dir
+}
+
+{
+   LLVM leaks here
+   Memcheck:Leak
+   ...
+   fun:*getConstantPool*
+}
+
+{
+   LLVM's optimisation passes are leaky as sh*t.
+   Memcheck:Addr1
+   ...
+   fun:*createInternalizePass*
+}
+
+{ 
+   libGL is leaky as poo
+   Memcheck:Leak
+   ...
+   obj:*/libGL.so.*
+}
+
+{ 
+   The bane of my life...
+   Memcheck:Leak
+   ...
+   obj:*/libselinux.so.*
+}
+
+{ 
+   The bane of my pt 2...
+   Memcheck:Addr4
+   ...
+   obj:*/libselinux.so.*
+}

@@ -1,6 +1,0 @@
-export TZ=America/Los_Angeles
-date=$(date +"%Y-%m-%d %H:%M:%S %z" | sed 's/..$/:&/')
-nodate="YYYY-YY-YY YY:YY:YY *YY:YY"
-../test-harness @/WORK/selcal
-sed "s/^$date/$nodate/" </WORK/selcal >/WORK/selall
-rm /WORK/selcal

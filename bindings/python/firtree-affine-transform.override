@@ -1,0 +1,102 @@
+%%
+override firtree_affine_transform_transform_point kwargs
+static PyObject* 
+_wrap_firtree_affine_transform_transform_point(PyGObject* self, PyObject *args, PyObject* kwargs)
+{
+    static char *kwlist[] = { "x", "y", NULL };
+    float x, y;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "ff:FirtreeAffineTransform.transform_point", kwlist, 
+                &x, &y))
+        return NULL;
+
+    FirtreeVec2 result = firtree_affine_transform_transform_point(
+            FIRTREE_AFFINE_TRANSFORM(self->obj), x, y);
+
+    GValue result_val = {0,};
+    g_value_init(&result_val, FIRTREE_TYPE_VEC2);
+    g_value_set_boxed(&result_val, &result);
+    PyObject* rv = _from_vec2(&result_val);
+    g_value_unset(&result_val);
+
+    return rv;
+}
+%%
+override firtree_affine_transform_transform_size kwargs
+static PyObject* 
+_wrap_firtree_affine_transform_transform_size(PyGObject* self, PyObject *args,  PyObject* kwargs)
+{
+    static char *kwlist[] = { "width", "height", NULL };
+    float w, h;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "ff:FirtreeAffineTransform.transform_size", kwlist, 
+                &w, &h))
+        return NULL;
+
+    FirtreeVec2 result = firtree_affine_transform_transform_size(
+            FIRTREE_AFFINE_TRANSFORM(self->obj), w, h);
+
+    GValue result_val = {0,};
+    g_value_init(&result_val, FIRTREE_TYPE_VEC2);
+    g_value_set_boxed(&result_val, &result);
+    PyObject* rv = _from_vec2(&result_val);
+    g_value_unset(&result_val);
+
+    return rv;
+}
+%%
+override firtree_affine_transform_get_elements
+static PyObject* 
+_wrap_firtree_affine_transform_get_elements(PyGObject* self, PyObject *args)
+{
+    /* We expect no parameters */
+    if(!PyArg_ParseTuple(args, ":AffineTransform.get_elements"))
+    {
+        return NULL;
+    }
+
+    float m11, m12, m21, m22, tx, ty;
+
+    firtree_affine_transform_get_elements(FIRTREE_AFFINE_TRANSFORM(self->obj),
+            &m11, &m12, &m21, &m22, &tx, &ty);
+
+    PyObject* element_tuple = PyTuple_New(6);
+    if(NULL == element_tuple) {
+        return NULL;
+    }
+
+    PyTuple_SET_ITEM(element_tuple, 0, PyFloat_FromDouble(m11));
+    PyTuple_SET_ITEM(element_tuple, 1, PyFloat_FromDouble(m12));
+    PyTuple_SET_ITEM(element_tuple, 2, PyFloat_FromDouble(m21));
+    PyTuple_SET_ITEM(element_tuple, 3, PyFloat_FromDouble(m22));
+    PyTuple_SET_ITEM(element_tuple, 4, PyFloat_FromDouble(tx));
+    PyTuple_SET_ITEM(element_tuple, 5, PyFloat_FromDouble(ty));
+
+    return element_tuple;
+}
+%%
+override firtree_affine_transform_clone
+static PyObject *
+_wrap_firtree_affine_transform_clone(PyGObject *self)
+{
+    FirtreeAffineTransform *ret;
+
+    /* This needs overriding to correctly unref the return value after
+     * we've passed it to pygobject_new(). */
+    
+    ret = firtree_affine_transform_clone(FIRTREE_AFFINE_TRANSFORM(self->obj));
+    
+    /* pygobject_new handles NULL checking */
+    PyObject* new_obj = pygobject_new((GObject *)ret);
+
+    if(ret) {
+        g_object_unref(ret);
+    }
+
+    return new_obj;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

@@ -1,131 +1,189 @@
 # CMake project file for firtree
 #
-# Copyright (C) 2007, 2008 Rich Wareham <richwareham@gmail.com>
+# Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
 #
 # See LICENSE file for distribution rights.
 
-# This file builds the main Firtree library.
+set(LLVM_CONFIG_COMPONENTS core 
+    codegen linker bitreader
+    jit native)
 
-# Find required libraries.
-FIND_PACKAGE(OpenGL)
-FIND_PACKAGE(OSMesa)
-FIND_PACKAGE(GLUT)
-FIND_PACKAGE(Magick++)
+find_package(LLVM)
+find_package(PythonInterp)
 
-SET(FIRTREE_TARGET_LIBRARIES "")
-SET(FIRTREE_TARGET_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
+find_program(LLVM_GCC_EXECUTABLE llvm-gcc)
 
-IF (OPENGL_LIBRARIES)
-    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${OPENGL_LIBRARIES})
-    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${OPENGL_INCLUDE_DIR})
-    SET(FIRTREE_HAVE_OPENGL 1)
-ELSE(OPENGL_LIBRARIES)
-    MESSAGE(SEND_ERROR "OpenGL is required to build FIRTREE.")
-    SET(FIRTREE_HAVE_OPENGL 0)
-ENDIF (OPENGL_LIBRARIES)
+find_program(GLIB_MKENUMS glib-mkenums PATHS "${GLIB_PREFIX}/bin")
 
-IF(GLUT_FOUND)
-    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${GLUT_LIBRARIES})
-    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${GLUT_INCLUDE_DIR})
-    SET(FIRTREE_HAVE_GLUT 1)
-ELSE(GLUT_FOUND)
-    MESSAGE(SEND_ERROR "GLUT is required to build FIRTREE.")
-    SET(FIRTREE_HAVE_GLUT 0)
-ENDIF(GLUT_FOUND)
+if(NOT GLIB_MKENUMS)
+	message(SEND_ERROR "Could not find glib-mkenums which is required for firtree.")
+endif(NOT GLIB_MKENUMS)
 
-# OSMesa can be installed with Apple's X11 but doesn't play nice with the OpenGL Framework.
-IF(OSMESA_FOUND AND NOT APPLE)
-    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${OSMESA_LIBRARIES})
-    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${OSMESA_INCLUDE_DIR})
-    SET(FIRTREE_HAVE_OSMESA 1)
-ELSE(OSMESA_FOUND AND NOT APPLE)
-    MESSAGE(STATUS "OSMesa is not found. Software-only rendering is disabled.")
-    SET(FIRTREE_HAVE_OSMESA 0)
-ENDIF(OSMESA_FOUND AND NOT APPLE)
+if(NOT LLVM_GCC_EXECUTABLE)
+    message(SEND_ERROR "llvm-gcc not found.")
+endif(NOT LLVM_GCC_EXECUTABLE)
 
-IF(MAGICKPP_FOUND)
-    SET(FIRTREE_TARGET_LIBRARIES ${FIRTREE_TARGET_LIBRARIES} ${MAGICKPP_LIBRARIES})
-    SET(FIRTREE_TARGET_INCLUDES ${FIRTREE_TARGET_INCLUDES} ${MAGICKPP_INCLUDE_DIR})
-ELSE(MAGICKPP_FOUND)
-    MESSAGE(SEND_ERROR "The ImageMagick libraries are required to build this example.")
-ENDIF(MAGICKPP_FOUND)
+if(NOT PYTHONINTERP_FOUND)
+    message(SEND_ERROR "Python interpreter not found.")
+endif(NOT PYTHONINTERP_FOUND)
 
-INCLUDE_DIRECTORIES(
-	${FIRTREE_TARGET_INCLUDES}
-	"${CMAKE_CURRENT_SOURCE_DIR}/../"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../third-party/"
-)
+include_directories(${LLVM_INCLUDE_DIRS})
 
-# Set platform-specific variables
-IF(APPLE)
-        SET(FIRTREE_APPLE 1)
-ENDIF(APPLE)
-IF(UNIX)
-        SET(FIRTREE_UNIX 1)
-ENDIF(UNIX)
-IF(WIN32)
-        SET(FIRTREE_WIN32 1)
-ENDIF(WIN32)
-IF(CYGWIN)
-        SET(FIRTREE_CYGWIN 1)
-ENDIF(CYGWIN)
+if(NOT APPLE)
+    find_package(PkgConfig)
+    pkg_check_modules(CAIRO cairo)
+    pkg_check_modules(CLUTTER clutter-0.8)
+endif(NOT APPLE)
 
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
-    CONFIGURE_FILE(
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h"
-        @ONLY)
-ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/firtree/platform.h.in")
+set(ENGINE_EXTRA_LIBS "")
 
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
-    CONFIGURE_FILE(
-        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc"
-        @ONLY)
-ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
-INSTALL(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig)
+set(FIRTREE_HAVE_CAIRO 0)
+if(CAIRO_FOUND)
+    set(FIRTREE_HAVE_CAIRO 1)
+    include_directories(${CAIRO_INCLUDE_DIRS})
+    set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${CAIRO_LIBRARIES})
+endif(CAIRO_FOUND)
 
-SET(FIRTREE_HEADERS
-	include/firtree/main.h		include/firtree/platform.h	include/firtree/opengl.h
-	include/firtree/blob.h		include/firtree/math.h		include/firtree/kernel.h
-	include/firtree/image.h		include/firtree/glsl-runtime.h
-)
+set(FIRTREE_HAVE_CLUTTER 0)
+if(CLUTTER_FOUND)
+    set(FIRTREE_HAVE_CLUTTER 1)
+    include_directories(${CLUTTER_INCLUDE_DIRS})
+    set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${CLUTTER_LIBRARIES})
+endif(CLUTTER_FOUND)
 
-SET(FIRTREE_SOURCES
-	${FIRTREE_HEADERS}
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h"
+    @ONLY)
 
-	internal/image-int.h
-	internal/lru-cache.h
-	internal/render-to-texture.h
-	internal/pbuffer.h
+add_custom_command(
+    OUTPUT 
+        engines/cpu/llvm-cpu-support.bc.h
+        engines/cpu/llvm-cpu-support.opt.bc
+        engines/cpu/llvm-cpu-support.bc
+        engines/cpu/render-buffer.o
+        engines/cpu/builtins.bc
+    COMMAND ${LLVM_AS_EXECUTABLE}
+        -f builtins.ll -o builtins.bc
+    COMMAND ${LLVM_GCC_EXECUTABLE} 
+        -fno-math-errno
+        -o render-buffer.o
+        -c -emit-llvm
+        ${GLIB_CFLAGS}
+        -I "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        render-buffer.c
+    COMMAND ${LLVM_LINK_EXECUTABLE}
+        -f builtins.bc render-buffer.o -o llvm-cpu-support.bc
+    COMMAND ${LLVM_OPT_EXECUTABLE} 
+        -f -std-compile-opts -o llvm-cpu-support.opt.bc llvm-cpu-support.bc
+    COMMAND ${PYTHON_EXECUTABLE} ../../../tools/bin2h.py
+        llvm-cpu-support.opt.bc llvm-cpu-support.bc.h
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/engines/cpu
+    DEPENDS
+        engines/cpu/builtins.ll
+        engines/cpu/render-buffer.c)
 
-	runtime/glsl/sha1.h
-	runtime/glsl/glsl-runtime.cpp	runtime/glsl/sha1.c
+set(_firtree_public_headers 
+    firtree-affine-transform.h
+    firtree-buffer-sampler.h
+    firtree-cairo-surface-sampler.h
+    firtree-cogl-texture-sampler.h
+    firtree-debug.h
+    firtree-kernel.h
+    firtree-kernel-sampler.h
+    firtree-pixbuf-sampler.h
+    firtree-sampler.h
+    firtree-types.h
+    firtree-vector.h
+    firtree.h)
+    
+add_custom_command(OUTPUT firtree-type-builtins.h firtree-type-builtins.c
+	COMMAND ${GLIB_MKENUMS} 
+		--template firtree-type-builtins.h.template 
+		${_firtree_public_headers} > firtree-type-builtins.h
+	COMMAND ${GLIB_MKENUMS} 
+		--template firtree-type-builtins.c.template
+		${_firtree_public_headers} > firtree-type-builtins.c
+	DEPENDS 
+		${_firtree_public_headers}
+		firtree-type-builtins.h.template 
+		firtree-type-builtins.c.template
+	VERBATIM)
 
-	main.cpp		math.cpp		blob.cpp
-	kernel.cpp		image.cpp
+add_library(firtree SHARED
+    ${_firtree_public_headers}
+    
+    firtree-type-builtins.h
+    firtree-type-builtins.c
 
-	image-int.cpp		render-to-texture.cpp	pbuffer.cpp
-)
+    engines/cpu/firtree-cpu-engine.h
 
-ADD_LIBRARY(firtree SHARED ${FIRTREE_SOURCES})
+    firtree-affine-transform.c
+    firtree-buffer-sampler.cc
+    firtree-cairo-surface-sampler.cc
+    firtree-cogl-texture-sampler.cc
+    firtree-debug.cc
+    firtree-kernel.cc
+    firtree-kernel-sampler.cc
+    firtree-pixbuf-sampler.cc
+    firtree-sampler.cc
+    firtree-vector.c
 
-TARGET_LINK_LIBRARIES(firtree 
-	selog
-	${FIRTREE_TARGET_LIBRARIES}
-	compiler glslang frontend irbackend glslbackend)
+    firtree-engine.cc
 
-# Set the version and soversion properties for Firtree
-# so that library versioning works.
-SET_TARGET_PROPERTIES(firtree PROPERTIES
-	VERSION "${FIRTREE_VERSION}"
-	SOVERSION "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}")
+    internal/firtree-cogl-texture-sampler-intl.hh
+    internal/firtree-engine-intl.hh
+    internal/firtree-kernel-intl.hh
+    internal/firtree-sampler-intl.hh
+
+    # CPU rendering library
+    engines/cpu/llvm-cpu-support.bc.h
+    engines/cpu/firtree-cpu-engine.cc
+
+    ${LLVM_STATIC_OBJS})
+    
+set_source_files_properties(
+    engines/cpu/llvm-cpu-support.bc.h
+    engines/cpu/firtree-cpu-engine.h
+    firtree-type-builtins.h
+    firtree-type-builtins.c
+    PROPERTIES GENERATED TRUE)
+
+# set the library version.
+set_target_properties(firtree 
+    PROPERTIES
+    VERSION 
+        "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
+    SOVERSION 
+        "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
+    )
+
+target_link_libraries(firtree
+    common llvm-frontend 
+    ${GLIB_LIBRARIES}
+    ${ENGINE_EXTRA_LIBS}
+    ${LLVM_STATIC_LIBS})
 
 # The magic runes required to install a library.
-INSTALL(TARGETS firtree
+install(TARGETS firtree
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-INSTALL(FILES ${FIRTREE_HEADERS} DESTINATION include/firtree)
+# Install the public headers
+install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION include/firtree)
+install(FILES engines/cpu/firtree-cpu-engine.h DESTINATION include/firtree/engines/cpu)
+
+# Update the firtree pkg-config file
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc"
+        @ONLY)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig)
+
+# vim:sw=4:ts=4:autoindent:et
+

@@ -1,0 +1,687 @@
+
+;; From firtree-cpu-engine.h
+
+(define-function cpu_engine_get_type
+  (c-name "firtree_cpu_engine_get_type")
+  (return-type "GType")
+)
+
+(define-function cpu_engine_new
+  (c-name "firtree_cpu_engine_new")
+  (is-constructor-of "FirtreeCpuEngine")
+  (return-type "FirtreeCpuEngine*")
+)
+
+(define-method render_into_pixbuf
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_pixbuf")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-method render_into_cairo_surface
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_cairo_surface")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("cairo_surface_t*" "surface")
+  )
+)
+
+(define-method set_sampler
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_set_sampler")
+  (return-type "none")
+  (parameters
+    '("FirtreeSampler*" "sampler")
+  )
+)
+
+(define-method get_sampler
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_get_sampler")
+  (return-type "FirtreeSampler*")
+)
+
+
+
+;; From llvm-cpu-support.bc.h
+
+
+
+;; From firtree-affine-transform.h
+
+(define-function affine_transform_get_type
+  (c-name "firtree_affine_transform_get_type")
+  (return-type "GType")
+)
+
+(define-function affine_transform_new
+  (c-name "firtree_affine_transform_new")
+  (is-constructor-of "FirtreeAffineTransform")
+  (return-type "FirtreeAffineTransform*")
+)
+
+(define-method clone
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_clone")
+  (return-type "FirtreeAffineTransform*")
+)
+
+(define-method is_identity
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_is_identity")
+  (return-type "gboolean")
+)
+
+(define-method append_transform
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_append_transform")
+  (return-type "none")
+  (parameters
+    '("FirtreeAffineTransform*" "trans")
+  )
+)
+
+(define-method prepend_transform
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_prepend_transform")
+  (return-type "none")
+  (parameters
+    '("FirtreeAffineTransform*" "trans")
+  )
+)
+
+(define-method invert
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_invert")
+  (return-type "gboolean")
+)
+
+(define-method rotate_by_degrees
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_rotate_by_degrees")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method rotate_by_radians
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_rotate_by_radians")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method scale_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_scale_by")
+  (return-type "none")
+  (parameters
+    '("float" "sx")
+    '("float" "sy")
+  )
+)
+
+(define-method translate_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_translate_by")
+  (return-type "none")
+  (parameters
+    '("float" "tx")
+    '("float" "ty")
+  )
+)
+
+(define-method transform_point
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_transform_point")
+  (return-type "FirtreeVec2")
+  (parameters
+    '("float" "x")
+    '("float" "y")
+  )
+)
+
+(define-method transform_size
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_transform_size")
+  (return-type "FirtreeVec2")
+  (parameters
+    '("float" "width")
+    '("float" "height")
+  )
+)
+
+(define-method set_identity
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_identity")
+  (return-type "none")
+)
+
+(define-method set_rotation_by_degrees
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_rotation_by_degrees")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method set_rotation_by_radians
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_rotation_by_radians")
+  (return-type "none")
+  (parameters
+    '("float" "angle")
+  )
+)
+
+(define-method set_scaling_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_scaling_by")
+  (return-type "none")
+  (parameters
+    '("float" "sx")
+    '("float" "sy")
+  )
+)
+
+(define-method set_translation_by
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_translation_by")
+  (return-type "none")
+  (parameters
+    '("float" "tx")
+    '("float" "ty")
+  )
+)
+
+(define-method set_elements
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_elements")
+  (return-type "none")
+  (parameters
+    '("float" "m11")
+    '("float" "m12")
+    '("float" "m21")
+    '("float" "m22")
+    '("float" "tx")
+    '("float" "ty")
+  )
+)
+
+(define-method get_elements
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_get_elements")
+  (return-type "none")
+  (parameters
+    '("float*" "m11")
+    '("float*" "m12")
+    '("float*" "m21")
+    '("float*" "m22")
+    '("float*" "tx")
+    '("float*" "ty")
+  )
+)
+
+(define-method set_transform
+  (of-object "FirtreeAffineTransform")
+  (c-name "firtree_affine_transform_set_transform")
+  (return-type "none")
+  (parameters
+    '("FirtreeAffineTransform*" "src")
+  )
+)
+
+
+
+;; From firtree-buffer-sampler.h
+
+(define-function buffer_sampler_get_type
+  (c-name "firtree_buffer_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function buffer_sampler_new
+  (c-name "firtree_buffer_sampler_new")
+  (is-constructor-of "FirtreeBufferSampler")
+  (return-type "FirtreeBufferSampler*")
+)
+
+(define-method get_do_interpolation
+  (of-object "FirtreeBufferSampler")
+  (c-name "firtree_buffer_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreeBufferSampler")
+  (c-name "firtree_buffer_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
+(define-method set_buffer
+  (of-object "FirtreeBufferSampler")
+  (c-name "firtree_buffer_sampler_set_buffer")
+  (return-type "none")
+  (parameters
+    '("gpointer" "buffer")
+    '("guint" "width")
+    '("guint" "height")
+    '("guint" "stride")
+    '("FirtreeBufferFormat" "format")
+  )
+)
+
+(define-method unset_buffer
+  (of-object "FirtreeBufferSampler")
+  (c-name "firtree_buffer_sampler_unset_buffer")
+  (return-type "none")
+)
+
+
+
+;; From firtree-cairo-surface-sampler.h
+
+(define-function cairo_surface_sampler_get_type
+  (c-name "firtree_cairo_surface_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function cairo_surface_sampler_new
+  (c-name "firtree_cairo_surface_sampler_new")
+  (is-constructor-of "FirtreeCairoSurfaceSampler")
+  (return-type "FirtreeCairoSurfaceSampler*")
+)
+
+(define-method set_cairo_surface
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_set_cairo_surface")
+  (return-type "none")
+  (parameters
+    '("cairo_surface_t*" "cairo_surface")
+  )
+)
+
+(define-method get_cairo_surface
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_get_cairo_surface")
+  (return-type "cairo_surface_t*")
+)
+
+(define-method get_do_interpolation
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
+
+
+;; From firtree-cogl-texture-sampler.h
+
+(define-function cogl_texture_sampler_get_type
+  (c-name "firtree_cogl_texture_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function cogl_texture_sampler_new
+  (c-name "firtree_cogl_texture_sampler_new")
+  (is-constructor-of "FirtreeCoglTextureSampler")
+  (return-type "FirtreeCoglTextureSampler*")
+)
+
+(define-method set_cogl_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_set_cogl_texture")
+  (return-type "none")
+  (parameters
+    '("CoglHandle" "texture")
+  )
+)
+
+(define-method get_cogl_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_get_cogl_texture")
+  (return-type "CoglHandle")
+)
+
+(define-method set_clutter_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_set_clutter_texture")
+  (return-type "none")
+  (parameters
+    '("ClutterTexture*" "texture")
+  )
+)
+
+(define-method get_clutter_texture
+  (of-object "FirtreeCoglTextureSampler")
+  (c-name "firtree_cogl_texture_sampler_get_clutter_texture")
+  (return-type "ClutterTexture*")
+)
+
+
+
+;; From firtree-debug.h
+
+(define-function debug_dump_kernel_function
+  (c-name "firtree_debug_dump_kernel_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeKernel*" "kernel")
+  )
+)
+
+(define-function debug_dump_sampler_function
+  (c-name "firtree_debug_dump_sampler_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeSampler*" "sampler")
+  )
+)
+
+(define-function debug_dump_cpu_engine_function
+  (c-name "firtree_debug_dump_cpu_engine_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuEngine*" "engine")
+  )
+)
+
+
+
+;; From firtree-kernel-sampler.h
+
+(define-function kernel_sampler_get_type
+  (c-name "firtree_kernel_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function kernel_sampler_new
+  (c-name "firtree_kernel_sampler_new")
+  (is-constructor-of "FirtreeKernelSampler")
+  (return-type "FirtreeKernelSampler*")
+)
+
+(define-method set_kernel
+  (of-object "FirtreeKernelSampler")
+  (c-name "firtree_kernel_sampler_set_kernel")
+  (return-type "none")
+  (parameters
+    '("FirtreeKernel*" "kernel")
+  )
+)
+
+(define-method get_kernel
+  (of-object "FirtreeKernelSampler")
+  (c-name "firtree_kernel_sampler_get_kernel")
+  (return-type "FirtreeKernel*")
+)
+
+
+
+;; From firtree-kernel.h
+
+(define-function kernel_get_type
+  (c-name "firtree_kernel_get_type")
+  (return-type "GType")
+)
+
+(define-function kernel_new
+  (c-name "firtree_kernel_new")
+  (is-constructor-of "FirtreeKernel")
+  (return-type "FirtreeKernel*")
+)
+
+(define-method compile_from_source
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_compile_from_source")
+  (return-type "gboolean")
+  (parameters
+    '("gchar**" "lines")
+    '("gint" "n_lines")
+    '("gchar*" "kernel_name")
+  )
+)
+
+(define-method get_compile_log
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_compile_log")
+  (return-type "gchar**")
+  (parameters
+    '("guint*" "n_log_lines")
+  )
+)
+
+(define-method get_compile_status
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_compile_status")
+  (return-type "gboolean")
+)
+
+(define-method list_arguments
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_list_arguments")
+  (return-type "GQuark*")
+  (parameters
+    '("guint*" "n_arguments")
+  )
+)
+
+(define-method has_argument_named
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_has_argument_named")
+  (return-type "gboolean")
+  (parameters
+    '("gchar*" "arg_name")
+  )
+)
+
+(define-method get_argument_spec
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_argument_spec")
+  (return-type "FirtreeKernelArgumentSpec*")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
+(define-method get_argument_value
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_argument_value")
+  (return-type "GValue*")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
+(define-method set_argument_value
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_set_argument_value")
+  (return-type "gboolean")
+  (parameters
+    '("GQuark" "arg_name")
+    '("GValue*" "value")
+  )
+)
+
+(define-method argument_changed
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_argument_changed")
+  (return-type "none")
+  (parameters
+    '("GQuark" "arg_name")
+  )
+)
+
+(define-method is_valid
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_is_valid")
+  (return-type "gboolean")
+)
+
+(define-method module_changed
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_module_changed")
+  (return-type "none")
+)
+
+
+
+;; From firtree-pixbuf-sampler.h
+
+(define-function pixbuf_sampler_get_type
+  (c-name "firtree_pixbuf_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function pixbuf_sampler_new
+  (c-name "firtree_pixbuf_sampler_new")
+  (is-constructor-of "FirtreePixbufSampler")
+  (return-type "FirtreePixbufSampler*")
+)
+
+(define-method set_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_pixbuf")
+  (return-type "none")
+  (parameters
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-method get_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_pixbuf")
+  (return-type "GdkPixbuf*")
+)
+
+(define-method get_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
+
+
+;; From firtree-sampler.h
+
+(define-function sampler_get_type
+  (c-name "firtree_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function sampler_new
+  (c-name "firtree_sampler_new")
+  (is-constructor-of "FirtreeSampler")
+  (return-type "FirtreeSampler*")
+)
+
+(define-method get_extent
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_get_extent")
+  (return-type "FirtreeVec4")
+)
+
+(define-method get_transform
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_get_transform")
+  (return-type "FirtreeAffineTransform*")
+)
+
+(define-method contents_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_contents_changed")
+  (return-type "none")
+)
+
+(define-method module_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_module_changed")
+  (return-type "none")
+)
+
+(define-method extents_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_extents_changed")
+  (return-type "none")
+)
+
+(define-method transform_changed
+  (of-object "FirtreeSampler")
+  (c-name "firtree_sampler_transform_changed")
+  (return-type "none")
+)
+
+
+
+;; From firtree-type-builtins.h
+
+(define-function buffer_format_get_type
+  (c-name "firtree_buffer_format_get_type")
+  (return-type "GType")
+)
+
+
+
+;; From firtree-types.h
+
+
+
+;; From firtree-vector.h
+
+(define-function vec2_get_type
+  (c-name "firtree_vec2_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+(define-function vec3_get_type
+  (c-name "firtree_vec3_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+(define-function vec4_get_type
+  (c-name "firtree_vec4_get_type")
+  (return-type "GType")
+  (parameters
+  )
+)
+
+
+
+;; From firtree.h
+
+

@@ -1,24 +1,21 @@
 # CMake project file for firtree
 #
-# Copyright (C) 2007, 2008 Rich Wareham <richwareham@gmail.com>
+# Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
 #
 # See LICENSE file for distribution rights.
 
-# This file builds a trivial kernelcompiler capable of dumping
-# the resultant IR or the compiled GLSL.
+if(NOT APPLE)
+    find_package(PkgConfig)
+    pkg_check_modules(CAIRO cairo)
+    pkg_check_modules(CLUTTER clutter-0.8)
+endif(NOT APPLE)
 
-SET(TEST_COMPILER_HEADERS
-)
+include_directories(${CLUTTER_INCLUDE_DIRS} ${CAIRO_INCLUDE_DIRS})
 
-SET(TEST_COMPILER_SOURCES
-    ${TEST_COMPILER_HEADERS}
+# The simple kernel compiler.
+add_executable(kernel2llvm kernel2llvm.cc)
+target_link_libraries(kernel2llvm firtree
+    ${CLUTTER_LIBRARIES} ${CAIRO_LIBRARIES})
 
-    kernelcompile.cc
-)
+# vim:sw=4:ts=4:autoindent:et
 
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../")
-ADD_EXECUTABLE(kernelcompile ${TEST_COMPILER_SOURCES})
-TARGET_LINK_LIBRARIES(kernelcompile firtree)
-
-# Vim modeline
-# vim:ts=4:sw=4:et

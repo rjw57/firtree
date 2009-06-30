@@ -1,0 +1,67 @@
+%%
+override firtree_cogl_texture_sampler_set_cogl_texture kwargs
+static PyObject *
+_wrap_firtree_cogl_texture_sampler_set_cogl_texture(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "texture", NULL };
+    unsigned long texture;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"k:FirtreeCoglTextureSampler.set_cogl_texture", 
+                kwlist, &texture))
+        return NULL;
+    
+    firtree_cogl_texture_sampler_set_cogl_texture(
+            FIRTREE_COGL_TEXTURE_SAMPLER(self->obj),
+            (CoglHandle)texture);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+override firtree_cogl_texture_sampler_get_cogl_texture
+static PyObject *
+_wrap_firtree_cogl_texture_sampler_get_cogl_texture(PyGObject *self)
+{
+    CoglHandle ret;
+    
+    ret = firtree_cogl_texture_sampler_get_cogl_texture(FIRTREE_COGL_TEXTURE_SAMPLER(self->obj));
+    
+    return PyInt_FromLong((unsigned long)ret);
+}
+%%
+override firtree_cogl_texture_sampler_set_clutter_texture kwargs
+static PyObject *
+_wrap_firtree_cogl_texture_sampler_set_clutter_texture(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "texture", NULL };
+    PyGObject *texture;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O:FirtreeCoglTextureSampler.set_clutter_texture", kwlist,
+                &texture))
+        return NULL;
+
+    if((PyObject*)texture == Py_None) {
+        firtree_cogl_texture_sampler_set_clutter_texture(
+                FIRTREE_COGL_TEXTURE_SAMPLER(self->obj),
+                NULL);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if(!PyObject_TypeCheck((PyObject*)texture, &PyClutterTexture_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Argument 1 must be a clutter.Texture or None.");
+        return NULL;
+    }
+
+    firtree_cogl_texture_sampler_set_clutter_texture(
+            FIRTREE_COGL_TEXTURE_SAMPLER(self->obj),
+            CLUTTER_TEXTURE(texture->obj));
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

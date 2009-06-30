@@ -1,0 +1,58 @@
+%%
+override firtree_cairo_surface_sampler_set_cairo_surface kwargs
+static PyObject *
+_wrap_firtree_cairo_surface_sampler_set_cairo_surface(PyGObject *self, 
+        PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "surface", NULL };
+    PycairoSurface* cairo_surface;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O:FirtreeCairoSurfaceSampler.set_cairo_surface", kwlist,
+                &cairo_surface))
+        return NULL;
+
+    /* Check input is None or a cairo_surface. */
+    if((PyObject*)cairo_surface == Py_None) {
+        firtree_cairo_surface_sampler_set_cairo_surface(
+                FIRTREE_CAIRO_SURFACE_SAMPLER(self->obj),
+                NULL);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if(!PyObject_TypeCheck((PyObject*)cairo_surface, 
+                &PycairoSurface_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Argument 1 must be a cairo.Surface or None.");
+        return NULL;
+    }
+
+    firtree_cairo_surface_sampler_set_cairo_surface(
+            FIRTREE_CAIRO_SURFACE_SAMPLER(self->obj), 
+            cairo_surface->surface);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+override firtree_cairo_surface_sampler_get_cairo_surface
+static PyObject *
+_wrap_firtree_cairo_surface_sampler_get_cairo_surface(PyGObject *self)
+{
+    cairo_surface_t *ret;
+    
+    ret = firtree_cairo_surface_sampler_get_cairo_surface(
+            FIRTREE_CAIRO_SURFACE_SAMPLER(self->obj));
+    
+    if(ret == NULL) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    cairo_surface_reference(ret);
+    return PycairoSurface_FromSurface(ret, NULL);
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

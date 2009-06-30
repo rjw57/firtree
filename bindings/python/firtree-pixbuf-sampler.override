@@ -1,0 +1,37 @@
+%%
+override firtree_pixbuf_sampler_set_pixbuf kwargs
+static PyObject *
+_wrap_firtree_pixbuf_sampler_set_pixbuf(PyGObject *self, PyObject *args, 
+        PyObject *kwargs)
+{
+    static char *kwlist[] = { "pixbuf", NULL };
+    PyGObject *pixbuf;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                "O:FirtreePixbufSampler.set_pixbuf", kwlist,
+                &pixbuf))
+        return NULL;
+
+    /* Check input is None or a pixbuf. */
+    if((PyObject*)pixbuf == Py_None) {
+        firtree_pixbuf_sampler_set_pixbuf(FIRTREE_PIXBUF_SAMPLER(self->obj),
+                NULL);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    if(!PyObject_TypeCheck((PyObject*)pixbuf, &PyGdkPixbuf_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Argument 1 must be a gtk.gdk.Pixbuf or None.");
+        return NULL;
+    }
+
+    firtree_pixbuf_sampler_set_pixbuf(FIRTREE_PIXBUF_SAMPLER(self->obj), 
+            GDK_PIXBUF(pixbuf->obj));
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%%
+// vim:sw=4:ts=4:cindent:et:filetype=c
+

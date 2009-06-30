@@ -28,6 +28,11 @@ vec4 unpack_pixel(void* p, FirtreeBufferFormat format)
     guint8 x=0, y=0, z=0, w=0;
 
     switch(format) {
+        case FIRTREE_FORMAT_L8:
+            /* 8-bit value */
+            x = ((guint8*)p)[0];
+            break;
+
         case FIRTREE_FORMAT_RGB24:
         case FIRTREE_FORMAT_BGR24:
             /* 24-bit value */
@@ -108,6 +113,9 @@ vec4 unpack_pixel(void* p, FirtreeBufferFormat format)
             return rv; }
         case FIRTREE_FORMAT_BGRX32: {
             vec4 rv = { fz, fy, fx, 1.f }; /* rgba */
+            return rv; }
+        case FIRTREE_FORMAT_L8: {
+            vec4 rv = { fx, fx, fx, 1.f }; /* rgba */
             return rv; }
     }
 
@@ -245,6 +253,75 @@ SAMPLE_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 SAMPLE_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
 SAMPLE_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
+SAMPLE_FUNCTION(1, FIRTREE_FORMAT_L8)
+
+/* Image buffer specialist sampler functions */
+G_INLINE_FUNC                                                           
+vec4 sample_FIRTREE_FORMAT_I420_FOURCC(uint8_t* buffer,                                   
+        unsigned int width, unsigned int height, unsigned int stride,   
+        vec2 location)                                                  
+{                                                                       
+    vec4 rv = { 0, 0, 0, 0 };                                           
+    int x = (int)(ELEMENT(location, 0));                                
+    int y = (int)(ELEMENT(location, 1));                                
+    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */             
+    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */             
+    if((x < 0) || (x >= width)) { return rv; }                          
+    if((y < 0) || (y >= height)) { return rv; }               
+
+    uint8_t* p_y_pixel = buffer + x + (y * stride);
+    uint8_t* p_u_pixel = buffer + (height*stride) + (x>>1) + (y>>1)*(stride>>1);
+    uint8_t* p_v_pixel = buffer + (height*stride) + ((height*stride)>>2) + (x>>1) + (y>>1)*(stride>>1);
+
+    gint Y = (gint)(*p_y_pixel) - 16;
+    gint U = (gint)(*p_u_pixel) - 128;
+    gint V = (gint)(*p_v_pixel) - 128;
+
+    gint r = (9535 * Y + 13074 * V            ) >> 13;
+    gint g = (9535 * Y -  6660 * V -  3203 * U) >> 13;
+    gint b = (9535 * Y             + 16531 * U) >> 13;
+
+    if(r>255) { r = 255; } if(r<0) { r = 0; }
+    if(g>255) { g = 255; } if(g<0) { g = 0; }
+    if(b>255) { b = 255; } if(b<0) { b = 0; }
+    
+    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };                                    
+    return pixel_vec;                                                   
+}  
+
+G_INLINE_FUNC                                                           
+vec4 sample_FIRTREE_FORMAT_YV12_FOURCC(uint8_t* buffer,                                   
+        unsigned int width, unsigned int height, unsigned int stride,   
+        vec2 location)                                                  
+{                                                                       
+    vec4 rv = { 0, 0, 0, 0 };                                           
+    int x = (int)(ELEMENT(location, 0));                                
+    int y = (int)(ELEMENT(location, 1));                                
+    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */             
+    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */             
+    if((x < 0) || (x >= width)) { return rv; }                          
+    if((y < 0) || (y >= height)) { return rv; }               
+
+    uint8_t* p_y_pixel = buffer + x + (y * stride);
+    uint8_t* p_v_pixel = buffer + (height*stride) + (x>>1) + (y>>1)*(stride>>1);
+    uint8_t* p_u_pixel = buffer + (height*stride) + ((height*stride)>>2) + (x>>1) + (y>>1)*(stride>>1);
+
+    gint Y = (gint)(*p_y_pixel) - 16;
+    gint V = (gint)(*p_u_pixel) - 128;
+    gint U = (gint)(*p_v_pixel) - 128;
+
+    gint r = (9535 * Y + 13074 * V            ) >> 13;
+    gint g = (9535 * Y -  6660 * V -  3203 * U) >> 13;
+    gint b = (9535 * Y             + 16531 * U) >> 13;
+
+    if(r>255) { r = 255; } if(r<0) { r = 0; }
+    if(g>255) { g = 255; } if(g<0) { g = 0; }
+    if(b>255) { b = 255; } if(b<0) { b = 0; }
+    
+    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };                                    
+    return pixel_vec;                                                   
+}  
+
 vec4 sample_image_buffer_nn(uint8_t* buffer,
         FirtreeBufferFormat format, 
         unsigned int width, unsigned int height, unsigned int stride,
@@ -293,6 +370,15 @@ vec4 sample_image_buffer_nn(uint8_t* buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGRX32:
             return sample_FIRTREE_FORMAT_BGRX32(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_L8:
+            return sample_FIRTREE_FORMAT_L8(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_I420_FOURCC:
+            return sample_FIRTREE_FORMAT_I420_FOURCC(buffer, 
+                    width, height, stride, location);
+        case FIRTREE_FORMAT_YV12_FOURCC:
+            return sample_FIRTREE_FORMAT_YV12_FOURCC(buffer, 
                     width, height, stride, location);
         default:
             /* do nothing */

@@ -199,6 +199,12 @@ firtree_buffer_sampler_set_buffer (FirtreeBufferSampler* self,
     FirtreeBufferSamplerPrivate* p = GET_PRIVATE(self);
 
     guint required_size = height * stride;
+
+    if((format == FIRTREE_FORMAT_I420_FOURCC) ||
+            (format == FIRTREE_FORMAT_YV12_FOURCC)) {
+        required_size += (height*stride)>>1;
+    }
+
     if(!p->cached_buffer || (required_size != p->cached_buffer_len)) {
         /* dispose of any cached buffer */
         if(p->cached_buffer) {

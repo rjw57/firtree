@@ -38,6 +38,7 @@
  * @FIRTREE_FORMAT_BGR24:
  * @FIRTREE_FORMAT_RGBX32:
  * @FIRTREE_FORMAT_BGRX32:
+ * @FIRTREE_FORMAT_L8:
  * 
  * A set of possible formats memory buffers can be in. The names are of the
  * form FIRTREE_FORMAT_abcdNN where abcd gives the byte order of the packed 
@@ -64,6 +65,10 @@ typedef enum {
 
     FIRTREE_FORMAT_RGBX32                   = 0x0c, 
     FIRTREE_FORMAT_BGRX32                   = 0x0d, 
+
+    FIRTREE_FORMAT_L8                       = 0x0e, 
+    FIRTREE_FORMAT_I420_FOURCC              = 0x0f, 
+    FIRTREE_FORMAT_YV12_FOURCC              = 0x10, 
 
     FIRTREE_FORMAT_LAST
 } FirtreeBufferFormat;

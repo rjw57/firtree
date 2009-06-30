@@ -86,6 +86,12 @@ const char* _function_names[] = {
     "render_FIRTREE_FORMAT_RGBX32",
     "render_FIRTREE_FORMAT_BGRX32",
 
+    /* Rendering to the following formats is not supported */
+
+    NULL, /* FIRTREE_FORMAT_L8 */
+    NULL, /* FIRTREE_FORMAT_I420_FOURCC */
+    NULL, /* FIRTREE_FORMAT_YV12_FOURCC */
+
     NULL,
 };
 
@@ -512,6 +518,11 @@ void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
 void*
 firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
 {
+    if(!name) {
+        g_debug("No renderer function specified.");
+        return NULL;
+    }
+
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     if(p->cached_engine) {
         llvm::Function* render_function = p->cached_engine->FindFunctionNamed(
@@ -587,7 +598,9 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
 
     std::vector<const char*> render_functions;
     for(int fi = 0; fi < FIRTREE_FORMAT_LAST; ++fi) {
-        render_functions.push_back(RENDER_FUNC_NAME(fi));
+        if(RENDER_FUNC_NAME(fi)) {
+            render_functions.push_back(RENDER_FUNC_NAME(fi));
+        }
     }
     optimise_module(linked_module, render_functions);
 

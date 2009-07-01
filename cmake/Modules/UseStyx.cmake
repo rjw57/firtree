@@ -42,10 +42,10 @@ MACRO(add_styx_grammars)
         "${_path}/${_base}_lim.h" "${_path}/ctoh.cth"
       COMMAND
         ${STYX_CTOH_EXECUTABLE}
-      ARGS
-        "-CPATH=${_path}"
-        "-HPATH=${_path}"
-        "-PRJ=${_path}"
+#      ARGS
+#        "-CPATH='${_path}'"
+#        "-HPATH='${_path}'"
+#        "-PRJ='${_path}'"
       WORKING_DIRECTORY
         "${_path}"
       DEPENDS

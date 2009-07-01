@@ -98,24 +98,28 @@ set(_firtree_public_headers
     firtree-vector.h
     firtree.h)
     
-add_custom_command(OUTPUT firtree-type-builtins.h firtree-type-builtins.c
+add_custom_command(OUTPUT firtree-type-builtins.h ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
 	COMMAND ${GLIB_MKENUMS} 
 		--template firtree-type-builtins.h.template 
 		${_firtree_public_headers} > firtree-type-builtins.h
 	COMMAND ${GLIB_MKENUMS} 
 		--template firtree-type-builtins.c.template
-		${_firtree_public_headers} > firtree-type-builtins.c
+		${_firtree_public_headers} > ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
 	DEPENDS 
 		${_firtree_public_headers}
 		firtree-type-builtins.h.template 
 		firtree-type-builtins.c.template
 	VERBATIM)
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+
 add_library(firtree SHARED
     ${_firtree_public_headers}
     
     firtree-type-builtins.h
-    firtree-type-builtins.c
+    ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
 
     engines/cpu/firtree-cpu-engine.h
 

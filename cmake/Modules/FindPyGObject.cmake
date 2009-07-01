@@ -154,6 +154,8 @@ macro(pygobject_target_add_bindings _prefix _file_prefix)
             COMMAND "${PYTHON_EXECUTABLE}" 
                 "${PYGOBJECT_CREATEDEFS}" "${_output_defs}" ${_defs}
             DEPENDS ${_defs}
+            WORKING_DIRECTORY
+                ${CMAKE_CURRENT_SOURCE_DIR}
             VERBATIM)
 
         # Generate a target to output code
@@ -161,6 +163,8 @@ macro(pygobject_target_add_bindings _prefix _file_prefix)
             COMMAND "${PYTHON_EXECUTABLE}" 
                 "${PYGOBJECT_CODEGEN}" ${_codegen_opts} "${_output_defs}" > "${_output_source}"
             DEPENDS "${_output_defs}" ${_overrides}
+            WORKING_DIRECTORY
+                ${CMAKE_CURRENT_SOURCE_DIR}
             VERBATIM)
 
         set(${_prefix}_SOURCES "${_output_source}")

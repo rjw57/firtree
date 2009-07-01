@@ -44,13 +44,13 @@ macro(gtk_doc_add_module _doc_prefix _doc_sourcedir)
     endif(NOT _xml_file_length LESS 2)
 
     if(_opts_valid)
-        # set default sgml file if not specified
-        set(_default_xml_file "${_doc_prefix}/${_doc_prefix}-docs.xml")
-        get_filename_component(_default_xml_file ${_default_xml_file} ABSOLUTE)
-
         # a directory to store output.
         set(_output_dir "${CMAKE_CURRENT_BINARY_DIR}/${_doc_prefix}")
         set(_output_dir_stamp "${_output_dir}/dir.stamp")
+
+        # set default sgml file if not specified
+        set(_default_xml_file "${_output_dir}/${_doc_prefix}-docs.xml")
+        get_filename_component(_default_xml_file ${_default_xml_file} ABSOLUTE)
 
         # a directory to store html output.
         set(_output_html_dir "${_output_dir}/html")

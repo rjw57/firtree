@@ -17,8 +17,9 @@ else(NOT GTKDOC_FOUND)
         # CFLAGS -I../../firtree
         SUFFIXES h c hh cc # <- what files to scan
         LDFLAGS
-            -L${CMAKE_CURRENT_SOURCE_DIR}/../../firtree -lfirtree
-        LDPATH ${CMAKE_CURRENT_SOURCE_DIR}/../../firtree
+            -L${CMAKE_CURRENT_BINARY_DIR}/../../firtree 
+            -lfirtree
+        LDPATH ${CMAKE_CURRENT_BINARY_DIR}/../../firtree
 		DEPENDS firtree)
 endif(NOT GTKDOC_FOUND)
 

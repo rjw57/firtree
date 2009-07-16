@@ -115,8 +115,16 @@ add_custom_command(OUTPUT firtree-type-builtins.h ${CMAKE_CURRENT_BINARY_DIR}/fi
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
+set(_firtree_internal_headers
+    internal/firtree-cogl-texture-sampler-intl.hh
+    internal/firtree-engine-intl.hh
+    internal/firtree-kernel-intl.hh
+    internal/firtree-sampler-intl.hh
+)
+
 add_library(firtree SHARED
     ${_firtree_public_headers}
+    ${_firtree_internal_headers}
     
     firtree-type-builtins.h
     ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
@@ -135,11 +143,6 @@ add_library(firtree SHARED
     firtree-vector.c
 
     firtree-engine.cc
-
-    internal/firtree-cogl-texture-sampler-intl.hh
-    internal/firtree-engine-intl.hh
-    internal/firtree-kernel-intl.hh
-    internal/firtree-sampler-intl.hh
 
     # CPU rendering library
     engines/cpu/llvm-cpu-support.bc.h
@@ -160,7 +163,9 @@ set_target_properties(firtree
     VERSION 
         "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
     SOVERSION 
-        "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
+        "${FIRTREE_VERSION_MAJOR}"
+    OUTPUT_NAME
+        "firtree-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
     )
 
 target_link_libraries(firtree
@@ -178,6 +183,7 @@ install(TARGETS firtree
 
 # Install the public headers
 install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION include/firtree)
+install(FILES ${_firtree_internal_headers} DESTINATION include/firtree/internal)
 install(FILES engines/cpu/firtree-cpu-engine.h DESTINATION include/firtree/engines/cpu)
 
 # Update the firtree pkg-config file

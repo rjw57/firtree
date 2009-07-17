@@ -112,7 +112,7 @@ install(TARGETS firtree-engine-cpu
 )
 
 # Install the public headers
-install(FILES ${_firtree_cpu_public_headers} DESTINATION include/firtree/engines/cpu)
+install(FILES ${_firtree_cpu_public_headers} DESTINATION "${FIRTREE_HEADER_INSTALL_DEST}/firtree/engines/cpu")
 
 # vim:sw=4:ts=4:autoindent:et
 

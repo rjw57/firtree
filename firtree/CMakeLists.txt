@@ -134,9 +134,11 @@ install(TARGETS firtree
   ARCHIVE DESTINATION lib
 )
 
+set(FIRTREE_HEADER_INSTALL_DEST "include/firtree-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}")
+
 # Install the public headers
-install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION include/firtree)
-install(FILES ${_firtree_internal_headers} DESTINATION include/firtree/internal)
+install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION "${FIRTREE_HEADER_INSTALL_DEST}/firtree")
+install(FILES ${_firtree_internal_headers} DESTINATION "${FIRTREE_HEADER_INSTALL_DEST}/firtree/internal")
 
 # Update the firtree pkg-config file
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")

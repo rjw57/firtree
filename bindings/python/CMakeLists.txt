@@ -49,7 +49,7 @@ if(BUILD_PYTHON_BINDINGS)
 	add_library(pyfirtree MODULE firtreemodule.c
         ${FIRTREE_BINDINGS_SOURCES})
 	link_directories(${SVFBINDINGS_LINK_DIRS})
-	target_link_libraries(pyfirtree firtree 
+	target_link_libraries(pyfirtree firtree firtree-engine-cpu
         ${FIRTREE_BINDINGS_LIBRARIES}
         ${CAIRO_LIBRARIES}
         ${CLUTTER_LIBRARIES}

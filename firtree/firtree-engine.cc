@@ -179,47 +179,5 @@ firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg)
     return NULL;
 }
 
-namespace Firtree {
-
-FunctionCallReplacementPass::FunctionCallReplacementPass(char* ID)
-    : llvm::BasicBlockPass(ID)
-{
-}
-
-bool FunctionCallReplacementPass::runOnBasicBlock(llvm::BasicBlock& bb) 
-{
-    llvm::BasicBlock::iterator inst_it = bb.begin();
-    std::vector<llvm::CallInst*> insts_to_process;
-    for( ; inst_it != bb.end(); ++inst_it) {
-        llvm::CallInst* call_inst = llvm::dyn_cast<llvm::CallInst>(inst_it);
-        if(call_inst) {
-            llvm::Function* called_function =
-                call_inst->getCalledFunction();
-            if(interestedInCallToFunction(called_function->getName())) {
-                insts_to_process.push_back(call_inst);
-            }
-        }
-    }
-
-    bool modified = false;
-    std::vector<llvm::CallInst*>::iterator cinst_it = insts_to_process.begin();
-    for(; cinst_it != insts_to_process.end(); ++cinst_it) {
-        llvm::CallInst* call_inst = *cinst_it;
-
-        llvm::Value* replacement = getReplacementForCallInst(*call_inst);
-
-        if(replacement && (replacement != call_inst)) {
-            call_inst->replaceAllUsesWith(replacement);
-            call_inst->eraseFromParent();
-            modified = true;
-        }
-
-    }
-
-    return modified;
-}
-
-} /* namespace Firtree */
-
 /* vim:sw=4:ts=4:et:cindent
  */

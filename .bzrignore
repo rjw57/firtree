@@ -10,7 +10,8 @@ doc/internal/html/
 doc/internal/latex/
 doc/internal/doxy.config
 doc/public/firtree/
-firtree/libfirtree.so.*
+firtree/libfirtree-core-*.so.*
+firtree/engines/cpu/libfirtree-engine-cpu-*.so.*
 bindings/python/firtree.generated.*
 firtree/engines/cpu/builtins.bc
 firtree/engines/cpu/llvm-cpu-support.bc*

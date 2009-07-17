@@ -11,6 +11,7 @@ if(NOT GTKDOC_FOUND)
 	message(STATUS "gtkdoc was not found, public documentation will not be built.")
 else(NOT GTKDOC_FOUND)
     get_target_property(_firtree_output_name firtree OUTPUT_NAME)
+    get_target_property(_firtree_engine_cpu_output_name firtree-engine-cpu OUTPUT_NAME)
 	include(UseGtkDoc)
 	gtk_doc_add_module(firtree ${CMAKE_SOURCE_DIR}/firtree
 		#XML firtree-docs.xml # When the time comes, copy this from firtree-docs.xml
@@ -20,7 +21,10 @@ else(NOT GTKDOC_FOUND)
         LDFLAGS
             -L${CMAKE_CURRENT_BINARY_DIR}/../../firtree 
             -l${_firtree_output_name}
-        LDPATH ${CMAKE_CURRENT_BINARY_DIR}/../../firtree
+            -L${CMAKE_CURRENT_BINARY_DIR}/../../firtree/engines/cpu
+            -l${_firtree_engine_cpu_output_name}
+        LDPATH 
+            "${CMAKE_CURRENT_BINARY_DIR}/../../firtree:${CMAKE_CURRENT_BINARY_DIR}/../../firtree/engines/cpu"
 		DEPENDS firtree)
 endif(NOT GTKDOC_FOUND)
 

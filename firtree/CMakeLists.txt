@@ -11,21 +11,11 @@ set(LLVM_CONFIG_COMPONENTS core
 find_package(LLVM)
 find_package(PythonInterp)
 
-find_program(LLVM_GCC_EXECUTABLE llvm-gcc)
-
 find_program(GLIB_MKENUMS glib-mkenums PATHS "${GLIB_PREFIX}/bin")
 
 if(NOT GLIB_MKENUMS)
 	message(SEND_ERROR "Could not find glib-mkenums which is required for firtree.")
 endif(NOT GLIB_MKENUMS)
-
-if(NOT LLVM_GCC_EXECUTABLE)
-    message(SEND_ERROR "llvm-gcc not found.")
-endif(NOT LLVM_GCC_EXECUTABLE)
-
-if(NOT PYTHONINTERP_FOUND)
-    message(SEND_ERROR "Python interpreter not found.")
-endif(NOT PYTHONINTERP_FOUND)
 
 include_directories(${LLVM_INCLUDE_DIRS})
 
@@ -55,34 +45,6 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h"
     @ONLY)
-
-add_custom_command(
-    OUTPUT 
-        engines/cpu/llvm-cpu-support.bc.h
-        engines/cpu/llvm-cpu-support.opt.bc
-        engines/cpu/llvm-cpu-support.bc
-        engines/cpu/render-buffer.o
-        engines/cpu/builtins.bc
-    COMMAND ${LLVM_AS_EXECUTABLE}
-        -f builtins.ll -o builtins.bc
-    COMMAND ${LLVM_GCC_EXECUTABLE} 
-        -fno-math-errno
-        -o render-buffer.o
-        -c -emit-llvm
-        ${GLIB_CFLAGS}
-        -I "${CMAKE_CURRENT_SOURCE_DIR}/.."
-        render-buffer.c
-    COMMAND ${LLVM_LINK_EXECUTABLE}
-        -f builtins.bc render-buffer.o -o llvm-cpu-support.bc
-    COMMAND ${LLVM_OPT_EXECUTABLE} 
-        -f -std-compile-opts -o llvm-cpu-support.opt.bc llvm-cpu-support.bc
-    COMMAND ${PYTHON_EXECUTABLE} ../../../tools/bin2h.py
-        llvm-cpu-support.opt.bc llvm-cpu-support.bc.h
-    WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/engines/cpu
-    DEPENDS
-        engines/cpu/builtins.ll
-        engines/cpu/render-buffer.c)
 
 set(_firtree_public_headers 
     firtree-affine-transform.h
@@ -129,30 +91,21 @@ add_library(firtree SHARED
     firtree-type-builtins.h
     ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
 
-    engines/cpu/firtree-cpu-engine.h
-
     firtree-affine-transform.c
     firtree-buffer-sampler.cc
     firtree-cairo-surface-sampler.cc
     firtree-cogl-texture-sampler.cc
     firtree-debug.cc
+    firtree-engine.cc
     firtree-kernel.cc
     firtree-kernel-sampler.cc
     firtree-pixbuf-sampler.cc
     firtree-sampler.cc
     firtree-vector.c
 
-    firtree-engine.cc
-
-    # CPU rendering library
-    engines/cpu/llvm-cpu-support.bc.h
-    engines/cpu/firtree-cpu-engine.cc
-
     ${LLVM_STATIC_OBJS})
     
 set_source_files_properties(
-    engines/cpu/llvm-cpu-support.bc.h
-    engines/cpu/firtree-cpu-engine.h
     firtree-type-builtins.h
     firtree-type-builtins.c
     PROPERTIES GENERATED TRUE)
@@ -165,7 +118,7 @@ set_target_properties(firtree
     SOVERSION 
         "${FIRTREE_VERSION_MAJOR}"
     OUTPUT_NAME
-        "firtree-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
+        "firtree-core-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
     )
 
 target_link_libraries(firtree
@@ -184,7 +137,6 @@ install(TARGETS firtree
 # Install the public headers
 install(FILES ${_firtree_public_headers} firtree-type-builtins.h DESTINATION include/firtree)
 install(FILES ${_firtree_internal_headers} DESTINATION include/firtree/internal)
-install(FILES engines/cpu/firtree-cpu-engine.h DESTINATION include/firtree/engines/cpu)
 
 # Update the firtree pkg-config file
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
@@ -194,6 +146,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
         @ONLY)
 endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc.in")
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/firtree.pc" DESTINATION lib/pkgconfig)
+
+# Build the Engines
+add_subdirectory(engines)
 
 # vim:sw=4:ts=4:autoindent:et
 

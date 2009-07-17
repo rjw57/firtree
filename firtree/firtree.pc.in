@@ -1,6 +1,6 @@
 prefix=@CMAKE_INSTALL_PREFIX@
 libdir=${prefix}/lib
-includedir=@FIRTREE_HEADER_INSTALL_DEST@
+includedir=${prefix}/@FIRTREE_HEADER_INSTALL_DEST@
 
 Name: firtree
 Description: The Firtree image processing library.

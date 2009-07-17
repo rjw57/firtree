@@ -4,7 +4,6 @@
 #
 # See LICENSE file for distribution rights.
 
-set(STYX_USE_STATIC_LIBS TRUE)
 include(UseStyx)
 
 # Generate firtree_{int,pim,lim}.c

@@ -50,6 +50,20 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS}")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
+# On x86_64 we need to compile with -fPIC
+if(UNIX AND NOT WIN32)
+  find_program(CMAKE_UNAME uname /bin /usr/bin /usr/local/bin )
+  if(CMAKE_UNAME)
+    exec_program(uname ARGS -m OUTPUT_VARIABLE CMAKE_SYSTEM_PROCESSOR)
+    set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} 
+    	CACHE INTERNAL "processor type (i386 and x86_64)")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    endif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  endif(CMAKE_UNAME)
+endif(UNIX AND NOT WIN32)
+
 # Build the common C++ support libraries
 add_subdirectory(common)
 

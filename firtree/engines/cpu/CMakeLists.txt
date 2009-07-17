@@ -4,9 +4,9 @@
 #
 # See LICENSE file for distribution rights.
 
-set(FIRTREE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../firtree")
-set(FIRTREE_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/../../firtree")
-set(FIRTREE_INCLUDE_DIR "${FIRTREE_SOURCE_DIR}/../")
+set(FIRTREE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(FIRTREE_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/../..")
+set(FIRTREE_INCLUDE_DIR "${FIRTREE_SOURCE_DIR}/..")
 
 set(LLVM_CONFIG_COMPONENTS core 
     codegen linker bitreader

@@ -21,13 +21,16 @@
 #define _FIRTREE_CPU_ENGINE
 
 #include <glib-object.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include <firtree/firtree.h>
 #include <firtree/firtree-sampler.h>
 
 #if FIRTREE_HAVE_CAIRO
 #   include <cairo/cairo.h>
+#endif
+
+#if FIRTREE_HAVE_GDK_PIXBUF
+#   include <gdk-pixbuf/gdk-pixbuf.h>
 #endif
 
 /**
@@ -85,6 +88,8 @@ GType firtree_cpu_engine_get_type (void);
 FirtreeCpuEngine* 
 firtree_cpu_engine_new (void);
 
+#if FIRTREE_HAVE_GDK_PIXBUF
+
 /**
  * firtree_cpu_engine_render_into_pixbuf:
  * @self: A FirtreeCpuEngine object.
@@ -98,6 +103,8 @@ firtree_cpu_engine_new (void);
 gboolean 
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf);
+
+#endif 
 
 #if FIRTREE_HAVE_CAIRO
 

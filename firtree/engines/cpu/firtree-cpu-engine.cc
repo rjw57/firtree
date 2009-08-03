@@ -723,6 +723,8 @@ firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
     firtree_sampler_unlock(p->sampler);
 }
 
+#if FIRTREE_HAVE_GDK_PIXBUF
+
 gboolean
 firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         FirtreeVec4* extents, GdkPixbuf* pixbuf)
@@ -768,6 +770,8 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
 
     return TRUE;
 }
+
+#endif
 
 #if FIRTREE_HAVE_CAIRO
 gboolean 

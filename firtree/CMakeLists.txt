@@ -23,6 +23,7 @@ if(NOT APPLE)
     find_package(PkgConfig)
     pkg_check_modules(CAIRO cairo)
     pkg_check_modules(CLUTTER clutter-0.8)
+    pkg_check_modules(GDK_PIXBUF gdk-pixbuf-2.0)
 endif(NOT APPLE)
 
 set(ENGINE_EXTRA_LIBS "")
@@ -41,6 +42,13 @@ if(CLUTTER_FOUND)
     set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${CLUTTER_LIBRARIES})
 endif(CLUTTER_FOUND)
 
+set(FIRTREE_HAVE_GDK_PIXBUF 0)
+if(GDK_PIXBUF_FOUND)
+    set(FIRTREE_HAVE_GDK_PIXBUF 1)
+    include_directories(${GDK_PIXBUF_INCLUDE_DIRS})
+    set(ENGINE_EXTRA_LIBS ${ENGINE_EXTRA_LIBS} ${GDK_PIXBUF_LIBRARIES})
+endif(GDK_PIXBUF_FOUND)
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/firtree.h"
@@ -49,16 +57,48 @@ configure_file(
 set(_firtree_public_headers 
     firtree-affine-transform.h
     firtree-buffer-sampler.h
-    firtree-cairo-surface-sampler.h
-    firtree-cogl-texture-sampler.h
     firtree-debug.h
     firtree-kernel.h
     firtree-kernel-sampler.h
-    firtree-pixbuf-sampler.h
     firtree-sampler.h
     firtree-types.h
     firtree-vector.h
     firtree.h)
+
+set(_firtree_source_files
+    ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
+
+    firtree-affine-transform.c
+    firtree-buffer-sampler.cc
+    firtree-debug.cc
+    firtree-engine.cc
+    firtree-kernel.cc
+    firtree-kernel-sampler.cc
+    firtree-sampler.cc
+    firtree-vector.c
+
+    ${LLVM_STATIC_OBJS})
+
+if(FIRTREE_HAVE_CAIRO)
+    set(_firtree_public_headers ${_firtree_public_headers}
+        firtree-cairo-surface-sampler.h)
+    set(_firtree_source_files ${_firtree_source_files} 
+        firtree-cairo-surface-sampler.cc)
+endif(FIRTREE_HAVE_CAIRO)
+
+if(FIRTREE_HAVE_CLUTTER)
+    set(_firtree_public_headers ${_firtree_public_headers}
+        firtree-cogl-texture-sampler.h)
+    set(_firtree_source_files ${_firtree_source_files} 
+        firtree-cogl-texture-sampler.cc)
+endif(FIRTREE_HAVE_CLUTTER)
+
+if(FIRTREE_HAVE_GDK_PIXBUF)
+    set(_firtree_public_headers ${_firtree_public_headers}
+        firtree-pixbuf-sampler.h)
+    set(_firtree_source_files ${_firtree_source_files} 
+        firtree-pixbuf-sampler.cc)
+endif(FIRTREE_HAVE_GDK_PIXBUF)
     
 add_custom_command(OUTPUT firtree-type-builtins.h ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
 	COMMAND ${GLIB_MKENUMS} 
@@ -82,28 +122,14 @@ set(_firtree_internal_headers
     internal/firtree-engine-intl.hh
     internal/firtree-kernel-intl.hh
     internal/firtree-sampler-intl.hh
+
+    firtree-type-builtins.h
 )
 
 add_library(firtree SHARED
     ${_firtree_public_headers}
     ${_firtree_internal_headers}
-    
-    firtree-type-builtins.h
-    ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
-
-    firtree-affine-transform.c
-    firtree-buffer-sampler.cc
-    firtree-cairo-surface-sampler.cc
-    firtree-cogl-texture-sampler.cc
-    firtree-debug.cc
-    firtree-engine.cc
-    firtree-kernel.cc
-    firtree-kernel-sampler.cc
-    firtree-pixbuf-sampler.cc
-    firtree-sampler.cc
-    firtree-vector.c
-
-    ${LLVM_STATIC_OBJS})
+    ${_firtree_source_files})
     
 set_source_files_properties(
     firtree-type-builtins.h

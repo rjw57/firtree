@@ -1,0 +1,13 @@
+Installation instructions for Mac OS X
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+== Required software
+
+ - CMake (http://cmake.org/)
+ - GLib/GObject (part of GTK, http://gtk.org/)
+ - llvm-gcc (http://llvm.org/)
+
+ - Styx (http://speculate.de/)
+ - LLVM (http://llvm.org/)
+
+ vim:spell:spelllang=en_gb:tw=77

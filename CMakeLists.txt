@@ -32,11 +32,14 @@ if(NOT APPLE)
     pkg_check_modules(GLIB REQUIRED glib-2.0 gobject-2.0 gdk-pixbuf-2.0)
     include_directories(${GLIB_INCLUDE_DIRS})
 else(NOT APPLE)
+    # Now, almost everything in this block is a horrible hack.
+    # I'm most terribly sorry about that.
     find_library(GLIB_LIBRARIES GLib)
     if(NOT GLIB_LIBRARIES)
         message(SEND_ERROR "GLib framework is required.")
     endif(NOT GLIB_LIBRARIES)
-
+    set(GLIB_PREFIX "${GLIB_LIBRARIES}/Resources/dev/")
+    set(GLIB_CFLAGS "-I${GLIB_LIBRARIES}/Headers")
     find_path(GLIB_INCLUDE_DIRS glib.h)
     include_directories(${GLIB_INCLUDE_DIRS})
 endif(NOT APPLE)

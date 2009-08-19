@@ -1,0 +1,5 @@
+;; -*- scheme -*-
+;; THIS FILE IS GENERATED - DO NOT EDIT
+(include "firtree-types.defs")
+(include "firtree.defs")
+(include "firtree-overriden.defs")

@@ -1,0 +1,18 @@
+;; -*- scheme -*-
+; boxed definitions ...
+
+; interface definitions ...
+
+; object definitions ...
+
+(define-object CoglTextureSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreeCoglTextureSampler")
+  (gtype-id "FIRTREE_TYPE_COGL_TEXTURE_SAMPLER")
+)
+
+; pointer definitions ...
+
+;; Enumerations and Flags ...
+

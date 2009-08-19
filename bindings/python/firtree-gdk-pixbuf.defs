@@ -1,0 +1,45 @@
+
+;; From firtree-pixbuf-sampler.h
+
+(define-function pixbuf_sampler_get_type
+  (c-name "firtree_pixbuf_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function pixbuf_sampler_new
+  (c-name "firtree_pixbuf_sampler_new")
+  (is-constructor-of "FirtreePixbufSampler")
+  (return-type "FirtreePixbufSampler*")
+)
+
+(define-method set_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_pixbuf")
+  (return-type "none")
+  (parameters
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-method get_pixbuf
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_pixbuf")
+  (return-type "GdkPixbuf*")
+)
+
+(define-method get_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreePixbufSampler")
+  (c-name "firtree_pixbuf_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
+

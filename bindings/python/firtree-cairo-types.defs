@@ -1,0 +1,18 @@
+;; -*- scheme -*-
+; boxed definitions ...
+
+; interface definitions ...
+
+; object definitions ...
+
+(define-object CairoSurfaceSampler
+  (in-module "Firtree")
+  (parent "FirtreeSampler")
+  (c-name "FirtreeCairoSurfaceSampler")
+  (gtype-id "FIRTREE_TYPE_CAIRO_SURFACE_SAMPLER")
+)
+
+; pointer definitions ...
+
+;; Enumerations and Flags ...
+

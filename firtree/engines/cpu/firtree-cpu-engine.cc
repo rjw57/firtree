@@ -157,6 +157,12 @@ _firtree_cpu_lazy_function_creator(const std::string& name) {
     if(name == "exp_f") {
         return (void*)expf;
     }
+    if(name == "atan_f") {
+        return (void*)atanf;
+    }
+    if(name == "atan_ff") {
+        return (void*)atan2f;
+    }
     g_debug("Do not know what function to use for '%s'.", name.c_str());
     return NULL;
 }

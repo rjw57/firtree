@@ -12,6 +12,7 @@ python codegen/defsgen.py \
 	../../firtree/firtree-kernel-sampler.h \
 	../../firtree/firtree-sampler.h \
 	../../firtree/firtree-types.h \
+	../../firtree/firtree-type-builtins.h \
 	../../firtree/firtree-vector.h
 
 python codegen/defsgen.py \

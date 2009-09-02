@@ -453,6 +453,15 @@
 
 
 
+;; From firtree-type-builtins.h
+
+(define-function buffer_format_get_type
+  (c-name "firtree_buffer_format_get_type")
+  (return-type "GType")
+)
+
+
+
 ;; From firtree-types.h
 
 

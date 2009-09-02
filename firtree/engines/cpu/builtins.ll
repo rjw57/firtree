@@ -525,3 +525,108 @@ last:
 	ret float %1
 }
 
+;; sign() intrinsic function
+
+define float @sign_f( float ) {
+entry:
+	%lt_flag = fcmp olt float %0, zeroinitializer
+	br i1 %lt_flag, label %minusone, label %one
+one:
+	ret float 1.0
+minusone:
+	ret float -1.0
+}
+
+define <2 x float> @sign_v2( <2 x float> ) {
+entry:
+	%x = extractelement <2 x float> %0, i32 0
+	%y = extractelement <2 x float> %0, i32 1
+	%ex = call float @sign_f( float %x )
+	%ey = call float @sign_f( float %y )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @sign_v3( <3 x float> ) {
+entry:
+	%x = extractelement <3 x float> %0, i32 0
+	%y = extractelement <3 x float> %0, i32 1
+	%z = extractelement <3 x float> %0, i32 2
+	%ex = call float @sign_f( float %x )
+	%ey = call float @sign_f( float %y )
+	%ez = call float @sign_f( float %z )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @sign_v4( <4 x float> ) {
+entry:
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
+	%w = extractelement <4 x float> %0, i32 3
+	%ex = call float @sign_f( float %x )
+	%ey = call float @sign_f( float %y )
+	%ez = call float @sign_f( float %z )
+	%ew = call float @sign_f( float %w )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+
+;; abs() intrinsic function
+
+define float @abs_f( float ) {
+entry:
+	%sx = call float @sign_f ( float %0 )
+	%ax = mul float %sx, %0
+	ret float %ax
+}
+
+define <2 x float> @abs_v2( <2 x float> ) {
+entry:
+	%x = extractelement <2 x float> %0, i32 0
+	%y = extractelement <2 x float> %0, i32 1
+	%ex = call float @abs_f( float %x )
+	%ey = call float @abs_f( float %y )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @abs_v3( <3 x float> ) {
+entry:
+	%x = extractelement <3 x float> %0, i32 0
+	%y = extractelement <3 x float> %0, i32 1
+	%z = extractelement <3 x float> %0, i32 2
+	%ex = call float @abs_f( float %x )
+	%ey = call float @abs_f( float %y )
+	%ez = call float @abs_f( float %z )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @abs_v4( <4 x float> ) {
+entry:
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
+	%w = extractelement <4 x float> %0, i32 3
+	%ex = call float @abs_f( float %x )
+	%ey = call float @abs_f( float %y )
+	%ez = call float @abs_f( float %z )
+	%ew = call float @abs_f( float %w )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+

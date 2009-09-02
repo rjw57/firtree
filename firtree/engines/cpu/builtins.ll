@@ -501,3 +501,27 @@ entry:
 	ret <4 x float> %rv4
 }
 
+;; max() intrinsic function
+
+define float @max_ff( float, float ) {
+entry:
+	%leq_flag = fcmp ole float %0, %1
+	br i1 %leq_flag, label %last, label %first
+first:
+	ret float %0
+last:
+	ret float %1
+}
+
+;; min() intrinsic function
+
+define float @min_ff( float, float ) {
+entry:
+	%leq_flag = fcmp ole float %0, %1
+	br i1 %leq_flag, label %first, label %last
+first:
+	ret float %0
+last:
+	ret float %1
+}
+

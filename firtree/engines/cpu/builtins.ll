@@ -337,6 +337,29 @@ entry:
 	ret float %rv3
 }
 
+;; length() intrinsic function 
+
+define float @length_v2( <2 x float> ) {
+entry:
+	%dotprod = call float @dot_v2v2( <2 x float> %0, <2 x float> %0 )
+	%length = call float @sqrt_f( float %dotprod )
+	ret float %length
+}
+
+define float @length_v3( <3 x float> ) {
+entry:
+	%dotprod = call float @dot_v3v3( <3 x float> %0, <3 x float> %0 )
+	%length = call float @sqrt_f( float %dotprod )
+	ret float %length
+}
+
+define float @length_v4( <4 x float> ) {
+entry:
+	%dotprod = call float @dot_v4v4( <4 x float> %0, <4 x float> %0 )
+	%length = call float @sqrt_f( float %dotprod )
+	ret float %length
+}
+
 ;; compare (%0 < 0.f ? %1 : %2) for each element
 
 define float @compare_ffff( float, float, float ) {

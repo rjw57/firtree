@@ -148,6 +148,26 @@ FirtreeSampler*
 firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self);
 
 /**
+ * firtree_cpu_engine_render_into_buffer:
+ * @engine: A FirtreeCpuEngine.
+ * @extents: The extents of the sampler to render.
+ * @buffer: The location of the buffer in memory or NULL to unset the buffer.
+ * @width: The buffer width in pixels.
+ * @height: The buffer height in rows.
+ * @stride: The size of one row in bytes.
+ * @format: The format of the buffer.
+ *
+ * Render directly into a buffer in memory.
+ *
+ * Returns: TRUE if rendereding succeeded.
+ */
+gboolean 
+firtree_cpu_engine_render_into_buffer (FirtreeCpuEngine* self,
+        FirtreeVec4* extents,
+        gpointer buffer, guint width, guint height,
+        guint stride, FirtreeBufferFormat format);
+
+/**
  * firtree_debug_dump_cpu_engine_function:
  * @engine: A FirtreeCpuEngine.
  *

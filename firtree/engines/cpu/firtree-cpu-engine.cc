@@ -820,5 +820,51 @@ firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
 }
 #endif
 
+gboolean 
+firtree_cpu_engine_render_into_buffer (FirtreeCpuEngine* self,
+        FirtreeVec4* extents,
+        gpointer buffer, guint width, guint height,
+        guint stride, FirtreeBufferFormat format)
+{
+    g_assert(self);
+
+    if(!buffer) { return FALSE; }
+
+    RenderFunc render = NULL;
+
+    switch(format) {
+        case FIRTREE_FORMAT_ARGB32:
+        case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED:
+        case FIRTREE_FORMAT_XRGB32:
+        case FIRTREE_FORMAT_RGBA32:
+        case FIRTREE_FORMAT_RGBA32_PREMULTIPLIED:
+        case FIRTREE_FORMAT_ABGR32:
+        case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED:
+        case FIRTREE_FORMAT_XBGR32:
+        case FIRTREE_FORMAT_BGRA32:
+        case FIRTREE_FORMAT_BGRA32_PREMULTIPLIED:
+        case FIRTREE_FORMAT_RGB24:
+        case FIRTREE_FORMAT_BGR24:
+        case FIRTREE_FORMAT_RGBX32:
+        case FIRTREE_FORMAT_BGRX32:
+            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+                    RENDER_FUNC_NAME(format));
+            break;
+        default:
+            g_warning("Attempt to render to buffer in unsupported format.");
+            return FALSE;
+            break;
+    }
+
+    if(!render) {
+        return FALSE;
+    }
+
+    firtree_cpu_engine_perform_render(self, render,
+            (unsigned char*)buffer, width, height, stride, (float*)extents);
+
+    return TRUE;
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

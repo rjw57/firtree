@@ -1,0 +1,45 @@
+
+;; From firtree-cairo-surface-sampler.h
+
+(define-function cairo_surface_sampler_get_type
+  (c-name "firtree_cairo_surface_sampler_get_type")
+  (return-type "GType")
+)
+
+(define-function cairo_surface_sampler_new
+  (c-name "firtree_cairo_surface_sampler_new")
+  (is-constructor-of "FirtreeCairoSurfaceSampler")
+  (return-type "FirtreeCairoSurfaceSampler*")
+)
+
+(define-method set_cairo_surface
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_set_cairo_surface")
+  (return-type "none")
+  (parameters
+    '("cairo_surface_t*" "cairo_surface")
+  )
+)
+
+(define-method get_cairo_surface
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_get_cairo_surface")
+  (return-type "cairo_surface_t*")
+)
+
+(define-method get_do_interpolation
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_get_do_interpolation")
+  (return-type "gboolean")
+)
+
+(define-method set_do_interpolation
+  (of-object "FirtreeCairoSurfaceSampler")
+  (c-name "firtree_cairo_surface_sampler_set_do_interpolation")
+  (return-type "none")
+  (parameters
+    '("gboolean" "do_interpolation")
+  )
+)
+
+

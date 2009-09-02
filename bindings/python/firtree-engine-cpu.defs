@@ -1,0 +1,76 @@
+
+;; From firtree-cpu-engine.h
+
+(define-function cpu_engine_get_type
+  (c-name "firtree_cpu_engine_get_type")
+  (return-type "GType")
+)
+
+(define-function cpu_engine_new
+  (c-name "firtree_cpu_engine_new")
+  (is-constructor-of "FirtreeCpuEngine")
+  (return-type "FirtreeCpuEngine*")
+)
+
+(define-method render_into_pixbuf
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_pixbuf")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-method render_into_cairo_surface
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_cairo_surface")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("cairo_surface_t*" "surface")
+  )
+)
+
+(define-method set_sampler
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_set_sampler")
+  (return-type "none")
+  (parameters
+    '("FirtreeSampler*" "sampler")
+  )
+)
+
+(define-method get_sampler
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_get_sampler")
+  (return-type "FirtreeSampler*")
+)
+
+(define-method render_into_buffer
+  (of-object "FirtreeCpuEngine")
+  (c-name "firtree_cpu_engine_render_into_buffer")
+  (return-type "gboolean")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("gpointer" "buffer")
+    '("guint" "width")
+    '("guint" "height")
+    '("guint" "stride")
+    '("FirtreeBufferFormat" "format")
+  )
+)
+
+(define-function debug_dump_cpu_engine_function
+  (c-name "firtree_debug_dump_cpu_engine_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuEngine*" "engine")
+  )
+)
+
+
+
+;; From llvm-cpu-support.bc.h
+
+

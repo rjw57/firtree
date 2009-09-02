@@ -34,7 +34,12 @@ if(BUILD_PYTHON_BINDINGS)
     endif(CMAKE_COMPILER_IS_GNUCC)
 
 	pygobject_target_add_bindings(FIRTREE_BINDINGS firtree MODULEPREFIX pyfirtree
-        DEFS firtree-types.defs firtree.defs firtree-overriden.defs 
+        DEFS 
+            firtree-core-types.defs firtree-core.defs firtree-core-overriden.defs 
+            firtree-engine-cpu-types.defs firtree-engine-cpu.defs firtree-engine-cpu-overriden.defs 
+            firtree-cairo-types.defs firtree-cairo.defs # firtree-cairo-overriden.defs 
+            firtree-clutter-types.defs firtree-clutter.defs # firtree-clutter-overriden.defs 
+            firtree-gdk-pixbuf-types.defs firtree-gdk-pixbuf.defs # firtree-gdk-pixbuf-overriden.defs 
         REGISTER 
             /usr/share/pygtk/2.0/defs/gdk-types.defs
             /usr/share/pyclutter/1.0/defs/clutter-types.defs

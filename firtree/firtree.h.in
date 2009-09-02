@@ -45,6 +45,14 @@
  */
 #define FIRTREE_HAVE_CLUTTER @FIRTREE_HAVE_CLUTTER@
 
+/**
+ * FIRTREE_HAVE_GDK_PIXBUF:
+ *
+ * Defined to be 1 if gdk-pixbuf support is compiled into the library, defined
+ * to be zero otherwise.
+ */
+#define FIRTREE_HAVE_GDK_PIXBUF @FIRTREE_HAVE_GDK_PIXBUF@
+
 #include "firtree-affine-transform.h"
 #include "firtree-buffer-sampler.h"
 #include "firtree-debug.h"

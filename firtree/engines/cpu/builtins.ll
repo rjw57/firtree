@@ -530,11 +530,11 @@ last:
 define float @sign_f( float ) {
 entry:
 	%lt_flag = fcmp olt float %0, zeroinitializer
-	br i1 %lt_flag, label %minusone, label %one
-one:
-	ret float 1.0
-minusone:
-	ret float -1.0
+	%signbits = sext i1 %lt_flag to i32
+	%one = bitcast float 1.0 to i32
+	%rv = or i32 %one, %signbits
+	%frv = bitcast i32 %rv to float
+	ret float %frv
 }
 
 define <2 x float> @sign_v2( <2 x float> ) {

@@ -232,7 +232,7 @@ entry:
 ;; exp() intrinsic function 
 
 ;; Mapped by the CPU engine into the standard math library's expf() function.
-declare float @exp_f( float );
+declare float @exp_f( float ) nounwind readnone;
 
 define <2 x float> @exp_v2( <2 x float> ) {
 entry:
@@ -405,8 +405,8 @@ pass_through:
 ;; atan() intrinsic function 
 
 ;; Mapped by the CPU engine into the standard math library's atanf()/atan2f function.
-declare float @atan_f( float );
-declare float @atan_ff( float, float );
+declare float @atan_f( float ) nounwind readnone;
+declare float @atan_ff( float, float ) nounwind readnone;
 
 define <2 x float> @atan_v2( <2 x float> ) {
 entry:

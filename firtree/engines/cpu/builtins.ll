@@ -583,50 +583,33 @@ entry:
 
 define float @abs_f( float ) {
 entry:
-	%sx = call float @sign_f ( float %0 )
-	%ax = mul float %sx, %0
-	ret float %ax
+	%arg0 = bitcast float %0 to i32
+	%arg0abs = and i32 %arg0, 2147483647 ; Set the sign bit to zero (constant is 0x7fffffff)
+	%abs = bitcast i32 %arg0abs to float
+	ret float %abs
 }
 
 define <2 x float> @abs_v2( <2 x float> ) {
 entry:
-	%x = extractelement <2 x float> %0, i32 0
-	%y = extractelement <2 x float> %0, i32 1
-	%ex = call float @abs_f( float %x )
-	%ey = call float @abs_f( float %y )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%arg0 = bitcast <2 x float> %0 to <2 x i32>
+	%arg0abs = and <2 x i32> %arg0, < i32 2147483647, i32 2147483647 > 
+	%abs = bitcast  <2 x i32> %arg0abs to <2 x float>
+	ret <2 x float> %abs
 }
 
 define <3 x float> @abs_v3( <3 x float> ) {
 entry:
-	%x = extractelement <3 x float> %0, i32 0
-	%y = extractelement <3 x float> %0, i32 1
-	%z = extractelement <3 x float> %0, i32 2
-	%ex = call float @abs_f( float %x )
-	%ey = call float @abs_f( float %y )
-	%ez = call float @abs_f( float %z )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%arg0 = bitcast <3 x float> %0 to <3 x i32>
+	%arg0abs = and <3 x i32> %arg0, < i32 2147483647, i32 2147483647, i32 2147483647 > 
+	%abs = bitcast  <3 x i32> %arg0abs to <3 x float>
+	ret <3 x float> %abs
 }
 
 define <4 x float> @abs_v4( <4 x float> ) {
 entry:
-	%x = extractelement <4 x float> %0, i32 0
-	%y = extractelement <4 x float> %0, i32 1
-	%z = extractelement <4 x float> %0, i32 2
-	%w = extractelement <4 x float> %0, i32 3
-	%ex = call float @abs_f( float %x )
-	%ey = call float @abs_f( float %y )
-	%ez = call float @abs_f( float %z )
-	%ew = call float @abs_f( float %w )
-	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
-	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
-	ret <4 x float> %rv4
+	%arg0 = bitcast <4 x float> %0 to <4 x i32>
+	%arg0abs = and <4 x i32> %arg0, < i32 2147483647, i32 214748364, i32 2147483647, i32 2147483647 > 
+	%abs = bitcast  <4 x i32> %arg0abs to <4 x float>
+	ret <4 x float> %abs
 }
 

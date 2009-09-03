@@ -35,7 +35,9 @@ add_custom_command(
         render-buffer.o
         builtins.bc
     COMMAND ${LLVM_AS_EXECUTABLE}
-        -f builtins.ll -o builtins.bc
+        -f builtins.ll -o builtins.nonopt.bc
+    COMMAND ${LLVM_OPT_EXECUTABLE}
+        -O3 builtins.nonopt.bc -f -o=builtins.bc
     COMMAND ${LLVM_GCC_EXECUTABLE} 
         -fno-math-errno
         -o render-buffer.o

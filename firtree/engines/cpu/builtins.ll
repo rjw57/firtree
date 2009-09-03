@@ -529,8 +529,8 @@ last:
 
 define float @sign_f( float ) {
 entry:
-	%lt_flag = fcmp olt float %0, zeroinitializer
-	%signbits = sext i1 %lt_flag to i32
+	%arg0 = bitcast float %0 to i32
+	%signbits = and i32 %arg0, 2147483648 ; Pick off sign bit, constant is 0x80000000
 	%one = bitcast float 1.0 to i32
 	%rv = or i32 %one, %signbits
 	%frv = bitcast i32 %rv to float

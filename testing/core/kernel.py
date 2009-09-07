@@ -8,6 +8,8 @@ class SimpleGood(unittest.TestCase):
         self._k.connect('module-changed', self.modChange)
         self._mod_changed_called = False
 
+        self.assertEqual( self._k.get_return_type().name, 'void' )
+
         self.assertNotEqual(self._k, None)
         self.assert_(not self._mod_changed_called)
         src = """
@@ -39,6 +41,10 @@ class SimpleGood(unittest.TestCase):
 
     def testCompileStatusProperty(self):
         self.assertEqual(self._k.get_property('compile-status'), True)
+
+    def testReturnType(self):
+        # FIXME: This seems the wrong way to do this.
+        self.assertEqual( self._k.get_return_type().name, 'firtree_vec4' )
 
     def testCompileLog(self):
         log = self._k.get_compile_log()

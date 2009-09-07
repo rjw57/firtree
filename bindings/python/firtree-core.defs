@@ -400,6 +400,12 @@
   (return-type "none")
 )
 
+(define-method get_return_type
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_return_type")
+  (return-type "GType")
+)
+
 
 
 ;; From firtree-sampler.h

@@ -538,5 +538,19 @@ firtree_kernel_get_function(FirtreeKernel* self)
     return p->preferred_function->Function;
 }
 
+GType
+firtree_kernel_get_return_type (FirtreeKernel* self)
+{
+    FirtreeKernelPrivate* p = GET_PRIVATE(self);
+
+    /* If we have no compiled kernel, we have no return type. */
+    if(!p->compiled_kernel || !p->compile_status) {
+        return G_TYPE_NONE;
+    }
+
+    return _firtree_kernel_type_specifier_to_gtype(
+            p->preferred_function->ReturnType);
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

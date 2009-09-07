@@ -197,7 +197,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 
 	std::string func_name = prototype.GetMangledName( m_Context );
 
-	llvm::Function::LinkageTypes linkage;
+	llvm::Function::LinkageTypes linkage = Function::InternalLinkage;
 	switch( prototype.Qualifier )
 	{
 		case FunctionPrototype::FuncQualKernel:
@@ -339,6 +339,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 		kernel_record.Name = symbolToString(prototype.Name);
 		kernel_record.Function = prototype.LLVMFunction;
+		kernel_record.ReturnType = prototype.ReturnType.Specifier;
 	
 		// Add parameters
 		std::vector<FunctionParameter>::const_iterator it =
@@ -740,11 +741,12 @@ void EmitDeclarations::constructPrototypeStruct(
 		}
 	}
 
-	// Kernels must return vec4
+	// Kernels must return vec4 or void.
 	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
-		if ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) {
+		if ( ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) &&
+			 ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) ) {
 			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Kernel functions "
-			                    "must have a return type of vec4." );
+			                    "must have a return type of vec4 or void." );
 		}
 	}
 }

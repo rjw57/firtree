@@ -56,6 +56,9 @@ struct KernelFunction {
 	/// should be passed to the kernel function.
 	KernelParameterList 			Parameters;
 
+	/// The kernel's return type. Should generally be vec4 or void.
+	KernelTypeSpecifier				ReturnType;
+
 	/// Assignment operator (possibly overkill).
 	inline const KernelFunction& operator = (const KernelFunction& f)
 	{

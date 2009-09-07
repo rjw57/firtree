@@ -285,6 +285,18 @@ firtree_kernel_module_changed (FirtreeKernel* self);
 void
 firtree_kernel_contents_changed (FirtreeKernel* self);
 
+/**
+ * @self: A FirtreeKernel instance.
+ *
+ * Return the return value type of the kernel. Most kernels should have vec4 or
+ * void return types indicating if they are an image processing or a map/reduce
+ * kernel. If there is no kernel associated with @self, this return G_TYPE_NONE.
+ *
+ * Returns: A GType.
+ */
+GType
+firtree_kernel_get_return_type (FirtreeKernel* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_KERNEL */

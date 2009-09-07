@@ -27,6 +27,8 @@
 #include <llvm/Instructions.h>
 #include <llvm/LinkAllPasses.h>
 
+namespace llvm { class PassManager; class Pass; }
+
 /**
  * SECTION:firtree-engine-intl
  * @short_description: Internal types and constants for Firtree Engines.
@@ -93,6 +95,25 @@ firtree_engine_create_sample_function_prototype(llvm::Module* module);
  */
 llvm::Value*
 firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg);
+
+/**
+ * firtree_engine_create_standard_optimization_passes:
+ *
+ * Create a number of standard optimisation passes which may be applied to a module
+ * before code-generation.
+ *
+ * This is mostly lifted from the LLVM SVN. 
+ */
+void
+firtree_engine_create_standard_optimization_passes(
+        llvm::PassManager *PM,
+        guint OptimizationLevel,
+        gboolean OptimizeSize,
+        gboolean UnitAtATime,
+        gboolean UnrollLoops,
+        gboolean SimplifyLibCalls,
+        gboolean HaveExceptions,
+        llvm::Pass *InliningPass);
 
 namespace Firtree {
 

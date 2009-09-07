@@ -46,11 +46,9 @@
 #include <llvm/Support/CommandLine.h>
 
 #if FIRTREE_HAVE_CLUTTER
-#   include <cogl/cogl.h>
 #   include "clutter.hh"
 #endif
 
-#include <firtree/internal/firtree-cogl-texture-sampler-intl.hh>
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 
@@ -290,86 +288,6 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
     return p->sampler;
 }
 
-/* lifted from the LLVM SVN. */
-static
-void createStandardModulePasses(llvm::PassManager *PM,
-        unsigned OptimizationLevel,
-        bool OptimizeSize,
-        bool UnitAtATime,
-        bool UnrollLoops,
-        bool SimplifyLibCalls,
-        bool HaveExceptions,
-        llvm::Pass *InliningPass) {
-    if (OptimizationLevel == 0) {
-        if (InliningPass)
-            PM->add(InliningPass);
-    } else {
-        if (UnitAtATime)
-            PM->add(llvm::createRaiseAllocationsPass());    // call %malloc -> malloc inst
-        PM->add(llvm::createCFGSimplificationPass());     // Clean up disgusting code
-        // Kill useless allocas
-        PM->add(llvm::createPromoteMemoryToRegisterPass());
-        if (UnitAtATime) {
-            PM->add(llvm::createGlobalOptimizerPass());     // Optimize out global vars
-            PM->add(llvm::createGlobalDCEPass());           // Remove unused fns and globs
-            // IP Constant Propagation
-            PM->add(llvm::createIPConstantPropagationPass());
-            PM->add(llvm::createDeadArgEliminationPass());  // Dead argument elimination
-        }
-        PM->add(llvm::createInstructionCombiningPass());  // Clean up after IPCP & DAE
-        PM->add(llvm::createCFGSimplificationPass());     // Clean up after IPCP & DAE
-        if (UnitAtATime) {
-            if (HaveExceptions)
-                PM->add(llvm::createPruneEHPass());           // Remove dead EH info
-            PM->add(llvm::createFunctionAttrsPass());       // Set readonly/readnone attrs
-        }
-        if (InliningPass)
-            PM->add(InliningPass);
-        if (OptimizationLevel > 2)
-            PM->add(llvm::createArgumentPromotionPass());   // Scalarize uninlined fn args
-        if (SimplifyLibCalls)
-            PM->add(llvm::createSimplifyLibCallsPass());    // Library Call Optimizations
-        PM->add(llvm::createInstructionCombiningPass());  // Cleanup for scalarrepl.
-        PM->add(llvm::createJumpThreadingPass());         // Thread jumps.
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-        PM->add(llvm::createScalarReplAggregatesPass());  // Break up aggregate allocas
-        PM->add(llvm::createInstructionCombiningPass());  // Combine silly seq's
-        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
-        PM->add(llvm::createTailCallEliminationPass());   // Eliminate tail calls
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-        PM->add(llvm::createReassociatePass());           // Reassociate expressions
-        PM->add(llvm::createLoopRotatePass());            // Rotate Loop
-        PM->add(llvm::createLICMPass());                  // Hoist loop invariants
-        PM->add(llvm::createLoopUnswitchPass(OptimizeSize));
-        PM->add(llvm::createLoopIndexSplitPass());        // Split loop index
-        PM->add(llvm::createInstructionCombiningPass());  
-        PM->add(llvm::createIndVarSimplifyPass());        // Canonicalize indvars
-        PM->add(llvm::createLoopDeletionPass());          // Delete dead loops
-        if (UnrollLoops)
-            PM->add(llvm::createLoopUnrollPass());          // Unroll small loops
-        PM->add(llvm::createInstructionCombiningPass());  // Clean up after the unroller
-        PM->add(llvm::createGVNPass());                   // Remove redundancies
-        PM->add(llvm::createMemCpyOptPass());             // Remove memcpy / form memset
-        PM->add(llvm::createSCCPPass());                  // Constant prop with SCCP
-
-        // Run instcombine after redundancy elimination to exploit opportunities
-        // opened up by them.
-        PM->add(llvm::createInstructionCombiningPass());
-        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
-        PM->add(llvm::createDeadStoreEliminationPass());  // Delete dead stores
-        PM->add(llvm::createAggressiveDCEPass());         // Delete dead instructions
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-
-        if (UnitAtATime) {
-            PM->add(llvm::createStripDeadPrototypesPass()); // Get rid of dead prototypes
-            PM->add(llvm::createDeadTypeEliminationPass()); // Eliminate dead types
-        }
-
-        if (OptimizationLevel > 1 && UnitAtATime)
-            PM->add(llvm::createConstantMergePass());       // Merge dup global constants
-    }
-}
-
 /* optimise a llvm module by internalising all but the
  * named function and agressively inlining. */
 void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
@@ -391,8 +309,7 @@ void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
 
     PM.add(llvm::createAggressiveDCEPass()); 
 
-    /* copied from the LLVM opt utility */
-    createStandardModulePasses(&PM, 3, 
+    firtree_engine_create_standard_optimization_passes(&PM, 3, 
                             /*OptimizeSize=*/ false,
                             /*UnitAtATime=*/ true,
                             /*UnrollLoops=*/ true,

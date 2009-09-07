@@ -6,6 +6,7 @@
 
 add_library(common
     system-info.h   system-info.c
+    threading.h     threading.c
     uuid.h          uuid.cpp
     common.h        common.cpp)
 

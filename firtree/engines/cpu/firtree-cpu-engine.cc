@@ -4,7 +4,7 @@
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License verstion as published
+ * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -46,14 +46,14 @@
 #include <llvm/Support/CommandLine.h>
 
 #if FIRTREE_HAVE_CLUTTER
-#   include <cogl/cogl.h>
+#   include "clutter.hh"
 #endif
 
-#include <firtree/internal/firtree-cogl-texture-sampler-intl.hh>
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 
 #include <common/system-info.h>
+#include <common/threading.h>
 
 #include <sstream>
 
@@ -107,8 +107,6 @@ struct _FirtreeCpuEnginePrivate {
     FirtreeSampler*             sampler;
     gulong                      sampler_handler_id;
     llvm::ExecutionEngine*      cached_engine;
-    GThreadPool*                thread_pool;
-    GAsyncQueue*                response_queue;
 };
 
 /* invalidate (and release) any cached LLVM modules/functions. This
@@ -133,25 +131,6 @@ struct FirtreeCpuEngineRenderRequest {
     float           extents[4];
 };
 
-static void
-_firtree_cpu_engine_thread_func(gpointer data, gpointer user_data)
-{
-    FirtreeCpuEngine* self = FIRTREE_CPU_ENGINE(user_data);
-    g_assert(self);
-    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
-    g_assert(p);
-
-    FirtreeCpuEngineRenderRequest* request = (FirtreeCpuEngineRenderRequest*)data;
-
-    /* do stuff */
-    g_assert(request->func);
-    request->func(request->buffer, request->row_width, request->num_rows, 
-            request->row_stride, request->extents);
-
-    /* signal we've finished this request. */
-    g_async_queue_push(p->response_queue, request);
-}
-
 static void*
 _firtree_cpu_lazy_function_creator(const std::string& name) {
     if(name == "exp_f") {
@@ -165,125 +144,6 @@ _firtree_cpu_lazy_function_creator(const std::string& name) {
     }
     g_debug("Do not know what function to use for '%s'.", name.c_str());
     return NULL;
-}
-
-/* This is a LLVM pass which replaces calls to sample_cogl_texture with
- * calls to sample_image_buffer_nn() or sample_image_buffer_lerp(). */
-namespace {
-
-#if FIRTREE_HAVE_CLUTTER
-
-class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
-    public:
-
-    static char ID;
-
-    CanonicaliseCoglCallsPass() 
-        : Firtree::FunctionCallReplacementPass(&ID) 
-    { }
-
-    protected:
-
-    virtual bool interestedInCallToFunction(const std::string& name) {
-        return (name == "sample_cogl_texture");
-    }
-
-    virtual llvm::Value* getReplacementForCallInst(llvm::CallInst& instruction) {
-        llvm::CallInst* call_inst = &instruction;
-        llvm::Module* m = call_inst->getParent()->getParent()->getParent();
-
-        /* this is a call we need to replace. */
-        llvm::Value* tex_handle = call_inst->getOperand(1);
-        llvm::Value* location = call_inst->getOperand(2);
-
-        if(!llvm::isa<llvm::ConstantExpr>(tex_handle) || 
-                !llvm::isa<llvm::PointerType>(tex_handle->getType())) {
-            g_assert(false &&
-                    "Texture handles passed to sample_cogl_texture() "
-                    "must be constant pointers.");
-        }
-
-        llvm::ConstantExpr* const_expr = 
-            llvm::cast<llvm::ConstantExpr>(tex_handle);
-        g_assert(const_expr->isCast());
-
-        llvm::ConstantInt* tex_handle_int_val =
-            llvm::cast<llvm::ConstantInt>(const_expr->getOperand(0));
-
-        FirtreeCoglTextureSampler* sampler = 
-            (FirtreeCoglTextureSampler*)
-            tex_handle_int_val->getZExtValue();
-        g_assert(FIRTREE_IS_COGL_TEXTURE_SAMPLER(sampler));
-
-        CoglHandle cogl_tex_handle = 
-            firtree_cogl_texture_sampler_get_cogl_texture(sampler);
-
-        guint width = cogl_texture_get_width(cogl_tex_handle);
-        guint height = cogl_texture_get_height(cogl_tex_handle);
-
-        guint stride = 0;
-        FirtreeBufferFormat format = FIRTREE_FORMAT_LAST;
-        guchar* data = NULL;
-
-        guint data_size = firtree_cogl_texture_sampler_get_data(sampler,
-                &data, &stride, &format);
-        g_assert(format != FIRTREE_FORMAT_LAST);
-        g_assert(data != NULL);
-        g_assert(data_size != 0);
-
-        gboolean do_interp =
-            (cogl_texture_get_mag_filter(cogl_tex_handle) == CGL_LINEAR);
-
-        llvm::Function* sample_buffer_func = 
-            firtree_engine_create_sample_image_buffer_prototype(
-                    m, do_interp);
-        g_assert(sample_buffer_func);
-
-        llvm::Value* llvm_width = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty, 
-                (uint64_t)width, false);
-        llvm::Value* llvm_height = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
-                (uint64_t)height, false);
-        llvm::Value* llvm_stride = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
-                (uint64_t)stride, false);
-        llvm::Value* llvm_format = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
-                (uint64_t)format, false);
-
-        /* This looks dirty but is apparently valid.
-         *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
-        llvm::Constant* llvm_data_int = llvm::ConstantInt::get(
-                llvm::Type::Int64Ty, 
-                (uint64_t)data, false);
-        llvm::Value* llvm_data = llvm::ConstantExpr::getIntToPtr(
-                llvm_data_int,
-                llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
-
-        std::vector<llvm::Value*> func_args;
-        func_args.push_back(llvm_data);
-        func_args.push_back(llvm_format);
-        func_args.push_back(llvm_width);
-        func_args.push_back(llvm_height);
-        func_args.push_back(llvm_stride);
-        func_args.push_back(location);
-
-        llvm::Value* new_call = llvm::CallInst::Create(
-                sample_buffer_func,
-                func_args.begin(), func_args.end(), "sample", 
-                call_inst);
-
-        return new_call;
-    }
-};
-
-char CanonicaliseCoglCallsPass::ID = 0;
-llvm::RegisterPass<CanonicaliseCoglCallsPass> X("canonicalise-cogl-calls", 
-        "Replace calls to sample_cogl_texture().");
-
-#endif /* FIRTREE_HAVE_CLUTTER */
-
 }
 
 static void
@@ -310,18 +170,6 @@ static void
 firtree_cpu_engine_dispose (GObject *object)
 {
     G_OBJECT_CLASS (firtree_cpu_engine_parent_class)->dispose (object);
-    FirtreeCpuEnginePrivate* p = GET_PRIVATE(object); 
-
-    if(p && p->thread_pool) {
-        g_thread_pool_free(p->thread_pool, FALSE, TRUE);
-        p->thread_pool = NULL;
-    }
-
-    if(p && p->response_queue) {
-        g_async_queue_unref(p->response_queue);
-        p->response_queue = NULL;
-    }
-
     FirtreeCpuEngine* cpu_engine = FIRTREE_CPU_ENGINE(object);
     firtree_cpu_engine_set_sampler(cpu_engine, NULL);
     _firtree_cpu_engine_invalidate_llvm_cache(cpu_engine);
@@ -352,12 +200,6 @@ firtree_cpu_engine_init (FirtreeCpuEngine *self)
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     p->sampler = NULL;
     p->cached_engine = NULL;
-    p->thread_pool = g_thread_pool_new(
-            _firtree_cpu_engine_thread_func,
-            self, system_info_cpu_cores(),
-            TRUE, NULL);
-    g_assert(p->thread_pool);
-    p->response_queue = g_async_queue_new();
 }
 
 FirtreeCpuEngine*
@@ -408,86 +250,6 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
     return p->sampler;
 }
 
-/* lifted from the LLVM SVN. */
-static
-void createStandardModulePasses(llvm::PassManager *PM,
-        unsigned OptimizationLevel,
-        bool OptimizeSize,
-        bool UnitAtATime,
-        bool UnrollLoops,
-        bool SimplifyLibCalls,
-        bool HaveExceptions,
-        llvm::Pass *InliningPass) {
-    if (OptimizationLevel == 0) {
-        if (InliningPass)
-            PM->add(InliningPass);
-    } else {
-        if (UnitAtATime)
-            PM->add(llvm::createRaiseAllocationsPass());    // call %malloc -> malloc inst
-        PM->add(llvm::createCFGSimplificationPass());     // Clean up disgusting code
-        // Kill useless allocas
-        PM->add(llvm::createPromoteMemoryToRegisterPass());
-        if (UnitAtATime) {
-            PM->add(llvm::createGlobalOptimizerPass());     // Optimize out global vars
-            PM->add(llvm::createGlobalDCEPass());           // Remove unused fns and globs
-            // IP Constant Propagation
-            PM->add(llvm::createIPConstantPropagationPass());
-            PM->add(llvm::createDeadArgEliminationPass());  // Dead argument elimination
-        }
-        PM->add(llvm::createInstructionCombiningPass());  // Clean up after IPCP & DAE
-        PM->add(llvm::createCFGSimplificationPass());     // Clean up after IPCP & DAE
-        if (UnitAtATime) {
-            if (HaveExceptions)
-                PM->add(llvm::createPruneEHPass());           // Remove dead EH info
-            PM->add(llvm::createFunctionAttrsPass());       // Set readonly/readnone attrs
-        }
-        if (InliningPass)
-            PM->add(InliningPass);
-        if (OptimizationLevel > 2)
-            PM->add(llvm::createArgumentPromotionPass());   // Scalarize uninlined fn args
-        if (SimplifyLibCalls)
-            PM->add(llvm::createSimplifyLibCallsPass());    // Library Call Optimizations
-        PM->add(llvm::createInstructionCombiningPass());  // Cleanup for scalarrepl.
-        PM->add(llvm::createJumpThreadingPass());         // Thread jumps.
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-        PM->add(llvm::createScalarReplAggregatesPass());  // Break up aggregate allocas
-        PM->add(llvm::createInstructionCombiningPass());  // Combine silly seq's
-        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
-        PM->add(llvm::createTailCallEliminationPass());   // Eliminate tail calls
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-        PM->add(llvm::createReassociatePass());           // Reassociate expressions
-        PM->add(llvm::createLoopRotatePass());            // Rotate Loop
-        PM->add(llvm::createLICMPass());                  // Hoist loop invariants
-        PM->add(llvm::createLoopUnswitchPass(OptimizeSize));
-        PM->add(llvm::createLoopIndexSplitPass());        // Split loop index
-        PM->add(llvm::createInstructionCombiningPass());  
-        PM->add(llvm::createIndVarSimplifyPass());        // Canonicalize indvars
-        PM->add(llvm::createLoopDeletionPass());          // Delete dead loops
-        if (UnrollLoops)
-            PM->add(llvm::createLoopUnrollPass());          // Unroll small loops
-        PM->add(llvm::createInstructionCombiningPass());  // Clean up after the unroller
-        PM->add(llvm::createGVNPass());                   // Remove redundancies
-        PM->add(llvm::createMemCpyOptPass());             // Remove memcpy / form memset
-        PM->add(llvm::createSCCPPass());                  // Constant prop with SCCP
-
-        // Run instcombine after redundancy elimination to exploit opportunities
-        // opened up by them.
-        PM->add(llvm::createInstructionCombiningPass());
-        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
-        PM->add(llvm::createDeadStoreEliminationPass());  // Delete dead stores
-        PM->add(llvm::createAggressiveDCEPass());         // Delete dead instructions
-        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
-
-        if (UnitAtATime) {
-            PM->add(llvm::createStripDeadPrototypesPass()); // Get rid of dead prototypes
-            PM->add(llvm::createDeadTypeEliminationPass()); // Eliminate dead types
-        }
-
-        if (OptimizationLevel > 1 && UnitAtATime)
-            PM->add(llvm::createConstantMergePass());       // Merge dup global constants
-    }
-}
-
 /* optimise a llvm module by internalising all but the
  * named function and agressively inlining. */
 void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
@@ -509,8 +271,7 @@ void optimise_module(llvm::Module* m, std::vector<const char*>& export_list)
 
     PM.add(llvm::createAggressiveDCEPass()); 
 
-    /* copied from the LLVM opt utility */
-    createStandardModulePasses(&PM, 3, 
+    firtree_engine_create_standard_optimization_passes(&PM, 3, 
                             /*OptimizeSize=*/ false,
                             /*UnitAtATime=*/ true,
                             /*UnrollLoops=*/ true,
@@ -659,6 +420,18 @@ firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* self)
 }
 
 static void
+_call_render_func(guint row, FirtreeCpuEngineRenderRequest* request)
+{
+    float dy = request->extents[3] / (float)(request->num_rows);
+    float extents[] = { 
+        request->extents[0], request->extents[1] + (dy * (float)row),
+        request->extents[2], dy };
+    request->func(request->buffer + (row * request->row_stride),
+            request->row_width, 1,
+            request->row_stride, extents);
+}
+
+static void
 firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
         RenderFunc func, unsigned char* buffer, unsigned int row_width, 
         unsigned int num_rows, unsigned int row_stride, 
@@ -674,57 +447,12 @@ firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
         return;
     }
 
-    /* Create an array of render requests. */
-    GPtrArray* request_array = g_ptr_array_new();
+    FirtreeCpuEngineRenderRequest request = {
+        func, buffer, row_width, num_rows, row_stride,
+        { extents[0], extents[1], extents[2], extents[3] },
+    };
 
-    float dy = extents[3] / (float)num_rows;
-    int slice_rows = 8;
-    guint row = 0;
-    float y = extents[1];
-    float slice_height = dy * (float)slice_rows;
-
-    while(row < num_rows) {
-        FirtreeCpuEngineRenderRequest* request =
-            g_slice_new(FirtreeCpuEngineRenderRequest);
-
-        request->func = func;
-        request->buffer = buffer + (row_stride * row);
-        request->row_width = row_width;
-        if(row + slice_rows <= num_rows) {
-            request->num_rows = slice_rows;
-        } else {
-            request->num_rows = num_rows - row;
-        }
-        request->row_stride = row_stride;
-
-        request->extents[0] = extents[0];
-        request->extents[1] = y;
-        request->extents[2] = extents[2];
-        request->extents[3] = dy * (float)(request->num_rows);
-
-        g_ptr_array_add(request_array, request);
-
-        g_thread_pool_push(p->thread_pool, request, NULL);
-
-        row += slice_rows;
-        y += slice_height;
-    }
-
-    /* wait for responses */
-    while(request_array->len > 0)
-    {
-        gpointer finished_req = g_async_queue_pop(p->response_queue);
-
-        /* look for request and remove it */
-        if(!g_ptr_array_remove_fast(request_array, finished_req)) 
-        {
-            g_error("Unexpected response from worker thread.");
-        }
-
-        g_slice_free(FirtreeCpuEngineRenderRequest, finished_req);
-    }
-
-    g_ptr_array_free(request_array, TRUE);
+    threading_apply(num_rows, (ThreadingApplyFunc) _call_render_func, &request);
 
     firtree_sampler_unlock(p->sampler);
 }

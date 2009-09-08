@@ -1,4 +1,4 @@
-/* firtree-engine-intl.h */
+/* threading.h */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -17,34 +17,33 @@
  * Franklin Street, Fifth Floor, Boston, MA    02110-1301, USA
  */
 
-#ifndef _FIRTREE_COGL_TEXTURE_SAMPLER_INTL
-#define _FIRTREE_COGL_TEXTURE_SAMPLER_INTL
+#ifndef COMMON_THREADING_H
+#define COMMON_THREADING_H
 
-#include <glib-object.h>
-#include <firtree/firtree.h>
-
-#if FIRTREE_HAVE_CLUTTER
-
-#include <firtree/firtree-cogl-texture-sampler.h>
-#include "firtree-engine-intl.hh"
+#include <glib.h>
 
 G_BEGIN_DECLS
 
 /**
- * firtree_cogl_texture_sampler_get_data:
+ * ThreadingApplyFunc:
  *
- * Returns: The size of the cached data.
+ * A worker function suitable for passing to threading_apply().
  */
-guint
-firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
-        guchar** data, guint* rowstride,
-        FirtreeBufferFormat* format);
+typedef void (*ThreadingApplyFunc) ( guint i, gpointer data );
+
+ /**
+  * threading_apply:
+  * @count: Number of times to apply @func.
+  * @func: The function to call.
+  * @data: Data to pass to the function.
+  *
+  * Call @func @count times with the initial i parameter of @func taking 
+  * unique values 0 to @count-1. There is no guarantee of the order of i and
+  * @func may be called simultaneously from multiple threads.
+  */
+void
+threading_apply(guint count, ThreadingApplyFunc func, gpointer data);
 
 G_END_DECLS
-
-#endif /* FIRTREE_HAVE_CLUTTER */
-
-#endif /* _FIRTREE_COGL_TEXTURE_SAMPLER_INTL */
-
-/* vim:sw=4:ts=4:et:cindent
- */
+ 
+#endif /* end of include guard: COMMON_THREADING_H */

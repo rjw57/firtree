@@ -4,7 +4,7 @@
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License verstion as published
+ * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,6 +26,13 @@
 #include <llvm/Instructions.h>
 #include <llvm/Constants.h>
 #include <llvm/Linker.h>
+
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Analysis/LoopPass.h>
+#include <llvm/Analysis/CallGraph.h>
+#include <llvm/Target/TargetData.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/LinkAllPasses.h>
 
 #include <common/uuid.h>
 
@@ -177,6 +184,87 @@ firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg)
     }
 
     return NULL;
+}
+
+void
+firtree_engine_create_standard_optimization_passes(
+        llvm::PassManager *PM,
+        guint OptimizationLevel,
+        gboolean OptimizeSize,
+        gboolean UnitAtATime,
+        gboolean UnrollLoops,
+        gboolean SimplifyLibCalls,
+        gboolean HaveExceptions,
+        llvm::Pass *InliningPass)
+{
+    if (OptimizationLevel == 0) {
+        if (InliningPass)
+            PM->add(InliningPass);
+    } else {
+        if (UnitAtATime)
+            PM->add(llvm::createRaiseAllocationsPass());    // call %malloc -> malloc inst
+        PM->add(llvm::createCFGSimplificationPass());     // Clean up disgusting code
+        // Kill useless allocas
+        PM->add(llvm::createPromoteMemoryToRegisterPass());
+        if (UnitAtATime) {
+            PM->add(llvm::createGlobalOptimizerPass());     // Optimize out global vars
+            PM->add(llvm::createGlobalDCEPass());           // Remove unused fns and globs
+            // IP Constant Propagation
+            PM->add(llvm::createIPConstantPropagationPass());
+            PM->add(llvm::createDeadArgEliminationPass());  // Dead argument elimination
+        }
+        PM->add(llvm::createInstructionCombiningPass());  // Clean up after IPCP & DAE
+        PM->add(llvm::createCFGSimplificationPass());     // Clean up after IPCP & DAE
+        if (UnitAtATime) {
+            if (HaveExceptions)
+                PM->add(llvm::createPruneEHPass());           // Remove dead EH info
+            PM->add(llvm::createFunctionAttrsPass());       // Set readonly/readnone attrs
+        }
+        if (InliningPass)
+            PM->add(InliningPass);
+        if (OptimizationLevel > 2)
+            PM->add(llvm::createArgumentPromotionPass());   // Scalarize uninlined fn args
+        if (SimplifyLibCalls)
+            PM->add(llvm::createSimplifyLibCallsPass());    // Library Call Optimizations
+        PM->add(llvm::createInstructionCombiningPass());  // Cleanup for scalarrepl.
+        PM->add(llvm::createJumpThreadingPass());         // Thread jumps.
+        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
+        PM->add(llvm::createScalarReplAggregatesPass());  // Break up aggregate allocas
+        PM->add(llvm::createInstructionCombiningPass());  // Combine silly seq's
+        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
+        PM->add(llvm::createTailCallEliminationPass());   // Eliminate tail calls
+        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
+        PM->add(llvm::createReassociatePass());           // Reassociate expressions
+        PM->add(llvm::createLoopRotatePass());            // Rotate Loop
+        PM->add(llvm::createLICMPass());                  // Hoist loop invariants
+        PM->add(llvm::createLoopUnswitchPass(OptimizeSize));
+        PM->add(llvm::createLoopIndexSplitPass());        // Split loop index
+        PM->add(llvm::createInstructionCombiningPass());  
+        PM->add(llvm::createIndVarSimplifyPass());        // Canonicalize indvars
+        PM->add(llvm::createLoopDeletionPass());          // Delete dead loops
+        if (UnrollLoops)
+            PM->add(llvm::createLoopUnrollPass());          // Unroll small loops
+        PM->add(llvm::createInstructionCombiningPass());  // Clean up after the unroller
+        PM->add(llvm::createGVNPass());                   // Remove redundancies
+        PM->add(llvm::createMemCpyOptPass());             // Remove memcpy / form memset
+        PM->add(llvm::createSCCPPass());                  // Constant prop with SCCP
+
+        // Run instcombine after redundancy elimination to exploit opportunities
+        // opened up by them.
+        PM->add(llvm::createInstructionCombiningPass());
+        PM->add(llvm::createCondPropagationPass());       // Propagate conditionals
+        PM->add(llvm::createDeadStoreEliminationPass());  // Delete dead stores
+        PM->add(llvm::createAggressiveDCEPass());         // Delete dead instructions
+        PM->add(llvm::createCFGSimplificationPass());     // Merge & remove BBs
+
+        if (UnitAtATime) {
+            PM->add(llvm::createStripDeadPrototypesPass()); // Get rid of dead prototypes
+            PM->add(llvm::createDeadTypeEliminationPass()); // Eliminate dead types
+        }
+
+        if (OptimizationLevel > 1 && UnitAtATime)
+            PM->add(llvm::createConstantMergePass());       // Merge dup global constants
+    }
 }
 
 /* vim:sw=4:ts=4:et:cindent

@@ -14,7 +14,8 @@ typedef float vec4 __attribute__ ((vector_size(16)));
 
 /* this is the function which acually calculates the sampler
  * value. */
-extern vec4 sampler_output(vec2 dest_coord);
+extern vec4 sampler_function_vec4(vec2 dest_coord);
+extern void sampler_function_void(vec2 dest_coord);
 
 /* leverage some of our builtins. */
 extern vec4 premultiply_v4(vec4);
@@ -450,7 +451,7 @@ void render_##format(unsigned char* buffer,                             \
         for(col=0; col<width; ++col, pixel+=pix_size, x+=dx) {          \
             vec4 in_vec = unpack_pixel(pixel, format);                  \
             vec2 dest_coord = {x, y};                                   \
-            vec4 sample_vec = sampler_output(dest_coord);               \
+            vec4 sample_vec = sampler_function_vec4(dest_coord);               \
             float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);       \
             vec4 one_minus_alpha_vec = {                                \
                 one_minus_alpha, one_minus_alpha,                       \
@@ -478,6 +479,26 @@ RENDER_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 
 RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
 RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
+
+void reduce(unsigned char* buffer,                             
+        unsigned int width, unsigned int height,                        
+        unsigned int row_stride, float* extents)                        
+{                                                                       
+    unsigned int row, col;                                              
+    float start_x = extents[0];                                         
+    float y = extents[1];                                               
+    float dx = extents[2] / (float)width;                               
+    float dy = extents[3] / (float)height;                              
+    start_x += 0.5f*dx; y += 0.5f*dy;                                   
+    for(row=0; row<height; ++row, y+=dy) {                              
+        unsigned char* pixel = buffer + (row * row_stride);             
+        float x = start_x;                                              
+        for(col=0; col<width; ++col, x+=dx) {          
+            vec2 dest_coord = {x, y};                                   
+            sampler_function_void(dest_coord);               
+        }                                                               
+    }                                                                   
+}                                                                       
 
 /* vim:sw=4:ts=4:cindent:et
  */

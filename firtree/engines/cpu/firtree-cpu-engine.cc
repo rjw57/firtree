@@ -290,6 +290,8 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
         return NULL;
     }
 
+    /* If we have a cached JIT engine, attempt to retrieve the required function
+     * pointer from it */
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
     if(p->cached_engine) {
         llvm::Function* render_function = p->cached_engine->FindFunctionNamed(
@@ -349,8 +351,9 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     llvm::Function* new_sampler_func = linked_module->getFunction(
             sampler_function->getName());
 
+    /* Create the 'return vec4' version of the sample function. */
     llvm::Function* existing_sample_func = linked_module->getFunction(
-            "sampler_output");
+            "sampler_function_vec4");
     if(existing_sample_func) {
         llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
                 existing_sample_func);
@@ -361,6 +364,21 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
                 args.begin(), args.end(),
                 "rv", bb);
         llvm::ReturnInst::Create(sample_val, bb);
+    }
+
+    /* Create the 'return void' version of the sample function. */
+    existing_sample_func = linked_module->getFunction(
+            "sampler_function_void");
+    if(existing_sample_func) {
+        llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
+                existing_sample_func);
+        std::vector<llvm::Value*> args;
+        args.push_back(existing_sample_func->arg_begin());
+        llvm::CallInst::Create(
+                new_sampler_func,
+                args.begin(), args.end(),
+                "rv", bb);
+        llvm::ReturnInst::Create(NULL, bb);
     }
 
     std::vector<const char*> render_functions;

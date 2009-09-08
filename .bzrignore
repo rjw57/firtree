@@ -23,3 +23,4 @@ firtree/firtree.pc
 firtree/firtree-type-builtins.*
 
 firtree/engines/cpu/builtins.nonopt.bc
+firtree/engines/cpu/llvm-cpu-support.opt.ll

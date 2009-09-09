@@ -96,6 +96,65 @@ class SimpleBad(unittest.TestCase):
         self.assertNotEqual(log, None)
         self.assertEqual(len(log), 1)
 
+class SimpleReduceGood(unittest.TestCase):
+    def setUp(self):
+        self._k = Kernel()
+        self.assertNotEqual(self._k, None)
+        src = """
+            kernel __reduce void simpleKernel() {
+                emit(vec4(1,2,3,4));
+            }
+        """
+        self._k.compile_from_source(src)
+
+    def tearDown(self):
+        self._k = None
+
+    def testValidity(self):
+        self.assertEqual(self._k.is_valid(), True)
+
+    def testCompileStatusMethod(self):
+        self.assertEqual(self._k.get_compile_status(), True)
+
+    def testCompileStatusProperty(self):
+        self.assertEqual(self._k.get_property('compile-status'), True)
+
+    def testCompileLog(self):
+        log = self._k.get_compile_log()
+        self.assertNotEqual(log, None)
+        self.assertEqual(len(log), 0)
+
+class SimpleRenderNoEmit(unittest.TestCase):
+    def setUp(self):
+        self._k = Kernel()
+        self.assertNotEqual(self._k, None)
+        src = """
+            kernel __render vec4 simpleKernel() {
+                emit(vec4(1,2,3,4));
+                return vec4(1,2,3,4);
+            }
+        """
+        self._k.compile_from_source(src)
+
+    def tearDown(self):
+        self._k = None
+
+    def testValidity(self):
+        self.assertEqual(self._k.is_valid(), False)
+
+    def testCompileStatusMethod(self):
+        self.assertEqual(self._k.get_compile_status(), False)
+
+    def testCompileStatusProperty(self):
+        self.assertEqual(self._k.get_property('compile-status'), False)
+
+    def testCompileLog(self):
+        log = self._k.get_compile_log()
+        if len(log) != 1:
+            print '\n'.join(log)
+        self.assertNotEqual(log, None)
+        self.assertEqual(len(log), 1)
+
 class CommonErrors(unittest.TestCase):
     def setUp(self):
         pass

@@ -114,13 +114,13 @@ struct FunctionParameter {
 /// \brief A structure decribing a prototype.
 
 struct FunctionPrototype {
-	/// The possible function types.
+	/// The possible function qualifiers.
 	enum FunctionQualifier {
-		FuncQualFunction,
-		FuncQualKernel,
-
-		/// Intrinsic functions do not need a definition.
-		FuncQualIntrinsic,
+		FunctionQualifierNone				= 0x00,
+		FunctionQualifierKernel				= 0x01,
+		FunctionQualifierReduce				= 0x02,
+		FunctionQualifierRender				= 0x04,
+		FunctionQualifierIntrinsic			= 0x08,
 
 		FuncQualInvalid = -1,
 	};
@@ -138,8 +138,8 @@ struct FunctionPrototype {
 	/// there is nont
 	llvm::Function*             LLVMFunction;
 
-	/// The function qualifier
-	FunctionQualifier           Qualifier;
+	/// The function qualifiers
+	unsigned int	            Qualifier;
 
 	/// The name of the function (as a symbol).
 	symbol                      Name;

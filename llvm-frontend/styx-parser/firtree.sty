@@ -40,6 +40,8 @@ Regular Grammar
     tok Out             = "out"
     tok InOut           = "inout"
     tok Kernel          = "kernel"
+    tok Reduce          = "__reduce"
+    tok Render          = "__render"
     tok Float           = "float"
     tok Int             = "int"
     tok Void            = "void"
@@ -66,7 +68,7 @@ Regular Grammar
     let ReservedWord    = True | False | Const | Do | For | While | If 
                         | Else | In | Out | InOut | Kernel | Float | Int
                         | Void | Bool | Return | Vec2 | Vec3 | Vec4 | Sampler
-                        | Color | Builtin | Static | Dynamic
+                        | Color | Builtin | Static | Dynamic | Reduce | Render
 
     ;;;; Assignment operators
     tok AddAssign       = "+="
@@ -137,9 +139,11 @@ let FunctionPrototype
     :functionprototype:     FunctionQualifier FullySpecifiedType Identifier "(" FunctionParameterDeclarationList ")"
 
 let FunctionQualifier
-    :function:
-    :kernel:                "kernel"
-    :builtin:               "__builtin__"
+    :none:
+    :kernel:                "kernel" FunctionQualifier
+    :reduce:                "__reduce" FunctionQualifier 
+    :render:                "__render" FunctionQualifier 
+    :builtin:               "__builtin__" FunctionQualifier
 
 let FullySpecifiedType
     :unqualifiedtype:       TypeSpecifier

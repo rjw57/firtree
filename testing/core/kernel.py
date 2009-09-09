@@ -16,6 +16,8 @@ class SimpleGood(unittest.TestCase):
             kernel vec4 simpleKernel() {
                 return vec4(1,0,0,1);
             }
+            __reduce kernel void simpleReduce() {
+            }
         """
         self._k.compile_from_source(src)
         self.assert_(self._mod_changed_called)
@@ -48,6 +50,8 @@ class SimpleGood(unittest.TestCase):
 
     def testCompileLog(self):
         log = self._k.get_compile_log()
+        if len(log) != 0:
+            print '\n'.join(log)
         self.assertNotEqual(log, None)
         self.assertEqual(len(log), 0)
 

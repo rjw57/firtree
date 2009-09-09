@@ -54,6 +54,7 @@
 
 #include <common/system-info.h>
 #include <common/threading.h>
+#include <common/lock-free.h>
 
 #include <sstream>
 
@@ -351,9 +352,9 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
     llvm::Function* new_sampler_func = linked_module->getFunction(
             sampler_function->getName());
 
-    /* Create the 'return vec4' version of the sample function. */
+    /* Create the render version of the sample function. */
     llvm::Function* existing_sample_func = linked_module->getFunction(
-            "sampler_function_vec4");
+            "sampler_render_function");
     if(existing_sample_func) {
         llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
                 existing_sample_func);
@@ -366,9 +367,9 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, const char* name)
         llvm::ReturnInst::Create(sample_val, bb);
     }
 
-    /* Create the 'return void' version of the sample function. */
+    /* Create the reduce version of the sample function. */
     existing_sample_func = linked_module->getFunction(
-            "sampler_function_void");
+            "sampler_reduce_function");
     if(existing_sample_func) {
         llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
                 existing_sample_func);

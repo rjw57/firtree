@@ -107,8 +107,8 @@ class FunctionCallEmitter : ExpressionEmitter
 						
 						// If this is a non-intrinisc function, add
 						// the implicit dest coord.
-						if(proto.Qualifier != 
-								FunctionPrototype::FuncQualIntrinsic) {
+						if(! ( proto.Qualifier &
+									FunctionPrototype::FunctionQualifierIntrinsic) ) {
 							llvm::Value* first_arg = llvm::cast<llvm::Value>(
 									context->Function->arg_begin());
 							llvm_params.push_back(first_arg);

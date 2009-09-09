@@ -170,7 +170,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	// Non-intrinsic functions have an implicit first parameter, 
 	// analagous to the 'this' pointer in C++, which gives the
 	// value of destCoord().
-	if(prototype.Qualifier != FunctionPrototype::FuncQualIntrinsic) {
+	if( ! (prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic) ) {
 		param_llvm_types.push_back( llvm::VectorType::get(
 					llvm::Type::FloatTy, 2 ) );
 	}
@@ -198,28 +198,18 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	std::string func_name = prototype.GetMangledName( m_Context );
 
 	llvm::Function::LinkageTypes linkage = Function::InternalLinkage;
-	switch( prototype.Qualifier )
-	{
-		case FunctionPrototype::FuncQualKernel:
-			linkage = Function::ExternalLinkage;
-			{
-				// A kernel has it's name mangled so that is is
-				// globally unique.
-				gchar uuid[37];
-				generate_random_uuid(uuid, '_');
-				func_name = "kernel_";
-				func_name += uuid;
-			}
-			break;
-		case FunctionPrototype::FuncQualFunction:
-			linkage = Function::InternalLinkage;
-			break;
-		case FunctionPrototype::FuncQualIntrinsic:
-			linkage = Function::ExternalLinkage;
-			break;
-		default:
-			FIRTREE_LLVM_ICE( m_Context, NULL, "Invalid linkage.");
-			break;
+	if( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
+		linkage = Function::ExternalLinkage;
+		// A kernel has it's name mangled so that is is
+		// globally unique.
+		gchar uuid[37];
+		generate_random_uuid(uuid, '_');
+		func_name = "kernel_";
+		func_name += uuid;
+	} else if( prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic ) {
+		linkage = Function::ExternalLinkage;
+	} else {
+		linkage = Function::InternalLinkage;
 	}
 
 	F = LLVM_CREATE( Function, FT,
@@ -333,7 +323,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	// If this prototype happens to be a kernel, and the context's
 	// KernelVector field is non-NULL, record details of this kernel.
 	if((m_Context->KernelList != NULL) && 
-			(prototype.Qualifier == FunctionPrototype::FuncQualKernel))
+			(prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel))
 	{
 		LLVM::KernelFunction kernel_record;
 
@@ -378,7 +368,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// If this is non-intrinsic, name the implicit
 	// variable '__this__destCoord'.
-	if(prototype.Qualifier != FunctionPrototype::FuncQualIntrinsic) {
+	if(! (prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic)) {
 		AI->setName("__this__destCoord");
 		++AI;
 	}
@@ -510,8 +500,8 @@ void EmitDeclarations::checkEmittedDeclarations()
 
 	while ( it != m_Context->FuncTable.end() ) {
 		if (( it->second.DefinitionTerm == NULL ) &&
-		        ( it->second.Qualifier !=
-		          FunctionPrototype::FuncQualIntrinsic ) ) {
+		        !( it->second.Qualifier &
+					FunctionPrototype::FunctionQualifierIntrinsic ) ) {
 			try {
 				FIRTREE_LLVM_ERROR( m_Context, it->second.PrototypeTerm,
 				                    "No definition found for function '%s'.",
@@ -613,6 +603,7 @@ void EmitDeclarations::constructPrototypeStruct(
     firtreeFunctionPrototype proto_term )
 {
 	firtreeFunctionQualifier qual;
+	firtreeFunctionQualifier next_qual;
 	firtreeFullySpecifiedType type;
 	GLS_Tok name;
 	GLS_Lst( firtreeParameterDeclaration ) params;
@@ -628,14 +619,52 @@ void EmitDeclarations::constructPrototypeStruct(
 	prototype.DefinitionTerm = NULL;
 	prototype.LLVMFunction = NULL;
 
-	if ( firtreeFunctionQualifier_function( qual ) ) {
-		prototype.Qualifier = FunctionPrototype::FuncQualFunction;
-	} else if ( firtreeFunctionQualifier_kernel( qual ) ) {
-		prototype.Qualifier = FunctionPrototype::FuncQualKernel;
-	} else if ( firtreeFunctionQualifier_builtin( qual ) ) {
-		prototype.Qualifier = FunctionPrototype::FuncQualIntrinsic;
-	} else {
-		FIRTREE_LLVM_ICE( m_Context, qual, "Invalid function qualifier." );
+	prototype.Qualifier = FunctionPrototype::FunctionQualifierNone;
+
+	bool finished_quals = false;
+	while( !finished_quals ) {
+		if ( firtreeFunctionQualifier_none( qual ) ) {
+			finished_quals = true;
+		} else if ( firtreeFunctionQualifier_kernel( qual, &next_qual ) ) {
+			prototype.Qualifier |= FunctionPrototype::FunctionQualifierKernel;
+		} else if ( firtreeFunctionQualifier_render( qual, &next_qual ) ) {
+			prototype.Qualifier |= FunctionPrototype::FunctionQualifierRender;
+		} else if ( firtreeFunctionQualifier_reduce( qual, &next_qual ) ) {
+			prototype.Qualifier |= FunctionPrototype::FunctionQualifierReduce;
+		} else if ( firtreeFunctionQualifier_builtin( qual, &next_qual ) ) {
+			prototype.Qualifier |= FunctionPrototype::FunctionQualifierIntrinsic;
+		} else {
+			FIRTREE_LLVM_ICE( m_Context, qual, "Invalid function qualifier." );
+		}
+		qual = next_qual;
+	}
+
+	/* Unless otherwise specified, kernels are render kernels */
+	if( (prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel) &&
+			! (prototype.Qualifier & (FunctionPrototype::FunctionQualifierRender | FunctionPrototype::FunctionQualifierReduce)) ) {
+		prototype.Qualifier |= FunctionPrototype::FunctionQualifierRender;
+	}
+
+	if( prototype.Qualifier & 
+			( FunctionPrototype::FunctionQualifierRender | 
+			  FunctionPrototype::FunctionQualifierReduce ) ) 
+	{
+		if( ! ( prototype.Qualifier & ( 
+			( FunctionPrototype::FunctionQualifierKernel | 
+			  FunctionPrototype::FunctionQualifierIntrinsic ) ) ) ) {
+			FIRTREE_LLVM_ERROR( m_Context, qual,
+					"Only kernel functions or intrinsics may be tagged as reduce or "
+					"render-only.");
+		}
+	}
+
+	if( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
+		if( ! ( prototype.Qualifier & 
+				( FunctionPrototype::FunctionQualifierRender | 
+				  FunctionPrototype::FunctionQualifierReduce ) )  )
+		{
+			FIRTREE_LLVM_ICE( m_Context, qual, "Kernel function has no render/reduce qualifier." );
+		}
 	}
 
 	prototype.Name = GLS_Tok_symbol( name );
@@ -722,7 +751,7 @@ void EmitDeclarations::constructPrototypeStruct(
 			}
 
 			// Kernels must have 'in' parameters only.
-			if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
+			if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
 				if(new_param.Direction != FunctionParameter::FuncParamIn) {
 					FIRTREE_LLVM_ERROR( m_Context, param_decl,
 							"Kernel functions must "
@@ -741,12 +770,19 @@ void EmitDeclarations::constructPrototypeStruct(
 		}
 	}
 
-	// Kernels must return vec4 or void.
-	if ( prototype.Qualifier == FunctionPrototype::FuncQualKernel ) {
-		if ( ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) &&
-			 ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) ) {
-			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Kernel functions "
-			                    "must have a return type of vec4 or void." );
+	// Render kernels must return vec4.
+	if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierRender ) {
+		if ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) {
+			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Render kernel functions "
+			                    "must have a return type of vec4." );
+		}
+	}
+
+	// Reduce kernels must return void.
+	if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierReduce ) {
+		if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
+			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Reduce kernel functions "
+			                    "must have a return type of void." );
 		}
 	}
 }

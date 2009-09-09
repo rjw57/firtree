@@ -513,6 +513,99 @@ last:
 	ret float %1
 }
 
+define <2 x float> @max_v2v2( <2 x float>, <2 x float> ) {
+entry:
+	%Yx = extractelement <2 x float> %0, i32 0
+	%Yy = extractelement <2 x float> %0, i32 1
+	%Xx = extractelement <2 x float> %1, i32 0
+	%Xy = extractelement <2 x float> %1, i32 1
+	%ex = call float @max_ff( float %Yx, float %Xx )
+	%ey = call float @max_ff( float %Yy, float %Xy )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @max_v3v3( <3 x float>, <3 x float> ) {
+entry:
+	%Yx = extractelement <3 x float> %0, i32 0
+	%Yy = extractelement <3 x float> %0, i32 1
+	%Yz = extractelement <3 x float> %0, i32 2
+	%Xx = extractelement <3 x float> %1, i32 0
+	%Xy = extractelement <3 x float> %1, i32 1
+	%Xz = extractelement <3 x float> %1, i32 2
+	%ex = call float @max_ff( float %Yx, float %Xx )
+	%ey = call float @max_ff( float %Yy, float %Xy )
+	%ez = call float @max_ff( float %Yz, float %Xz )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @max_v4v4( <4 x float>, <4 x float> ) {
+entry:
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Yw = extractelement <4 x float> %0, i32 3
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
+	%Xz = extractelement <4 x float> %1, i32 2
+	%Xw = extractelement <4 x float> %1, i32 3
+	%ex = call float @max_ff( float %Yx, float %Xx )
+	%ey = call float @max_ff( float %Yy, float %Xy )
+	%ez = call float @max_ff( float %Yz, float %Xz )
+	%ew = call float @max_ff( float %Yw, float %Xw )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+
+define <2 x float> @max_v2f( <2 x float>, float ) {
+entry:
+	%Yx = extractelement <2 x float> %0, i32 0
+	%Yy = extractelement <2 x float> %0, i32 1
+	%ex = call float @max_ff( float %Yx, float %1 )
+	%ey = call float @max_ff( float %Yy, float %1 )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @max_v3f( <3 x float>, float ) {
+entry:
+	%Yx = extractelement <3 x float> %0, i32 0
+	%Yy = extractelement <3 x float> %0, i32 1
+	%Yz = extractelement <3 x float> %0, i32 2
+	%ex = call float @max_ff( float %Yx, float %1 )
+	%ey = call float @max_ff( float %Yy, float %1 )
+	%ez = call float @max_ff( float %Yz, float %1 )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @max_v4f( <4 x float>, float ) {
+entry:
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Yw = extractelement <4 x float> %0, i32 3
+	%ex = call float @max_ff( float %Yx, float %1 )
+	%ey = call float @max_ff( float %Yy, float %1 )
+	%ez = call float @max_ff( float %Yz, float %1 )
+	%ew = call float @max_ff( float %Yw, float %1 )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+
 ;; min() intrinsic function
 
 define float @min_ff( float, float ) {
@@ -523,6 +616,99 @@ first:
 	ret float %0
 last:
 	ret float %1
+}
+
+define <2 x float> @min_v2v2( <2 x float>, <2 x float> ) {
+entry:
+	%Yx = extractelement <2 x float> %0, i32 0
+	%Yy = extractelement <2 x float> %0, i32 1
+	%Xx = extractelement <2 x float> %1, i32 0
+	%Xy = extractelement <2 x float> %1, i32 1
+	%ex = call float @min_ff( float %Yx, float %Xx )
+	%ey = call float @min_ff( float %Yy, float %Xy )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @min_v3v3( <3 x float>, <3 x float> ) {
+entry:
+	%Yx = extractelement <3 x float> %0, i32 0
+	%Yy = extractelement <3 x float> %0, i32 1
+	%Yz = extractelement <3 x float> %0, i32 2
+	%Xx = extractelement <3 x float> %1, i32 0
+	%Xy = extractelement <3 x float> %1, i32 1
+	%Xz = extractelement <3 x float> %1, i32 2
+	%ex = call float @min_ff( float %Yx, float %Xx )
+	%ey = call float @min_ff( float %Yy, float %Xy )
+	%ez = call float @min_ff( float %Yz, float %Xz )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @min_v4v4( <4 x float>, <4 x float> ) {
+entry:
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Yw = extractelement <4 x float> %0, i32 3
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
+	%Xz = extractelement <4 x float> %1, i32 2
+	%Xw = extractelement <4 x float> %1, i32 3
+	%ex = call float @min_ff( float %Yx, float %Xx )
+	%ey = call float @min_ff( float %Yy, float %Xy )
+	%ez = call float @min_ff( float %Yz, float %Xz )
+	%ew = call float @min_ff( float %Yw, float %Xw )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
+}
+
+define <2 x float> @min_v2f( <2 x float>, float ) {
+entry:
+	%Yx = extractelement <2 x float> %0, i32 0
+	%Yy = extractelement <2 x float> %0, i32 1
+	%ex = call float @min_ff( float %Yx, float %1 )
+	%ey = call float @min_ff( float %Yy, float %1 )
+	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
+	ret <2 x float> %rv2
+}
+
+define <3 x float> @min_v3f( <3 x float>, float ) {
+entry:
+	%Yx = extractelement <3 x float> %0, i32 0
+	%Yy = extractelement <3 x float> %0, i32 1
+	%Yz = extractelement <3 x float> %0, i32 2
+	%ex = call float @min_ff( float %Yx, float %1 )
+	%ey = call float @min_ff( float %Yy, float %1 )
+	%ez = call float @min_ff( float %Yz, float %1 )
+	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
+	ret <3 x float> %rv3
+}
+
+define <4 x float> @min_v4f( <4 x float>, float ) {
+entry:
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Yw = extractelement <4 x float> %0, i32 3
+	%ex = call float @min_ff( float %Yx, float %1 )
+	%ey = call float @min_ff( float %Yy, float %1 )
+	%ez = call float @min_ff( float %Yz, float %1 )
+	%ew = call float @min_ff( float %Yw, float %1 )
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	%rv4 = insertelement <4 x float> %rv3, float %ew, i32 3
+	ret <4 x float> %rv4
 }
 
 ;; sign() intrinsic function

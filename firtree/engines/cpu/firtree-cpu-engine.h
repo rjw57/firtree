@@ -149,7 +149,7 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self);
 
 /**
  * firtree_cpu_engine_render_into_buffer:
- * @engine: A FirtreeCpuEngine.
+ * @self: A FirtreeCpuEngine.
  * @extents: The extents of the sampler to render.
  * @buffer: The location of the buffer in memory or NULL to unset the buffer.
  * @width: The buffer width in pixels.

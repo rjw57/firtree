@@ -107,18 +107,16 @@ class FunctionCallEmitter : ExpressionEmitter
 
 						// If this is a reduce/render only function, check the
 						// current prototype.
-						if(proto.Qualifier & FunctionPrototype::FunctionQualifierReduce) {
-							if( ! (context->CurrentPrototype->Qualifier & 
-										FunctionPrototype::FunctionQualifierReduce ) ) {
+						if(proto.is_reduce_only()) {
+							if(!context->CurrentPrototype->is_reduce_only()) {
 								FIRTREE_LLVM_ERROR(context, func_spec, 
 										"Attempt to call reduce-only "
 										"function from non-reduce kernel function.");
 							}
 						}
 
-						if(proto.Qualifier & FunctionPrototype::FunctionQualifierRender) {
-							if( ! (context->CurrentPrototype->Qualifier & 
-										FunctionPrototype::FunctionQualifierRender ) ) {
+						if(proto.is_render_only()) {
+							if(!context->CurrentPrototype->is_reduce_only()) {
 								FIRTREE_LLVM_ERROR(context, func_spec, 
 										"Attempt to call render-only "
 										"function from non-render kernel function.");

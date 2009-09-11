@@ -121,9 +121,17 @@ struct FunctionPrototype {
 		FunctionQualifierReduce				= 0x02,
 		FunctionQualifierRender				= 0x04,
 		FunctionQualifierIntrinsic			= 0x08,
+		FunctionQualifierStateful			= 0x10, // Function has side-effects.
 
 		FuncQualInvalid = -1,
 	};
+
+	inline bool is_kernel() const { return Qualifier & FunctionQualifierKernel; }
+	inline bool is_reduce_only() const { return Qualifier & FunctionQualifierReduce; }
+	inline bool is_render_only() const { return Qualifier & FunctionQualifierRender; }
+	inline bool is_intrinsic() const { return Qualifier & FunctionQualifierIntrinsic; }
+	inline bool is_normal_function() const { return !is_kernel() && !is_intrinsic(); }
+	inline bool is_stateful() const { return Qualifier & FunctionQualifierStateful; }
 
 	/// The parse tree term which defined this prototype.
 	firtreeFunctionPrototype    PrototypeTerm;

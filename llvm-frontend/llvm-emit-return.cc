@@ -54,12 +54,17 @@ class ReturnEmitter : public ExpressionEmitter
 
 			try {
 				// Cast the return value if necessary.
-				cast_return_value =
-				    TypeCaster::CastValue( context, return_value_expr,
-				                           return_value,
-				                           context->CurrentPrototype->
-				                           ReturnType.Specifier );
-				FIRTREE_SAFE_RELEASE( return_value );
+				if(return_value->GetType().Specifier != Firtree::TySpecVoid) {
+					cast_return_value =
+						TypeCaster::CastValue( context, return_value_expr,
+								return_value,
+					 			context->CurrentPrototype->
+		  						ReturnType.Specifier );
+					FIRTREE_SAFE_RELEASE( return_value );
+				} else {
+					cast_return_value = return_value;
+					return_value = NULL;
+				}
 
 				// Create the return statement.
 				llvm::Value* llvm_ret_val = NULL;

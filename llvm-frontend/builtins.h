@@ -234,7 +234,7 @@ const char* _firtree_builtins =
 	"}\n"
 
 	/* Reduce kernel-only functions */
-	"__builtin__ __reduce void emit(vec4);\n"
+	"__builtin__ __reduce __stateful__ void emit(vec4);\n"
 
 	"";
 

@@ -170,9 +170,15 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	// Non-intrinsic functions have an implicit first parameter, 
 	// analagous to the 'this' pointer in C++, which gives the
 	// value of destCoord().
-	if( ! (prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic) ) {
+	if( ! prototype.is_intrinsic() ) {
 		param_llvm_types.push_back( llvm::VectorType::get(
 					llvm::Type::FloatTy, 2 ) );
+	}
+
+	// Reduce kernels also have an implicit pointer to an output array
+	if( prototype.is_kernel() && prototype.is_reduce_only() ) {
+		param_llvm_types.push_back( llvm::PointerType::get(
+					llvm::Type::Int32Ty, 0 ) );
 	}
 
 	while ( it != prototype.Parameters.end() ) {
@@ -198,7 +204,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	std::string func_name = prototype.GetMangledName( m_Context );
 
 	llvm::Function::LinkageTypes linkage = Function::InternalLinkage;
-	if( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
+	if( prototype.is_kernel() ) {
 		linkage = Function::ExternalLinkage;
 		// A kernel has it's name mangled so that is is
 		// globally unique.
@@ -206,7 +212,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 		generate_random_uuid(uuid, '_');
 		func_name = "kernel_";
 		func_name += uuid;
-	} else if( prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic ) {
+	} else if( prototype.is_intrinsic() ) {
 		linkage = Function::ExternalLinkage;
 	} else {
 		linkage = Function::InternalLinkage;
@@ -217,13 +223,17 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 			func_name.c_str(),
 			m_Context->Module );
 
-	// ALL firtree functions (including the intrinsics) are 'read none', i.e.
+	// Most firtree functions (including the intrinsics) are 'read none', i.e.
 	// if called with the same arguments, you will get the same result. There
 	// is no global state within one kernel call. Mark the function as such.
 	// This allows later optimisation stages to coelesce multiple calls to
 	// the same function.
+	//
+	// If the intrinsic has side-effects, it should have the __stateful qualifier
 #if LLVM_AT_LEAST_2_4
-	F->addFnAttr(Attribute::ReadNone);
+	if( !prototype.is_stateful() ) {
+		F->addFnAttr(Attribute::ReadNone);
+	}
 	F->addFnAttr(Attribute::NoUnwind);
 #else
 #if LLVM_AT_LEAST_2_3
@@ -322,9 +332,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// If this prototype happens to be a kernel, and the context's
 	// KernelVector field is non-NULL, record details of this kernel.
-	if((m_Context->KernelList != NULL) && 
-			(prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel))
-	{
+	if((m_Context->KernelList != NULL) && prototype.is_kernel() ) {
 		LLVM::KernelFunction kernel_record;
 
 		kernel_record.Name = symbolToString(prototype.Name);
@@ -368,8 +376,15 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// If this is non-intrinsic, name the implicit
 	// variable '__this__destCoord'.
-	if(! (prototype.Qualifier & FunctionPrototype::FunctionQualifierIntrinsic)) {
+	if( ! prototype.is_intrinsic() ) {
 		AI->setName("__this__destCoord");
+		++AI;
+	}
+
+	// If this is reduce-only kernel, name the implicit
+	// variable '__output'.
+	if( prototype.is_kernel() && prototype.is_reduce_only() ) {
+		AI->setName("__output");
 		++AI;
 	}
 
@@ -465,20 +480,16 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 
 	// Create a default return inst if there was no terminator.
 	if ( m_Context->BB->getTerminator() == NULL ) {
-		// If this basic block is empty, and is different to the 
-		// original BB, then it is the 'guard' BB appended by the
-		// return instruction.
-		if((m_Context->BB != BB) && (m_Context->BB->empty())) {
-			// We can safely append an unreachable.
+		if ( prototype.ReturnType.Specifier == Firtree::TySpecVoid ) {
+			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+		} else if((m_Context->BB != BB) && (m_Context->BB->empty())) {
+			// If this basic block is empty, and is different to the 
+			// original BB, then it is the 'guard' BB appended by the
+			// return instruction. We can safely append an unreachable.
 			new UnreachableInst(m_Context->BB);
 		} else {
-			// Check function return type is void.
-			if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
-				FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
-						"of non-void function." );
-			}
-
-			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+			FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
+					"of non-void function." );
 		}
 	}
 
@@ -499,9 +510,7 @@ void EmitDeclarations::checkEmittedDeclarations()
 	    m_Context->FuncTable.begin();
 
 	while ( it != m_Context->FuncTable.end() ) {
-		if (( it->second.DefinitionTerm == NULL ) &&
-		        !( it->second.Qualifier &
-					FunctionPrototype::FunctionQualifierIntrinsic ) ) {
+		if (( it->second.DefinitionTerm == NULL ) && ! ( it->second.is_intrinsic() ) ) {
 			try {
 				FIRTREE_LLVM_ERROR( m_Context, it->second.PrototypeTerm,
 				                    "No definition found for function '%s'.",
@@ -633,6 +642,8 @@ void EmitDeclarations::constructPrototypeStruct(
 			prototype.Qualifier |= FunctionPrototype::FunctionQualifierReduce;
 		} else if ( firtreeFunctionQualifier_builtin( qual, &next_qual ) ) {
 			prototype.Qualifier |= FunctionPrototype::FunctionQualifierIntrinsic;
+		} else if ( firtreeFunctionQualifier_stateful( qual, &next_qual ) ) {
+			prototype.Qualifier |= FunctionPrototype::FunctionQualifierStateful;
 		} else {
 			FIRTREE_LLVM_ICE( m_Context, qual, "Invalid function qualifier." );
 		}
@@ -640,31 +651,25 @@ void EmitDeclarations::constructPrototypeStruct(
 	}
 
 	/* Unless otherwise specified, kernels are render kernels */
-	if( (prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel) &&
-			! (prototype.Qualifier & (FunctionPrototype::FunctionQualifierRender | FunctionPrototype::FunctionQualifierReduce)) ) {
+	if( prototype.is_kernel() && 
+			! ( prototype.is_reduce_only() ||  prototype.is_render_only() ) ) 
+	{
 		prototype.Qualifier |= FunctionPrototype::FunctionQualifierRender;
 	}
 
-	if( prototype.Qualifier & 
-			( FunctionPrototype::FunctionQualifierRender | 
-			  FunctionPrototype::FunctionQualifierReduce ) ) 
+	if( prototype.is_render_only() || prototype.is_reduce_only() ) 
 	{
-		if( ! ( prototype.Qualifier & ( 
-			( FunctionPrototype::FunctionQualifierKernel | 
-			  FunctionPrototype::FunctionQualifierIntrinsic ) ) ) ) {
+		if( !prototype.is_kernel() && !prototype.is_intrinsic() ) {
 			FIRTREE_LLVM_ERROR( m_Context, qual,
 					"Only kernel functions or intrinsics may be tagged as reduce or "
 					"render-only.");
 		}
 	}
 
-	if( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
-		if( ! ( prototype.Qualifier & 
-				( FunctionPrototype::FunctionQualifierRender | 
-				  FunctionPrototype::FunctionQualifierReduce ) )  )
-		{
-			FIRTREE_LLVM_ICE( m_Context, qual, "Kernel function has no render/reduce qualifier." );
-		}
+	if( prototype.is_kernel() && 
+			! ( prototype.is_render_only() || prototype.is_reduce_only() ) ) {
+		FIRTREE_LLVM_ICE( m_Context, qual, "Kernel function has no render/reduce "
+				"qualifier." );
 	}
 
 	prototype.Name = GLS_Tok_symbol( name );
@@ -751,7 +756,7 @@ void EmitDeclarations::constructPrototypeStruct(
 			}
 
 			// Kernels must have 'in' parameters only.
-			if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierKernel ) {
+			if ( prototype.is_kernel() ) {
 				if(new_param.Direction != FunctionParameter::FuncParamIn) {
 					FIRTREE_LLVM_ERROR( m_Context, param_decl,
 							"Kernel functions must "
@@ -771,7 +776,7 @@ void EmitDeclarations::constructPrototypeStruct(
 	}
 
 	// Render kernels must return vec4.
-	if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierRender ) {
+	if ( prototype.is_kernel() && prototype.is_render_only() ) {
 		if ( prototype.ReturnType.Specifier != Firtree::TySpecVec4 ) {
 			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Render kernel functions "
 			                    "must have a return type of vec4." );
@@ -779,7 +784,7 @@ void EmitDeclarations::constructPrototypeStruct(
 	}
 
 	// Reduce kernels must return void.
-	if ( prototype.Qualifier & FunctionPrototype::FunctionQualifierReduce ) {
+	if ( prototype.is_kernel() && prototype.is_reduce_only() ) {
 		if ( prototype.ReturnType.Specifier != Firtree::TySpecVoid ) {
 			FIRTREE_LLVM_ERROR( m_Context, proto_term, "Reduce kernel functions "
 			                    "must have a return type of void." );

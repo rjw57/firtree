@@ -29,6 +29,7 @@ import core.cairosampler
 import core.cluttersampler
 import core.kernelargs
 import core.buffersampler
+import core.reduce
 
 suite = unittest.TestSuite()
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.affinetransform))
@@ -41,6 +42,7 @@ suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.cairosampler))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.cluttersampler))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.kernelargs))
 suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.buffersampler))
+suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(core.reduce))
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()

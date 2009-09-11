@@ -175,12 +175,6 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 					llvm::Type::FloatTy, 2 ) );
 	}
 
-	// Reduce kernels also have an implicit pointer to an output array
-	if( prototype.is_kernel() && prototype.is_reduce_only() ) {
-		param_llvm_types.push_back( llvm::PointerType::get(
-					llvm::Type::Int32Ty, 0 ) );
-	}
-
 	while ( it != prototype.Parameters.end() ) {
 		// output parameters are passed by reference.
 		const llvm::Type* base_type = it->Type.ToLLVMType( m_Context );
@@ -378,13 +372,6 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	// variable '__this__destCoord'.
 	if( ! prototype.is_intrinsic() ) {
 		AI->setName("__this__destCoord");
-		++AI;
-	}
-
-	// If this is reduce-only kernel, name the implicit
-	// variable '__output'.
-	if( prototype.is_kernel() && prototype.is_reduce_only() ) {
-		AI->setName("__output");
 		++AI;
 	}
 

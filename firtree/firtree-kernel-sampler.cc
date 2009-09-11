@@ -197,6 +197,13 @@ firtree_kernel_sampler_set_kernel (FirtreeKernelSampler* self,
 
     if(kernel) {
         g_assert(FIRTREE_IS_KERNEL(kernel));
+
+        /* Can only sample from render kernels. */
+        if(firtree_kernel_get_target(kernel) != FIRTREE_KERNEL_TARGET_RENDER) {
+            g_warning("Ignoring attempt to set KernelSampler's kernel to non-render kernel.");
+            return;
+        }
+
         g_object_ref(kernel);
         p->kernel = kernel;
         

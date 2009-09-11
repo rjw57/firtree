@@ -46,6 +46,9 @@ class SimpleReduce(unittest.TestCase):
     def testValidity(self):
         self.assertEqual(self._k.is_valid(), True)
 
+    def testTarget(self):
+        self.assertEqual(self._k.get_target(), KERNEL_TARGET_REDUCE)
+
     def testCompileStatusMethod(self):
         self.assertEqual(self._k.get_compile_status(), True)
 

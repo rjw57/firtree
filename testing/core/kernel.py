@@ -16,8 +16,6 @@ class SimpleGood(unittest.TestCase):
             kernel vec4 simpleKernel() {
                 return vec4(1,0,0,1);
             }
-            __reduce kernel void simpleReduce() {
-            }
         """
         self._k.compile_from_source(src)
         self.assert_(self._mod_changed_called)
@@ -43,6 +41,9 @@ class SimpleGood(unittest.TestCase):
 
     def testCompileStatusProperty(self):
         self.assertEqual(self._k.get_property('compile-status'), True)
+
+    def testTarget(self):
+        self.assertEqual(self._k.get_target(), KERNEL_TARGET_RENDER)
 
     def testReturnType(self):
         # FIXME: This seems the wrong way to do this.
@@ -118,6 +119,9 @@ class SimpleReduceGood(unittest.TestCase):
 
     def testCompileStatusProperty(self):
         self.assertEqual(self._k.get_property('compile-status'), True)
+
+    def testTarget(self):
+        self.assertEqual(self._k.get_target(), KERNEL_TARGET_REDUCE)
 
     def testCompileLog(self):
         log = self._k.get_compile_log()

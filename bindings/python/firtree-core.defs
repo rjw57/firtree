@@ -406,6 +406,12 @@
   (return-type "GType")
 )
 
+(define-method get_target
+  (of-object "FirtreeKernel")
+  (c-name "firtree_kernel_get_target")
+  (return-type "FirtreeKernelTarget")
+)
+
 
 
 ;; From firtree-sampler.h
@@ -460,6 +466,11 @@
 
 
 ;; From firtree-type-builtins.h
+
+(define-function kernel_target_get_type
+  (c-name "firtree_kernel_target_get_type")
+  (return-type "GType")
+)
 
 (define-function buffer_format_get_type
   (c-name "firtree_buffer_format_get_type")

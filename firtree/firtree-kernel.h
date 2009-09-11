@@ -74,6 +74,13 @@ typedef struct {
     gboolean    is_static;
 } FirtreeKernelArgumentSpec;
 
+typedef enum {
+    FIRTREE_KERNEL_TARGET_RENDER,
+    FIRTREE_KERNEL_TARGET_REDUCE,
+
+    FIRTREE_KERNEL_TARGET_INVALID = -1
+} FirtreeKernelTarget;
+
 /**
  * FirtreeKernel:
  * @parent: The parent GObject.
@@ -286,6 +293,7 @@ void
 firtree_kernel_contents_changed (FirtreeKernel* self);
 
 /**
+ * firtree_kernel_get_return_type:
  * @self: A FirtreeKernel instance.
  *
  * Return the return value type of the kernel. Most kernels should have vec4 or
@@ -296,6 +304,20 @@ firtree_kernel_contents_changed (FirtreeKernel* self);
  */
 GType
 firtree_kernel_get_return_type (FirtreeKernel* self);
+
+/**
+ * firtree_kernel_get_target:
+ * @self:  A FirtreeKernel instance.
+ *
+ * A kernel can be targetted to particular tasks. In Firtree currently there are
+ * two types of kernels, rendering and reducing kernels. Rendering kernels output
+ * exactly one vec4 for every destination co-ordinate. Reducing kernels may
+ * output one or none vec4s for each destination co-ordinate.
+ *
+ * Returns: A member of the FirtreeKernelTarget enum indicating the kernel's target.
+ */
+FirtreeKernelTarget
+firtree_kernel_get_target (FirtreeKernel* self);
 
 G_END_DECLS
 

@@ -332,6 +332,16 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 		kernel_record.Name = symbolToString(prototype.Name);
 		kernel_record.Function = prototype.LLVMFunction;
 		kernel_record.ReturnType = prototype.ReturnType.Specifier;
+
+		if( prototype.is_render_only() ) {
+			kernel_record.Target = LLVM::KernelFunction::Render;
+		} else if( prototype.is_reduce_only() ) {
+			kernel_record.Target = LLVM::KernelFunction::Reduce;
+		} else {
+			// Shouldn't really get here
+			kernel_record.Target = LLVM::KernelFunction::Invalid;
+			FIRTREE_LLVM_ICE( m_Context, func, "Kernel has unknown target." );
+		}
 	
 		// Add parameters
 		std::vector<FunctionParameter>::const_iterator it =

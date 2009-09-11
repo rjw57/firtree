@@ -552,5 +552,23 @@ firtree_kernel_get_return_type (FirtreeKernel* self)
             p->preferred_function->ReturnType);
 }
 
+FirtreeKernelTarget
+firtree_kernel_get_target (FirtreeKernel* self)
+{
+    FirtreeKernelPrivate* p = GET_PRIVATE(self);
+
+    if(!p->compiled_kernel || !p->compile_status) {
+        return FIRTREE_KERNEL_TARGET_INVALID;
+    }
+
+    if( p->preferred_function->Target == LLVM::KernelFunction::Render ) {
+        return FIRTREE_KERNEL_TARGET_RENDER;
+    } else if( p->preferred_function->Target == LLVM::KernelFunction::Reduce ) {
+        return FIRTREE_KERNEL_TARGET_REDUCE;
+    }
+
+    return FIRTREE_KERNEL_TARGET_INVALID;
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

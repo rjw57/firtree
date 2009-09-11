@@ -89,7 +89,7 @@ firtree_cogl_texture_sampler_new (void);
 /**
  * firtree_cogl_texture_sampler_set_cogl_texture:
  * @self: A FirtreeCoglTextureSampler.
- * @cogl_texture: A cogl_texture_t.
+ * @texture: A cogl_texture_t.
  *
  * Set @cogl_texture as the cogl_texture associated with this sampler. Drop any references
  * to any other cogl_texture previously associated. The sampler increments the 

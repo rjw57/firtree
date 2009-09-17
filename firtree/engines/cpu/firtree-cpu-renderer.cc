@@ -211,14 +211,18 @@ firtree_debug_dump_cpu_renderer_function(FirtreeCpuRenderer* self)
 }
 
 static void
-_call_render_func(guint row, FirtreeCpuRendererRenderRequest* request)
+_call_render_func(guint slice, FirtreeCpuRendererRenderRequest* request)
 {
+    guint start_row = slice << 3;
+    guint end_row = MIN(start_row+8, request->num_rows);
+    guint n_rows = end_row - start_row;
+
     float dy = request->extents[3] / (float)(request->num_rows);
     float extents[] = { 
-        request->extents[0], request->extents[1] + (dy * (float)row),
-        request->extents[2], dy };
-    request->func(request->buffer + (row * request->row_stride),
-            request->row_width, 1,
+        request->extents[0], request->extents[1] + (dy * (float)start_row),
+        request->extents[2], dy * (float)n_rows };
+    request->func(request->buffer + (start_row * request->row_stride),
+            request->row_width, n_rows,
             request->row_stride, extents);
 }
 
@@ -248,7 +252,7 @@ firtree_cpu_renderer_perform_render(FirtreeCpuRenderer* self,
         { extents[0], extents[1], extents[2], extents[3] },
     };
 
-    threading_apply(num_rows, (ThreadingApplyFunc) _call_render_func, &request);
+    threading_apply(((num_rows+7)>>3), (ThreadingApplyFunc) _call_render_func, &request);
 
     firtree_sampler_unlock(p->sampler);
 }

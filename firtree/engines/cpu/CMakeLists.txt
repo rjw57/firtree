@@ -82,7 +82,10 @@ add_library(firtree-engine-cpu SHARED
     
     # CPU rendering library
     llvm-cpu-support.bc.h
-    firtree-cpu-engine.cc)
+
+    firtree-cpu-engine.cc   
+    firtree-cpu-jit.cc      firtree-cpu-jit.hh
+    )
 
 set_source_files_properties(
     engines/cpu/llvm-cpu-support.bc.h

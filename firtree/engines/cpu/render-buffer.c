@@ -15,7 +15,6 @@ typedef float vec4 __attribute__ ((vector_size(16)));
 /* this is the function which acually calculates the sampler
  * value. */
 extern vec4 sampler_render_function(vec2 dest_coord);
-extern void sampler_reduce_function(vec2 dest_coord, void* output_array);
 
 /* leverage some of our builtins. */
 extern vec4 premultiply_v4(vec4);
@@ -479,6 +478,10 @@ RENDER_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 
 RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
 RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
+
+/* This is the function that performs a reduction. */
+
+extern void sampler_reduce_function(vec2 dest_coord, void* output_array);
 
 void reduce(unsigned char* buffer,                             
         unsigned int width, unsigned int height,                        

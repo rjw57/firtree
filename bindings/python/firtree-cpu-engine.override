@@ -1,19 +1,19 @@
 %%
-override firtree_cpu_engine_set_sampler kwargs
+override firtree_cpu_renderer_set_sampler kwargs
 static PyObject *
-_wrap_firtree_cpu_engine_set_sampler(PyGObject *self, PyObject *args, PyObject *kwargs)
+_wrap_firtree_cpu_renderer_set_sampler(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "sampler", NULL };
     PyGObject *sampler;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "O:FirtreeCpuEngine.set_sampler", kwlist,
+                "O:FirtreeCpuRenderer.set_sampler", kwlist,
                 &sampler))
         return NULL;
 
     /* Check input is None or a sampler. */
     if((PyObject*)sampler == Py_None) {
-        firtree_cpu_engine_set_sampler(FIRTREE_CPU_ENGINE(self->obj), NULL);
+        firtree_cpu_renderer_set_sampler(FIRTREE_CPU_RENDERER(self->obj), NULL);
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -24,16 +24,16 @@ _wrap_firtree_cpu_engine_set_sampler(PyGObject *self, PyObject *args, PyObject *
         return NULL;
     }
 
-    firtree_cpu_engine_set_sampler(FIRTREE_CPU_ENGINE(self->obj), 
+    firtree_cpu_renderer_set_sampler(FIRTREE_CPU_RENDERER(self->obj), 
             FIRTREE_SAMPLER(sampler->obj));
     
     Py_INCREF(Py_None);
     return Py_None;
 }
 %%
-override firtree_cpu_engine_render_into_pixbuf
+override firtree_cpu_renderer_render_into_pixbuf
 static PyObject *
-_wrap_firtree_cpu_engine_render_into_pixbuf(PyGObject *self, PyObject *args, PyObject *kwargs)
+_wrap_firtree_cpu_renderer_render_into_pixbuf(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "extents", "pixbuf", NULL };
     PyGObject *pixbuf;
@@ -41,21 +41,21 @@ _wrap_firtree_cpu_engine_render_into_pixbuf(PyGObject *self, PyObject *args, PyO
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "(ffff)O!:FirtreeCpuEngine.render_into_pixbuf", kwlist,
+                "(ffff)O!:FirtreeCpuRenderer.render_into_pixbuf", kwlist,
                 &extents[0], &extents[1], &extents[2], &extents[3],
                 &PyGdkPixbuf_Type, &pixbuf))
         return NULL;
     
-    ret = firtree_cpu_engine_render_into_pixbuf(FIRTREE_CPU_ENGINE(self->obj), 
+    ret = firtree_cpu_renderer_render_into_pixbuf(FIRTREE_CPU_RENDERER(self->obj), 
             (FirtreeVec4*)extents, GDK_PIXBUF(pixbuf->obj));
     
     return PyBool_FromLong(ret);
 
 }
 %%
-override firtree_cpu_engine_render_into_cairo_surface
+override firtree_cpu_renderer_render_into_cairo_surface
 static PyObject *
-_wrap_firtree_cpu_engine_render_into_cairo_surface(PyGObject *self,
+_wrap_firtree_cpu_renderer_render_into_cairo_surface(PyGObject *self,
         PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "extents", "surface", NULL };
@@ -64,21 +64,21 @@ _wrap_firtree_cpu_engine_render_into_cairo_surface(PyGObject *self,
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "(ffff)O!:FirtreeCpuEngine.render_into_cairo_surface", kwlist,
+                "(ffff)O!:FirtreeCpuRenderer.render_into_cairo_surface", kwlist,
                 &extents[0], &extents[1], &extents[2], &extents[3],
                 &PycairoSurface_Type, &cairo_surface))
         return NULL;
     
-    ret = firtree_cpu_engine_render_into_cairo_surface(
-            FIRTREE_CPU_ENGINE(self->obj), 
+    ret = firtree_cpu_renderer_render_into_cairo_surface(
+            FIRTREE_CPU_RENDERER(self->obj), 
             (FirtreeVec4*)extents, cairo_surface->surface);
     
     return PyBool_FromLong(ret);
 }
 %%
-override firtree_cpu_engine_render_into_buffer
+override firtree_cpu_renderer_render_into_buffer
 static PyObject *
-_wrap_firtree_cpu_engine_render_into_buffer(PyGObject *self, PyObject *args, PyObject *kwargs)
+_wrap_firtree_cpu_renderer_render_into_buffer(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "extents", "buffer", "width", "height", "stride", "format", NULL };
 
@@ -90,7 +90,7 @@ _wrap_firtree_cpu_engine_render_into_buffer(PyGObject *self, PyObject *args, PyO
     PyObject *format;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "(ffff)z#kkkO!:FirtreeCpuEngine.render_into_buffer", kwlist,
+                "(ffff)z#kkkO!:FirtreeCpuRenderer.render_into_buffer", kwlist,
                 &extents[0], &extents[1], &extents[2], &extents[3],
                 &buffer, &buffer_len, &width, &height, &stride, 
                 &PyGEnum_Type, &format))
@@ -109,8 +109,8 @@ _wrap_firtree_cpu_engine_render_into_buffer(PyGObject *self, PyObject *args, PyO
         return NULL;
     }
  
-    ret = firtree_cpu_engine_render_into_buffer(
-            FIRTREE_CPU_ENGINE(self->obj), 
+    ret = firtree_cpu_renderer_render_into_buffer(
+            FIRTREE_CPU_RENDERER(self->obj), 
             (FirtreeVec4*)extents,
             buffer, width, height, stride, (FirtreeBufferFormat)format_val);
     

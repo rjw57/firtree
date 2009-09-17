@@ -9,7 +9,7 @@ headers
 #include <firtree/firtree-cogl-texture-sampler.h>
 #include <firtree/firtree-pixbuf-sampler.h>
 
-#include <firtree/engines/cpu/firtree-cpu-engine.h>
+#include <firtree/engines/cpu/firtree-cpu-renderer.h>
 
 #if FIRTREE_HAVE_CAIRO
 #   include <pycairo/pycairo.h>

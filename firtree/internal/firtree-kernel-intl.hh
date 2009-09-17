@@ -51,6 +51,24 @@ G_BEGIN_DECLS
 llvm::Function*
 firtree_kernel_get_function(FirtreeKernel* self);
 
+/**
+ * firtree_kernel_create_overall_function:
+ * @self: A FirtreeKernel instance.
+ *
+ * Get a pointer to the LLVM function resulting from the last call to
+ * firtree_kernel_compile_from_source() appropriately linked into dependent samplers
+ * and with static parameters interpolated in.
+ *
+ * This is a heavyweight function. Callers should cache the return value if possible.
+ *
+ * Ownership of the function passes to the caller. It should be delete-ed after use along
+ * with the module returned via getParent().
+ *
+ * Returns: NULL or an LLVM function.
+ */
+llvm::Function*
+firtree_kernel_create_overall_function(FirtreeKernel* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_KERNEL_INTL */

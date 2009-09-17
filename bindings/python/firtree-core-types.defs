@@ -88,3 +88,14 @@
   )
 )
 
+(define-enum KernelTarget
+  (in-module "Firtree")
+  (c-name "FirtreeKernelTarget")
+  (gtype-id "FIRTREE_TYPE_KERNEL_TARGET")
+  (values
+    '("render" "FIRTREE_KERNEL_TARGET_RENDER")
+    '("reduce" "FIRTREE_KERNEL_TARGET_REDUCE")
+    '("invalid" "FIRTREE_KERNEL_TARGET_INVALID")
+  )
+)
+

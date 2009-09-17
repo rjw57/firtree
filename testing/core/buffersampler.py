@@ -38,7 +38,7 @@ class Creation(FirtreeTestCase):
         cs = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
         self.clearSurface(cs)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((-10, -10, 630, 470), cs)

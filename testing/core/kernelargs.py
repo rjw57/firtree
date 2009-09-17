@@ -11,7 +11,7 @@ height = 120
 
 class StaticArgs(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)

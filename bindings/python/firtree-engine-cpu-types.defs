@@ -5,11 +5,11 @@
 
 ; object definitions ...
 
-(define-object CpuEngine
+(define-object CpuRenderer
   (in-module "Firtree")
   (parent "GObject")
-  (c-name "FirtreeCpuEngine")
-  (gtype-id "FIRTREE_TYPE_CPU_ENGINE")
+  (c-name "FirtreeCpuRenderer")
+  (gtype-id "FIRTREE_TYPE_CPU_RENDERER")
 )
 
 ; pointer definitions ...

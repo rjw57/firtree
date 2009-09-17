@@ -11,7 +11,7 @@ height = 120
 
 class Creation(unittest.TestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
 
@@ -33,7 +33,7 @@ class Creation(unittest.TestCase):
 
 class CairoARGBSurface(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -75,7 +75,7 @@ class CairoARGBSurface(FirtreeTestCase):
 
 class CairoRGBSurface(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._s = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
@@ -122,7 +122,7 @@ class CairoRGBSurface(FirtreeTestCase):
 
 class GdkPixbufARGBSurface(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, width, height)
@@ -161,7 +161,7 @@ class GdkPixbufARGBSurface(FirtreeTestCase):
 
 class GdkPixbufRGBSurface(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, False, 8, width, height)
@@ -200,7 +200,7 @@ class GdkPixbufRGBSurface(FirtreeTestCase):
 
 class KernelTests(FirtreeTestCase):
     def setUp(self):
-        self._e = CpuEngine()
+        self._e = CpuRenderer()
         self.failIfEqual(self._e, None)
         self.assertEqual(self._e.get_sampler(), None)
         self._s = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)

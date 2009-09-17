@@ -45,18 +45,18 @@ _wrap_firtree_debug_dump_sampler_function(PyObject *self, PyObject *args, PyObje
     return str;
 }
 %%
-override firtree_debug_dump_cpu_engine_function
+override firtree_debug_dump_cpu_renderer_function
 static PyObject *
-_wrap_firtree_debug_dump_cpu_engine_function(PyObject *self, PyObject *args, PyObject *kwargs)
+_wrap_firtree_debug_dump_cpu_renderer_function(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "engine", NULL };
-    PyGObject *cpu_engine;
+    PyGObject *cpu_renderer;
     GString* ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:debug_dump_cpu_engine_function", kwlist, &PyFirtreeCpuEngine_Type, &cpu_engine))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:debug_dump_cpu_renderer_function", kwlist, &PyFirtreeCpuRenderer_Type, &cpu_renderer))
         return NULL;
     
-    ret = firtree_debug_dump_cpu_engine_function(FIRTREE_CPU_ENGINE(cpu_engine->obj));
+    ret = firtree_debug_dump_cpu_renderer_function(FIRTREE_CPU_RENDERER(cpu_renderer->obj));
 
     if(!ret) {
         Py_INCREF(Py_None);

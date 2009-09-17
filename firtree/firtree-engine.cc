@@ -123,6 +123,33 @@ firtree_engine_create_sample_function_prototype(llvm::Module* module)
     return f;
 }
 
+llvm::Function*
+firtree_engine_create_reduce_function_prototype(llvm::Module* module)
+{
+    /* work out the function name. */
+    std::string func_name("reduce_");
+    gchar uuid[37];
+    generate_random_uuid(uuid, '_');
+    func_name += uuid;
+
+    g_assert(module);
+    g_assert(module->getFunction(func_name.c_str()) == NULL);
+
+    std::vector<const llvm::Type*> params;
+    params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2)); /* location */
+    params.push_back(llvm::PointerType::get(llvm::Type::Int32Ty, 0)); /* output */
+    llvm::FunctionType* ft = llvm::FunctionType::get(
+            llvm::Type::VoidTy, /* ret. type */
+            params, false);
+    llvm::Function* f = llvm::Function::Create( 
+            ft, llvm::Function::ExternalLinkage,
+            func_name.c_str(), module);
+
+    g_assert(f);
+
+    return f;
+}
+
 llvm::Value*
 firtree_engine_get_constant_for_kernel_argument(GValue* kernel_arg)
 {

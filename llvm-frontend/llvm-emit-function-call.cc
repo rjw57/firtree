@@ -104,11 +104,29 @@ class FunctionCallEmitter : ExpressionEmitter
 							return ConstantExpressionValue::Create(context,
 									first_arg, proto.ReturnType.IsStatic());
 						}
+
+						// If this is a reduce/render only function, check the
+						// current prototype.
+						if(proto.is_reduce_only()) {
+							if(!context->CurrentPrototype->is_reduce_only()) {
+								FIRTREE_LLVM_ERROR(context, func_spec, 
+										"Attempt to call reduce-only "
+										"function from non-reduce kernel function.");
+							}
+						}
+
+						if(proto.is_render_only()) {
+							if(!context->CurrentPrototype->is_reduce_only()) {
+								FIRTREE_LLVM_ERROR(context, func_spec, 
+										"Attempt to call render-only "
+										"function from non-render kernel function.");
+							}
+						}
 						
 						// If this is a non-intrinisc function, add
 						// the implicit dest coord.
-						if(proto.Qualifier != 
-								FunctionPrototype::FuncQualIntrinsic) {
+						if(! ( proto.Qualifier &
+									FunctionPrototype::FunctionQualifierIntrinsic) ) {
 							llvm::Value* first_arg = llvm::cast<llvm::Value>(
 									context->Function->arg_begin());
 							llvm_params.push_back(first_arg);

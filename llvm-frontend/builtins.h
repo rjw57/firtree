@@ -233,6 +233,9 @@ const char* _firtree_builtins =
 	"  return samplerExtent(s).zw;\n"
 	"}\n"
 
+	/* Reduce kernel-only functions */
+	"__builtin__ __reduce __stateful__ void emit(vec4);\n"
+
 	"";
 
 /* vim:sw=4:ts=4:cindent:noet

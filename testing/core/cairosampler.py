@@ -60,7 +60,7 @@ class Creation(FirtreeTestCase):
         cs = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
         self.clearSurface(cs)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((-10, -10, 310, 230), cs)
@@ -76,7 +76,7 @@ class Creation(FirtreeTestCase):
         cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         self.clearSurface(cs)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((-10, -10, 310, 230), cs)
@@ -92,7 +92,7 @@ class Creation(FirtreeTestCase):
         cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         self.clearSurface(cs)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((0, 0, 30, 30), cs)
@@ -109,7 +109,7 @@ class Creation(FirtreeTestCase):
         self.clearSurface(cs)
         self._s.set_do_interpolation(True)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((0, 0, 30, 30), cs)
@@ -127,7 +127,7 @@ class Creation(FirtreeTestCase):
         self.clearSurface(cs)
         self._s.set_do_interpolation(True)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((-5, -5, 25, 25), cs)
@@ -145,7 +145,7 @@ class Creation(FirtreeTestCase):
         self.clearSurface(cs)
         self._s.set_do_interpolation(True)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((0, 0, width, height), cs)
@@ -163,7 +163,7 @@ class Creation(FirtreeTestCase):
         self.clearSurface(cs)
         self._s.set_do_interpolation(False)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
 
         rv = engine.render_into_cairo_surface((0, 0, width, height), cs)
@@ -192,7 +192,7 @@ class Creation(FirtreeTestCase):
         cs = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         self.clearSurface(cs)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
         engine.set_sampler(dks)
 
@@ -224,7 +224,7 @@ class Creation(FirtreeTestCase):
 
         self._s.set_do_interpolation(True)
 
-        engine = CpuEngine()
+        engine = CpuRenderer()
         engine.set_sampler(self._s)
         engine.set_sampler(dks)
 

@@ -114,16 +114,24 @@ struct FunctionParameter {
 /// \brief A structure decribing a prototype.
 
 struct FunctionPrototype {
-	/// The possible function types.
+	/// The possible function qualifiers.
 	enum FunctionQualifier {
-		FuncQualFunction,
-		FuncQualKernel,
-
-		/// Intrinsic functions do not need a definition.
-		FuncQualIntrinsic,
+		FunctionQualifierNone				= 0x00,
+		FunctionQualifierKernel				= 0x01,
+		FunctionQualifierReduce				= 0x02,
+		FunctionQualifierRender				= 0x04,
+		FunctionQualifierIntrinsic			= 0x08,
+		FunctionQualifierStateful			= 0x10, // Function has side-effects.
 
 		FuncQualInvalid = -1,
 	};
+
+	inline bool is_kernel() const { return Qualifier & FunctionQualifierKernel; }
+	inline bool is_reduce_only() const { return Qualifier & FunctionQualifierReduce; }
+	inline bool is_render_only() const { return Qualifier & FunctionQualifierRender; }
+	inline bool is_intrinsic() const { return Qualifier & FunctionQualifierIntrinsic; }
+	inline bool is_normal_function() const { return !is_kernel() && !is_intrinsic(); }
+	inline bool is_stateful() const { return Qualifier & FunctionQualifierStateful; }
 
 	/// The parse tree term which defined this prototype.
 	firtreeFunctionPrototype    PrototypeTerm;
@@ -138,8 +146,8 @@ struct FunctionPrototype {
 	/// there is nont
 	llvm::Function*             LLVMFunction;
 
-	/// The function qualifier
-	FunctionQualifier           Qualifier;
+	/// The function qualifiers
+	unsigned int	            Qualifier;
 
 	/// The name of the function (as a symbol).
 	symbol                      Name;

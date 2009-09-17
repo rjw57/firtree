@@ -19,6 +19,7 @@ class Creation(unittest.TestCase):
         self._s.set_kernel(None)
         self.assertEqual(self._s.get_kernel(), None)
         k = Kernel()
+        k.compile_from_source('kernel vec4 simple() { return vec4(0,0,0,0); }')
         self._s.set_kernel(k)
         self.assertEqual(self._s.get_kernel(), k)
         self._s.set_kernel(None)

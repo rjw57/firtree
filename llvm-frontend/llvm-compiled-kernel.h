@@ -46,6 +46,12 @@ typedef std::vector<KernelParameter> KernelParameterList;
 //===========================================================================
 /// \brief A structure describing a kernel.
 struct KernelFunction {
+	enum KernelTarget {
+		Render,
+		Reduce,
+		Invalid = -1
+	};
+
 	/// The name of this kernel.
 	std::string						Name;
 
@@ -56,12 +62,20 @@ struct KernelFunction {
 	/// should be passed to the kernel function.
 	KernelParameterList 			Parameters;
 
+	/// The kernel's return type. Should generally be vec4 or void.
+	KernelTypeSpecifier				ReturnType;
+
+	/// The kernel's target.
+	KernelTarget					Target;
+
 	/// Assignment operator (possibly overkill).
 	inline const KernelFunction& operator = (const KernelFunction& f)
 	{
 		Name = f.Name; 
 		Function = f.Function; 
 		Parameters = f.Parameters;
+		ReturnType = f.ReturnType;
+		Target = f.Target;
 		return *this;
 	}
 };

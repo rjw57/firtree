@@ -1,20 +1,20 @@
 
-;; From firtree-cpu-engine.h
+;; From firtree-cpu-renderer.h
 
-(define-function cpu_engine_get_type
-  (c-name "firtree_cpu_engine_get_type")
+(define-function cpu_renderer_get_type
+  (c-name "firtree_cpu_renderer_get_type")
   (return-type "GType")
 )
 
-(define-function cpu_engine_new
-  (c-name "firtree_cpu_engine_new")
-  (is-constructor-of "FirtreeCpuEngine")
-  (return-type "FirtreeCpuEngine*")
+(define-function cpu_renderer_new
+  (c-name "firtree_cpu_renderer_new")
+  (is-constructor-of "FirtreeCpuRenderer")
+  (return-type "FirtreeCpuRenderer*")
 )
 
 (define-method render_into_pixbuf
-  (of-object "FirtreeCpuEngine")
-  (c-name "firtree_cpu_engine_render_into_pixbuf")
+  (of-object "FirtreeCpuRenderer")
+  (c-name "firtree_cpu_renderer_render_into_pixbuf")
   (return-type "gboolean")
   (parameters
     '("FirtreeVec4*" "extents")
@@ -23,8 +23,8 @@
 )
 
 (define-method render_into_cairo_surface
-  (of-object "FirtreeCpuEngine")
-  (c-name "firtree_cpu_engine_render_into_cairo_surface")
+  (of-object "FirtreeCpuRenderer")
+  (c-name "firtree_cpu_renderer_render_into_cairo_surface")
   (return-type "gboolean")
   (parameters
     '("FirtreeVec4*" "extents")
@@ -33,8 +33,8 @@
 )
 
 (define-method set_sampler
-  (of-object "FirtreeCpuEngine")
-  (c-name "firtree_cpu_engine_set_sampler")
+  (of-object "FirtreeCpuRenderer")
+  (c-name "firtree_cpu_renderer_set_sampler")
   (return-type "none")
   (parameters
     '("FirtreeSampler*" "sampler")
@@ -42,14 +42,14 @@
 )
 
 (define-method get_sampler
-  (of-object "FirtreeCpuEngine")
-  (c-name "firtree_cpu_engine_get_sampler")
+  (of-object "FirtreeCpuRenderer")
+  (c-name "firtree_cpu_renderer_get_sampler")
   (return-type "FirtreeSampler*")
 )
 
 (define-method render_into_buffer
-  (of-object "FirtreeCpuEngine")
-  (c-name "firtree_cpu_engine_render_into_buffer")
+  (of-object "FirtreeCpuRenderer")
+  (c-name "firtree_cpu_renderer_render_into_buffer")
   (return-type "gboolean")
   (parameters
     '("FirtreeVec4*" "extents")
@@ -61,11 +61,11 @@
   )
 )
 
-(define-function debug_dump_cpu_engine_function
-  (c-name "firtree_debug_dump_cpu_engine_function")
+(define-function debug_dump_cpu_renderer_function
+  (c-name "firtree_debug_dump_cpu_renderer_function")
   (return-type "GString*")
   (parameters
-    '("FirtreeCpuEngine*" "engine")
+    '("FirtreeCpuRenderer*" "engine")
   )
 )
 

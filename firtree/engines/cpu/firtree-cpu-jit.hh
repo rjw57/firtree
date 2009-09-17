@@ -77,6 +77,14 @@ GType firtree_cpu_jit_get_type (void);
 
 typedef void* (*FirtreeCpuJitLazyFunctionCreatorFunc) (const std::string& name);
 
+typedef void (*FirtreeCpuJitRenderFunc) (unsigned char* buffer,
+    unsigned int row_width, unsigned int num_rows,
+    unsigned int row_stride, float* extents);
+
+typedef void (*FirtreeCpuJitReduceFunc) (gpointer output_array,
+    unsigned int row_width, unsigned int num_rows,
+    unsigned int row_stride, float* extents);
+
 /**
  * firtree_cpu_jit_new:
  *
@@ -87,22 +95,27 @@ typedef void* (*FirtreeCpuJitLazyFunctionCreatorFunc) (const std::string& name);
 FirtreeCpuJit* 
 firtree_cpu_jit_new (void);
 
-void*
+/**
+ * firtree_cpu_jit_get_render_function_for_sampler:
+ * 
+ * Compile the sampler function of the passed sampler and return a pointer to
+ * a renderer.
+ */
+FirtreeCpuJitRenderFunc
 firtree_cpu_jit_get_render_function_for_sampler(FirtreeCpuJit* self,
         FirtreeBufferFormat format,
         FirtreeSampler* sampler,
         FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function);
 
-void*
+/**
+ * firtree_cpu_jit_get_reduce_function_for_kernel:
+ * 
+ * Compile the function of the passed kernel and return a pointer to
+ * a reduce function.
+ */
+FirtreeCpuJitReduceFunc
 firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
         FirtreeKernel* kernel,
-        FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function);
-
-void*
-firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
-        const char* compute_function_name,
-        llvm::Function* llvm_function,
-        FirtreeKernelTarget target,
         FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function);
 
 G_END_DECLS

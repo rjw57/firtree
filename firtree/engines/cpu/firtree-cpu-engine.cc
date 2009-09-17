@@ -38,10 +38,6 @@ G_DEFINE_TYPE (FirtreeCpuEngine, firtree_cpu_engine, G_TYPE_OBJECT)
 #define GET_PRIVATE(o) \
     (G_TYPE_INSTANCE_GET_PRIVATE ((o), FIRTREE_TYPE_CPU_ENGINE, FirtreeCpuEnginePrivate))
 
-typedef void (* RenderFunc) (unsigned char* buffer,
-    unsigned int row_width, unsigned int num_rows,
-    unsigned int row_stride, float* extents);
-
 typedef struct _FirtreeCpuEnginePrivate FirtreeCpuEnginePrivate;
 
 struct _FirtreeCpuEnginePrivate {
@@ -49,8 +45,17 @@ struct _FirtreeCpuEnginePrivate {
     gulong                      sampler_handler_id;
     FirtreeCpuJit*              jit;
 
-    RenderFunc                  cached_render_func;
+    FirtreeCpuJitRenderFunc     cached_render_func;
     FirtreeBufferFormat         cached_render_func_format;
+};
+
+struct FirtreeCpuEngineRenderRequest {
+    FirtreeCpuJitRenderFunc      func;
+    unsigned char*  buffer;
+    unsigned int    row_width;
+    unsigned int    num_rows;
+    unsigned int    row_stride;
+    float           extents[4];
 };
 
 /* invalidate (and release) any cached LLVM modules/functions. This
@@ -62,15 +67,6 @@ _firtree_cpu_engine_invalidate_llvm_cache(FirtreeCpuEngine* self)
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self);
     p->cached_render_func = NULL;
 }
-
-struct FirtreeCpuEngineRenderRequest {
-    RenderFunc      func;
-    unsigned char*  buffer;
-    unsigned int    row_width;
-    unsigned int    num_rows;
-    unsigned int    row_stride;
-    float           extents[4];
-};
 
 static void*
 _firtree_cpu_lazy_function_creator(const std::string& name) {
@@ -169,7 +165,7 @@ firtree_cpu_engine_get_sampler (FirtreeCpuEngine* self)
     return p->sampler;
 }
 
-void*
+FirtreeCpuJitRenderFunc
 firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, FirtreeBufferFormat format)
 {
     FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
@@ -180,31 +176,30 @@ firtree_cpu_engine_get_renderer_func(FirtreeCpuEngine* self, FirtreeBufferFormat
     }
 
     if(p->cached_render_func && (p->cached_render_func_format == format)) {
-        return (void*) p->cached_render_func;
+        return p->cached_render_func;
     }
 
     p->cached_render_func_format = format;
-    p->cached_render_func = (RenderFunc) firtree_cpu_jit_get_render_function_for_sampler(p->jit,
+    p->cached_render_func = firtree_cpu_jit_get_render_function_for_sampler(p->jit,
             format, p->sampler, _firtree_cpu_lazy_function_creator);
 
-    return (void*) p->cached_render_func;
+    return p->cached_render_func;
 }
 
 GString*
 firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* self)
 {
-    // FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
-    void* rf = firtree_cpu_engine_get_renderer_func(self,
-            FIRTREE_FORMAT_ABGR32_PREMULTIPLIED);
-    if(!rf) {
+    FirtreeCpuEnginePrivate* p = GET_PRIVATE(self); 
+
+    if(!p->sampler) {
         return NULL;
     }
 
-    return g_string_new("FIXME: Not implemented");
-
-#if 0
-    llvm::Module* m = p->cached_engine->FindFunctionNamed(
-            RENDER_FUNC_NAME(FIRTREE_FORMAT_ABGR32_PREMULTIPLIED))->getParent();
+    llvm::Function* f = firtree_sampler_get_sample_function(p->sampler);
+    if(!f) {
+        return NULL;
+    }
+    llvm::Module* m = f->getParent();
     
     std::ostringstream out;
 
@@ -213,7 +208,6 @@ firtree_debug_dump_cpu_engine_function(FirtreeCpuEngine* self)
     /* This is non-optimal, invlving a copy as it does but
      * production code shouldn't be using this function anyway. */
     return g_string_new(out.str().c_str());
-#endif
 }
 
 static void
@@ -230,7 +224,7 @@ _call_render_func(guint row, FirtreeCpuEngineRenderRequest* request)
 
 static void
 firtree_cpu_engine_perform_render(FirtreeCpuEngine* self,
-        RenderFunc func, unsigned char* buffer, unsigned int row_width, 
+        FirtreeCpuJitRenderFunc func, unsigned char* buffer, unsigned int row_width, 
         unsigned int num_rows, unsigned int row_stride, 
         float* extents) 
 {
@@ -285,15 +279,15 @@ firtree_cpu_engine_render_into_pixbuf (FirtreeCpuEngine* self,
         return FALSE;
     }
 
-    RenderFunc render = NULL;
+    FirtreeCpuJitRenderFunc render = NULL;
 
     if(gdk_pixbuf_get_has_alpha(pixbuf)) {
         /* GdkPixbufs use non-premultiplied alpha. */
-        render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+        render = (FirtreeCpuJitRenderFunc)firtree_cpu_engine_get_renderer_func(self, 
                 FIRTREE_FORMAT_RGBA32);
     } else {
         /* Use the render function optimised for ignored alpha. */
-        render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+        render = (FirtreeCpuJitRenderFunc)firtree_cpu_engine_get_renderer_func(self, 
                 FIRTREE_FORMAT_RGB24);
     }
 
@@ -328,15 +322,15 @@ firtree_cpu_engine_render_into_cairo_surface (FirtreeCpuEngine* self,
     guint height = cairo_image_surface_get_height(surface);
     guint stride = cairo_image_surface_get_stride(surface);
 
-    RenderFunc render = NULL;
+    FirtreeCpuJitRenderFunc render = NULL;
 
     switch(format) {
         case CAIRO_FORMAT_ARGB32:
-            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+            render = (FirtreeCpuJitRenderFunc)firtree_cpu_engine_get_renderer_func(self, 
                     FIRTREE_FORMAT_BGRA32_PREMULTIPLIED);
             break;
         case CAIRO_FORMAT_RGB24:
-            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, 
+            render = (FirtreeCpuJitRenderFunc)firtree_cpu_engine_get_renderer_func(self, 
                     FIRTREE_FORMAT_BGRX32);
             break;
         default:
@@ -366,7 +360,7 @@ firtree_cpu_engine_render_into_buffer (FirtreeCpuEngine* self,
 
     if(!buffer) { return FALSE; }
 
-    RenderFunc render = NULL;
+    FirtreeCpuJitRenderFunc render = NULL;
 
     switch(format) {
         case FIRTREE_FORMAT_ARGB32:
@@ -383,7 +377,7 @@ firtree_cpu_engine_render_into_buffer (FirtreeCpuEngine* self,
         case FIRTREE_FORMAT_BGR24:
         case FIRTREE_FORMAT_RGBX32:
         case FIRTREE_FORMAT_BGRX32:
-            render = (RenderFunc)firtree_cpu_engine_get_renderer_func(self, format);
+            render = (FirtreeCpuJitRenderFunc)firtree_cpu_engine_get_renderer_func(self, format);
             break;
         default:
             g_warning("Attempt to render to buffer in unsupported format.");

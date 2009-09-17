@@ -483,10 +483,9 @@ RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
 extern void sampler_reduce_function(vec2 dest_coord, void* output_array);
 
-void reduce(unsigned char* buffer,                             
+void reduce(void* output_array,
         unsigned int width, unsigned int height,                        
-        unsigned int row_stride, float* extents,
-        void* output_array)                        
+        unsigned int row_stride, float* extents)
 {                                                                       
     unsigned int row, col;                                              
     float start_x = extents[0];                                         
@@ -495,7 +494,6 @@ void reduce(unsigned char* buffer,
     float dy = extents[3] / (float)height;                              
     start_x += 0.5f*dx; y += 0.5f*dy;                                   
     for(row=0; row<height; ++row, y+=dy) {                              
-        unsigned char* pixel = buffer + (row * row_stride);             
         float x = start_x;                                              
         for(col=0; col<width; ++col, x+=dx) {          
             vec2 dest_coord = {x, y};                                   

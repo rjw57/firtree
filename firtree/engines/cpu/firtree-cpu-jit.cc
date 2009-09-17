@@ -28,13 +28,9 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Linker.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/ExecutionEngine/JIT.h>
 
-#include <llvm/Analysis/Verifier.h>
 #include <llvm/Analysis/LoopPass.h>
-#include <llvm/Analysis/CallGraph.h>
 #include <llvm/Target/TargetData.h>
-#include <llvm/Transforms/Scalar.h>
 #include <llvm/LinkAllPasses.h>
 
 #include <llvm/DerivedTypes.h>
@@ -105,6 +101,15 @@ struct _FirtreeCpuJitPrivate {
     llvm::MemoryBuffer*         render_buffer_bitcode;
 };
 
+/* Internal function called by firtree_cpu_jit_get_render_function_for_sampler 
+ * and firtree_cpu_jit_get_reduce_function_for_kernel to call the JIT. */
+static void*
+firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
+        const char* compute_function_name,
+        llvm::Function* llvm_function,
+        FirtreeKernelTarget target,
+        FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function);
+
 static void
 firtree_cpu_jit_dispose (GObject *object)
 {
@@ -172,7 +177,7 @@ firtree_cpu_jit_purge_cache(FirtreeCpuJit* self)
     }
 }
 
-void*
+FirtreeCpuJitRenderFunc
 firtree_cpu_jit_get_render_function_for_sampler(FirtreeCpuJit* self,
         FirtreeBufferFormat format,
         FirtreeSampler* sampler,
@@ -185,13 +190,14 @@ firtree_cpu_jit_get_render_function_for_sampler(FirtreeCpuJit* self,
 
     const char* func_name = RENDER_FUNC_NAME(format);
 
-    return firtree_cpu_jit_get_compute_function(self,
+    return (FirtreeCpuJitRenderFunc)
+        firtree_cpu_jit_get_compute_function(self,
             func_name, firtree_sampler_get_sample_function(sampler),
             FIRTREE_KERNEL_TARGET_RENDER,
             lazy_creator_function);
 }
 
-void*
+FirtreeCpuJitReduceFunc
 firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
         FirtreeKernel* kernel,
         FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function)
@@ -203,7 +209,8 @@ firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
 
     const char* func_name = "reduce";
 
-    return firtree_cpu_jit_get_compute_function(self,
+    return (FirtreeCpuJitReduceFunc)
+        firtree_cpu_jit_get_compute_function(self,
             func_name, firtree_kernel_get_function(kernel),
             FIRTREE_KERNEL_TARGET_REDUCE,
             lazy_creator_function);

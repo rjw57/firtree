@@ -831,15 +831,31 @@ firtree_kernel_create_overall_function(FirtreeKernel* self)
 
     g_datalist_clear(&sampler_function_list);
 
+    llvm::Function* f = NULL;
+
     /* create the function */
-    llvm::Function* f = firtree_engine_create_sample_function_prototype(m);
+    switch(firtree_kernel_get_target(self)) {
+        case FIRTREE_KERNEL_TARGET_RENDER: 
+            f = firtree_engine_create_sample_function_prototype(m);
+            break;
+        case FIRTREE_KERNEL_TARGET_REDUCE:
+            f = firtree_engine_create_reduce_function_prototype(m);
+            break;
+        default:
+            g_error("Unknown target");
+    }
+
+    g_assert(f);
 
     llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", f);
 
-    llvm::Value* dest_coord = f->arg_begin();
-
     std::vector<llvm::Value*> arguments;
-    arguments.push_back(dest_coord);
+
+    llvm::Function::arg_iterator ai = f->arg_begin();
+    while(ai != f->arg_end()) {
+        arguments.push_back(ai);
+        ++ai;
+    }
 
     for(guint arg_i=0; arg_i<n_arguments; ++arg_i)
     {

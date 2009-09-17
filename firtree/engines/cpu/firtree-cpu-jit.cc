@@ -211,7 +211,7 @@ firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
 
     return (FirtreeCpuJitReduceFunc)
         firtree_cpu_jit_get_compute_function(self,
-            func_name, firtree_kernel_get_function(kernel),
+            func_name, firtree_kernel_create_overall_function(kernel),
             FIRTREE_KERNEL_TARGET_REDUCE,
             lazy_creator_function);
 }

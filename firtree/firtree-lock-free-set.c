@@ -104,6 +104,10 @@ firtree_lock_free_set_add_element(FirtreeLockFreeSet* set, gpointer element)
 gpointer
 firtree_lock_free_set_get_first_element(FirtreeLockFreeSet* set)
 {
+    if(firtree_lock_free_set_get_element_count(set) == 0) {
+        return NULL;
+    }
+
     return LF_NODE_TO_DATA(g_atomic_pointer_get(&(set->head)));
 }
 

@@ -55,6 +55,40 @@ class CairoARGBSurface(FirtreeTestCase):
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
         self.assertCairoSurfaceMatches(self._s, 'cairo-argb-simple')
 
+    def testMultipleEngine(self):
+        k = Kernel()
+        k.compile_from_source('kernel vec4 red() { return vec4(1,0,0,1); }')
+        self.assertKernelCompiled(k)
+        self.assert_(k.is_valid())
+
+        ks = KernelSampler()
+        ks.set_kernel(k)
+        self._e.set_sampler(ks)
+
+        engine_1 = CpuRenderer()
+        engine_1.set_sampler(ks)
+
+        k2 = Kernel()
+        k2.compile_from_source('kernel vec4 green() { return vec4(0,1,0,1); }')
+        self.assertKernelCompiled(k2)
+        self.assert_(k2.is_valid())
+
+        ks2 = KernelSampler()
+        ks2.set_kernel(k2)
+
+        engine_2 = CpuRenderer()
+        engine_2.set_sampler(ks2)
+
+        for run in xrange(2):
+            rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+            self.assertCairoSurfaceMatches(self._s, 'cairo-multiple-engine-1')
+
+            rv = engine_1.render_into_cairo_surface((0, 0, width, height), self._s)
+            self.assertCairoSurfaceMatches(self._s, 'cairo-multiple-engine-2')
+
+            rv = engine_2.render_into_cairo_surface((0, 0, width, height), self._s)
+            self.assertCairoSurfaceMatches(self._s, 'cairo-multiple-engine-3')
+
     def testSimpleAlphaKernel(self):
         k = Kernel()
         k.compile_from_source('kernel vec4 red() { return 0.5*vec4(1,0,0,1); }')

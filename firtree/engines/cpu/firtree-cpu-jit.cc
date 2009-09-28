@@ -95,8 +95,9 @@ static void _firtree_cpu_jit_optimise_module(llvm::Module* m,
 
 typedef struct _FirtreeCpuJitPrivate FirtreeCpuJitPrivate;
 
+static llvm::ExecutionEngine*   _firtree_cpu_jit_global_llvm_engine = NULL;
+
 struct _FirtreeCpuJitPrivate {
-    llvm::ExecutionEngine*      llvm_engine;
     llvm::ModuleProvider*       cached_llvm_module_provider;
     llvm::MemoryBuffer*         render_buffer_bitcode;
 };
@@ -118,8 +119,9 @@ firtree_cpu_jit_dispose (GObject *object)
     FirtreeCpuJitPrivate* p = GET_PRIVATE(cpu_jit); 
 
     if(p && p->cached_llvm_module_provider) {
-        if(p->llvm_engine) {
-            p->llvm_engine->deleteModuleProvider(p->cached_llvm_module_provider);
+        if(_firtree_cpu_jit_global_llvm_engine) {
+            _firtree_cpu_jit_global_llvm_engine->
+                deleteModuleProvider(p->cached_llvm_module_provider);
         }
         p->cached_llvm_module_provider = NULL;
     }
@@ -127,11 +129,6 @@ firtree_cpu_jit_dispose (GObject *object)
     if(p && p->render_buffer_bitcode) {
         delete p->render_buffer_bitcode;
         p->render_buffer_bitcode = NULL;
-    }
-
-    if(p && p->llvm_engine) {
-        delete p->llvm_engine;
-        p->llvm_engine = NULL;
     }
 }
 
@@ -150,7 +147,6 @@ firtree_cpu_jit_init (FirtreeCpuJit *self)
 {
     FirtreeCpuJitPrivate* p = GET_PRIVATE(self); 
 
-    p->llvm_engine = NULL;
     p->cached_llvm_module_provider = NULL;
     p->render_buffer_bitcode = 
         llvm::MemoryBuffer::getMemBuffer(
@@ -319,28 +315,30 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
     _firtree_cpu_jit_optimise_module(linked_module, compute_functions);
 
     if(p->cached_llvm_module_provider) {
-        if(p->llvm_engine) {
-            p->llvm_engine->deleteModuleProvider(p->cached_llvm_module_provider);
+        if(_firtree_cpu_jit_global_llvm_engine) {
+            _firtree_cpu_jit_global_llvm_engine->
+                deleteModuleProvider(p->cached_llvm_module_provider);
         }
         p->cached_llvm_module_provider = NULL;
     }
     p->cached_llvm_module_provider = new llvm::ExistingModuleProvider(linked_module);
 
     std::string err;
-    if(!p->llvm_engine) {
-        p->llvm_engine = llvm::ExecutionEngine::create(
+    if(!_firtree_cpu_jit_global_llvm_engine) {
+        _firtree_cpu_jit_global_llvm_engine = llvm::ExecutionEngine::create(
                 p->cached_llvm_module_provider, false, &err);
     } else {
-        p->llvm_engine->addModuleProvider(p->cached_llvm_module_provider);
+        _firtree_cpu_jit_global_llvm_engine->addModuleProvider(p->cached_llvm_module_provider);
     }
 
-    g_assert(p->llvm_engine);
+    g_assert(_firtree_cpu_jit_global_llvm_engine);
 
     if(lazy_creator_function) {
-        p->llvm_engine->InstallLazyFunctionCreator(lazy_creator_function);
+        _firtree_cpu_jit_global_llvm_engine->InstallLazyFunctionCreator(lazy_creator_function);
     }
 
-    void* compute_function = p->llvm_engine->getPointerToFunction(new_compute_func);
+    void* compute_function = _firtree_cpu_jit_global_llvm_engine->
+        getPointerToFunction(new_compute_func);
     g_assert(compute_function);
 
     return compute_function;

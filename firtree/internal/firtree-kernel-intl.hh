@@ -61,8 +61,8 @@ firtree_kernel_get_function(FirtreeKernel* self);
  *
  * This is a heavyweight function. Callers should cache the return value if possible.
  *
- * Ownership of the function passes to the caller. It should be delete-ed after use along
- * with the module returned via getParent().
+ * Ownership of the function passes to the caller. It should be deleteed after use along
+ * with the module by calling delete function->getParent().
  *
  * Returns: NULL or an LLVM function.
  */

@@ -58,6 +58,7 @@ set(_firtree_public_headers
     firtree-affine-transform.h
     firtree-buffer-sampler.h
     firtree-debug.h
+    firtree-lock-free-set.h
     firtree-kernel.h
     firtree-kernel-sampler.h
     firtree-sampler.h
@@ -72,6 +73,7 @@ set(_firtree_source_files
     firtree-buffer-sampler.cc
     firtree-debug.cc
     firtree-engine.cc
+    firtree-lock-free-set.c
     firtree-kernel.cc
     firtree-kernel-sampler.cc
     firtree-sampler.cc

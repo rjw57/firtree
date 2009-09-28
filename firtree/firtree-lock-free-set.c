@@ -17,45 +17,45 @@
 
 #include <string.h>
 
-#include "lock-free.h"
+#include "firtree-lock-free-set.h"
 
-struct _LockFreeSetNode {
-    struct _LockFreeSetNode*    next;
+struct _FirtreeLockFreeSetNode {
+    struct _FirtreeLockFreeSetNode*    next;
     /* Data is stored in memory after the header. */
 };
-typedef struct _LockFreeSetNode LockFreeSetNode;
+typedef struct _FirtreeLockFreeSetNode FirtreeLockFreeSetNode;
 
-struct _LockFreeSet {
-    LockFreeSetNode*    head;
+struct _FirtreeLockFreeSet {
+    FirtreeLockFreeSetNode*    head;
     gpointer            tail;
     gsize               element_size;
     gint                element_count;
 };
 
-#define LF_NODE_TO_DATA(node) ((gpointer)((guint8*)(node)+sizeof(LockFreeSetNode)))
-#define LF_DATA_TO_NODE(data) ((LockFreeSetNode*)((guint8*)(data)-sizeof(LockFreeSetNode)))
+#define LF_NODE_TO_DATA(node) ((gpointer)((guint8*)(node)+sizeof(FirtreeLockFreeSetNode)))
+#define LF_DATA_TO_NODE(data) ((FirtreeLockFreeSetNode*)((guint8*)(data)-sizeof(FirtreeLockFreeSetNode)))
 
 static inline
-LockFreeSetNode*
-_lock_free_set_new_node(LockFreeSet* set)
+FirtreeLockFreeSetNode*
+_firtree_lock_free_set_new_node(FirtreeLockFreeSet* set)
 {
-    LockFreeSetNode* node = (LockFreeSetNode*)
-        g_slice_alloc(set->element_size + sizeof(LockFreeSetNode));
+    FirtreeLockFreeSetNode* node = (FirtreeLockFreeSetNode*)
+        g_slice_alloc(set->element_size + sizeof(FirtreeLockFreeSetNode));
     node->next = NULL;
     return node;
 }
 
-LockFreeSet*
-lock_free_set_new(gsize element_size)
+FirtreeLockFreeSet*
+firtree_lock_free_set_new(gsize element_size)
 {
-    LockFreeSet* set = g_new(LockFreeSet, 1);
+    FirtreeLockFreeSet* set = g_new(FirtreeLockFreeSet, 1);
     
     set->element_size = element_size;
     g_atomic_int_set(&(set->element_count), 0);
 
     /* We always keep an element 'in hand' to copy to. This makes the
      * CAS locking simpler. */
-    LockFreeSetNode* node = _lock_free_set_new_node(set);
+    FirtreeLockFreeSetNode* node = _firtree_lock_free_set_new_node(set);
     g_atomic_pointer_set(&(set->head), node);
     g_atomic_pointer_set(&(set->tail), node);
 
@@ -63,14 +63,14 @@ lock_free_set_new(gsize element_size)
 }
 
 void
-lock_free_set_free(LockFreeSet* set)
+firtree_lock_free_set_free(FirtreeLockFreeSet* set)
 {
     g_assert(set != NULL);
 
     /* Walk the set, freeing each node. */
     if(set->head != NULL) {
         g_slice_free_chain_with_offset(
-                set->element_size + sizeof(LockFreeSetNode),
+                set->element_size + sizeof(FirtreeLockFreeSetNode),
                 set->head,
                 0);
     }
@@ -80,13 +80,13 @@ lock_free_set_free(LockFreeSet* set)
 }
 
 void
-lock_free_set_add_element(LockFreeSet* set, gpointer element)
+firtree_lock_free_set_add_element(FirtreeLockFreeSet* set, gpointer element)
 {
     /* Create a new node 'in hand' which will be used in the next call. */
-    LockFreeSetNode* new_node = _lock_free_set_new_node(set);
+    FirtreeLockFreeSetNode* new_node = _firtree_lock_free_set_new_node(set);
 
     /* Atomically swap this for the tail. */
-    LockFreeSetNode* old_tail = g_atomic_pointer_get(&(set->tail));
+    FirtreeLockFreeSetNode* old_tail = g_atomic_pointer_get(&(set->tail));
     while(!g_atomic_pointer_compare_and_exchange(&(set->tail), old_tail, new_node)) {
         old_tail = g_atomic_pointer_get(&(set->tail));
     }
@@ -102,15 +102,15 @@ lock_free_set_add_element(LockFreeSet* set, gpointer element)
 }
 
 gpointer
-lock_free_set_get_first_element(LockFreeSet* set)
+firtree_lock_free_set_get_first_element(FirtreeLockFreeSet* set)
 {
     return LF_NODE_TO_DATA(g_atomic_pointer_get(&(set->head)));
 }
 
 gpointer
-lock_free_set_get_next_element(LockFreeSet* set, gpointer element)
+firtree_lock_free_set_get_next_element(FirtreeLockFreeSet* set, gpointer element)
 {
-    LockFreeSetNode* node = LF_DATA_TO_NODE(element)->next;
+    FirtreeLockFreeSetNode* node = LF_DATA_TO_NODE(element)->next;
     
     if(node && node->next) {
         /* If this node is not the tail 'in hand' */
@@ -118,6 +118,12 @@ lock_free_set_get_next_element(LockFreeSet* set, gpointer element)
     }
 
     return NULL;
+}
+
+gint
+firtree_lock_free_set_get_element_count(FirtreeLockFreeSet* set)
+{
+    return g_atomic_int_get(&(set->element_count));
 }
 
 /* vim:cindent:sw=4:ts=4:et 

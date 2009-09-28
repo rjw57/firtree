@@ -209,11 +209,19 @@ firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
 
     const char* func_name = "reduce";
 
-    return (FirtreeCpuJitReduceFunc)
+    llvm::Function* f = firtree_kernel_create_overall_function(kernel);
+    if(!f) {
+        return NULL;
+    }
+
+    FirtreeCpuJitReduceFunc rv = (FirtreeCpuJitReduceFunc)
         firtree_cpu_jit_get_compute_function(self,
-            func_name, firtree_kernel_create_overall_function(kernel),
-            FIRTREE_KERNEL_TARGET_REDUCE,
+            func_name, f, FIRTREE_KERNEL_TARGET_REDUCE,
             lazy_creator_function);
+
+    delete f->getParent();
+
+    return rv;
 }
 
 void*
@@ -296,12 +304,10 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
             std::vector<llvm::Value*> args;
             llvm::Function::arg_iterator AI = existing_llvm_render_function->arg_begin();
             args.push_back(AI);
-            ++AI;
-            args.push_back(AI);
             llvm::CallInst::Create(
                     new_sampler_func,
                     args.begin(), args.end(),
-                    "rv", bb);
+                    "", bb);
             llvm::ReturnInst::Create(NULL, bb);
         }
     } else {

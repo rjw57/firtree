@@ -94,7 +94,7 @@ firtree_engine_create_sample_function_prototype(llvm::Module* module);
  * Create a prototype for a reduce kernel's reduce() function. The C-style
  * prototype would be:
  *
- *   void reduce(vec2 location, gpointer output);
+ *   void reduce(vec2 location);
  *
  * Note that the function name is constructed via a UUID so can be assumed to
  * be unique between modules.

@@ -56,6 +56,7 @@
 #include "firtree-affine-transform.h"
 #include "firtree-buffer-sampler.h"
 #include "firtree-debug.h"
+#include "firtree-lock-free-set.h"
 #include "firtree-kernel.h"
 #include "firtree-kernel-sampler.h"
 #include "firtree-sampler.h"

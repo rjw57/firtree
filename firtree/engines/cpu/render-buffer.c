@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <firtree/firtree-types.h>
+#include <firtree/firtree-lock-free-set.h>
 
 /* Vector types */
 typedef float vec2 __attribute__ ((vector_size(8)));
@@ -481,11 +482,16 @@ RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
 /* This is the function that performs a reduction. */
 
-extern void sampler_reduce_function(vec2 dest_coord, void* output_array);
+extern void sampler_reduce_function(vec2 dest_coord);
 
-void reduce(void* output_array,
-        unsigned int width, unsigned int height,                        
-        unsigned int row_stride, float* extents)
+FirtreeLockFreeSet* g_reduce_output;
+
+extern void emit_v4(vec4 val) {
+    firtree_lock_free_set_add_element(g_reduce_output, &val);
+}
+
+void reduce(FirtreeLockFreeSet* output, unsigned int width, 
+        unsigned int height, float* extents)
 {                                                                       
     unsigned int row, col;                                              
     float start_x = extents[0];                                         
@@ -493,11 +499,12 @@ void reduce(void* output_array,
     float dx = extents[2] / (float)width;                               
     float dy = extents[3] / (float)height;                              
     start_x += 0.5f*dx; y += 0.5f*dy;                                   
+    g_reduce_output = output;
     for(row=0; row<height; ++row, y+=dy) {                              
         float x = start_x;                                              
         for(col=0; col<width; ++col, x+=dx) {          
             vec2 dest_coord = {x, y};                                   
-            sampler_reduce_function(dest_coord, output_array);               
+            sampler_reduce_function(dest_coord);
         }                                                               
     }                                                                   
 }                                                                       

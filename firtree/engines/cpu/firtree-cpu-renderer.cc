@@ -23,13 +23,13 @@
 #include <firtree/firtree-debug.h>
 #include "firtree-cpu-renderer.h"
 #include "firtree-cpu-jit.hh"
+#include "firtree-cpu-common.hh"
 
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 
 #include <common/system-info.h>
 #include <common/threading.h>
-#include <common/lock-free.h>
 
 #include <sstream>
 
@@ -66,21 +66,6 @@ _firtree_cpu_renderer_invalidate_llvm_cache(FirtreeCpuRenderer* self)
 {
     FirtreeCpuRendererPrivate* p = GET_PRIVATE(self);
     p->cached_render_func = NULL;
-}
-
-static void*
-_firtree_cpu_lazy_function_creator(const std::string& name) {
-    if(name == "exp_f") {
-        return (void*)expf;
-    }
-    if(name == "atan_f") {
-        return (void*)atanf;
-    }
-    if(name == "atan_ff") {
-        return (void*)atan2f;
-    }
-    g_debug("Do not know what function to use for '%s'.", name.c_str());
-    return NULL;
 }
 
 static void
@@ -165,7 +150,7 @@ firtree_cpu_renderer_get_sampler (FirtreeCpuRenderer* self)
     return p->sampler;
 }
 
-FirtreeCpuJitRenderFunc
+static FirtreeCpuJitRenderFunc
 firtree_cpu_renderer_get_renderer_func(FirtreeCpuRenderer* self, FirtreeBufferFormat format)
 {
     FirtreeCpuRendererPrivate* p = GET_PRIVATE(self); 
@@ -181,7 +166,7 @@ firtree_cpu_renderer_get_renderer_func(FirtreeCpuRenderer* self, FirtreeBufferFo
 
     p->cached_render_func_format = format;
     p->cached_render_func = firtree_cpu_jit_get_render_function_for_sampler(p->jit,
-            format, p->sampler, _firtree_cpu_lazy_function_creator);
+            format, p->sampler, firtree_cpu_common_lazy_function_creator);
 
     return p->cached_render_func;
 }
@@ -214,8 +199,7 @@ static void
 _call_render_func(guint slice, FirtreeCpuRendererRenderRequest* request)
 {
     guint start_row = slice << 3;
-    guint end_row = MIN(start_row+8, request->num_rows);
-    guint n_rows = end_row - start_row;
+    guint n_rows = MIN(start_row+8, request->num_rows) - start_row;
 
     float dy = request->extents[3] / (float)(request->num_rows);
     float extents[] = { 

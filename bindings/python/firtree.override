@@ -10,6 +10,7 @@ headers
 #include <firtree/firtree-pixbuf-sampler.h>
 
 #include <firtree/engines/cpu/firtree-cpu-renderer.h>
+#include <firtree/engines/cpu/firtree-cpu-reduce-engine.h>
 
 #if FIRTREE_HAVE_CAIRO
 #   include <pycairo/pycairo.h>

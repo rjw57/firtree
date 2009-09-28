@@ -68,5 +68,28 @@ _wrap_firtree_debug_dump_cpu_renderer_function(PyObject *self, PyObject *args, P
     return str;
 }
 %%
+override firtree_debug_dump_cpu_reduce_engine_function
+static PyObject *
+_wrap_firtree_debug_dump_cpu_reduce_engine_function(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "engine", NULL };
+    PyGObject *cpu_reduce_engine;
+    GString* ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:debug_dump_cpu_reduce_engine_function", kwlist, &PyFirtreeCpuReduceEngine_Type, &cpu_reduce_engine))
+        return NULL;
+    
+    ret = firtree_debug_dump_cpu_reduce_engine_function(FIRTREE_CPU_REDUCE_ENGINE(cpu_reduce_engine->obj));
+
+    if(!ret) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    PyObject* str = PyString_FromString(ret->str);
+    g_string_free(ret, TRUE);
+    return str;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 

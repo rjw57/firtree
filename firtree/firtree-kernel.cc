@@ -885,10 +885,18 @@ firtree_kernel_create_overall_function(FirtreeKernel* self)
     }
 
     llvm::Value* function_call = llvm::CallInst::Create(
-            new_kernel_func, arguments.begin(), arguments.end(),
-            "kernel_call", bb);
+            new_kernel_func, arguments.begin(), arguments.end(), "", bb);
 
-    llvm::ReturnInst::Create(function_call, bb);
+    switch(firtree_kernel_get_target(self)) {
+        case FIRTREE_KERNEL_TARGET_RENDER: 
+            llvm::ReturnInst::Create(function_call, bb);
+            break;
+        case FIRTREE_KERNEL_TARGET_REDUCE:
+            llvm::ReturnInst::Create(NULL, bb);
+            break;
+        default:
+            g_error("Unknown target");
+    }
 
     /* run an agressive inlining pass over the function */
     _firtree_kernel_aggressive_inline(f);

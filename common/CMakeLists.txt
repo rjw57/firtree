@@ -5,7 +5,6 @@
 # See LICENSE file for distribution rights.
 
 add_library(common
-    lock-free.h     lock-free.c
     system-info.h   system-info.c
     threading.h     threading.c
     uuid.h          uuid.cpp

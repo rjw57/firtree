@@ -5,6 +5,13 @@
 
 ; object definitions ...
 
+(define-object CpuReduceEngine
+  (in-module "Firtree")
+  (parent "GObject")
+  (c-name "FirtreeCpuReduceEngine")
+  (gtype-id "FIRTREE_TYPE_CPU_REDUCE_ENGINE")
+)
+
 (define-object CpuRenderer
   (in-module "Firtree")
   (parent "GObject")

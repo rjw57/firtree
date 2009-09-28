@@ -137,7 +137,6 @@ firtree_engine_create_reduce_function_prototype(llvm::Module* module)
 
     std::vector<const llvm::Type*> params;
     params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2)); /* location */
-    params.push_back(llvm::PointerType::get(llvm::Type::Int32Ty, 0)); /* output */
     llvm::FunctionType* ft = llvm::FunctionType::get(
             llvm::Type::VoidTy, /* ret. type */
             params, false);

@@ -58,7 +58,8 @@ add_custom_command(
         render-buffer.c)
 
 set(_firtree_cpu_public_headers 
-    firtree-cpu-renderer.h)
+    firtree-cpu-renderer.h
+    firtree-cpu-reduce-engine.h)
     
 add_custom_command(OUTPUT firtree-type-builtins.h ${CMAKE_CURRENT_BINARY_DIR}/firtree-type-builtins.c
 	COMMAND ${GLIB_MKENUMS} 
@@ -84,12 +85,13 @@ add_library(firtree-engine-cpu SHARED
     llvm-cpu-support.bc.h
 
     firtree-cpu-renderer.cc   
+    firtree-cpu-reduce-engine.cc   
     firtree-cpu-jit.cc      firtree-cpu-jit.hh
+    firtree-cpu-common.cc   firtree-cpu-common.hh
     )
 
 set_source_files_properties(
     engines/cpu/llvm-cpu-support.bc.h
-    engines/cpu/firtree-cpu-renderer.h
     PROPERTIES GENERATED TRUE)
 
 # set the library version.

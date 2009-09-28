@@ -1,4 +1,53 @@
 
+;; From firtree-cpu-reduce-engine.h
+
+(define-function cpu_reduce_engine_get_type
+  (c-name "firtree_cpu_reduce_engine_get_type")
+  (return-type "GType")
+)
+
+(define-function cpu_reduce_engine_new
+  (c-name "firtree_cpu_reduce_engine_new")
+  (is-constructor-of "FirtreeCpuReduceEngine")
+  (return-type "FirtreeCpuReduceEngine*")
+)
+
+(define-method set_kernel
+  (of-object "FirtreeCpuReduceEngine")
+  (c-name "firtree_cpu_reduce_engine_set_kernel")
+  (return-type "none")
+  (parameters
+    '("FirtreeKernel*" "kernel")
+  )
+)
+
+(define-method get_kernel
+  (of-object "FirtreeCpuReduceEngine")
+  (c-name "firtree_cpu_reduce_engine_get_kernel")
+  (return-type "FirtreeKernel*")
+)
+
+(define-method run
+  (of-object "FirtreeCpuReduceEngine")
+  (c-name "firtree_cpu_reduce_engine_run")
+  (return-type "none")
+  (parameters
+    '("FirtreeVec4*" "extents")
+    '("guint" "width")
+    '("guint" "height")
+  )
+)
+
+(define-function debug_dump_cpu_reduce_engine_function
+  (c-name "firtree_debug_dump_cpu_reduce_engine_function")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuReduceEngine*" "engine")
+  )
+)
+
+
+
 ;; From firtree-cpu-renderer.h
 
 (define-function cpu_renderer_get_type

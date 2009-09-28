@@ -81,9 +81,9 @@ typedef void (*FirtreeCpuJitRenderFunc) (unsigned char* buffer,
     unsigned int row_width, unsigned int num_rows,
     unsigned int row_stride, float* extents);
 
-typedef void (*FirtreeCpuJitReduceFunc) (gpointer output_array,
+typedef void (*FirtreeCpuJitReduceFunc) (gpointer output,
     unsigned int row_width, unsigned int num_rows,
-    unsigned int row_stride, float* extents);
+    float* extents);
 
 /**
  * firtree_cpu_jit_new:

@@ -39,10 +39,15 @@
  * @FIRTREE_FORMAT_RGBX32:
  * @FIRTREE_FORMAT_BGRX32:
  * @FIRTREE_FORMAT_L8:
+ * @FIRTREE_FORMAT_RGBA_F32: 4 component 32-bit floating point numbers.
  * 
  * A set of possible formats memory buffers can be in. The names are of the
  * form FIRTREE_FORMAT_abcdNN where abcd gives the byte order of the packed 
  * components in memory and NN is the number of bits per pixel.
+ *
+ * Exceptions to this are the _FOURCC and _F32 formats. The former are laid 
+ * out in memory as specified by their four character code and the latter are
+ * laid out as arrays of 4-component floating point vectors.
  *
  * Since these are specified in terms of byte order in memory, they are
  * endian independent.
@@ -69,6 +74,8 @@ typedef enum {
     FIRTREE_FORMAT_L8                       = 0x0e, 
     FIRTREE_FORMAT_I420_FOURCC              = 0x0f, 
     FIRTREE_FORMAT_YV12_FOURCC              = 0x10, 
+
+    FIRTREE_FORMAT_RGBA_F32                 = 0x11, 
 
     FIRTREE_FORMAT_LAST
 } FirtreeBufferFormat;

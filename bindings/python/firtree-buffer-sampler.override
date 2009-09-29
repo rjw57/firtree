@@ -30,6 +30,12 @@ _wrap_firtree_buffer_sampler_set_buffer(PyGObject *self, PyObject *args,
         return NULL;
     }
 
+    if(buffer_len < height * stride) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Buffer argument is smaller than stride * height.");
+        return NULL;
+    }
+
     firtree_buffer_sampler_set_buffer(FIRTREE_BUFFER_SAMPLER(self->obj),
             buffer, width, height, stride, (FirtreeBufferFormat)format_val);
 

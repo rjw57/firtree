@@ -92,18 +92,22 @@ _wrap_firtree_cpu_renderer_render_into_buffer(PyGObject *self, PyObject *args, P
     PyObject *format;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                "(ffff)z#kkkO!:FirtreeCpuRenderer.render_into_buffer", kwlist,
+                "(ffff)w#kkkO!:FirtreeCpuRenderer.render_into_buffer", kwlist,
                 &extents[0], &extents[1], &extents[2], &extents[3],
                 &buffer, &buffer_len, &width, &height, &stride, 
                 &PyGEnum_Type, &format))
         return NULL;
 
     if((buffer == NULL) || (buffer_len == 0)) {
-        firtree_buffer_sampler_set_buffer(FIRTREE_BUFFER_SAMPLER(self->obj),
-                NULL, 0, 0, 0, FIRTREE_FORMAT_LAST);
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot convert buffer argument to a mutable buffer.");
+        return NULL;
+    }
 
-        Py_INCREF(Py_None);
-        return Py_None;
+    if(buffer_len < height * stride) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Buffer argument is smaller than stride * height.");
+        return NULL;
     }
 
     gint format_val;

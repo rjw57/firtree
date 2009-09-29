@@ -363,6 +363,7 @@ firtree_cpu_renderer_render_into_buffer (FirtreeCpuRenderer* self,
         case FIRTREE_FORMAT_BGR24:
         case FIRTREE_FORMAT_RGBX32:
         case FIRTREE_FORMAT_BGRX32:
+        case FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED:
             render = (FirtreeCpuJitRenderFunc)firtree_cpu_renderer_get_renderer_func(self, format);
             break;
         default:

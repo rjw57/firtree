@@ -85,7 +85,7 @@ static const char* _firtree_cpu_jit_function_names[] = {
     NULL, /* FIRTREE_FORMAT_I420_FOURCC */
     NULL, /* FIRTREE_FORMAT_YV12_FOURCC */
 
-    "render_FIRTREE_FORMAT_RGBA_F32",
+    "render_FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED",
 
     NULL,
 };

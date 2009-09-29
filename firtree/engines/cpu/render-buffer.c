@@ -25,7 +25,7 @@ extern vec4 unpremultiply_v4(vec4);
 G_INLINE_FUNC
 vec4 unpack_pixel(void* p, FirtreeBufferFormat format)
 {
-    if(format == FIRTREE_FORMAT_RGBA_F32) {
+    if(format == FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED) {
         float* fp = (float*)p;
         vec4 rv = { fp[0], fp[1], fp[2], fp[3] };
         return rv;
@@ -134,7 +134,7 @@ vec4 unpack_pixel(void* p, FirtreeBufferFormat format)
 G_INLINE_FUNC
 void pack_pixel(vec4 pixel, void* p, FirtreeBufferFormat format)
 {
-    if(format == FIRTREE_FORMAT_RGBA_F32) {
+    if(format == FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED) {
         float* fp = (float*)p;
         fp[0] = ELEMENT(pixel, 0);
         fp[1] = ELEMENT(pixel, 1);
@@ -275,7 +275,7 @@ SAMPLE_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
 SAMPLE_FUNCTION(1, FIRTREE_FORMAT_L8)
 
-SAMPLE_FUNCTION(16, FIRTREE_FORMAT_RGBA_F32)
+SAMPLE_FUNCTION(16, FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED)
 
 /* Image buffer specialist sampler functions */
 G_INLINE_FUNC                                                           
@@ -402,8 +402,8 @@ vec4 sample_image_buffer_nn(uint8_t* buffer,
         case FIRTREE_FORMAT_YV12_FOURCC:
             return sample_FIRTREE_FORMAT_YV12_FOURCC(buffer, 
                     width, height, stride, location);
-        case FIRTREE_FORMAT_RGBA_F32:
-            return sample_FIRTREE_FORMAT_RGBA_F32(buffer, 
+        case FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED:
+            return sample_FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED(buffer, 
                     width, height, stride, location);
         default:
             /* do nothing */
@@ -504,7 +504,7 @@ RENDER_FUNCTION(3, FIRTREE_FORMAT_BGR24)
 RENDER_FUNCTION(4, FIRTREE_FORMAT_RGBX32)
 RENDER_FUNCTION(4, FIRTREE_FORMAT_BGRX32)
 
-RENDER_FUNCTION(16, FIRTREE_FORMAT_RGBA_F32)
+RENDER_FUNCTION(16, FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED)
 
 /* This is the function that performs a reduction. */
 

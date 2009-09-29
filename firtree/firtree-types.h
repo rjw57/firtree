@@ -39,7 +39,7 @@
  * @FIRTREE_FORMAT_RGBX32:
  * @FIRTREE_FORMAT_BGRX32:
  * @FIRTREE_FORMAT_L8:
- * @FIRTREE_FORMAT_RGBA_F32: 4 component 32-bit floating point numbers.
+ * @FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED: 4 component 32-bit floating point numbers.
  * 
  * A set of possible formats memory buffers can be in. The names are of the
  * form FIRTREE_FORMAT_abcdNN where abcd gives the byte order of the packed 
@@ -75,7 +75,7 @@ typedef enum {
     FIRTREE_FORMAT_I420_FOURCC              = 0x0f, 
     FIRTREE_FORMAT_YV12_FOURCC              = 0x10, 
 
-    FIRTREE_FORMAT_RGBA_F32                 = 0x11, 
+    FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED   = 0x11, 
 
     FIRTREE_FORMAT_LAST
 } FirtreeBufferFormat;

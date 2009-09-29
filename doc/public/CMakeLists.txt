@@ -25,7 +25,7 @@ else(NOT GTKDOC_FOUND)
             -l${_firtree_engine_cpu_output_name}
         LDPATH 
             "${CMAKE_CURRENT_BINARY_DIR}/../../firtree:${CMAKE_CURRENT_BINARY_DIR}/../../firtree/engines/cpu"
-		DEPENDS firtree)
+		DEPENDS firtree firtree-engine-cpu)
 endif(NOT GTKDOC_FOUND)
 
 # vim:sw=4:ts=4:autoindent:et

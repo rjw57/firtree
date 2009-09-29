@@ -32,6 +32,7 @@
   (c-name "firtree_cpu_reduce_engine_run")
   (return-type "none")
   (parameters
+    '("FirtreeLockFreeSet*" "set")
     '("FirtreeVec4*" "extents")
     '("guint" "width")
     '("guint" "height")

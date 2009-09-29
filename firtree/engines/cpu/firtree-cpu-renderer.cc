@@ -210,7 +210,7 @@ _call_render_func(guint slice, FirtreeCpuRendererRenderRequest* request)
             request->row_stride, extents);
 }
 
-static void
+static gboolean
 firtree_cpu_renderer_perform_render(FirtreeCpuRenderer* self,
         FirtreeCpuJitRenderFunc func, unsigned char* buffer, unsigned int row_width, 
         unsigned int num_rows, unsigned int row_stride, 
@@ -219,16 +219,16 @@ firtree_cpu_renderer_perform_render(FirtreeCpuRenderer* self,
     FirtreeCpuRendererPrivate* p = GET_PRIVATE(self); 
 
     if(!func) {
-        return;
+        return FALSE;
     }
 
     if(!p->sampler) {
-        return;
+        return FALSE;
     }
 
     if(!firtree_sampler_lock(p->sampler)) {
         g_debug("Failed to lock sampler.");
-        return;
+        return FALSE;
     }
 
     FirtreeCpuRendererRenderRequest request = {
@@ -239,6 +239,8 @@ firtree_cpu_renderer_perform_render(FirtreeCpuRenderer* self,
     threading_apply(((num_rows+7)>>3), (ThreadingApplyFunc) _call_render_func, &request);
 
     firtree_sampler_unlock(p->sampler);
+
+    return TRUE;
 }
 
 #if FIRTREE_HAVE_GDK_PIXBUF
@@ -283,10 +285,8 @@ firtree_cpu_renderer_render_into_pixbuf (FirtreeCpuRenderer* self,
         return FALSE;
     }
 
-    firtree_cpu_renderer_perform_render(self, render,
+    return firtree_cpu_renderer_perform_render(self, render,
             pixels, width, height, stride, (float*)extents);
-
-    return TRUE;
 }
 
 #endif
@@ -331,10 +331,8 @@ firtree_cpu_renderer_render_into_cairo_surface (FirtreeCpuRenderer* self,
         return FALSE;
     }
 
-    firtree_cpu_renderer_perform_render(self, render,
+    return firtree_cpu_renderer_perform_render(self, render,
             data, width, height, stride, (float*)extents);
-
-    return TRUE;
 }
 #endif
 
@@ -365,6 +363,7 @@ firtree_cpu_renderer_render_into_buffer (FirtreeCpuRenderer* self,
         case FIRTREE_FORMAT_BGR24:
         case FIRTREE_FORMAT_RGBX32:
         case FIRTREE_FORMAT_BGRX32:
+        case FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED:
             render = (FirtreeCpuJitRenderFunc)firtree_cpu_renderer_get_renderer_func(self, format);
             break;
         default:
@@ -377,10 +376,8 @@ firtree_cpu_renderer_render_into_buffer (FirtreeCpuRenderer* self,
         return FALSE;
     }
 
-    firtree_cpu_renderer_perform_render(self, render,
+    return firtree_cpu_renderer_perform_render(self, render,
             (unsigned char*)buffer, width, height, stride, (float*)extents);
-
-    return TRUE;
 }
 
 /* vim:sw=4:ts=4:et:cindent

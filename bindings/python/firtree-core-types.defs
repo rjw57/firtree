@@ -84,6 +84,7 @@
     '("l8" "FIRTREE_FORMAT_L8")
     '("i420-fourcc" "FIRTREE_FORMAT_I420_FOURCC")
     '("yv12-fourcc" "FIRTREE_FORMAT_YV12_FOURCC")
+    '("rgba-f32-premultiplied" "FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED")
     '("last" "FIRTREE_FORMAT_LAST")
   )
 )

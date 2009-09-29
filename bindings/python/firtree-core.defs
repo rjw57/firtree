@@ -230,6 +230,19 @@
   )
 )
 
+(define-method set_buffer_no_copy
+  (of-object "FirtreeBufferSampler")
+  (c-name "firtree_buffer_sampler_set_buffer_no_copy")
+  (return-type "none")
+  (parameters
+    '("gpointer" "buffer")
+    '("guint" "width")
+    '("guint" "height")
+    '("guint" "stride")
+    '("FirtreeBufferFormat" "format")
+  )
+)
+
 (define-method unset_buffer
   (of-object "FirtreeBufferSampler")
   (c-name "firtree_buffer_sampler_unset_buffer")

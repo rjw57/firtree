@@ -125,6 +125,25 @@ firtree_buffer_sampler_set_buffer (FirtreeBufferSampler* self,
             guint stride, FirtreeBufferFormat format);
 
 /**
+ * firtree_buffer_sampler_set_buffer_no_copy:
+ * @self: A FirtreeBufferSampler
+ * @buffer: The location of the buffer in memory or NULL to unset the buffer.
+ * @width: The buffer width in pixels.
+ * @height: The buffer height in rows.
+ * @stride: The size of one row in bytes.
+ * @format: The format of the buffer.
+ *
+ * Associate an in-memory buffer with this sampler like
+ * firtree_buffer_sampler_set_buffer() except that no implicit copy is made.
+ * The buffer must be valid for the lifetime of the sampler or until
+ * firtree_buffer_sampler_set_buffer() or
+ * firtree_buffer_sampler_set_buffer_no_copy()  is called again. 
+ */
+void firtree_buffer_sampler_set_buffer_no_copy (FirtreeBufferSampler* self, gpointer
+        buffer, guint width, guint height, guint stride, FirtreeBufferFormat
+        format);
+
+/**
  * firtree_buffer_sampler_unset_buffer:
  * @self: A FirtreeBufferSampler
  *

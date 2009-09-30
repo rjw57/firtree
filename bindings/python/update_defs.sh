@@ -3,7 +3,7 @@
 python codegen/defsgen.py \
 	-m firtree \
 	-f firtree-core-overriden.defs \
-	-l ../../firtree/libfirtree-core-0.1.so \
+	-l ../../firtree/libfirtree-core.so \
 	-s firtree-core -p \
 	../../firtree/firtree-affine-transform.h \
 	../../firtree/firtree-buffer-sampler.h \
@@ -18,25 +18,25 @@ python codegen/defsgen.py \
 python codegen/defsgen.py \
 	-m firtree \
 	-f firtree-engine-cpu-overriden.defs \
-	-l ../../firtree/engines/cpu/libfirtree-engine-cpu-0.1.so \
+	-l ../../firtree/engines/cpu/libfirtree-engine-cpu.so \
 	-s firtree-engine-cpu -p \
 	../../firtree/engines/cpu/*.h 
 
 python codegen/defsgen.py \
 	-m firtree \
-	-l ../../firtree/libfirtree-core-0.1.so \
+	-l ../../firtree/libfirtree-core.so \
 	-s firtree-cairo -p \
 	../../firtree/firtree-cairo-surface-sampler.h
 
 python codegen/defsgen.py \
 	-m firtree \
-	-l ../../firtree/libfirtree-core-0.1.so \
+	-l ../../firtree/libfirtree-core.so \
 	-s firtree-clutter -p \
 	../../firtree/firtree-cogl-texture-sampler.h
 
 python codegen/defsgen.py \
 	-m firtree \
-	-l ../../firtree/libfirtree-core-0.1.so \
+	-l ../../firtree/libfirtree-core.so \
 	-s firtree-gdk-pixbuf -p \
 	../../firtree/firtree-pixbuf-sampler.h
 

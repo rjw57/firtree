@@ -144,9 +144,9 @@ set_target_properties(firtree
     VERSION 
         "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
     SOVERSION 
-        "${FIRTREE_VERSION_MAJOR}"
+        "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
     OUTPUT_NAME
-        "firtree-core-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
+        "firtree-core"
     )
 
 target_link_libraries(firtree

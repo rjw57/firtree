@@ -15,8 +15,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # Set some variables indicating the version number of Firtree.
 set(FIRTREE_VERSION_MAJOR "0")
-set(FIRTREE_VERSION_MINOR "1")
-set(FIRTREE_VERSION_PATCH "1") # Even for release, odd for development
+set(FIRTREE_VERSION_MINOR "2")
+set(FIRTREE_VERSION_PATCH "0")
 set(FIRTREE_VERSION "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")

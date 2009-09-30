@@ -83,3 +83,35 @@
    ...
    obj:*/libselinux.so.*
 }
+
+{
+   The long lived thread pool and TLS generate spurious leak reports
+   Memcheck:Leak
+   ...
+   fun:threading_apply
+}
+
+{
+   Something screwy within LLVM?
+   Memcheck:Addr4
+   ...
+   fun:*SearchForAddressOfSymbol*
+}
+
+{
+   The Python GC doing it's thang?
+   Memcheck:Leak
+   ...
+   fun:realloc
+   fun:_PyObject_GC_Resize
+}
+
+{
+   I *think* this is something to do with static strings?
+   Memcheck:Leak
+   ...
+   fun:*basic_string*
+   ...
+   obj:*/libstdc++.so.*
+}
+

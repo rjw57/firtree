@@ -114,7 +114,10 @@ firtree_buffer_sampler_dispose (GObject *object)
     FirtreeBufferSamplerPrivate* p = GET_PRIVATE(object);
 
     /* dispose of any LLVM modules we might have. */
-    _firtree_buffer_sampler_invalidate_llvm_cache((FirtreeBufferSampler*)object);
+    if(p && p->cached_function) {
+        delete p->cached_function->getParent();
+        p->cached_function = NULL;
+    }
 
     /* dispose of any cached buffer */
     if(p->cached_buffer) {

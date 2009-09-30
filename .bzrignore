@@ -10,8 +10,8 @@ doc/internal/html/
 doc/internal/latex/
 doc/internal/doxy.config
 doc/public/firtree/
-firtree/libfirtree-core-*.so.*
-firtree/engines/cpu/libfirtree-engine-cpu-*.so.*
+firtree/libfirtree-core*.so.*
+firtree/engines/cpu/libfirtree-engine-cpu*.so.*
 bindings/python/firtree.generated.*
 firtree/engines/cpu/builtins.bc
 firtree/engines/cpu/llvm-cpu-support.bc*
@@ -21,6 +21,5 @@ firtree/firtree.h
 install_manifest.txt
 firtree/firtree.pc
 firtree/firtree-type-builtins.*
-
 firtree/engines/cpu/builtins.nonopt.bc
 firtree/engines/cpu/llvm-cpu-support.opt.ll

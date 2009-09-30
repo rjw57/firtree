@@ -100,9 +100,9 @@ set_target_properties(firtree-engine-cpu
     VERSION 
         "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}.${FIRTREE_VERSION_PATCH}"
     SOVERSION 
-        "${FIRTREE_VERSION_MAJOR}"
+        "${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
     OUTPUT_NAME
-        "firtree-engine-cpu-${FIRTREE_VERSION_MAJOR}.${FIRTREE_VERSION_MINOR}"
+        "firtree-engine-cpu"
     )
 
 target_link_libraries(firtree-engine-cpu 

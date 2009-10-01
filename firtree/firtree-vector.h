@@ -1,4 +1,4 @@
-/* firtree.h */
+/* firtree-vector.h */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -17,41 +17,23 @@
  * Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#ifndef _FIRTREE_VECTOR
-#define _FIRTREE_VECTOR
+#ifndef __FIRTREE_VECTOR_H__
+#define __FIRTREE_VECTOR_H__
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-/**
- * SECTION:firtree-vector
- * @short_description: Vector types used in Firtree.
- * @include: firtree/firtree-vector.h
- *
- * Firtree uses 2, 3 and 4 dimensional vectors as kernel parameters. Firtree
- * also defines appropriate boxing and unboxing code for passing these as
- * parameters for firtree_kernel_set_argument_value(), etc.
- */
+typedef	struct	_FirtreeVec2	FirtreeVec2;
+typedef	struct	_FirtreeVec3	FirtreeVec3;
+typedef	struct	_FirtreeVec4	FirtreeVec4;
 
-/**
- * FirtreeVec2:
- * @x: The x-co-ordinate of the vector.
- * @y: The y-co-ordinate of the vector.
- *
- * A two-dimensional vector.
- */
-typedef struct {
-    float x, y;
-} FirtreeVec2;
+struct _FirtreeVec2
+{
+	float 	x;
+	float	y;
+};
 
-/**
- * firtree_vec2_get_type:
- *
- * Retrieve the GType for the boxed version of FirtreeVec2.
- *
- * Returns: A GType
- */
 GType firtree_vec2_get_type();
 
 /**
@@ -61,26 +43,13 @@ GType firtree_vec2_get_type();
  */
 #define FIRTREE_TYPE_VEC2 (firtree_vec2_get_type())
 
-/**
- * FirtreeVec3:
- * @x: The x-co-ordinate of the vector.
- * @y: The y-co-ordinate of the vector.
- * @z: The z-co-ordinate of the vector.
- *
- * A three-dimensional vector.
- */
-typedef struct {
-    float x, y, z;
-} FirtreeVec3;
+struct _FirtreeVec3
+{
+	float 	x;
+	float	y;
+	float	z;
+};
 
-
-/**
- * firtree_vec3_get_type:
- *
- * Retrieve the GType for the boxed version of FirtreeVec3.
- *
- * Returns: A GType
- */
 GType firtree_vec3_get_type();
 
 /**
@@ -90,26 +59,14 @@ GType firtree_vec3_get_type();
  */
 #define FIRTREE_TYPE_VEC3 (firtree_vec3_get_type())
 
-/**
- * FirtreeVec4:
- * @x: The x-co-ordinate of the vector.
- * @y: The y-co-ordinate of the vector.
- * @z: The z-co-ordinate of the vector.
- * @w: The w-co-ordinate of the vector.
- *
- * A four-dimensional vector.
- */
-typedef struct {
-    float x, y, z, w;
-} FirtreeVec4;
+struct _FirtreeVec4
+{
+	float 	x;
+	float	y;
+	float	z;
+	float	w;
+};
 
-/**
- * firtree_vec4_get_type:
- *
- * Retrieve the GType for the boxed version of FirtreeVec4.
- *
- * Returns: A GType
- */
 GType firtree_vec4_get_type();
 
 /**
@@ -120,8 +77,6 @@ GType firtree_vec4_get_type();
 #define FIRTREE_TYPE_VEC4 (firtree_vec4_get_type())
 
 G_END_DECLS
-
-#endif /* _FIRTREE_VECTOR */
-
-/* vim:sw=4:ts=4:et:cindent
+#endif				/* __FIRTREE_VECTOR_H__ */
+/* vim:sw=8:ts=8:noet:cindent
  */

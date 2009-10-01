@@ -25,77 +25,132 @@ static GType _firtree_vec2_type = 0;
 static GType _firtree_vec3_type = 0;
 static GType _firtree_vec4_type = 0;
 
-gpointer 
-_firtree_vec2_copy(gpointer ptr) 
+/**
+ * SECTION:firtree-vector
+ * @short_description: Vector types used in Firtree.
+ * @include: firtree/firtree-vector.h
+ *
+ * Firtree uses 2, 3 and 4 dimensional vectors as kernel parameters. Firtree
+ * also defines appropriate boxing and unboxing code for passing these as
+ * parameters for firtree_kernel_set_argument_value(), etc.
+ */
+
+/**
+ * FirtreeVec2:
+ * @x: The x-co-ordinate of the vector.
+ * @y: The y-co-ordinate of the vector.
+ *
+ * A two-dimensional vector.
+ */
+
+gpointer _firtree_vec2_copy(gpointer ptr)
 {
-    FirtreeVec2* new_vec2 = g_slice_new(FirtreeVec2);
-    memcpy(new_vec2, ptr, sizeof(FirtreeVec2));
-    return new_vec2;
+	FirtreeVec2 *new_vec2 = g_slice_new(FirtreeVec2);
+	memcpy(new_vec2, ptr, sizeof(FirtreeVec2));
+	return new_vec2;
 }
 
-void
-_firtree_vec2_free(gpointer ptr) 
+void _firtree_vec2_free(gpointer ptr)
 {
-    g_slice_free(FirtreeVec2, ptr);
+	g_slice_free(FirtreeVec2, ptr);
 }
 
-GType
-firtree_vec2_get_type()
+/**
+ * firtree_vec2_get_type:
+ *
+ * Retrieve the GType for the boxed version of FirtreeVec2.
+ *
+ * Returns: A GType
+ */
+GType firtree_vec2_get_type()
 {
-    if(0==_firtree_vec2_type) {
-        _firtree_vec2_type = g_boxed_type_register_static(
-                "firtree_vec2", _firtree_vec2_copy, _firtree_vec2_free);
-    }
-    return _firtree_vec2_type;
+	if (0 == _firtree_vec2_type) {
+		_firtree_vec2_type =
+		    g_boxed_type_register_static("firtree_vec2",
+						 _firtree_vec2_copy,
+						 _firtree_vec2_free);
+	}
+	return _firtree_vec2_type;
 }
 
-gpointer 
-_firtree_vec3_copy(gpointer ptr) 
+/**
+ * FirtreeVec3:
+ * @x: The x-co-ordinate of the vector.
+ * @y: The y-co-ordinate of the vector.
+ * @z: The z-co-ordinate of the vector.
+ *
+ * A three-dimensional vector.
+ */
+
+gpointer _firtree_vec3_copy(gpointer ptr)
 {
-    FirtreeVec3* new_vec3 = g_slice_new(FirtreeVec3);
-    memcpy(new_vec3, ptr, sizeof(FirtreeVec3));
-    return new_vec3;
+	FirtreeVec3 *new_vec3 = g_slice_new(FirtreeVec3);
+	memcpy(new_vec3, ptr, sizeof(FirtreeVec3));
+	return new_vec3;
 }
 
-void
-_firtree_vec3_free(gpointer ptr) 
+void _firtree_vec3_free(gpointer ptr)
 {
-    g_slice_free(FirtreeVec3, ptr);
+	g_slice_free(FirtreeVec3, ptr);
 }
 
-GType
-firtree_vec3_get_type()
+/**
+ * firtree_vec3_get_type:
+ *
+ * Retrieve the GType for the boxed version of FirtreeVec3.
+ *
+ * Returns: A GType
+ */
+GType firtree_vec3_get_type()
 {
-    if(0==_firtree_vec3_type) {
-        _firtree_vec3_type = g_boxed_type_register_static(
-                "firtree_vec3", _firtree_vec3_copy, _firtree_vec3_free);
-    }
-    return _firtree_vec3_type;
+	if (0 == _firtree_vec3_type) {
+		_firtree_vec3_type =
+		    g_boxed_type_register_static("firtree_vec3",
+						 _firtree_vec3_copy,
+						 _firtree_vec3_free);
+	}
+	return _firtree_vec3_type;
 }
 
-gpointer 
-_firtree_vec4_copy(gpointer ptr) 
+/**
+ * FirtreeVec4:
+ * @x: The x-co-ordinate of the vector.
+ * @y: The y-co-ordinate of the vector.
+ * @z: The z-co-ordinate of the vector.
+ * @w: The w-co-ordinate of the vector.
+ *
+ * A four-dimensional vector.
+ */
+
+gpointer _firtree_vec4_copy(gpointer ptr)
 {
-    FirtreeVec4* new_vec4 = g_slice_new(FirtreeVec4);
-    memcpy(new_vec4, ptr, sizeof(FirtreeVec4));
-    return new_vec4;
+	FirtreeVec4 *new_vec4 = g_slice_new(FirtreeVec4);
+	memcpy(new_vec4, ptr, sizeof(FirtreeVec4));
+	return new_vec4;
 }
 
-void
-_firtree_vec4_free(gpointer ptr) 
+void _firtree_vec4_free(gpointer ptr)
 {
-    g_slice_free(FirtreeVec4, ptr);
+	g_slice_free(FirtreeVec4, ptr);
 }
 
-GType
-firtree_vec4_get_type()
+/**
+ * firtree_vec4_get_type:
+ *
+ * Retrieve the GType for the boxed version of FirtreeVec4.
+ *
+ * Returns: A GType
+ */
+GType firtree_vec4_get_type()
 {
-    if(0==_firtree_vec4_type) {
-        _firtree_vec4_type = g_boxed_type_register_static(
-                "firtree_vec4", _firtree_vec4_copy, _firtree_vec4_free);
-    }
-    return _firtree_vec4_type;
+	if (0 == _firtree_vec4_type) {
+		_firtree_vec4_type =
+		    g_boxed_type_register_static("firtree_vec4",
+						 _firtree_vec4_copy,
+						 _firtree_vec4_free);
+	}
+	return _firtree_vec4_type;
 }
 
-/* vim:sw=4:ts=4:et:cindent
+/* vim:sw=8:ts=8:tw=78:noet:cindent
  */

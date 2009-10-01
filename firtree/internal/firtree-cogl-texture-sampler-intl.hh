@@ -1,4 +1,4 @@
-/* firtree-engine-intl.h */
+/* firtree-cogl-texture-sampler-intl.h */
 
 /* Firtree - A generic image processing library
  * Copyright (C) 2009 Rich Wareham <richwareham@gmail.com>
@@ -30,11 +30,6 @@
 
 G_BEGIN_DECLS
 
-/**
- * firtree_cogl_texture_sampler_get_data:
- *
- * Returns: The size of the cached data.
- */
 guint
 firtree_cogl_texture_sampler_get_data(FirtreeCoglTextureSampler* self,
         guchar** data, guint* rowstride,

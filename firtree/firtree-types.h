@@ -17,10 +17,18 @@
  * Franklin Street, Fifth Floor, Boston, MA    02110-1301, USA
  */
 
-#ifndef _FIRTREE_TYPES
-#define _FIRTREE_TYPES
+#ifndef __FIRTREE_TYPES_H__
+#define __FIRTREE_TYPES_H__
 
 #include <glib-object.h>
+
+/**
+ * SECTION:firtree-types
+ * @short_description: Various cross-object types used in Firtree.
+ * @include: firtree/firtree-types.h
+ *
+ * Various cross-object types used in Firtree.
+ */
 
 /*
  * FirtreeBufferFormat:
@@ -53,34 +61,34 @@
  * endian independent.
  */
 typedef enum {
-    FIRTREE_FORMAT_ARGB32                   = 0x00, 
-    FIRTREE_FORMAT_ARGB32_PREMULTIPLIED     = 0x01, 
-    FIRTREE_FORMAT_XRGB32                   = 0x02, 
-    FIRTREE_FORMAT_RGBA32                   = 0x03, 
-    FIRTREE_FORMAT_RGBA32_PREMULTIPLIED     = 0x04, 
+	FIRTREE_FORMAT_ARGB32 			= 0x00,
+	FIRTREE_FORMAT_ARGB32_PREMULTIPLIED 	= 0x01,
+	FIRTREE_FORMAT_XRGB32 			= 0x02,
+	FIRTREE_FORMAT_RGBA32 			= 0x03,
+	FIRTREE_FORMAT_RGBA32_PREMULTIPLIED 	= 0x04,
 
-    FIRTREE_FORMAT_ABGR32                   = 0x05, 
-    FIRTREE_FORMAT_ABGR32_PREMULTIPLIED     = 0x06, 
-    FIRTREE_FORMAT_XBGR32                   = 0x07, 
-    FIRTREE_FORMAT_BGRA32                   = 0x08, 
-    FIRTREE_FORMAT_BGRA32_PREMULTIPLIED     = 0x09, 
+	FIRTREE_FORMAT_ABGR32 			= 0x05,
+	FIRTREE_FORMAT_ABGR32_PREMULTIPLIED 	= 0x06,
+	FIRTREE_FORMAT_XBGR32 			= 0x07,
+	FIRTREE_FORMAT_BGRA32 			= 0x08,
+	FIRTREE_FORMAT_BGRA32_PREMULTIPLIED 	= 0x09,
 
-    FIRTREE_FORMAT_RGB24                    = 0x0a,
-    FIRTREE_FORMAT_BGR24                    = 0x0b,
+	FIRTREE_FORMAT_RGB24 			= 0x0a,
+	FIRTREE_FORMAT_BGR24 			= 0x0b,
 
-    FIRTREE_FORMAT_RGBX32                   = 0x0c, 
-    FIRTREE_FORMAT_BGRX32                   = 0x0d, 
+	FIRTREE_FORMAT_RGBX32 			= 0x0c,
+	FIRTREE_FORMAT_BGRX32 			= 0x0d,
 
-    FIRTREE_FORMAT_L8                       = 0x0e, 
-    FIRTREE_FORMAT_I420_FOURCC              = 0x0f, 
-    FIRTREE_FORMAT_YV12_FOURCC              = 0x10, 
+	FIRTREE_FORMAT_L8			= 0x0e,
+	FIRTREE_FORMAT_I420_FOURCC 		= 0x0f,
+	FIRTREE_FORMAT_YV12_FOURCC 		= 0x10,
 
-    FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED   = 0x11, 
+	FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED 	= 0x11,
 
-    FIRTREE_FORMAT_LAST
+	FIRTREE_FORMAT_LAST
 } FirtreeBufferFormat;
 
-#endif /* _FIRTREE_TYPES */
+#endif				/* __FIRTREE_TYPES_H__ */
 
-/* vim:sw=4:ts=4:et:cindent
+/* vim:sw=8:ts=8:noet:cindent
  */

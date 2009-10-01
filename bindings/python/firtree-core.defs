@@ -213,7 +213,7 @@
   (c-name "firtree_buffer_sampler_set_do_interpolation")
   (return-type "none")
   (parameters
-    '("gboolean" "do_interpolation")
+    '("gboolean" "do_interp")
   )
 )
 
@@ -425,6 +425,24 @@
   (return-type "FirtreeKernelTarget")
 )
 
+(define-virtual argument_changed
+  (of-object "FirtreeKernel")
+  (return-type "none")
+  (parameters
+    '("gchar*" "arg_name")
+  )
+)
+
+(define-virtual module_changed
+  (of-object "FirtreeKernel")
+  (return-type "none")
+)
+
+(define-virtual contents_changed
+  (of-object "FirtreeKernel")
+  (return-type "none")
+)
+
 
 
 ;; From firtree-sampler.h
@@ -473,6 +491,41 @@
 (define-method transform_changed
   (of-object "FirtreeSampler")
   (c-name "firtree_sampler_transform_changed")
+  (return-type "none")
+)
+
+(define-virtual contents_changed
+  (of-object "FirtreeSampler")
+  (return-type "none")
+)
+
+(define-virtual module_changed
+  (of-object "FirtreeSampler")
+  (return-type "none")
+)
+
+(define-virtual extents_changed
+  (of-object "FirtreeSampler")
+  (return-type "none")
+)
+
+(define-virtual transform_changed
+  (of-object "FirtreeSampler")
+  (return-type "none")
+)
+
+(define-virtual get_extent
+  (of-object "FirtreeSampler")
+  (return-type "FirtreeVec4")
+)
+
+(define-virtual lock
+  (of-object "FirtreeSampler")
+  (return-type "gboolean")
+)
+
+(define-virtual unlock
+  (of-object "FirtreeSampler")
   (return-type "none")
 )
 

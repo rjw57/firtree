@@ -76,5 +76,5 @@ G_END_DECLS
 
 #endif				/* __FIRTREE_CAIRO_SURFACE_SAMPLER_H__ */
 
-/* vim:sw=8:ts=8:tw=78:noet:cindent
+/* vim:sw=8:ts=8:noet:cindent
  */

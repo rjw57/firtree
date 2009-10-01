@@ -30,10 +30,10 @@ G_BEGIN_DECLS
 #define FIRTREE_AFFINE_TRANSFORM_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST ((klass), FIRTREE_TYPE_AFFINE_TRANSFORM, FirtreeAffineTransformClass))
 #define FIRTREE_IS_AFFINE_TRANSFORM(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), FIRTREE_TYPE_AFFINE_TRANSFORM))
 #define FIRTREE_IS_AFFINE_TRANSFORM_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), FIRTREE_TYPE_AFFINE_TRANSFORM))
-#define FIRTREE_AFFINE_TRANSFORM_GET_CLASS(obj)	(G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_AFFINE_TRANSFORM, FirtreeAffineTransformClass))
+#define FIRTREE_AFFINE_TRANSFORM_GET_CLASS(obj)		(G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_AFFINE_TRANSFORM, FirtreeAffineTransformClass))
 
-typedef struct _FirtreeAffineTransform FirtreeAffineTransform;
-typedef struct _FirtreeAffineTransformClass FirtreeAffineTransformClass;
+typedef struct _FirtreeAffineTransform 			FirtreeAffineTransform;
+typedef struct _FirtreeAffineTransformClass 		FirtreeAffineTransformClass;
 
 struct _FirtreeAffineTransform
 {
@@ -136,5 +136,5 @@ G_END_DECLS
 
 #endif		/* __FIRTREE_AFFINE_TRANSFORM_H__ */
 
-/* vim:sw=8:ts=8:tw=78:noet:cindent
+/* vim:sw=8:ts=8:noet:cindent
  */

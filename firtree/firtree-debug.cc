@@ -30,49 +30,79 @@
 
 #include <sstream>
 
-GString*
-_firtree_debug_dump_module(llvm::Module* m)
+/**
+ * SECTION:firtree-debug
+ * @short_description: Debugging utility functions.
+ * @include: firtree/firtree-debug.h
+ *
+ * These are a selection of functions which are useful for debugging the
+ * Firtree library.
+ */
+
+GString *_firtree_debug_dump_module(llvm::Module * m)
 {
-    std::ostringstream out;
+	std::ostringstream out;
 
-    m->print(out, NULL);
+	m->print(out, NULL);
 
-    /* This is non-optimal, invlving a copy as it does but
-     * production code shouldn't be using this function anyway. */
-    return g_string_new(out.str().c_str());
+	/* This is non-optimal, invlving a copy as it does but
+	 * production code shouldn't be using this function anyway. */
+	return g_string_new(out.str().c_str());
 }
 
-GString*
-firtree_debug_dump_kernel_function(FirtreeKernel* kernel)
+/**
+ * firtree_debug_dump_kernel_function:
+ * @kernel: A FirtreeKernel.
+ *
+ * Dump the compiled LLVM associated with @kernel into a string and
+ * return it. The string must be released via g_string_free() after use.
+ *
+ * If the kernel is invalid, or there is no LLVM function, this returns
+ * NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString *firtree_debug_dump_kernel_function(FirtreeKernel * kernel)
 {
-    if(!FIRTREE_IS_KERNEL(kernel)) {
-        return NULL;
-    }
+	if (!FIRTREE_IS_KERNEL(kernel)) {
+		return NULL;
+	}
 
-    llvm::Function* f = firtree_kernel_get_function(kernel);
-    if(!f) {
-        return NULL;
-    }
+	llvm::Function * f = firtree_kernel_get_function(kernel);
+	if (!f) {
+		return NULL;
+	}
 
-    llvm::Module* m = f->getParent();
-    return _firtree_debug_dump_module(m);
+	llvm::Module * m = f->getParent();
+	return _firtree_debug_dump_module(m);
 }
 
-GString*
-firtree_debug_dump_sampler_function(FirtreeSampler* sampler)
+/**
+ * firtree_debug_dump_sampler_function:
+ * @sampler: A FirtreeKernel.
+ *
+ * Dump the compiled LLVM associated with @sampler into a string and
+ * return it. The string must be released via g_string_free() after use.
+ *
+ * If the sampler is invalid, or there is no LLVM function, this returns
+ * NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString *firtree_debug_dump_sampler_function(FirtreeSampler * sampler)
 {
-    if(!FIRTREE_IS_SAMPLER(sampler)) {
-        return NULL;
-    }
+	if (!FIRTREE_IS_SAMPLER(sampler)) {
+		return NULL;
+	}
 
-    llvm::Function* f = firtree_sampler_get_sample_function(sampler);
-    if(!f) {
-        return NULL;
-    }
+	llvm::Function * f = firtree_sampler_get_sample_function(sampler);
+	if (!f) {
+		return NULL;
+	}
 
-    llvm::Module* m = f->getParent();
-    return _firtree_debug_dump_module(m);
+	llvm::Module * m = f->getParent();
+	return _firtree_debug_dump_module(m);
 }
 
-/* vim:sw=4:ts=4:et:cindent
+/* vim:sw=8:ts=8:tw=78:noet:cindent
  */

@@ -17,176 +17,73 @@
  * Franklin Street, Fifth Floor, Boston, MA    02110-1301, USA
  */
 
-#ifndef _FIRTREE_SAMPLER
-#define _FIRTREE_SAMPLER
+#ifndef __FIRTREE_SAMPLER_H__
+#define __FIRTREE_SAMPLER_H__
 
 #include <glib-object.h>
 
-#include "firtree-affine-transform.h"
-#include "firtree-vector.h"
-
-/**
- * SECTION:firtree-sampler
- * @short_description: Encapsulate the various image sources Firtree can use.
- * @include: firtree/firtree-sampler.h
- *
- * A FirtreeSampler is the object assigned to sampler arguments on Firtree
- * kernels to specify image sources and a pixel pipeline.
- *
- * There are a number of sub-classes of FirtreeSampler who know how to sample from
- * image buffers, textures, etc.
- *
- * A sampler has associated a set of extents which define the rectangle outside of
- * which the sampler is guaranteed to return a transparent pixel. The extents are
- * defined in *sampler co-ordinates*.
- *
- * The sampler co-ordinate is the result of applying the sampler transform to a 
- * world co-ordinate.
- *
- * A sampler should emit a signal when the extents change and when the transform 
- * changes.
- *
- * In addition to the signals described above, a sampler will emit a ::module-changed
- * signal when the internal LLVM function which describes it has changed. It will
- * emit a ::contents-changed signal when the contents of the sampler have changed and
- * should be re-rendered by interested parties.
- */
+#include <firtree/firtree-affine-transform.h>
+#include <firtree/firtree-vector.h>
 
 G_BEGIN_DECLS
 
-#define FIRTREE_TYPE_SAMPLER firtree_sampler_get_type()
+#define FIRTREE_TYPE_SAMPLER 		firtree_sampler_get_type()
+#define FIRTREE_SAMPLER(obj) 		(G_TYPE_CHECK_INSTANCE_CAST ((obj), FIRTREE_TYPE_SAMPLER, FirtreeSampler))
+#define FIRTREE_SAMPLER_CLASS(klass) 	(G_TYPE_CHECK_CLASS_CAST ((klass), FIRTREE_TYPE_SAMPLER, FirtreeSamplerClass))
+#define FIRTREE_IS_SAMPLER(obj) 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), FIRTREE_TYPE_SAMPLER))
+#define FIRTREE_IS_SAMPLER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), FIRTREE_TYPE_SAMPLER))
+#define FIRTREE_SAMPLER_GET_CLASS(obj) 	(G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_SAMPLER, FirtreeSamplerClass))
 
-#define FIRTREE_SAMPLER(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST ((obj), FIRTREE_TYPE_SAMPLER, FirtreeSampler))
+typedef struct 	_FirtreeSampler 		FirtreeSampler;
+typedef struct 	_FirtreeSamplerClass 		FirtreeSamplerClass;
+typedef struct 	_FirtreeSamplerPrivate 		FirtreeSamplerPrivate;
+typedef struct 	_FirtreeSamplerIntlVTable 	FirtreeSamplerIntlVTable;
 
-#define FIRTREE_SAMPLER_CLASS(klass) \
-    (G_TYPE_CHECK_CLASS_CAST ((klass), FIRTREE_TYPE_SAMPLER, FirtreeSamplerClass))
+struct _FirtreeSampler
+{
+	GObject 	parent;
+};
 
-#define FIRTREE_IS_SAMPLER(obj) \
-    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FIRTREE_TYPE_SAMPLER))
+struct _FirtreeSamplerClass 
+{
+	GObjectClass 	parent_class;
 
-#define FIRTREE_IS_SAMPLER_CLASS(klass) \
-    (G_TYPE_CHECK_CLASS_TYPE ((klass), FIRTREE_TYPE_SAMPLER))
+	void 		(*contents_changed) 	(FirtreeSampler *sampler);
+	void 		(*module_changed)	(FirtreeSampler *sampler);
+	void 		(*extents_changed) 	(FirtreeSampler *sampler);
+	void 		(*transform_changed) 	(FirtreeSampler *sampler);
 
-#define FIRTREE_SAMPLER_GET_CLASS(obj) \
-    (G_TYPE_INSTANCE_GET_CLASS ((obj), FIRTREE_TYPE_SAMPLER, FirtreeSamplerClass))
+	/* Publically overridable virtual methods. */
 
-/**
- * FirtreeSampler
- * @parent: The GObject parent of FirtreeSampler.
- *
- * A FirtreeSampler is the object assigned to sampler arguments on Firtree
- * kernels to specify image sources and a pixel pipeline.
- */
-typedef struct {
-    GObject parent;
-} FirtreeSampler;
+	FirtreeVec4	(*get_extent) 		(FirtreeSampler *sampler);
+	gboolean	(*lock) 		(FirtreeSampler *sampler);
+	void 		(*unlock) 		(FirtreeSampler *sampler);
 
-/**
- * FirtreeSamplerIntlVTable:
- *
- * Internal structure holding virtual function pointers for the 
- * internal API.
- */
-typedef struct _FirtreeSamplerIntlVTable FirtreeSamplerIntlVTable;
+	/* internal table of virtual methods. These are not publically
+	 * overridable. */
+	FirtreeSamplerIntlVTable *intl_vtable;
+};
 
-typedef struct {
-    GObjectClass                parent_class;
+GType 		 firtree_sampler_get_type		(void);
 
-    void (* contents_changed) (FirtreeSampler *kernel);
-    void (* module_changed) (FirtreeSampler *kernel);
-    void (* extents_changed) (FirtreeSampler *kernel);
-    void (* transform_changed) (FirtreeSampler *kernel);
+FirtreeSampler 	*firtree_sampler_new			(void);
 
-    /* Publically overridable virtual methods. */
-    FirtreeVec4 (* get_extent) (FirtreeSampler* self);
-    gboolean (* lock) (FirtreeSampler* self);
-    void (* unlock) (FirtreeSampler* self);
+FirtreeVec4 	 firtree_sampler_get_extent		(FirtreeSampler *self);
 
-    /* internal table of virtual methods. These are not publically
-     * overridable. */
-    FirtreeSamplerIntlVTable*   intl_vtable; 
-} FirtreeSamplerClass;
+FirtreeAffineTransform *firtree_sampler_get_transform
+							(FirtreeSampler *self);
 
-GType firtree_sampler_get_type (void);
+void		 firtree_sampler_contents_changed	(FirtreeSampler *self);
 
-/**
- * firtree_sampler_new:
- *
- * Construct a NULL sampler.
- *
- * Returns: A newly instantiated FirtreeSampler.
- */
-FirtreeSampler*
-firtree_sampler_new (void);
+void		 firtree_sampler_module_changed		(FirtreeSampler *self);
 
-/**
- * firtree_sampler_get_extent:
- * @self: An instantiated FirtreeSampler object.
- *
- * Find the extent of the sampler as a (minx, miny, width, height)
- * 4-vector.
- *
- * Returns: A 4-vector with the sampler extent.
- */
-FirtreeVec4
-firtree_sampler_get_extent (FirtreeSampler* self);
+void		 firtree_sampler_extents_changed	(FirtreeSampler *self);
 
-/**
- * firtree_sampler_get_transform:
- * @self: An instantiated FirtreeSampler object.
- *
- * Retrieve the transform which should be use to map points from the
- * output space of the sampler to the sampler space. This ultimately
- * is what ends up being implemented by samplerTransform().
- *
- * Callers should release the returned transform via g_object_unref()
- * when finished with it.
- *
- * Returns: A referenced FirtreeAffineTransform object.
- */
-FirtreeAffineTransform*
-firtree_sampler_get_transform (FirtreeSampler* self);
-
-/**
- * firtree_sampler_contents_changed:
- * @self: A FirtreeSampler object.
- *
- * Emit the ::contents-changed signal.
- */
-void
-firtree_sampler_contents_changed (FirtreeSampler* self);
-
-/**
- * firtree_sampler_module_changed:
- * @self: A FirtreeSampler object.
- *
- * Emit the ::module-changed signal.
- */
-void
-firtree_sampler_module_changed (FirtreeSampler* self);
-
-/**
- * firtree_sampler_extents_changed:
- * @self: A FirtreeSampler object.
- *
- * Emit the ::extents-changed signal.
- */
-void
-firtree_sampler_extents_changed (FirtreeSampler* self);
-
-/**
- * firtree_sampler_transform_changed:
- * @self: A FirtreeSampler object.
- *
- * Emit the ::transform-changed signal.
- */
-void
-firtree_sampler_transform_changed (FirtreeSampler* self);
+void		 firtree_sampler_transform_changed	(FirtreeSampler *self);
 
 G_END_DECLS
 
-#endif /* _FIRTREE_SAMPLER */
+#endif				/* __FIRTREE_SAMPLER_H__ */
 
-/* vim:sw=4:ts=4:et:cindent
+/* vim:sw=8:ts=8:noet:cindent
  */

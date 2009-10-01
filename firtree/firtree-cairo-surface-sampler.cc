@@ -104,27 +104,6 @@ _firtree_cairo_surface_sampler_invalidate_llvm_cache(FirtreeCairoSurfaceSampler
 	firtree_sampler_contents_changed(FIRTREE_SAMPLER(self));
 }
 
-static void
-firtree_cairo_surface_sampler_get_property(GObject * object, guint property_id,
-					   GValue * value, GParamSpec * pspec)
-{
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-	}
-}
-
-static void
-firtree_cairo_surface_sampler_set_property(GObject * object, guint property_id,
-					   const GValue * value,
-					   GParamSpec * pspec)
-{
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-	}
-}
-
 static void firtree_cairo_surface_sampler_dispose(GObject * object)
 {
 	G_OBJECT_CLASS(firtree_cairo_surface_sampler_parent_class)->dispose
@@ -135,12 +114,6 @@ static void firtree_cairo_surface_sampler_dispose(GObject * object)
 
 	/* dispose of any LLVM modules we might have. */
 	_firtree_cairo_surface_sampler_invalidate_llvm_cache((FirtreeCairoSurfaceSampler *) object);
-}
-
-static void firtree_cairo_surface_sampler_finalize(GObject * object)
-{
-	G_OBJECT_CLASS(firtree_cairo_surface_sampler_parent_class)->finalize
-	    (object);
 }
 
 static FirtreeSamplerIntlVTable _firtree_cairo_surface_sampler_class_vtable;
@@ -154,10 +127,7 @@ firtree_cairo_surface_sampler_class_init(FirtreeCairoSurfaceSamplerClass *
 	g_type_class_add_private(klass,
 				 sizeof(FirtreeCairoSurfaceSamplerPrivate));
 
-	object_class->get_property = firtree_cairo_surface_sampler_get_property;
-	object_class->set_property = firtree_cairo_surface_sampler_set_property;
 	object_class->dispose = firtree_cairo_surface_sampler_dispose;
-	object_class->finalize = firtree_cairo_surface_sampler_finalize;
 
 	/* override the sampler virtual functions with our own */
 	FirtreeSamplerClass *sampler_class = FIRTREE_SAMPLER_CLASS(klass);

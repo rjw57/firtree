@@ -60,13 +60,17 @@ class NegateEmitter : ExpressionEmitter
 				FullType req_type = negate_value->GetType();
 				if ( req_type.IsVector() ) {
 					std::vector<Constant*> neg_ones;
-					for ( unsigned int i=0; i<req_type.GetArity(); ++i ) {
+					//for ( unsigned int i=0; i<req_type.GetArity(); ++i ) {
+					for ( unsigned int i=0; 
+							i<4; /* all vectors are represented by <floatx4> in LLVM */
+							++i ) 
+					{
 #if LLVM_AT_LEAST_2_3
 						neg_ones.push_back( ConstantFP::
-						                    get( Type::FloatTy, -1.0 ) );
+						                    get( Type::FLOAT_TY(context), -1.0 ) );
 #else
 						neg_ones.push_back( ConstantFP::
-						                    get( Type::FloatTy,
+						                    get( Type::FLOAT_TY(context),
 						                         APFloat( -1.f ) ) );
 #endif
 					}
@@ -76,20 +80,20 @@ class NegateEmitter : ExpressionEmitter
 						case Firtree::TySpecFloat:
 #if LLVM_AT_LEAST_2_3
 							negative_one = ConstantFP::
-							               get( Type::FloatTy, -1.0 );
+							               get( Type::FLOAT_TY(context), -1.0 );
 #else
 							negative_one = ConstantFP::
-							               get( Type::FloatTy,
+							               get( Type::FLOAT_TY(context),
 							                    APFloat( -1.f ) );
 #endif
 							break;
 						case Firtree::TySpecInt:
 							negative_one = ConstantInt::
-							               get( Type::Int32Ty, -1 );
+							               get( Type::INT32_TY(context), -1 );
 							break;
 						case Firtree::TySpecBool:
 							negative_one = ConstantInt::
-							               get( Type::Int1Ty, -1 );
+							               get( Type::INT1_TY(context), -1 );
 							break;
 						default:
 							FIRTREE_LLVM_ERROR( context, negate_value_expr,
@@ -109,7 +113,7 @@ class NegateEmitter : ExpressionEmitter
 				                           negate_value->GetLLVMValue(),
 				                           "tmp", context->BB );
 				return_value = ConstantExpressionValue::
-				               Create( context, new_val );
+				               Create( context, new_val, negate_value->GetType().Specifier );
 
 				FIRTREE_SAFE_RELEASE( negate_value );
 			} catch ( CompileErrorException e ) {

@@ -18,12 +18,12 @@ class ConstantExpressionValue : public VoidExpressionValue
 {
 	protected:
 		ConstantExpressionValue( LLVMContext* ctx, llvm::Value* val,
-				bool is_static );
+				Firtree::KernelTypeSpecifier ty_spec, bool is_static );
 		virtual ~ConstantExpressionValue();
 
 	public:
 		static ExpressionValue* Create( LLVMContext* ctx, llvm::Value* val,
-				bool is_static = false);
+				KernelTypeSpecifier ty_spec, bool is_static = false);
 
 		virtual llvm::Value*	GetLLVMValue() const;
 
@@ -31,6 +31,7 @@ class ConstantExpressionValue : public VoidExpressionValue
 
 	private:
 		llvm::Value*			m_WrappedValue;
+		KernelTypeSpecifier		m_TypeSpecifier;
 		bool					m_IsStatic;
 };
 

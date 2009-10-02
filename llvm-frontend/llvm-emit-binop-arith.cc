@@ -109,7 +109,7 @@ class BinaryOpArithEmitter : ExpressionEmitter
 				                          right_val->GetLLVMValue(),
 				                          "tmp", context->BB );
 				return_val =  ConstantExpressionValue::
-				              Create( context, result_val );
+				              Create( context, result_val, left_val->GetType().Specifier );
 
 				FIRTREE_SAFE_RELEASE( left_val );
 				FIRTREE_SAFE_RELEASE( right_val );

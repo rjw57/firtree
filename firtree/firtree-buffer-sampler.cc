@@ -28,6 +28,9 @@
 
 #include <common/uuid.h>
 
+/* For the LLVM version macros */
+#include <firtree/firtree.h>
+
 #include "internal/firtree-engine-intl.hh"
 #include "internal/firtree-sampler-intl.hh"
 #include "firtree-buffer-sampler.h"
@@ -375,7 +378,11 @@ _firtree_buffer_sampler_create_sample_function(FirtreeBufferSampler * self)
 
 	_firtree_buffer_sampler_invalidate_llvm_cache(self);
 
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::Module * m = new llvm::Module("buffer", llvm::getGlobalContext());
+#else
 	llvm::Module * m = new llvm::Module("buffer");
+#endif
 
 	/* declare the sample_image_buffer() function which will be implemented
 	 * by the engine. */
@@ -389,30 +396,35 @@ _firtree_buffer_sampler_create_sample_function(FirtreeBufferSampler * self)
 	    firtree_engine_create_sample_function_prototype(m);
 	g_assert(sample_func);
 
-	llvm::Value * llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+	llvm::Value * llvm_width = llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 							  (uint64_t) width,
 							  false);
 	llvm::Value * llvm_height =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty, (uint64_t) height,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY, (uint64_t) height,
 				   false);
 	llvm::Value * llvm_stride =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty, (uint64_t) stride,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY, (uint64_t) stride,
 				   false);
 	llvm::Value * llvm_format =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 				   (uint64_t) firtree_format, false);
 
 	/* This looks dirty but is apparently valid.
 	 *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
 	llvm::Constant * llvm_data_int =
-	    llvm::ConstantInt::get(llvm::Type::Int64Ty, (uint64_t) data, false);
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT64_TY, (uint64_t) data, false);
 	llvm::Value * llvm_data =
 	    llvm::ConstantExpr::getIntToPtr(llvm_data_int,
 					    llvm::PointerType::
-					    getUnqual(llvm::Type::Int8Ty));
+					    getUnqual(FIRTREE_LLVM_INT8_TY));
 
 	/* Implement the sample function. */
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::BasicBlock * bb = llvm::BasicBlock::Create(
+			llvm::getGlobalContext(), "entry", sample_func);
+#else
 	llvm::BasicBlock * bb = llvm::BasicBlock::Create("entry", sample_func);
+#endif
 
 	std::vector < llvm::Value * >func_args;
 	func_args.push_back(llvm_data);
@@ -427,7 +439,11 @@ _firtree_buffer_sampler_create_sample_function(FirtreeBufferSampler * self)
 						       func_args.end(), "rv",
 						       bb);
 
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::ReturnInst::Create(llvm::getGlobalContext(), ret_val, bb);
+#else
 	llvm::ReturnInst::Create(ret_val, bb);
+#endif
 
 	p->cached_function = sample_func;
 	return sample_func;

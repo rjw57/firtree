@@ -1,5 +1,5 @@
 /* This is not source code per-se, it is more lke documentation.
- * This a C-version of the buffer rendering function which is 
+ * This a C-version of the buffer rendering function which is
  * acually compiled via llvm-gcc. */
 
 #include <stdint.h>
@@ -7,7 +7,8 @@
 #include <firtree/firtree-lock-free-set.h>
 
 /* Vector types */
-typedef float vec2 __attribute__ ((vector_size(8)));
+//typedef float vec2 __attribute__ ((vector_size(8)));
+typedef float vec2 __attribute__ ((vector_size(16)));
 typedef float vec4 __attribute__ ((vector_size(16)));
 
 /* Extract an element from a vector. */
@@ -192,10 +193,10 @@ void pack_pixel(vec4 pixel, void* p, FirtreeBufferFormat format)
         case FIRTREE_FORMAT_BGR24:
             b1=b; b2=g; b3=r;
             break;
-        case FIRTREE_FORMAT_RGBX32: 
+        case FIRTREE_FORMAT_RGBX32:
             b1=r; b2=g; b3=b;
             break;
-        case FIRTREE_FORMAT_BGRX32: 
+        case FIRTREE_FORMAT_BGRX32:
             b1=b; b2=g; b3=r;
             break;
     }
@@ -253,7 +254,7 @@ vec4 sample_##format(uint8_t* buffer,                                   \
     vec4 pixel_vec = { 0, 0, 0, 0 };                                    \
     pixel_vec = unpack_pixel(pixel, format);                            \
     return pixel_vec;                                                   \
-}  
+}
 
 SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ARGB32)
 SAMPLE_FUNCTION(4, FIRTREE_FORMAT_ARGB32_PREMULTIPLIED)
@@ -278,18 +279,18 @@ SAMPLE_FUNCTION(1, FIRTREE_FORMAT_L8)
 SAMPLE_FUNCTION(16, FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED)
 
 /* Image buffer specialist sampler functions */
-G_INLINE_FUNC                                                           
-vec4 sample_FIRTREE_FORMAT_I420_FOURCC(uint8_t* buffer,                                   
-        unsigned int width, unsigned int height, unsigned int stride,   
-        vec2 location)                                                  
-{                                                                       
-    vec4 rv = { 0, 0, 0, 0 };                                           
-    int x = (int)(ELEMENT(location, 0));                                
-    int y = (int)(ELEMENT(location, 1));                                
-    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */             
-    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */             
-    if((x < 0) || (x >= width)) { return rv; }                          
-    if((y < 0) || (y >= height)) { return rv; }               
+G_INLINE_FUNC
+vec4 sample_FIRTREE_FORMAT_I420_FOURCC(uint8_t* buffer,
+        unsigned int width, unsigned int height, unsigned int stride,
+        vec2 location)
+{
+    vec4 rv = { 0, 0, 0, 0 };
+    int x = (int)(ELEMENT(location, 0));
+    int y = (int)(ELEMENT(location, 1));
+    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */
+    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */
+    if((x < 0) || (x >= width)) { return rv; }
+    if((y < 0) || (y >= height)) { return rv; }
 
     uint8_t* p_y_pixel = buffer + x + (y * stride);
     uint8_t* p_u_pixel = buffer + (height*stride) + (x>>1) + (y>>1)*(stride>>1);
@@ -306,23 +307,23 @@ vec4 sample_FIRTREE_FORMAT_I420_FOURCC(uint8_t* buffer,
     if(r>255) { r = 255; } if(r<0) { r = 0; }
     if(g>255) { g = 255; } if(g<0) { g = 0; }
     if(b>255) { b = 255; } if(b<0) { b = 0; }
-    
-    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };                                    
-    return pixel_vec;                                                   
-}  
 
-G_INLINE_FUNC                                                           
-vec4 sample_FIRTREE_FORMAT_YV12_FOURCC(uint8_t* buffer,                                   
-        unsigned int width, unsigned int height, unsigned int stride,   
-        vec2 location)                                                  
-{                                                                       
-    vec4 rv = { 0, 0, 0, 0 };                                           
-    int x = (int)(ELEMENT(location, 0));                                
-    int y = (int)(ELEMENT(location, 1));                                
-    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */             
-    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */             
-    if((x < 0) || (x >= width)) { return rv; }                          
-    if((y < 0) || (y >= height)) { return rv; }               
+    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };
+    return pixel_vec;
+}
+
+G_INLINE_FUNC
+vec4 sample_FIRTREE_FORMAT_YV12_FOURCC(uint8_t* buffer,
+        unsigned int width, unsigned int height, unsigned int stride,
+        vec2 location)
+{
+    vec4 rv = { 0, 0, 0, 0 };
+    int x = (int)(ELEMENT(location, 0));
+    int y = (int)(ELEMENT(location, 1));
+    if(ELEMENT(location, 0) < 0.f) { x--; } /* implement */
+    if(ELEMENT(location, 1) < 0.f) { y--; } /* floor()   */
+    if((x < 0) || (x >= width)) { return rv; }
+    if((y < 0) || (y >= height)) { return rv; }
 
     uint8_t* p_y_pixel = buffer + x + (y * stride);
     uint8_t* p_v_pixel = buffer + (height*stride) + (x>>1) + (y>>1)*(stride>>1);
@@ -339,71 +340,71 @@ vec4 sample_FIRTREE_FORMAT_YV12_FOURCC(uint8_t* buffer,
     if(r>255) { r = 255; } if(r<0) { r = 0; }
     if(g>255) { g = 255; } if(g<0) { g = 0; }
     if(b>255) { b = 255; } if(b<0) { b = 0; }
-    
-    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };                                    
-    return pixel_vec;                                                   
-}  
+
+    vec4 pixel_vec = { (float)r*(1.f/255.f), (float)g*(1.f/255.f), (float)b*(1.f/255.f), 1.f };
+    return pixel_vec;
+}
 
 vec4 sample_image_buffer_nn(uint8_t* buffer,
-        FirtreeBufferFormat format, 
+        FirtreeBufferFormat format,
         unsigned int width, unsigned int height, unsigned int stride,
         vec2 location)
 {
     vec4 default_rv = { 1, 0, 0, 1 };
     switch(format) {
         case FIRTREE_FORMAT_ARGB32:
-            return sample_FIRTREE_FORMAT_ARGB32(buffer, 
+            return sample_FIRTREE_FORMAT_ARGB32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_ARGB32_PREMULTIPLIED:
-            return sample_FIRTREE_FORMAT_ARGB32_PREMULTIPLIED(buffer, 
+            return sample_FIRTREE_FORMAT_ARGB32_PREMULTIPLIED(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_XRGB32:
-            return sample_FIRTREE_FORMAT_XRGB32(buffer, 
+            return sample_FIRTREE_FORMAT_XRGB32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGBA32:
-            return sample_FIRTREE_FORMAT_RGBA32(buffer, 
+            return sample_FIRTREE_FORMAT_RGBA32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGBA32_PREMULTIPLIED:
-            return sample_FIRTREE_FORMAT_RGBA32_PREMULTIPLIED(buffer, 
+            return sample_FIRTREE_FORMAT_RGBA32_PREMULTIPLIED(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_ABGR32:
-            return sample_FIRTREE_FORMAT_ABGR32(buffer, 
+            return sample_FIRTREE_FORMAT_ABGR32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_ABGR32_PREMULTIPLIED:
-            return sample_FIRTREE_FORMAT_ABGR32_PREMULTIPLIED(buffer, 
+            return sample_FIRTREE_FORMAT_ABGR32_PREMULTIPLIED(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_XBGR32:
-            return sample_FIRTREE_FORMAT_XBGR32(buffer, 
+            return sample_FIRTREE_FORMAT_XBGR32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGRA32:
-            return sample_FIRTREE_FORMAT_BGRA32(buffer, 
+            return sample_FIRTREE_FORMAT_BGRA32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGRA32_PREMULTIPLIED:
-            return sample_FIRTREE_FORMAT_BGRA32_PREMULTIPLIED(buffer, 
+            return sample_FIRTREE_FORMAT_BGRA32_PREMULTIPLIED(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGB24:
-            return sample_FIRTREE_FORMAT_RGB24(buffer, 
+            return sample_FIRTREE_FORMAT_RGB24(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGR24:
-            return sample_FIRTREE_FORMAT_BGR24(buffer, 
+            return sample_FIRTREE_FORMAT_BGR24(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGBX32:
-            return sample_FIRTREE_FORMAT_RGBX32(buffer, 
+            return sample_FIRTREE_FORMAT_RGBX32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_BGRX32:
-            return sample_FIRTREE_FORMAT_BGRX32(buffer, 
+            return sample_FIRTREE_FORMAT_BGRX32(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_L8:
-            return sample_FIRTREE_FORMAT_L8(buffer, 
+            return sample_FIRTREE_FORMAT_L8(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_I420_FOURCC:
-            return sample_FIRTREE_FORMAT_I420_FOURCC(buffer, 
+            return sample_FIRTREE_FORMAT_I420_FOURCC(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_YV12_FOURCC:
-            return sample_FIRTREE_FORMAT_YV12_FOURCC(buffer, 
+            return sample_FIRTREE_FORMAT_YV12_FOURCC(buffer,
                     width, height, stride, location);
         case FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED:
-            return sample_FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED(buffer, 
+            return sample_FIRTREE_FORMAT_RGBA_F32_PREMULTIPLIED(buffer,
                     width, height, stride, location);
         default:
             /* do nothing */
@@ -413,13 +414,13 @@ vec4 sample_image_buffer_nn(uint8_t* buffer,
 }
 
 vec4 sample_image_buffer_lerp(uint8_t* buffer,
-        FirtreeBufferFormat format, 
+        FirtreeBufferFormat format,
         unsigned int width, unsigned int height, unsigned int stride,
         vec2 location)
 {
     vec2 offset = {-0.5f, -0.5f};
     location += offset;
-    int x = (int)(ELEMENT(location, 0)); /* default rounding is */ 
+    int x = (int)(ELEMENT(location, 0)); /* default rounding is */
     int y = (int)(ELEMENT(location, 1)); /* towards zero        */
 
     /* Correct rounding to rounding down. */
@@ -475,7 +476,7 @@ void render_##format(unsigned char* buffer,                             \
         for(col=0; col<width; ++col, pixel+=pix_size, x+=dx) {          \
             vec4 in_vec = unpack_pixel(pixel, format);                  \
             vec2 dest_coord = {x, y};                                   \
-            vec4 sample_vec = sampler_render_function(dest_coord);               \
+            vec4 sample_vec = sampler_render_function(dest_coord);      \
             float one_minus_alpha = 1.f - ELEMENT(sample_vec, 3);       \
             vec4 one_minus_alpha_vec = {                                \
                 one_minus_alpha, one_minus_alpha,                       \
@@ -516,24 +517,24 @@ extern void emit_v4(vec4 val) {
     firtree_lock_free_set_add_element(g_reduce_output, &val);
 }
 
-void reduce(FirtreeLockFreeSet* output, unsigned int width, 
+void reduce(FirtreeLockFreeSet* output, unsigned int width,
         unsigned int height, float* extents)
-{                                                                       
-    unsigned int row, col;                                              
-    float start_x = extents[0];                                         
-    float y = extents[1];                                               
-    float dx = extents[2] / (float)width;                               
-    float dy = extents[3] / (float)height;                              
-    start_x += 0.5f*dx; y += 0.5f*dy;                                   
+{
+    unsigned int row, col;
+    float start_x = extents[0];
+    float y = extents[1];
+    float dx = extents[2] / (float)width;
+    float dy = extents[3] / (float)height;
+    start_x += 0.5f*dx; y += 0.5f*dy;
     g_reduce_output = output;
-    for(row=0; row<height; ++row, y+=dy) {                              
-        float x = start_x;                                              
-        for(col=0; col<width; ++col, x+=dx) {          
-            vec2 dest_coord = {x, y};                                   
+    for(row=0; row<height; ++row, y+=dy) {
+        float x = start_x;
+        for(col=0; col<width; ++col, x+=dx) {
+            vec2 dest_coord = {x, y};
             sampler_reduce_function(dest_coord);
-        }                                                               
-    }                                                                   
-}                                                                       
+        }
+    }
+}
 
 /* vim:sw=4:ts=4:cindent:et
  */

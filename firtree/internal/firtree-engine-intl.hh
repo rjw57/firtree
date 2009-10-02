@@ -20,12 +20,41 @@
 #ifndef _FIRTREE_ENGINE_INTL
 #define _FIRTREE_ENGINE_INTL
 
+/* For the LLVM version macros */
+#include <firtree/firtree.h>
+
 #include <glib-object.h>
 
 #include <llvm/Module.h>
 #include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/LinkAllPasses.h>
+
+/*
+ * Ultimately, I'm probably onto a losing strategy here of trying to impedence
+ * match the LLVM cross-version API breakages using pre-processor magic. Until the 
+ * API properly stabilises though, this is the only way to make things work over
+ * $LATEST and $LATEST - 1.
+ *
+ * I appologise to everyone trying to follow this :(.
+ */
+#if FIRTREE_LLVM_AT_LEAST_2_6
+# define FIRTREE_LLVM_INT1_TY   (llvm::Type::getInt1Ty(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_INT8_TY   (llvm::Type::getInt8Ty(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_INT32_TY  (llvm::Type::getInt32Ty(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_INT64_TY  (llvm::Type::getInt64Ty(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_FLOAT_TY  (llvm::Type::getFloatTy(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_VOID_TY   (llvm::Type::getVoidTy(llvm::getGlobalContext()))
+# define FIRTREE_LLVM_CONTEXT   llvm::getGlobalContext(),
+#else
+# define FIRTREE_LLVM_INT1_TY   (llvm::Type::Int1Ty)
+# define FIRTREE_LLVM_INT8_TY   (llvm::Type::Int8Ty)
+# define FIRTREE_LLVM_INT32_TY  (llvm::Type::Int32Ty)
+# define FIRTREE_LLVM_INT64_TY  (llvm::Type::Int64Ty)
+# define FIRTREE_LLVM_FLOAT_TY  (llvm::Type::FloatTy)
+# define FIRTREE_LLVM_VOID_TY   (llvm::Type::VoidTy)
+# define FIRTREE_LLVM_CONTEXT   
+#endif
 
 namespace llvm { class PassManager; class Pass; }
 

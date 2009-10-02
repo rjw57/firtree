@@ -9,6 +9,32 @@
 
 #include "common/common.h"
 
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 2))
+#  define LLVM_AT_LEAST_2_2 1
+#else
+#  define LLVM_AT_LEAST_2_2 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 3))
+#  define LLVM_AT_LEAST_2_3 1
+#else
+#  define LLVM_AT_LEAST_2_3 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 4))
+#  define LLVM_AT_LEAST_2_4 1
+#else
+#  define LLVM_AT_LEAST_2_4 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 5))
+#  define LLVM_AT_LEAST_2_5 1
+#else
+#  define LLVM_AT_LEAST_2_5 0
+#endif
+#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 6))
+#  define LLVM_AT_LEAST_2_6 1
+#else
+#  define LLVM_AT_LEAST_2_6 0
+#endif
+
 namespace Firtree
 {
 
@@ -165,6 +191,14 @@ struct FunctionPrototype {
 //===========================================================================
 /// \brief A structure defining the current LLVM context.
 struct LLVMContext {
+#if LLVM_AT_LEAST_2_6
+	///					  Starting with LLVM 2.6, we need to keep a llvm
+	///					  'context' object around. This is initialised
+	///					  to the 'global' context when we construct this
+	/// 				  struct.
+	llvm::LLVMContext&	  Context;
+#endif
+
 	///                   The current LLVM module we're inserting functions
 	///                   into.
 	llvm::Module*         Module;
@@ -201,25 +235,18 @@ struct LLVMContext {
 	/// functions in Firtree (although we keep quiet about it!).
 	std::multimap<symbol, FunctionPrototype>  FuncTable;
 
+#if LLVM_AT_LEAST_2_6
+	/// Constructor defining default values.
+	LLVMContext() : 
+		Context( llvm::getGlobalContext() ),
+		Module( NULL ), Function( NULL ), 
+		BB( NULL )
+	{ }
+#else
 	/// Constructor defining default values.
 	LLVMContext() : Module( NULL ), Function( NULL ), BB( NULL ) { }
+#endif
 };
-
-#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 2))
-#  define LLVM_AT_LEAST_2_2 1
-#else
-#  define LLVM_AT_LEAST_2_2 0
-#endif
-#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 3))
-#  define LLVM_AT_LEAST_2_3 1
-#else
-#  define LLVM_AT_LEAST_2_3 0
-#endif
-#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER >= 4))
-#  define LLVM_AT_LEAST_2_4 1
-#else
-#  define LLVM_AT_LEAST_2_4 0
-#endif
 
 //===========================================================================
 /// \brief A macro to create a LLVM object.
@@ -229,20 +256,46 @@ struct LLVMContext {
 /// the appropriate mechanism based upon the LLVM_MAJOR_VER and
 /// LLVM_MINOR_VER macros.
 ///
+/// In LLVM 2.6 a new object, the LLVMContext, was added. We stuff that into
+/// our own LLVMContext structure above.
+///
 /// FIXME: The way this macro is constructed *requires* that the constructor
 /// takes arguments. Hell, it also requires variadic macro support but then
 /// I'm just that sort of crazy mo-fo.
-#if (LLVM_MAJOR_VER > 2) || ((LLVM_MAJOR_VER == 2) && (LLVM_MINOR_VER > 2))
-# define LLVM_CREATE(type, ...) ( type::Create(__VA_ARGS__) )
+#if LLVM_AT_LEAST_2_3
+# if LLVM_AT_LEAST_2_6
+#  warning Using LLVM 2.6 object creation idiom.
+#  define LLVM_CREATE(context, type, ...) ( type::Create((context)->Context, __VA_ARGS__) )
+#  define LLVM_CREATE_NO_CONTEXT(type, ...) ( type::Create(__VA_ARGS__) )
+# else
+#  warning Using LLVM 2.{3,4,5} object creation idiom.
+#  define LLVM_CREATE(context, type, ...) ( type::Create(__VA_ARGS__) )
+#  define LLVM_CREATE_NO_CONTEXT(context, type, ...) ( type::Create(__VA_ARGS__) )
+# endif
 #else
-# define LLVM_CREATE(type, ...) ( new type(__VA_ARGS__) )
+#  warning Using LLVM 2.2 object creation idiom.
+# define LLVM_CREATE(context, type, ...) ( new type(__VA_ARGS__) )
+# define LLVM_CREATE_NO_CONTEXT(context, type, ...) ( new type(__VA_ARGS__) )
 #endif
 
 /// Use new Foo() idiom for versions of LLVM <= 2.3
 #if LLVM_AT_LEAST_2_4
-# define LLVM_NEW_2_3(type, ...) ( type::Create(__VA_ARGS__) )
+# define LLVM_NEW_2_3(context, type, ...) ( type::Create(__VA_ARGS__) )
 #else
-# define LLVM_NEW_2_3(type, ...) ( new type(__VA_ARGS__) )
+# define LLVM_NEW_2_3(context, type, ...) ( new type(__VA_ARGS__) )
+#endif
+
+// Horrible hack to work around the new static type API in LLVM 2.6
+#if LLVM_AT_LEAST_2_6
+# define FLOAT_TY(context) getFloatTy(context->Context)
+# define INT32_TY(context) getInt32Ty(context->Context)
+# define INT1_TY(context) getInt1Ty(context->Context)
+# define VOID_TY(context) getVoidTy(context->Context)
+#else
+# define FLOAT_TY(context) FloatTy
+# define INT32_TY(context) Int32Ty
+# define INT1_TY(context) Int1Ty
+# define VOID_TY(context) VoidTy
 #endif
 
 } // namespace Firtree

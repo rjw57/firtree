@@ -4,9 +4,7 @@
 #
 # See LICENSE file for distribution rights.
 
-set(LLVM_CONFIG_COMPONENTS core 
-    codegen linker bitreader
-    jit native)
+set(LLVM_CONFIG_COMPONENTS all) 
 
 find_package(LLVM)
 find_package(PythonInterp)
@@ -22,7 +20,19 @@ include_directories(${LLVM_INCLUDE_DIRS})
 if(NOT APPLE)
     find_package(PkgConfig)
     pkg_check_modules(CAIRO cairo)
-    pkg_check_modules(CLUTTER clutter-0.8)
+    pkg_check_modules(CLUTTER clutter-1.0)
+    if(NOT CLUTTER_FOUND)
+        pkg_check_modules(CLUTTER clutter-0.8)
+        if(CLUTTER_FOUND)
+            set(CLUTTER_VERSION "0.8")
+            set(CLUTTER_VERSION_MAJOR "0")
+            set(CLUTTER_VERSION_MINOR "8")
+        endif(CLUTTER_FOUND)
+    else(NOT CLUTTER_FOUND)
+        set(CLUTTER_VERSION "1.0")
+        set(CLUTTER_VERSION_MAJOR "1")
+        set(CLUTTER_VERSION_MINOR "0")
+    endif(NOT CLUTTER_FOUND)
     pkg_check_modules(GDK_PIXBUF gdk-pixbuf-2.0)
 endif(NOT APPLE)
 

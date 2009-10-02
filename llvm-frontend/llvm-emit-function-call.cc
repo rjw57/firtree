@@ -102,7 +102,8 @@ class FunctionCallEmitter : ExpressionEmitter
 							llvm::Value* first_arg = llvm::cast<llvm::Value>(
 									context->Function->arg_begin());
 							return ConstantExpressionValue::Create(context,
-									first_arg, proto.ReturnType.IsStatic());
+									first_arg, proto.ReturnType.Specifier,
+									proto.ReturnType.IsStatic());
 						}
 
 						// If this is a reduce/render only function, check the
@@ -145,7 +146,7 @@ class FunctionCallEmitter : ExpressionEmitter
 						// If we get this far then a match has been found.
 						bool is_void =
 							proto.ReturnType.Specifier == Firtree::TySpecVoid;
-						llvm::Value* func_call = LLVM_CREATE(CallInst,
+						llvm::Value* func_call = LLVM_CREATE_NO_CONTEXT(CallInst,
 								proto.LLVMFunction,
 								llvm_params.begin(), llvm_params.end(),
 								is_void ? "" : "tmp",
@@ -157,7 +158,7 @@ class FunctionCallEmitter : ExpressionEmitter
 						}
 
 						return ConstantExpressionValue::Create(context,
-								func_call, proto.ReturnType.IsStatic());
+								func_call, proto.ReturnType.Specifier, proto.ReturnType.IsStatic());
 					} catch (CompileErrorException e) {
 						while(func_params.size() != 0) {
 							FIRTREE_SAFE_RELEASE(func_params.back());

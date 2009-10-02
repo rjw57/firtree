@@ -774,7 +774,7 @@ firtree_kernel_implement_transform_function(FirtreeKernel * self,
 					    llvm::Function * transform_func)
 {
 	llvm::BasicBlock * bb =
-	    llvm::BasicBlock::Create("entry", transform_func);
+	    llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "entry", transform_func);
 
 	/* extract the input arguments. */
 	llvm::Function::const_arg_iterator argit = transform_func->arg_begin();
@@ -785,8 +785,8 @@ firtree_kernel_implement_transform_function(FirtreeKernel * self,
 	/* construct a basic block that 'implements' an identity transform
 	 * (the default). */
 	llvm::BasicBlock * id_bb =
-	    llvm::BasicBlock::Create("identity", transform_func);
-	llvm::ReturnInst::Create(const_cast < llvm::Value * >(input_vector),
+	    llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "identity", transform_func);
+	llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT const_cast < llvm::Value * >(input_vector),
 				 id_bb);
 
 	/* Now make a switch statement for each sampler argument. */
@@ -813,7 +813,7 @@ firtree_kernel_implement_transform_function(FirtreeKernel * self,
 			if (firtree_affine_transform_is_identity(transform)) {
 				sampler_switch->
 				    addCase(llvm::ConstantInt::
-					    get(llvm::Type::Int32Ty, arg_quark,
+					    get(FIRTREE_LLVM_INT32_TY, arg_quark,
 						false), id_bb);
 			} else {
 				g_error
@@ -831,7 +831,7 @@ firtree_kernel_implement_sample_function(FirtreeKernel * self,
 					 llvm::Function * sample_func,
 					 GData ** sampler_func_map)
 {
-	llvm::BasicBlock * bb = llvm::BasicBlock::Create("entry", sample_func);
+	llvm::BasicBlock * bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "entry", sample_func);
 
 	llvm::Function::arg_iterator args = sample_func->arg_begin();
 
@@ -844,11 +844,11 @@ firtree_kernel_implement_sample_function(FirtreeKernel * self,
 	}
 
 	/* default return value. */
-	llvm::BasicBlock * default_bb = llvm::BasicBlock::Create("default_id",
+	llvm::BasicBlock * default_bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "default_id",
 								 sample_func);
-	llvm::ReturnInst::Create(llvm::ConstantAggregateZero::
+	llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT llvm::ConstantAggregateZero::
 				 get(llvm::VectorType::
-				     get(llvm::Type::FloatTy, 4)), default_bb);
+				     get(FIRTREE_LLVM_FLOAT_TY, 4)), default_bb);
 
 	guint n_arguments = 0;
 	GQuark *arg_list = firtree_kernel_list_arguments(self, &n_arguments);
@@ -872,7 +872,7 @@ firtree_kernel_implement_sample_function(FirtreeKernel * self,
 			g_assert(sampler_f);
 
 			llvm::BasicBlock * sample_bb =
-			    llvm::BasicBlock::Create("id", sample_func);
+			    llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "id", sample_func);
 
 			llvm::Value * ret_val =
 			    llvm::CallInst::Create(sampler_f,
@@ -880,11 +880,11 @@ firtree_kernel_implement_sample_function(FirtreeKernel * self,
 						   remaining_args.end(), "rv",
 						   sample_bb);
 
-			llvm::ReturnInst::Create(ret_val, sample_bb);
+			llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT ret_val, sample_bb);
 
 			sampler_switch->
 			    addCase(llvm::ConstantInt::
-				    get(llvm::Type::Int32Ty, arg_quark, false),
+				    get(FIRTREE_LLVM_INT32_TY, arg_quark, false),
 				    sample_bb);
 		}
 	}
@@ -900,7 +900,11 @@ static void _firtree_kernel_aggressive_inline(llvm::Function * f)
 	/* Firstly internalise all the functions apart from our sampler
 	 * function. */
 	std::vector < const char *>export_list;
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	export_list.push_back(f->getName().str().c_str());
+#else
 	export_list.push_back(f->getName().c_str());
+#endif
 	PM.add(llvm::createInternalizePass(export_list));
 
 	/* Now inline functions. */
@@ -940,7 +944,12 @@ llvm::Function * firtree_kernel_create_overall_function(FirtreeKernel * self)
 	}
 
 	/* Link the kernel function into a new module. */
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::Linker * linker = new llvm::Linker("linked_kernel", "module",
+			llvm::getGlobalContext());
+#else
 	llvm::Linker * linker = new llvm::Linker("linked_kernel", "module");
+#endif
 	std::string err_str;
 	llvm::Module * new_mod = llvm::CloneModule(kernel_func->getParent());
 	if (linker->LinkInModule(new_mod, &err_str)) {
@@ -1048,7 +1057,7 @@ llvm::Function * firtree_kernel_create_overall_function(FirtreeKernel * self)
 
 	g_assert(f);
 
-	llvm::BasicBlock * bb = llvm::BasicBlock::Create("entry", f);
+	llvm::BasicBlock * bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "entry", f);
 
 	std::vector < llvm::Value * >arguments;
 
@@ -1077,7 +1086,7 @@ llvm::Function * firtree_kernel_create_overall_function(FirtreeKernel * self)
 			 * doesn't expand to a constant. */
 			if (arg_spec->type == FIRTREE_TYPE_SAMPLER) {
 				llvm::Value * arg_quark_val =
-				    llvm::ConstantInt::get(llvm::Type::Int32Ty,
+				    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 							   arg_quark, false);
 				arguments.push_back(arg_quark_val);
 			} else {
@@ -1095,10 +1104,10 @@ llvm::Function * firtree_kernel_create_overall_function(FirtreeKernel * self)
 
 	switch (firtree_kernel_get_target(self)) {
 	case FIRTREE_KERNEL_TARGET_RENDER:
-		llvm::ReturnInst::Create(function_call, bb);
+		llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT function_call, bb);
 		break;
 	case FIRTREE_KERNEL_TARGET_REDUCE:
-		llvm::ReturnInst::Create(NULL, bb);
+		llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT NULL, bb);
 		break;
 	default:
 		g_error("Unknown target");

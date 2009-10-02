@@ -46,12 +46,84 @@
 #define FIRTREE_HAVE_CLUTTER @FIRTREE_HAVE_CLUTTER@
 
 /**
+ * FIRTREE_CLUTTER_VERSION_MAJOR:
+ *
+ * If clutter support is compiled in, this is the major version number of
+ * the clutter library used.
+ */
+#define FIRTREE_CLUTTER_VERSION_MAJOR @CLUTTER_VERSION_MAJOR@
+
+/**
+ * FIRTREE_CLUTTER_VERSION_MINOR:
+ *
+ * If clutter support is compiled in, this is the minor version number of
+ * the clutter library used.
+ */
+#define FIRTREE_CLUTTER_VERSION_MINOR @CLUTTER_VERSION_MINOR@
+
+/**
+ * FIRTREE_CLUTTER_VERSION:
+ *
+ * If clutter support is compiled in, this is the version number of
+ * the clutter library used.
+ */
+#define FIRTREE_CLUTTER_VERSION @CLUTTER_VERSION@
+
+/**
  * FIRTREE_HAVE_GDK_PIXBUF:
  *
  * Defined to be 1 if gdk-pixbuf support is compiled into the library, defined
  * to be zero otherwise.
  */
 #define FIRTREE_HAVE_GDK_PIXBUF @FIRTREE_HAVE_GDK_PIXBUF@
+
+/**
+ * FIRTREE_LLVM_VERSION_MAJOR:
+ *
+ * The major version number of the version of LLVM used to compile Firtree.
+ */
+#define FIRTREE_LLVM_VERSION_MAJOR @LLVM_MAJOR@
+
+/**
+ * FIRTREE_LLVM_VERSION_MINOR:
+ *
+ * The minor version number of the version of LLVM used to compile Firtree.
+ */
+#define FIRTREE_LLVM_VERSION_MINOR @LLVM_MINOR@
+ 
+/**
+ * FIRTREE_LLVM_VERSION:
+ *
+ * The version number of the version of LLVM used to compile Firtree.
+ */
+#define FIRTREE_LLVM_VERSION @LLVM_MAJOR@.@LLVM_MINOR@
+
+/* Various convenience macros to test for specific LLVM versions. */
+#if (FIRTREE_LLVM_VERSION_MAJOR > 2) || ((FIRTREE_LLVM_VERSION_MAJOR == 2) && (FIRTREE_LLVM_VERSION_MINOR >= 2))
+#  define FIRTREE_LLVM_AT_LEAST_2_2 1
+#else
+#  define FIRTREE_LLVM_AT_LEAST_2_2 0
+#endif
+#if (FIRTREE_LLVM_VERSION_MAJOR > 2) || ((FIRTREE_LLVM_VERSION_MAJOR == 2) && (FIRTREE_LLVM_VERSION_MINOR >= 3))
+#  define FIRTREE_LLVM_AT_LEAST_2_3 1
+#else
+#  define FIRTREE_LLVM_AT_LEAST_2_3 0
+#endif
+#if (FIRTREE_LLVM_VERSION_MAJOR > 2) || ((FIRTREE_LLVM_VERSION_MAJOR == 2) && (FIRTREE_LLVM_VERSION_MINOR >= 4))
+#  define FIRTREE_LLVM_AT_LEAST_2_4 1
+#else
+#  define FIRTREE_LLVM_AT_LEAST_2_4 0
+#endif
+#if (FIRTREE_LLVM_VERSION_MAJOR > 2) || ((FIRTREE_LLVM_VERSION_MAJOR == 2) && (FIRTREE_LLVM_VERSION_MINOR >= 5))
+#  define FIRTREE_LLVM_AT_LEAST_2_5 1
+#else
+#  define FIRTREE_LLVM_AT_LEAST_2_5 0
+#endif
+#if (FIRTREE_LLVM_VERSION_MAJOR > 2) || ((FIRTREE_LLVM_VERSION_MAJOR == 2) && (FIRTREE_LLVM_VERSION_MINOR >= 6))
+#  define FIRTREE_LLVM_AT_LEAST_2_6 1
+#else
+#  define FIRTREE_LLVM_AT_LEAST_2_6 0
+#endif
 
 #include "firtree-affine-transform.h"
 #include "firtree-buffer-sampler.h"

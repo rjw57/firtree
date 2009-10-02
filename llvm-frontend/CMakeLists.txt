@@ -7,7 +7,7 @@
 # Build the parser
 add_subdirectory(styx-parser)
 
-set(LLVM_CONFIG_COMPONENTS ipo instrumentation)
+set(LLVM_CONFIG_COMPONENTS all) 
 
 # We need the styx libraries and LLVM
 find_package(Styx)

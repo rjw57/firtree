@@ -89,7 +89,7 @@ class BinaryOpAssignEmitter : ExpressionEmitter
 
 					//FIRTREE_SAFE_RELEASE( return_val );
 					return_val = ConstantExpressionValue::
-					             Create( context, result_val );
+					             Create( context, result_val, left_val->GetType().Specifier );
 				} else {
 					// For assignment, the right value must have same type as
 					// left.

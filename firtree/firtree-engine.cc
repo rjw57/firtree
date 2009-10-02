@@ -55,13 +55,13 @@ firtree_engine_create_sample_image_buffer_prototype(llvm::Module * module,
 	}
 
 	std::vector < const llvm::Type * >params;
-	params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty));	/* buffer */
-	params.push_back(llvm::Type::Int32Ty);	/* format */
-	params.push_back(llvm::Type::Int32Ty);	/* width */
-	params.push_back(llvm::Type::Int32Ty);	/* height */
-	params.push_back(llvm::Type::Int32Ty);	/* stride */
-	params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2));	/* location */
-	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(llvm::Type::FloatTy, 4),	/* ret. type */
+	params.push_back(llvm::PointerType::getUnqual(FIRTREE_LLVM_INT8_TY));	/* buffer */
+	params.push_back(FIRTREE_LLVM_INT32_TY);	/* format */
+	params.push_back(FIRTREE_LLVM_INT32_TY);	/* width */
+	params.push_back(FIRTREE_LLVM_INT32_TY);	/* height */
+	params.push_back(FIRTREE_LLVM_INT32_TY);	/* stride */
+	params.push_back(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4));	/* location */
+	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4),	/* ret. type */
 							  params, false);
 	llvm::Function * f =
 	    llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
@@ -83,9 +83,9 @@ firtree_engine_create_sample_cogl_texture_prototype(llvm::Module * module)
 	}
 
 	std::vector < const llvm::Type * >params;
-	params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty));	/* handle */
-	params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2));	/* location */
-	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(llvm::Type::FloatTy, 4),	/* ret. type */
+	params.push_back(llvm::PointerType::getUnqual(FIRTREE_LLVM_INT8_TY));	/* handle */
+	params.push_back(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4));	/* location */
+	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4),	/* ret. type */
 							  params, false);
 	llvm::Function * f =
 	    llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
@@ -109,8 +109,8 @@ firtree_engine_create_sample_function_prototype(llvm::Module * module)
 	g_assert(module->getFunction(func_name.c_str()) == NULL);
 
 	std::vector < const llvm::Type * >params;
-	params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2));	/* location */
-	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(llvm::Type::FloatTy, 4),	/* ret. type */
+	params.push_back(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4));	/* location */
+	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4),	/* ret. type */
 							  params, false);
 	llvm::Function * f =
 	    llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
@@ -134,8 +134,8 @@ firtree_engine_create_reduce_function_prototype(llvm::Module * module)
 	g_assert(module->getFunction(func_name.c_str()) == NULL);
 
 	std::vector < const llvm::Type * >params;
-	params.push_back(llvm::VectorType::get(llvm::Type::FloatTy, 2));	/* location */
-	llvm::FunctionType * ft = llvm::FunctionType::get(llvm::Type::VoidTy,	/* ret. type */
+	params.push_back(llvm::VectorType::get(FIRTREE_LLVM_FLOAT_TY, 4));	/* location */
+	llvm::FunctionType * ft = llvm::FunctionType::get(FIRTREE_LLVM_VOID_TY,	/* ret. type */
 							  params, false);
 	llvm::Function * f =
 	    llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
@@ -156,19 +156,19 @@ firtree_engine_get_constant_for_kernel_argument(GValue * kernel_arg)
 	if (type == G_TYPE_FLOAT) {
 		gfloat float_val = g_value_get_float(kernel_arg);
 		llvm::Value * llvm_float =
-		    llvm::ConstantFP::get(llvm::Type::FloatTy,
+		    llvm::ConstantFP::get(FIRTREE_LLVM_FLOAT_TY,
 					  (double)float_val);
 		return llvm_float;
 	} else if (type == G_TYPE_INT) {
 		gint int_val = g_value_get_int(kernel_arg);
 		llvm::Value * llvm_int =
-		    llvm::ConstantInt::get(llvm::Type::Int32Ty,
+		    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 					   (int64_t) int_val, true);
 		return llvm_int;
 	} else if (type == G_TYPE_BOOLEAN) {
 		gboolean bool_val = g_value_get_boolean(kernel_arg);
 		llvm::Value * llvm_bool =
-		    llvm::ConstantInt::get(llvm::Type::Int1Ty,
+		    llvm::ConstantInt::get(FIRTREE_LLVM_INT1_TY,
 					   (uint64_t) bool_val, false);
 		return llvm_bool;
 	} else if (type == FIRTREE_TYPE_VEC2) {
@@ -177,10 +177,16 @@ firtree_engine_get_constant_for_kernel_argument(GValue * kernel_arg)
 		std::vector < llvm::Constant * >vec_vals;
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->x));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->x));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->y));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->y));
+		vec_vals.
+		    push_back(llvm::ConstantFP::
+			      get(FIRTREE_LLVM_FLOAT_TY, 0.0));
+		vec_vals.
+		    push_back(llvm::ConstantFP::
+			      get(FIRTREE_LLVM_FLOAT_TY, 0.0));
 		llvm::Value * vec_val = llvm::ConstantVector::get(vec_vals);
 		return vec_val;
 	} else if (type == FIRTREE_TYPE_VEC3) {
@@ -189,13 +195,16 @@ firtree_engine_get_constant_for_kernel_argument(GValue * kernel_arg)
 		std::vector < llvm::Constant * >vec_vals;
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->x));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->x));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->y));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->y));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->z));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->z));
+		vec_vals.
+		    push_back(llvm::ConstantFP::
+			      get(FIRTREE_LLVM_FLOAT_TY, 0.0));
 		llvm::Value * vec_val = llvm::ConstantVector::get(vec_vals);
 		return vec_val;
 	} else if (type == FIRTREE_TYPE_VEC4) {
@@ -204,16 +213,16 @@ firtree_engine_get_constant_for_kernel_argument(GValue * kernel_arg)
 		std::vector < llvm::Constant * >vec_vals;
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->x));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->x));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->y));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->y));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->z));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->z));
 		vec_vals.
 		    push_back(llvm::ConstantFP::
-			      get(llvm::Type::FloatTy, (double)vec_box->w));
+			      get(FIRTREE_LLVM_FLOAT_TY, (double)vec_box->w));
 		llvm::Value * vec_val = llvm::ConstantVector::get(vec_vals);
 		return vec_val;
 	} else {

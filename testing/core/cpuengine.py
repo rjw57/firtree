@@ -272,6 +272,7 @@ class KernelTests(FirtreeTestCase):
         self.clearSurface()
 
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
+
         self.assertCairoSurfaceMatches(self._s, 'cpu-sin-1')
 
     def testDistorted(self):

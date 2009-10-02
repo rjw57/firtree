@@ -27,7 +27,12 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Linker.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
+
+/* See http://markmail.org/message/7fuma5ghjxtnk5mz fpr why
+ * we need to include these headers and not ExecutionEngine.h.
+ * This makes me sad :(. */
+#include <llvm/ExecutionEngine/JIT.h>
+#include <llvm/ExecutionEngine/Interpreter.h>
 
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Target/TargetData.h>
@@ -40,8 +45,13 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Support/CommandLine.h>
 
+#include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 #include <firtree/internal/firtree-kernel-intl.hh>
+
+#if FIRTREE_LLVM_AT_LEAST_2_6
+#   include <llvm/Target/TargetSelect.h>
+#endif
 
 #if FIRTREE_HAVE_CLUTTER
 #   include "clutter.hh"
@@ -241,21 +251,35 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
         return NULL;
     }
 
+    /* Since we moved to using 4-way vectors throughout, this
+     * is no-longer required! Yay! */
+#if 0
     /* Nasty, nasty hack to set an option to disable MMX *
      * This is really horrible but is required by:       *
      *   http://llvm.org/bugs/show_bug.cgi?id=3287       */
     static bool set_opt = false;
     static const char* opts[] = {
         "progname",
+#if FIRTREE_LLVM_AT_LEAST_2_6
+        "-mattr=-mmx",
+#else
     	"-disable-mmx",
+#endif
     };
     if(!set_opt) {
-        llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(opts));
+        llvm::cl::ParseCommandLineOptions(sizeof(opts) / sizeof(const char*),
+                const_cast<char**>(opts));
     	set_opt = true;
     }
+#endif
 
     /* create an LLVM module from the bitcode */
+#if FIRTREE_LLVM_AT_LEAST_2_6
+    llvm::Module* m = llvm::ParseBitcodeFile(p->render_buffer_bitcode,
+            llvm::getGlobalContext());
+#else
     llvm::Module* m = llvm::ParseBitcodeFile(p->render_buffer_bitcode);
+#endif
     
     llvm::Linker* linker = new llvm::Linker("jit_compute", m);
 
@@ -281,7 +305,8 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
         llvm::Function* existing_llvm_render_function = 
             linked_module->getFunction("sampler_render_function");
         if(existing_llvm_render_function) {
-            llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
+            llvm::BasicBlock* bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT
+                    "entry", 
                     existing_llvm_render_function);
             std::vector<llvm::Value*> args;
             llvm::Function::arg_iterator AI = existing_llvm_render_function->arg_begin();
@@ -290,14 +315,15 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
                     new_sampler_func,
                     args.begin(), args.end(),
                     "rv", bb);
-            llvm::ReturnInst::Create(sample_val, bb);
+            llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT sample_val, bb);
         }
     } else if(target == FIRTREE_KERNEL_TARGET_REDUCE) {
         /* Create the reduce version of the render function. */
         llvm::Function* existing_llvm_render_function = 
             linked_module->getFunction("sampler_reduce_function");
         if(existing_llvm_render_function) {
-            llvm::BasicBlock* bb = llvm::BasicBlock::Create("entry", 
+            llvm::BasicBlock* bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT
+                    "entry", 
                     existing_llvm_render_function);
             std::vector<llvm::Value*> args;
             llvm::Function::arg_iterator AI = existing_llvm_render_function->arg_begin();
@@ -306,7 +332,7 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
                     new_sampler_func,
                     args.begin(), args.end(),
                     "", bb);
-            llvm::ReturnInst::Create(NULL, bb);
+            llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT NULL, bb);
         }
     } else {
         g_error("Unknown target.");
@@ -325,10 +351,26 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
     }
     p->cached_llvm_module_provider = new llvm::ExistingModuleProvider(linked_module);
 
-    std::string err;
     if(!_firtree_cpu_jit_global_llvm_engine) {
+        std::string err;
+
+#if FIRTREE_LLVM_AT_LEAST_2_6
+        bool init_native = llvm::InitializeNativeTarget();
+        if(init_native) { // <- quite why the return flag is this way around, I don't know.
+            g_error("No native target compiled in!");
+        }
+        _firtree_cpu_jit_global_llvm_engine = llvm::ExecutionEngine::create(
+                p->cached_llvm_module_provider, false, &err,
+                llvm::CodeGenOpt::None, false);
+#else
         _firtree_cpu_jit_global_llvm_engine = llvm::ExecutionEngine::create(
                 p->cached_llvm_module_provider, false, &err);
+#endif
+
+        if(!_firtree_cpu_jit_global_llvm_engine) 
+        {
+            g_error("Error creating JIT: %s", err.c_str());
+        }
     } else {
         _firtree_cpu_jit_global_llvm_engine->addModuleProvider(p->cached_llvm_module_provider);
     }

@@ -50,20 +50,36 @@ class SwizzleExpressionValue : public ExpressionValue
 		virtual llvm::Value*	GetLLVMValue() const {
 			if ( m_SwizzleIndices.size() == 1 ) {
 				// just need to return a single value.
+#if LLVM_AT_LEAST_2_6
+				llvm::Value* element_value = LLVM_CREATE_NO_CONTEXT(
+						ExtractElementInst,
+				                 m_Swizzlee->GetLLVMValue(),
+				                 llvm::ConstantInt::get(
+									 llvm::Type::getInt32Ty(m_Context->Context), 
+									 m_SwizzleIndices.front()),
+				                 "tmp",
+				                 m_Context->BB );
+#else
 				llvm::Value* element_value =
 				    new ExtractElementInst(
 				                 m_Swizzlee->GetLLVMValue(),
 				                 m_SwizzleIndices.front(),
 				                 "tmp",
 				                 m_Context->BB );
+#endif
 				return element_value;
 			}
 
 			// If we get this far, we have to return a vector.
 
 			std::vector<Constant*> zero_vector;
-			for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
-#if	LLVM_AT_LEAST_2_3
+			//for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
+			for ( unsigned int i=0; 
+					i<4; /* all vectors are represented by <floatx4> in LLVM */
+					++i ) {
+#if 	LLVM_AT_LEAST_2_6
+				zero_vector.push_back( ConstantFP::get( Type::getFloatTy(m_Context->Context), 0.0 ) );
+#elif	LLVM_AT_LEAST_2_3
 				zero_vector.push_back( ConstantFP::get( Type::FloatTy, 0.0 ) );
 #else
 				zero_vector.push_back( ConstantFP::get( Type::FloatTy,
@@ -75,17 +91,36 @@ class SwizzleExpressionValue : public ExpressionValue
 
 			llvm::Value* swizlee_val = m_Swizzlee->GetLLVMValue();
 			for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
+#if 	LLVM_AT_LEAST_2_6
+				llvm::Value* swizzlee_element = LLVM_CREATE_NO_CONTEXT(
+						ExtractElementInst,
+						swizlee_val,
+						llvm::ConstantInt::get(
+						   	llvm::Type::getInt32Ty(m_Context->Context), 
+							m_SwizzleIndices[i]),
+   						"tmp",m_Context->BB );
+				return_value =
+				    LLVM_CREATE_NO_CONTEXT(InsertElementInst,
+				                 return_value,
+				                 swizzlee_element, 
+								 llvm::ConstantInt::get(
+									 llvm::Type::getInt32Ty(m_Context->Context), 
+									 i),
+				                 "tmp",
+				                 m_Context->BB );
+#else	
 				llvm::Value* swizzlee_element =
 				    new ExtractElementInst(
 				                 swizlee_val,
 				                 m_SwizzleIndices[i],
 				                 "tmp",m_Context->BB );
 				return_value =
-				    LLVM_CREATE( InsertElementInst,
+				    LLVM_CREATE_NO_CONTEXT(InsertElementInst,
 				                 return_value,
 				                 swizzlee_element, i,
 				                 "tmp",
 				                 m_Context->BB );
+#endif
 			}
 
 			return return_value;
@@ -144,32 +179,62 @@ class SwizzleExpressionValue : public ExpressionValue
 				llvm::Value* assignment = assignment_value->GetLLVMValue();
 				llvm::Value* new_val = NULL;
 				if ( m_SwizzleIndices.size() == 1 ) {
-					new_val = LLVM_CREATE( InsertElementInst,
+#if 	LLVM_AT_LEAST_2_6
+					new_val = LLVM_CREATE_NO_CONTEXT(InsertElementInst,
+					                       swizzlee,
+					                       assignment,
+										   llvm::ConstantInt::get(
+											   llvm::Type::getInt32Ty(m_Context->Context), 
+											   m_SwizzleIndices.front()),
+					                       "tmp",
+					                       m_Context->BB );
+#else
+					new_val = LLVM_CREATE_NO_CONTEXT(InsertElementInst,
 					                       swizzlee,
 					                       assignment,
 					                       m_SwizzleIndices.front(),
 					                       "tmp",
 					                       m_Context->BB );
+#endif
 				} else {
 					// Need to build value to assign from swizzlee.
 					new_val = swizzlee;
 					for ( unsigned int i=0; i<m_SwizzleIndices.size(); ++i ) {
+#if 	LLVM_AT_LEAST_2_6
+						llvm::Value* assign_val = LLVM_CREATE_NO_CONTEXT(
+							ExtractElementInst,
+							assignment,
+							llvm::ConstantInt::get(
+					   			llvm::Type::getInt32Ty(m_Context->Context), 
+			   					i),
+							"tmp",
+	   						m_Context->BB );
+						new_val = LLVM_CREATE_NO_CONTEXT(
+								InsertElementInst,
+								new_val, assign_val,
+								llvm::ConstantInt::get(
+									llvm::Type::getInt32Ty(m_Context->Context), 
+									m_SwizzleIndices[i]),
+								"tmp",
+								m_Context->BB );
+#else
 						llvm::Value* assign_val =
 						    new ExtractElementInst(
 						                 assignment,
 						                 i, "tmp",
 						                 m_Context->BB );
 						new_val =
-						    LLVM_CREATE( InsertElementInst,
+						    LLVM_CREATE_NO_CONTEXT(InsertElementInst,
 						                 new_val, assign_val,
 						                 m_SwizzleIndices[i],
 						                 "tmp",
 						                 m_Context->BB );
+#endif
 					}
 				}
 
 				ExpressionValue* new_exp_val = ConstantExpressionValue::
-				                               Create( m_Context, new_val );
+				                               Create( m_Context, new_val, GetType().Specifier );
 				m_Swizzlee->AssignFrom( *new_exp_val );
 				FIRTREE_SAFE_RELEASE( new_exp_val );
 

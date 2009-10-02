@@ -165,18 +165,35 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				llvm::Value* result_val = NULL;
 
 				if ( left_val->GetType().Specifier == Firtree::TySpecFloat ) {
-					result_val = new FCmpInst( fcmp,
-					                          left_val->GetLLVMValue(),
-					                          right_val->GetLLVMValue(),
-					                          "tmp",
-					                          context->BB );
+#if LLVM_AT_LEAST_2_6
+					result_val = new FCmpInst( 
+							*(context->BB),
+							fcmp,
+		  					left_val->GetLLVMValue(),
+							right_val->GetLLVMValue(),
+							"tmp");
+#else
+					result_val = new FCmpInst( 
+							fcmp,
+		  					left_val->GetLLVMValue(),
+							right_val->GetLLVMValue(),
+							"tmp",
+							context->BB );
+#endif
 				} else if (( left_val->GetType().Specifier == Firtree::TySpecInt ) ||
 				           ( left_val->GetType().Specifier == Firtree::TySpecBool ) ) {
+#if LLVM_AT_LEAST_2_6
+					result_val = new ICmpInst( *(context->BB), icmp,
+					                          left_val->GetLLVMValue(),
+					                          right_val->GetLLVMValue(),
+					                          "tmp");
+#else
 					result_val = new ICmpInst( icmp,
 					                          left_val->GetLLVMValue(),
 					                          right_val->GetLLVMValue(),
 					                          "tmp",
 					                          context->BB );
+#endif
 				} else {
 					FIRTREE_LLVM_ERROR( context, expression,
 					                    "Incompatible types for binary "
@@ -184,7 +201,7 @@ class BinaryOpCmpEmitter : ExpressionEmitter
 				}
 
 				return_val =  ConstantExpressionValue::
-				              Create( context, result_val );
+				              Create( context, result_val, TySpecBool );
 
 				FIRTREE_SAFE_RELEASE( left_val );
 				FIRTREE_SAFE_RELEASE( right_val );

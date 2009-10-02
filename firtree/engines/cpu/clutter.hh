@@ -29,6 +29,18 @@
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-cogl-texture-sampler-intl.hh>
 
+#if (FIRTREE_CLUTTER_VERSION_MAJOR > 0) || ((FIRTREE_CLUTTER_VERSION_MAJOR == 0) && (FIRTREE_CLUTTER_VERSION_MINOR >= 8))
+#  define FIRTREE_CLUTTER_AT_LEAST_0_8 1
+#else
+#  define FIRTREE_CLUTTER_AT_LEAST_0_8 0
+#endif
+
+#if (FIRTREE_CLUTTER_VERSION_MAJOR > 1) || ((FIRTREE_CLUTTER_VERSION_MAJOR == 1) && (FIRTREE_CLUTTER_VERSION_MINOR >= 0))
+#  define FIRTREE_CLUTTER_AT_LEAST_1_0 1
+#else
+#  define FIRTREE_CLUTTER_AT_LEAST_1_0 0
+#endif
+
 /* This is a LLVM pass which replaces calls to sample_cogl_texture with
  * calls to sample_image_buffer_nn() or sample_image_buffer_lerp(). */
 class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
@@ -89,8 +101,13 @@ class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
         g_assert(data != NULL);
         g_assert(data_size != 0);
 
+#if FIRTREE_CLUTTER_AT_LEAST_1_0
+	/* I think that Clutter 1.0 *only* supports linear filtering? */
+	gboolean do_interp = TRUE;
+#else
         gboolean do_interp =
             (cogl_texture_get_mag_filter(cogl_tex_handle) == CGL_LINEAR);
+#endif
 
         llvm::Function* sample_buffer_func = 
             firtree_engine_create_sample_image_buffer_prototype(
@@ -98,26 +115,26 @@ class CanonicaliseCoglCallsPass : public Firtree::FunctionCallReplacementPass {
         g_assert(sample_buffer_func);
 
         llvm::Value* llvm_width = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty, 
+                FIRTREE_LLVM_INT32_TY, 
                 (uint64_t)width, false);
         llvm::Value* llvm_height = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
+                FIRTREE_LLVM_INT32_TY,
                 (uint64_t)height, false);
         llvm::Value* llvm_stride = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
+                FIRTREE_LLVM_INT32_TY,
                 (uint64_t)stride, false);
         llvm::Value* llvm_format = llvm::ConstantInt::get(
-                llvm::Type::Int32Ty,
+                FIRTREE_LLVM_INT32_TY,
                 (uint64_t)format, false);
 
         /* This looks dirty but is apparently valid.
          *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
         llvm::Constant* llvm_data_int = llvm::ConstantInt::get(
-                llvm::Type::Int64Ty, 
+                FIRTREE_LLVM_INT64_TY, 
                 (uint64_t)data, false);
         llvm::Value* llvm_data = llvm::ConstantExpr::getIntToPtr(
                 llvm_data_int,
-                llvm::PointerType::getUnqual(llvm::Type::Int8Ty)); 
+                llvm::PointerType::getUnqual(FIRTREE_LLVM_INT8_TY)); 
 
         std::vector<llvm::Value*> func_args;
         func_args.push_back(llvm_data);

@@ -75,33 +75,41 @@ FullType FullType::FromFullySpecifiedType( firtreeFullySpecifiedType t )
 /// which can be used for error reporting.
 const llvm::Type* FullType::ToLLVMType( LLVMContext* ctx ) const
 {
+	// NOTE: We use 4-way vector types all throughout, even when passing
+	// around 2- or 3-d types. This is for two reasons:
+	//
+	// 1) On modern architectures, only 4-way vector types are supported anyway.
+	//
+	// 2) Using 2-way on x86 means that MMX instructions are used which end up
+	//    requiring sprinkles of emms intrinsics which we don't want to deal with.
+	//
 	switch ( Specifier ) {
 
 		case TySpecFloat:
-			return Type::FloatTy;
+			return Type::FLOAT_TY(ctx);
 
 		case TySpecSampler:
-			return Type::Int32Ty;
+			return Type::INT32_TY(ctx);
 
 		case TySpecInt:
-			return Type::Int32Ty;
+			return Type::INT32_TY(ctx);
 
 		case TySpecBool:
-			return Type::Int1Ty;
+			return Type::INT1_TY(ctx);
 
 		case TySpecVec2:
-			return VectorType::get( Type::FloatTy, 2 );
+			return VectorType::get( Type::FLOAT_TY(ctx), 4 );
 
 		case TySpecVec3:
-			return VectorType::get( Type::FloatTy, 3 );
+			return VectorType::get( Type::FLOAT_TY(ctx), 4 );
 
 		case TySpecVec4:
 
 		case TySpecColor:
-			return VectorType::get( Type::FloatTy, 4 );
+			return VectorType::get( Type::FLOAT_TY(ctx), 4 );
 
 		case TySpecVoid:
-			return Type::VoidTy;
+			return Type::VOID_TY(ctx);
 
 		default:
 			FIRTREE_LLVM_ICE( ctx, NULL, "Unknown type." );
@@ -141,7 +149,11 @@ LLVMFrontend::LLVMFrontend( firtree top_level_term,
 	}
 
 	// Create the LLVM module.
+#if LLVM_AT_LEAST_2_6
+	m_LLVMContext->Module = new Module( "kernel_module", m_LLVMContext->Context );
+#else
 	m_LLVMContext->Module = new Module( "kernel_module" );
+#endif
 
 	try {
 		EmitDeclarations emit_decls( m_LLVMContext );

@@ -7,7 +7,10 @@
 if(NOT APPLE)
     find_package(PkgConfig)
     pkg_check_modules(CAIRO cairo)
-    pkg_check_modules(CLUTTER clutter-0.8)
+    pkg_check_modules(CLUTTER clutter-1.0)
+    if(NOT CLUTTER_FOUND)
+        pkg_check_modules(CLUTTER clutter-0.8)
+    endif(NOT CLUTTER_FOUND)
 endif(NOT APPLE)
 
 include_directories(${CLUTTER_INCLUDE_DIRS} ${CAIRO_INCLUDE_DIRS})

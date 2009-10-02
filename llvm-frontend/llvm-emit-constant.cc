@@ -20,9 +20,10 @@ namespace Firtree
 
 //===========================================================================
 ConstantExpressionValue::ConstantExpressionValue( LLVMContext* ctx,
-        llvm::Value* val, bool is_static )
+        llvm::Value* val, Firtree::KernelTypeSpecifier ty_spec, bool is_static )
 		: VoidExpressionValue( ctx )
 		, m_WrappedValue( val )
+		, m_TypeSpecifier( ty_spec )
 		, m_IsStatic( is_static )
 {
 }
@@ -34,9 +35,9 @@ ConstantExpressionValue::~ConstantExpressionValue()
 
 //===========================================================================
 ExpressionValue* ConstantExpressionValue::Create( LLVMContext* ctx,
-        llvm::Value* val, bool is_static )
+        llvm::Value* val, Firtree::KernelTypeSpecifier ty_spec, bool is_static )
 {
-	return new ConstantExpressionValue( ctx, val, is_static );
+	return new ConstantExpressionValue( ctx, val, ty_spec, is_static );
 }
 
 //===========================================================================
@@ -52,6 +53,10 @@ FullType ConstantExpressionValue::GetType() const
 	return_value.Qualifier = 
 		m_IsStatic ? Firtree::TyQualStatic : Firtree::TyQualConstant;
 
+	return_value.Specifier = m_TypeSpecifier;
+	return return_value;
+
+#if 0
 	const llvm::Type* type = GetLLVMValue()->getType();
 
 	if ( type->getTypeID() == llvm::Type::VoidTyID ) {
@@ -91,6 +96,7 @@ FullType ConstantExpressionValue::GetType() const
 	}
 
 	return return_value;
+#endif
 }
 
 //===========================================================================
@@ -101,28 +107,28 @@ FullType ConstantExpressionValue::GetType() const
 ExpressionValue* CreateFloat( LLVMContext* context, float float_val )
 {
 #if LLVM_AT_LEAST_2_3
-	llvm::Value* val = ConstantFP::get( Type::FloatTy, (double)(float_val) );
+	llvm::Value* val = ConstantFP::get( Type::FLOAT_TY(context), (double)(float_val) );
 #else
-	llvm::Value* val = ConstantFP::get( Type::FloatTy,
+	llvm::Value* val = ConstantFP::get( Type::FLOAT_TY(context),
 	                                    APFloat( float_val ) );
 #endif
-	return ConstantExpressionValue::Create( context, val, true );
+	return ConstantExpressionValue::Create( context, val, Firtree::TySpecFloat, true );
 }
 
 //===========================================================================
 /// Utilitiy function to create an integer immediate value.
 ExpressionValue* CreateInt( LLVMContext* context, int int_val )
 {
-	llvm::Value* val = ConstantInt::get( Type::Int32Ty, int_val );
-	return ConstantExpressionValue::Create( context, val, true );
+	llvm::Value* val = ConstantInt::get( Type::INT32_TY(context), int_val );
+	return ConstantExpressionValue::Create( context, val, Firtree::TySpecInt, true );
 }
 
 //===========================================================================
 /// Utilitiy function to create a boolean immediate value.
 ExpressionValue* CreateBool( LLVMContext* context, bool bool_val )
 {
-	llvm::Value* val = ConstantInt::get( Type::Int1Ty, ( int )bool_val );
-	return ConstantExpressionValue::Create( context, val, true );
+	llvm::Value* val = ConstantInt::get( Type::INT1_TY(context), ( int )bool_val );
+	return ConstantExpressionValue::Create( context, val, Firtree::TySpecBool, true );
 }
 
 //===========================================================================
@@ -136,19 +142,44 @@ ExpressionValue* CreateVector( LLVMContext* context, const float* params,
 
 	std::vector<Constant*> elements;
 
+	Firtree::KernelTypeSpecifier spec;
+	switch(param_count) 
+	{
+		case 2:
+			spec = Firtree::TySpecVec2;
+			break;
+		case 3:
+			spec = Firtree::TySpecVec3;
+			break;
+		case 4:
+			spec = Firtree::TySpecVec4;
+			break;
+		default:
+			g_error("Unreachable");
+			break;
+	}
+
 	for ( int i=0; i<param_count; i++ ) {
 #if LLVM_AT_LEAST_2_3
-		elements.push_back( ConstantFP::get( Type::FloatTy, 
+		elements.push_back( ConstantFP::get( Type::FLOAT_TY(context), 
 					(double)(params[i])));
 #else
-		elements.push_back( ConstantFP::get( Type::FloatTy,
+		elements.push_back( ConstantFP::get( Type::FLOAT_TY(context),
 		                                     APFloat( params[i] ) ) );
+#endif
+	}
+
+	for ( int i=param_count; i<4; i++ ) {
+#if LLVM_AT_LEAST_2_3
+		elements.push_back( ConstantFP::get( Type::FLOAT_TY(context), 0.0 ) );
+#else
+		elements.push_back( ConstantFP::get( Type::FLOAT_TY(context), APFloat( 0.0f ) ) );
 #endif
 	}
 
 
 	llvm::Value* val = ConstantVector::get( elements );
-	return ConstantExpressionValue::Create( context, val, true );
+	return ConstantExpressionValue::Create( context, val, spec, true );
 }
 
 //===========================================================================
@@ -184,6 +215,23 @@ ExpressionValue* CreateVector( LLVMContext* context,
 		FIRTREE_LLVM_ICE( context, NULL, "Invalid vector size." );
 	}
 
+	Firtree::KernelTypeSpecifier spec;
+	switch(values.size()) 
+	{
+		case 2:
+			spec = Firtree::TySpecVec2;
+			break;
+		case 3:
+			spec = Firtree::TySpecVec3;
+			break;
+		case 4:
+			spec = Firtree::TySpecVec4;
+			break;
+		default:
+			g_error("Unreachable");
+			break;
+	}
+
 	static const float zeros[] = {0.f, 0.f, 0.f, 0.f};
 
 	ExpressionValue* zero_vec = CreateVector( context,
@@ -192,14 +240,23 @@ ExpressionValue* CreateVector( LLVMContext* context,
 	llvm::Value* vec_val = zero_vec->GetLLVMValue();
 
 	for ( unsigned int i=0; i<values.size(); ++i ) {
-		vec_val = LLVM_CREATE( InsertElementInst, vec_val,
+#if LLVM_AT_LEAST_2_6
+		vec_val = LLVM_CREATE_NO_CONTEXT(InsertElementInst, vec_val,
+		                       values[i]->GetLLVMValue(), 
+							   llvm::ConstantInt::get(
+								   llvm::Type::INT32_TY(context),
+								   i),
+		                       "tmp", context->BB );
+#else
+		vec_val = LLVM_CREATE_NO_CONTEXT(InsertElementInst, vec_val,
 		                       values[i]->GetLLVMValue(), i,
 		                       "tmp", context->BB );
+#endif
 	}
 
 	FIRTREE_SAFE_RELEASE( zero_vec );
 
-	return ConstantExpressionValue::Create( context, vec_val, is_static );
+	return ConstantExpressionValue::Create( context, vec_val, spec, is_static );
 }
 
 //===========================================================================
@@ -217,11 +274,22 @@ void CrackVector( LLVMContext* context, ExpressionValue* vector,
 	llvm::Value* vec_val = vector->GetLLVMValue();
 
 	for ( unsigned int i=0; i<vec_type.GetArity(); i++ ) {
+#if LLVM_AT_LEAST_2_6
+		llvm::Value* ext_val = LLVM_CREATE_NO_CONTEXT(ExtractElementInst,
+				vec_val, 
+				llvm::ConstantInt::get(
+					llvm::Type::INT32_TY(context),
+					i),
+				"tmp",
+				context->BB );
+#else
 		llvm::Value* ext_val = new ExtractElementInst(
 		                                    vec_val, i, "tmp",
 		                                    context->BB );
+#endif
+		// Firtree vector components are always floats.
 		output_values.push_back(
-		    ConstantExpressionValue::Create( context, ext_val ) );
+		    ConstantExpressionValue::Create( context, ext_val, TySpecFloat ) );
 	}
 }
 

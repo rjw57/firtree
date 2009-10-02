@@ -183,7 +183,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 	// make the result a constant however.
 	if ( source_type.Specifier == dest_ty_spec ) {
 		return ConstantExpressionValue::Create( context, llvm_value,
-				source_type.IsStatic() );
+				source_type.Specifier, source_type.IsStatic() );
 	}
 
 	switch ( dest_ty_spec ) {
@@ -192,7 +192,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				if( source_type.Specifier == Firtree::TySpecVec4 )
 				{
 					return ConstantExpressionValue::Create( 
-							context, llvm_value, source_type.IsStatic() );
+							context, llvm_value, dest_ty_spec, source_type.IsStatic() );
 				}
 			}
 			break;
@@ -201,7 +201,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				if( source_type.Specifier == Firtree::TySpecColor )
 				{
 					return ConstantExpressionValue::Create( 
-							context, llvm_value, source_type.IsStatic() );
+							context, llvm_value, dest_ty_spec, source_type.IsStatic() );
 				}
 			}
 			break;
@@ -218,12 +218,12 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					// Add a conversion instruction
 					llvm::Value* llvm_new_value = new SIToFPInst(
 					                                     llvm_value,
-					                                     Type::FloatTy,
+					                                     Type::FLOAT_TY(context),
 					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value,
-							   source_type.IsStatic() );
+							   dest_ty_spec, source_type.IsStatic() );
 				}
 				break;
 				default:
@@ -241,7 +241,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 				case Firtree::TySpecFloat: {
 					const Type* dest_llvm_type =
 					    ( dest_ty_spec == Firtree::TySpecInt ) ?
-					    Type::Int32Ty : Type::Int1Ty;
+					    Type::INT32_TY(context) : Type::INT1_TY(context);
 					llvm::Value* llvm_new_value = new FPToSIInst(
 					                                     llvm_value,
 					                                     dest_llvm_type,
@@ -249,7 +249,7 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value, 
-							   source_type.IsStatic() );
+							   dest_ty_spec, source_type.IsStatic() );
 				}
 				break;
 				case Firtree::TySpecBool: {
@@ -257,12 +257,12 @@ ExpressionValue* TypeCaster::CastValue( LLVMContext* context,
 					// this does not lose bits.
   	 			    llvm::Value* llvm_new_value = new SExtInst(
 					                                     llvm_value,
-					                                     Type::Int32Ty,
+					                                     Type::INT32_TY(context),
 					                                     "tmp",
 					                                     context->BB );
 					return ConstantExpressionValue::Create(
 					           context, llvm_new_value, 
-							   source_type.IsStatic() );
+							   dest_ty_spec, source_type.IsStatic() );
 				}
 				default:
 					// Do nothing, the call to FIRTREE_LLVM_ERROR at the

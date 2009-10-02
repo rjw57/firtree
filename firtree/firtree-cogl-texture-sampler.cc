@@ -444,7 +444,12 @@ _firtree_cogl_texture_sampler_create_sample_function(FirtreeCoglTextureSampler *
 
 	_firtree_cogl_texture_sampler_invalidate_llvm_cache(self);
 
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::Module * m = new llvm::Module("cogl_texture",
+			llvm::getGlobalContext());
+#else
 	llvm::Module * m = new llvm::Module("cogl_texture");
+#endif
 
 	/* declare the sample_image_buffer() function which will be implemented
 	 * by the engine. */
@@ -460,14 +465,15 @@ _firtree_cogl_texture_sampler_create_sample_function(FirtreeCoglTextureSampler *
 	/* This looks dirty but is apparently valid.
 	 *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
 	llvm::Constant * llvm_tex_int =
-	    llvm::ConstantInt::get(llvm::Type::Int64Ty, (uint64_t) self, false);
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT64_TY, (uint64_t) self, false);
 	llvm::Value * llvm_tex =
 	    llvm::ConstantExpr::getIntToPtr(llvm_tex_int,
 					    llvm::PointerType::
-					    getUnqual(llvm::Type::Int8Ty));
+					    getUnqual(FIRTREE_LLVM_INT8_TY));
 
 	/* Implement the sample function. */
-	llvm::BasicBlock * bb = llvm::BasicBlock::Create("entry", sample_func);
+	llvm::BasicBlock * bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT 
+			"entry", sample_func);
 
 	std::vector < llvm::Value * >func_args;
 	func_args.push_back(llvm_tex);
@@ -478,7 +484,7 @@ _firtree_cogl_texture_sampler_create_sample_function(FirtreeCoglTextureSampler *
 						       func_args.end(), "rv",
 						       bb);
 
-	llvm::ReturnInst::Create(ret_val, bb);
+	llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT ret_val, bb);
 
 	p->cached_function = sample_func;
 	return sample_func;

@@ -72,11 +72,11 @@ class ReturnEmitter : public ExpressionEmitter
 				        Firtree::TySpecVoid ) {
 					llvm_ret_val = cast_return_value->GetLLVMValue();
 				}
-				LLVM_CREATE( ReturnInst, llvm_ret_val, context->BB );
+				LLVM_CREATE(context, ReturnInst, llvm_ret_val, context->BB );
 
 				// Create a basic block to follow (in case we have
 				// some unreachable code below).
-				context->BB = LLVM_CREATE( BasicBlock, "cont",
+				context->BB = LLVM_CREATE(context,  BasicBlock, "cont",
 						context->Function);
 
 				// Ensure static correctness.

@@ -80,11 +80,11 @@ class LoopEmitter : public ExpressionEmitter
 				// Create a BB for the pre-condition.
 				BasicBlock *pre_cond_BB = context->BB;
 				if(pre_condition_expr) {
-					pre_cond_BB = LLVM_CREATE( BasicBlock, "precond",
+					pre_cond_BB = LLVM_CREATE(context,  BasicBlock, "precond",
 							context->Function );
 
 					// Emit a straight branch into the pre-cond.
-					LLVM_CREATE( BranchInst, pre_cond_BB, context->BB  );
+					LLVM_CREATE_NO_CONTEXT( BranchInst, pre_cond_BB, context->BB  );
 
 					// Set the pre-cond block as the new insertion point.
 					context->BB = pre_cond_BB;
@@ -104,7 +104,7 @@ class LoopEmitter : public ExpressionEmitter
 
 				// Create a BB for the loop body and set it as the 
 				// insertion point.
-				BasicBlock *body_BB = LLVM_CREATE( BasicBlock, "loopbody",
+				BasicBlock *body_BB = LLVM_CREATE(context,  BasicBlock, "loopbody",
 						context->Function );
 				context->BB = body_BB;
 
@@ -139,7 +139,7 @@ class LoopEmitter : public ExpressionEmitter
 				post_cond_BB = context->BB;
 
 				// Create a BB for the continuation.
-				BasicBlock *cont_BB = LLVM_CREATE( BasicBlock, "cont",
+				BasicBlock *cont_BB = LLVM_CREATE(context,  BasicBlock, "cont",
 						context->Function );
 				context->BB = cont_BB;
 
@@ -148,21 +148,21 @@ class LoopEmitter : public ExpressionEmitter
 				// The pre-condition block either ends with a conditional
 				// branch into the loop body or into the continuation.
 				if(pre_condition_value) {
-					LLVM_CREATE( BranchInst, body_start_BB, cont_BB,
+					LLVM_CREATE_NO_CONTEXT( BranchInst, body_start_BB, cont_BB,
 							pre_condition_value->GetLLVMValue(),
 							pre_cond_BB);
 				} else {
-					LLVM_CREATE( BranchInst, body_start_BB, pre_cond_BB);
+					LLVM_CREATE_NO_CONTEXT( BranchInst, body_start_BB, pre_cond_BB);
 				}
 	
 				// The post-condition block either ends with a conditional
 				// branch into the continuation or into the loop body.
 				if(post_condition_value) {
-					LLVM_CREATE( BranchInst, body_start_BB, cont_BB,
+					LLVM_CREATE_NO_CONTEXT( BranchInst, body_start_BB, cont_BB,
 							post_condition_value->GetLLVMValue(),
 							post_cond_BB);
 				} else {
-					LLVM_CREATE( BranchInst, pre_cond_start_BB, body_BB);
+					LLVM_CREATE_NO_CONTEXT( BranchInst, pre_cond_start_BB, body_BB);
 				}
 
 				FIRTREE_SAFE_RELEASE( init_value );

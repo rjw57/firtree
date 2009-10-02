@@ -1,18 +1,12 @@
 ; ModuleID = 'builtins'
 
 declare float @llvm.sin.f32( float )
-declare <2 x float> @llvm.sin.v2f32( <2 x float> )
-declare <3 x float> @llvm.sin.v3f32( <3 x float> )
 declare <4 x float> @llvm.sin.v4f32( <4 x float> )
 
 declare float @llvm.cos.f32( float )
-declare <2 x float> @llvm.cos.v2f32( <2 x float> )
-declare <3 x float> @llvm.cos.v3f32( <3 x float> )
 declare <4 x float> @llvm.cos.v4f32( <4 x float> )
 
 declare float @llvm.sqrt.f32( float )
-declare <2 x float> @llvm.sqrt.v2f32( <2 x float> )
-declare <3 x float> @llvm.sqrt.v3f32( <3 x float> )
 declare <4 x float> @llvm.sqrt.v4f32( <4 x float> )
 
 define float @round_to_zero( float ) {
@@ -44,16 +38,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @radians_v2( <2 x float> ) {
+define <4 x float> @radians_v2( <4 x float> ) {
 entry:
-	%rv = mul <2 x float> < float 0x3F91DF46A0000000, float 0x3F91DF46A0000000 >, %0
-	ret <2 x float> %rv
+	%rv = mul <4 x float> < float 0x3F91DF46A0000000, float 0x3F91DF46A0000000, float zeroinitializer, float zeroinitializer >, %0
+	ret <4 x float> %rv
 }
 
-define <3 x float> @radians_v3( <3 x float> ) {
+define <4 x float> @radians_v3( <4 x float> ) {
 entry:
-	%rv = mul <3 x float> < float 0x3F91DF46A0000000, float 0x3F91DF46A0000000, float 0x3F91DF46A0000000 >, %0
-	ret <3 x float> %rv
+	%rv = mul <4 x float> < float 0x3F91DF46A0000000, float 0x3F91DF46A0000000, float 0x3F91DF46A0000000, float zeroinitializer >, %0
+	ret <4 x float> %rv
 }
 
 define <4 x float> @radians_v4( <4 x float> ) {
@@ -71,16 +65,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @degrees_v2( <2 x float> ) {
+define <4 x float> @degrees_v2( <4 x float> ) {
 entry:
-	%rv = mul <2 x float> < float 0x404CA5DC20000000, float 0x404CA5DC20000000 >, %0
-	ret <2 x float> %rv
+	%rv = mul <4 x float> < float 0x404CA5DC20000000, float 0x404CA5DC20000000, float zeroinitializer, float zeroinitializer >, %0
+	ret <4 x float> %rv
 }
 
-define <3 x float> @degrees_v3( <3 x float> ) {
+define <4 x float> @degrees_v3( <4 x float> ) {
 entry:
-	%rv = mul <3 x float> < float 0x404CA5DC20000000, float 0x404CA5DC20000000, float 0x404CA5DC20000000 >, %0
-	ret <3 x float> %rv
+	%rv = mul <4 x float> < float 0x404CA5DC20000000, float 0x404CA5DC20000000, float 0x404CA5DC20000000, float zeroinitializer >, %0
+	ret <4 x float> %rv
 }
 
 define <4 x float> @degrees_v4( <4 x float> ) {
@@ -97,16 +91,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @sin_v2(<2 x float>) {
+define <4 x float> @sin_v2(<4 x float>) {
 entry:
-	%rv = call <2 x float> @llvm.sin.v2f32( <2 x float> %0 )
-	ret <2 x float> %rv
+	%rv = call <4 x float> @llvm.sin.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
-define <3 x float> @sin_v3(<3 x float>) {
+define <4 x float> @sin_v3(<4 x float>) {
 entry:
-	%rv = call <3 x float> @llvm.sin.v3f32( <3 x float> %0 )
-	ret <3 x float> %rv
+	%rv = call <4 x float> @llvm.sin.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
 define <4 x float> @sin_v4(<4 x float>) {
@@ -121,16 +115,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @sin__v2(<2 x float>) {
+define <4 x float> @sin__v2(<4 x float>) {
 entry:
-	%rv = call <2 x float> @llvm.sin.v2f32( <2 x float> %0 )
-	ret <2 x float> %rv
+	%rv = call <4 x float> @llvm.sin.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
-define <3 x float> @sin__v3(<3 x float>) {
+define <4 x float> @sin__v3(<4 x float>) {
 entry:
-	%rv = call <3 x float> @llvm.sin.v3f32( <3 x float> %0 )
-	ret <3 x float> %rv
+	%rv = call <4 x float> @llvm.sin.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
 define <4 x float> @sin__v4(<4 x float>) {
@@ -147,16 +141,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @cos_v2(<2 x float>) {
+define <4 x float> @cos_v2(<4 x float>) {
 entry:
-	%rv = call <2 x float> @llvm.cos.v2f32( <2 x float> %0 )
-	ret <2 x float> %rv
+	%rv = call <4 x float> @llvm.cos.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
-define <3 x float> @cos_v3(<3 x float>) {
+define <4 x float> @cos_v3(<4 x float>) {
 entry:
-	%rv = call <3 x float> @llvm.cos.v3f32( <3 x float> %0 )
-	ret <3 x float> %rv
+	%rv = call <4 x float> @llvm.cos.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
 define <4 x float> @cos_v4(<4 x float>) {
@@ -171,16 +165,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @cos__v2(<2 x float>) {
+define <4 x float> @cos__v2(<4 x float>) {
 entry:
-	%rv = call <2 x float> @llvm.cos.v2f32( <2 x float> %0 )
-	ret <2 x float> %rv
+	%rv = call <4 x float> @llvm.cos.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
-define <3 x float> @cos__v3(<3 x float>) {
+define <4 x float> @cos__v3(<4 x float>) {
 entry:
-	%rv = call <3 x float> @llvm.cos.v3f32( <3 x float> %0 )
-	ret <3 x float> %rv
+	%rv = call <4 x float> @llvm.cos.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
 define <4 x float> @cos__v4(<4 x float>) {
@@ -191,42 +185,42 @@ entry:
 
 ;; sincos() intrinsic function 
 
-define <2 x float> @sincos_f(float) {
+define <4 x float> @sincos_f(float) {
 entry:
 	%s = call float @llvm.sin.f32( float %0 )
 	%c = call float @llvm.cos.f32( float %0 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %s, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %c, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %s, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %c, i32 1
+	ret <4 x float> %rv2
 }
 
-define <2 x float> @sincos__f(float) {
+define <4 x float> @sincos__f(float) {
 entry:
 	%s = call float @llvm.sin.f32( float %0 )
 	%c = call float @llvm.cos.f32( float %0 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %s, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %c, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %s, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %c, i32 1
+	ret <4 x float> %rv2
 }
 
 ;; cossin() intrinsic function 
 
-define <2 x float> @cossin_f(float) {
+define <4 x float> @cossin_f(float) {
 entry:
 	%s = call float @llvm.sin.f32( float %0 )
 	%c = call float @llvm.cos.f32( float %0 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %s, i32 1
-	%rv2 = insertelement <2 x float> %rv1, float %c, i32 0
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %s, i32 1
+	%rv2 = insertelement <4 x float> %rv1, float %c, i32 0
+	ret <4 x float> %rv2
 }
 
-define <2 x float> @cossin__f(float) {
+define <4 x float> @cossin__f(float) {
 entry:
 	%s = call float @llvm.sin.f32( float %0 )
 	%c = call float @llvm.cos.f32( float %0 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %s, i32 1
-	%rv2 = insertelement <2 x float> %rv1, float %c, i32 0
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %s, i32 1
+	%rv2 = insertelement <4 x float> %rv1, float %c, i32 0
+	ret <4 x float> %rv2
 }
 
 ;; exp() intrinsic function 
@@ -234,29 +228,29 @@ entry:
 ;; Mapped by the CPU engine into the standard math library's expf() function.
 declare float @exp_f( float ) nounwind readnone;
 
-define <2 x float> @exp_v2( <2 x float> ) {
+define <4 x float> @exp_v2( <4 x float> ) {
 entry:
-	%x = extractelement <2 x float> %0, i32 0
-	%y = extractelement <2 x float> %0, i32 1
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
 	%ex = call float @exp_f( float %x )
 	%ey = call float @exp_f( float %y )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @exp_v3( <3 x float> ) {
+define <4 x float> @exp_v3( <4 x float> ) {
 entry:
-	%x = extractelement <3 x float> %0, i32 0
-	%y = extractelement <3 x float> %0, i32 1
-	%z = extractelement <3 x float> %0, i32 2
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
 	%ex = call float @exp_f( float %x )
 	%ey = call float @exp_f( float %y )
 	%ez = call float @exp_f( float %z )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @exp_v4( <4 x float> ) {
@@ -284,16 +278,16 @@ entry:
 	ret float %rv
 }
 
-define <2 x float> @sqrt_v2(<2 x float>) {
+define <4 x float> @sqrt_v2(<4 x float>) {
 entry:
-	%rv = call <2 x float> @llvm.sqrt.v2f32( <2 x float> %0 )
-	ret <2 x float> %rv
+	%rv = call <4 x float> @llvm.sqrt.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
-define <3 x float> @sqrt_v3(<3 x float>) {
+define <4 x float> @sqrt_v3(<4 x float>) {
 entry:
-	%rv = call <3 x float> @llvm.sqrt.v3f32( <3 x float> %0 )
-	ret <3 x float> %rv
+	%rv = call <4 x float> @llvm.sqrt.v4f32( <4 x float> %0 )
+	ret <4 x float> %rv
 }
 
 define <4 x float> @sqrt_v4(<4 x float>) {
@@ -304,21 +298,21 @@ entry:
 
 ;; dot() intrinsic function 
 
-define float @dot_v2v2( <2 x float>, <2 x float> ) {
+define float @dot_v2v2( <4 x float>, <4 x float> ) {
 entry:
-	%mul_val = mul <2 x float> %0, %1
-	%x = extractelement <2 x float> %mul_val, i32 0
-	%y = extractelement <2 x float> %mul_val, i32 1
+	%mul_val = mul <4 x float> %0, %1
+	%x = extractelement <4 x float> %mul_val, i32 0
+	%y = extractelement <4 x float> %mul_val, i32 1
 	%rv = add float %x, %y
 	ret float %rv
 }
 
-define float @dot_v3v3( <3 x float>, <3 x float> ) {
+define float @dot_v3v3( <4 x float>, <4 x float> ) {
 entry:
-	%mul_val = mul <3 x float> %0, %1
-	%x = extractelement <3 x float> %mul_val, i32 0
-	%y = extractelement <3 x float> %mul_val, i32 1
-	%z = extractelement <3 x float> %mul_val, i32 2
+	%mul_val = mul <4 x float> %0, %1
+	%x = extractelement <4 x float> %mul_val, i32 0
+	%y = extractelement <4 x float> %mul_val, i32 1
+	%z = extractelement <4 x float> %mul_val, i32 2
 	%rv1 = add float %x, %y
 	%rv2 = add float %rv1, %z
 	ret float %rv2
@@ -339,16 +333,16 @@ entry:
 
 ;; length() intrinsic function 
 
-define float @length_v2( <2 x float> ) {
+define float @length_v2( <4 x float> ) {
 entry:
-	%dotprod = call float @dot_v2v2( <2 x float> %0, <2 x float> %0 )
+	%dotprod = call float @dot_v2v2( <4 x float> %0, <4 x float> %0 )
 	%length = call float @sqrt_f( float %dotprod )
 	ret float %length
 }
 
-define float @length_v3( <3 x float> ) {
+define float @length_v3( <4 x float> ) {
 entry:
-	%dotprod = call float @dot_v3v3( <3 x float> %0, <3 x float> %0 )
+	%dotprod = call float @dot_v3v3( <4 x float> %0, <4 x float> %0 )
 	%length = call float @sqrt_f( float %dotprod )
 	ret float %length
 }
@@ -408,29 +402,29 @@ pass_through:
 declare float @atan_f( float ) nounwind readnone;
 declare float @atan_ff( float, float ) nounwind readnone;
 
-define <2 x float> @atan_v2( <2 x float> ) {
+define <4 x float> @atan_v2( <4 x float> ) {
 entry:
-	%x = extractelement <2 x float> %0, i32 0
-	%y = extractelement <2 x float> %0, i32 1
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
 	%ex = call float @atan_f( float %x )
 	%ey = call float @atan_f( float %y )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @atan_v3( <3 x float> ) {
+define <4 x float> @atan_v3( <4 x float> ) {
 entry:
-	%x = extractelement <3 x float> %0, i32 0
-	%y = extractelement <3 x float> %0, i32 1
-	%z = extractelement <3 x float> %0, i32 2
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
 	%ex = call float @atan_f( float %x )
 	%ey = call float @atan_f( float %y )
 	%ez = call float @atan_f( float %z )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @atan_v4( <4 x float> ) {
@@ -450,34 +444,34 @@ entry:
 	ret <4 x float> %rv4
 }
 
-define <2 x float> @atan_v2v2( <2 x float>, <2 x float> ) {
+define <4 x float> @atan_v2v2( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <2 x float> %0, i32 0
-	%Yy = extractelement <2 x float> %0, i32 1
-	%Xx = extractelement <2 x float> %1, i32 0
-	%Xy = extractelement <2 x float> %1, i32 1
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
 	%ex = call float @atan_ff( float %Yx, float %Xx )
 	%ey = call float @atan_ff( float %Yy, float %Xy )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @atan_v3v3( <3 x float>, <3 x float> ) {
+define <4 x float> @atan_v3v3( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <3 x float> %0, i32 0
-	%Yy = extractelement <3 x float> %0, i32 1
-	%Yz = extractelement <3 x float> %0, i32 2
-	%Xx = extractelement <3 x float> %1, i32 0
-	%Xy = extractelement <3 x float> %1, i32 1
-	%Xz = extractelement <3 x float> %1, i32 2
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
+	%Xz = extractelement <4 x float> %1, i32 2
 	%ex = call float @atan_ff( float %Yx, float %Xx )
 	%ey = call float @atan_ff( float %Yy, float %Xy )
 	%ez = call float @atan_ff( float %Yz, float %Xz )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @atan_v4v4( <4 x float>, <4 x float> ) {
@@ -513,34 +507,34 @@ last:
 	ret float %1
 }
 
-define <2 x float> @max_v2v2( <2 x float>, <2 x float> ) {
+define <4 x float> @max_v2v2( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <2 x float> %0, i32 0
-	%Yy = extractelement <2 x float> %0, i32 1
-	%Xx = extractelement <2 x float> %1, i32 0
-	%Xy = extractelement <2 x float> %1, i32 1
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
 	%ex = call float @max_ff( float %Yx, float %Xx )
 	%ey = call float @max_ff( float %Yy, float %Xy )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @max_v3v3( <3 x float>, <3 x float> ) {
+define <4 x float> @max_v3v3( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <3 x float> %0, i32 0
-	%Yy = extractelement <3 x float> %0, i32 1
-	%Yz = extractelement <3 x float> %0, i32 2
-	%Xx = extractelement <3 x float> %1, i32 0
-	%Xy = extractelement <3 x float> %1, i32 1
-	%Xz = extractelement <3 x float> %1, i32 2
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
+	%Xz = extractelement <4 x float> %1, i32 2
 	%ex = call float @max_ff( float %Yx, float %Xx )
 	%ey = call float @max_ff( float %Yy, float %Xy )
 	%ez = call float @max_ff( float %Yz, float %Xz )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @max_v4v4( <4 x float>, <4 x float> ) {
@@ -564,29 +558,29 @@ entry:
 	ret <4 x float> %rv4
 }
 
-define <2 x float> @max_v2f( <2 x float>, float ) {
+define <4 x float> @max_v2f( <4 x float>, float ) {
 entry:
-	%Yx = extractelement <2 x float> %0, i32 0
-	%Yy = extractelement <2 x float> %0, i32 1
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
 	%ex = call float @max_ff( float %Yx, float %1 )
 	%ey = call float @max_ff( float %Yy, float %1 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @max_v3f( <3 x float>, float ) {
+define <4 x float> @max_v3f( <4 x float>, float ) {
 entry:
-	%Yx = extractelement <3 x float> %0, i32 0
-	%Yy = extractelement <3 x float> %0, i32 1
-	%Yz = extractelement <3 x float> %0, i32 2
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
 	%ex = call float @max_ff( float %Yx, float %1 )
 	%ey = call float @max_ff( float %Yy, float %1 )
 	%ez = call float @max_ff( float %Yz, float %1 )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @max_v4f( <4 x float>, float ) {
@@ -618,34 +612,34 @@ last:
 	ret float %1
 }
 
-define <2 x float> @min_v2v2( <2 x float>, <2 x float> ) {
+define <4 x float> @min_v2v2( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <2 x float> %0, i32 0
-	%Yy = extractelement <2 x float> %0, i32 1
-	%Xx = extractelement <2 x float> %1, i32 0
-	%Xy = extractelement <2 x float> %1, i32 1
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
 	%ex = call float @min_ff( float %Yx, float %Xx )
 	%ey = call float @min_ff( float %Yy, float %Xy )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @min_v3v3( <3 x float>, <3 x float> ) {
+define <4 x float> @min_v3v3( <4 x float>, <4 x float> ) {
 entry:
-	%Yx = extractelement <3 x float> %0, i32 0
-	%Yy = extractelement <3 x float> %0, i32 1
-	%Yz = extractelement <3 x float> %0, i32 2
-	%Xx = extractelement <3 x float> %1, i32 0
-	%Xy = extractelement <3 x float> %1, i32 1
-	%Xz = extractelement <3 x float> %1, i32 2
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
+	%Xx = extractelement <4 x float> %1, i32 0
+	%Xy = extractelement <4 x float> %1, i32 1
+	%Xz = extractelement <4 x float> %1, i32 2
 	%ex = call float @min_ff( float %Yx, float %Xx )
 	%ey = call float @min_ff( float %Yy, float %Xy )
 	%ez = call float @min_ff( float %Yz, float %Xz )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @min_v4v4( <4 x float>, <4 x float> ) {
@@ -669,29 +663,29 @@ entry:
 	ret <4 x float> %rv4
 }
 
-define <2 x float> @min_v2f( <2 x float>, float ) {
+define <4 x float> @min_v2f( <4 x float>, float ) {
 entry:
-	%Yx = extractelement <2 x float> %0, i32 0
-	%Yy = extractelement <2 x float> %0, i32 1
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
 	%ex = call float @min_ff( float %Yx, float %1 )
 	%ey = call float @min_ff( float %Yy, float %1 )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @min_v3f( <3 x float>, float ) {
+define <4 x float> @min_v3f( <4 x float>, float ) {
 entry:
-	%Yx = extractelement <3 x float> %0, i32 0
-	%Yy = extractelement <3 x float> %0, i32 1
-	%Yz = extractelement <3 x float> %0, i32 2
+	%Yx = extractelement <4 x float> %0, i32 0
+	%Yy = extractelement <4 x float> %0, i32 1
+	%Yz = extractelement <4 x float> %0, i32 2
 	%ex = call float @min_ff( float %Yx, float %1 )
 	%ey = call float @min_ff( float %Yy, float %1 )
 	%ez = call float @min_ff( float %Yz, float %1 )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @min_v4f( <4 x float>, float ) {
@@ -723,29 +717,29 @@ entry:
 	ret float %frv
 }
 
-define <2 x float> @sign_v2( <2 x float> ) {
+define <4 x float> @sign_v2( <4 x float> ) {
 entry:
-	%x = extractelement <2 x float> %0, i32 0
-	%y = extractelement <2 x float> %0, i32 1
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
 	%ex = call float @sign_f( float %x )
 	%ey = call float @sign_f( float %y )
-	%rv1 = insertelement <2 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <2 x float> %rv1, float %ey, i32 1
-	ret <2 x float> %rv2
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	ret <4 x float> %rv2
 }
 
-define <3 x float> @sign_v3( <3 x float> ) {
+define <4 x float> @sign_v3( <4 x float> ) {
 entry:
-	%x = extractelement <3 x float> %0, i32 0
-	%y = extractelement <3 x float> %0, i32 1
-	%z = extractelement <3 x float> %0, i32 2
+	%x = extractelement <4 x float> %0, i32 0
+	%y = extractelement <4 x float> %0, i32 1
+	%z = extractelement <4 x float> %0, i32 2
 	%ex = call float @sign_f( float %x )
 	%ey = call float @sign_f( float %y )
 	%ez = call float @sign_f( float %z )
-	%rv1 = insertelement <3 x float> zeroinitializer, float %ex, i32 0
-	%rv2 = insertelement <3 x float> %rv1, float %ey, i32 1
-	%rv3 = insertelement <3 x float> %rv2, float %ez, i32 2
-	ret <3 x float> %rv3
+	%rv1 = insertelement <4 x float> zeroinitializer, float %ex, i32 0
+	%rv2 = insertelement <4 x float> %rv1, float %ey, i32 1
+	%rv3 = insertelement <4 x float> %rv2, float %ez, i32 2
+	ret <4 x float> %rv3
 }
 
 define <4 x float> @sign_v4( <4 x float> ) {
@@ -775,20 +769,20 @@ entry:
 	ret float %abs
 }
 
-define <2 x float> @abs_v2( <2 x float> ) {
+define <4 x float> @abs_v2( <4 x float> ) {
 entry:
-	%arg0 = bitcast <2 x float> %0 to <2 x i32>
-	%arg0abs = and <2 x i32> %arg0, < i32 2147483647, i32 2147483647 > 
-	%abs = bitcast  <2 x i32> %arg0abs to <2 x float>
-	ret <2 x float> %abs
+	%arg0 = bitcast <4 x float> %0 to <4 x i32>
+	%arg0abs = and <4 x i32> %arg0, < i32 2147483647, i32 2147483647, i32 zeroinitializer, i32 zeroinitializer > 
+	%abs = bitcast  <4 x i32> %arg0abs to <4 x float>
+	ret <4 x float> %abs
 }
 
-define <3 x float> @abs_v3( <3 x float> ) {
+define <4 x float> @abs_v3( <4 x float> ) {
 entry:
-	%arg0 = bitcast <3 x float> %0 to <3 x i32>
-	%arg0abs = and <3 x i32> %arg0, < i32 2147483647, i32 2147483647, i32 2147483647 > 
-	%abs = bitcast  <3 x i32> %arg0abs to <3 x float>
-	ret <3 x float> %abs
+	%arg0 = bitcast <4 x float> %0 to <4 x i32>
+	%arg0abs = and <4 x i32> %arg0, < i32 2147483647, i32 2147483647, i32 2147483647, i32 zeroinitializer > 
+	%abs = bitcast  <4 x i32> %arg0abs to <4 x float>
+	ret <4 x float> %abs
 }
 
 define <4 x float> @abs_v4( <4 x float> ) {

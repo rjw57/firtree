@@ -271,7 +271,13 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler * self)
 
 	_firtree_pixbuf_sampler_invalidate_llvm_cache(self);
 
-	llvm::Module * m = new llvm::Module("pixbuf");
+
+#if FIRTREE_LLVM_AT_LEAST_2_6
+	llvm::Module * m = new llvm::Module("cogl_texture",
+			llvm::getGlobalContext());
+#else
+	llvm::Module * m = new llvm::Module("cogl_texture");
+#endif
 
 	/* declare the sample_image_buffer() function which will be implemented
 	 * by the engine. */
@@ -300,31 +306,31 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler * self)
 	FirtreeBufferFormat firtree_format =
 	    (channels == 3) ? FIRTREE_FORMAT_RGB24 : FIRTREE_FORMAT_RGBA32;
 
-	llvm::Value * llvm_width = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+	llvm::Value * llvm_width = llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 							  (uint64_t) width,
 							  false);
 	llvm::Value * llvm_height =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty, (uint64_t) height,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY, (uint64_t) height,
 				   false);
 	llvm::Value * llvm_stride =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty, (uint64_t) stride,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY, (uint64_t) stride,
 				   false);
 	llvm::Value * llvm_format =
-	    llvm::ConstantInt::get(llvm::Type::Int32Ty,
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT32_TY,
 				   (uint64_t) firtree_format, false);
 
 	/* This looks dirty but is apparently valid.
 	 *   See: http://www.nabble.com/Creating-Pointer-Constants-td22401381.html */
 	llvm::Constant * llvm_data_int =
-	    llvm::ConstantInt::get(llvm::Type::Int64Ty, (uint64_t) data, false);
+	    llvm::ConstantInt::get(FIRTREE_LLVM_INT64_TY, (uint64_t) data, false);
 	llvm::Value * llvm_data =
 	    llvm::ConstantExpr::getIntToPtr(llvm_data_int,
-					    llvm::PointerType::getUnqual(llvm::
-									 Type::
-									 Int8Ty));
+					    llvm::PointerType::
+					    	getUnqual(FIRTREE_LLVM_INT8_TY));
 
 	/* Implement the sample function. */
-	llvm::BasicBlock * bb = llvm::BasicBlock::Create("entry", sample_func);
+	llvm::BasicBlock * bb = llvm::BasicBlock::Create(FIRTREE_LLVM_CONTEXT "entry", 
+			sample_func);
 
 	std::vector < llvm::Value * >func_args;
 	func_args.push_back(llvm_data);
@@ -339,7 +345,7 @@ _firtree_pixbuf_sampler_create_sample_function(FirtreePixbufSampler * self)
 						       func_args.end(), "rv",
 						       bb);
 
-	llvm::ReturnInst::Create(ret_val, bb);
+	llvm::ReturnInst::Create(FIRTREE_LLVM_CONTEXT ret_val, bb);
 
 	p->cached_function = sample_func;
 	return sample_func;

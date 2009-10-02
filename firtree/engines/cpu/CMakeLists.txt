@@ -15,7 +15,7 @@ set(LLVM_CONFIG_COMPONENTS core
 find_package(LLVM)
 find_package(PythonInterp)
 
-find_program(LLVM_GCC_EXECUTABLE llvm-gcc)
+find_program(LLVM_GCC_EXECUTABLE llvm-gcc PATH /usr/lib/llvm/llvm/gcc-4.2/bin)
 
 if(NOT LLVM_GCC_EXECUTABLE)
     message(SEND_ERROR "llvm-gcc not found.")
@@ -40,6 +40,7 @@ add_custom_command(
         -O3 builtins.nonopt.bc -f -o=builtins.bc
     COMMAND ${LLVM_GCC_EXECUTABLE} 
         -fno-math-errno
+        -msse3 -march=i686 -O3
         -o render-buffer.o
         -c -emit-llvm
         ${GLIB_CFLAGS}

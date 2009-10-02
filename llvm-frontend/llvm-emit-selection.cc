@@ -59,13 +59,13 @@ class SelectionEmitter : public ExpressionEmitter
 				condition_value = ExpressionEmitterRegistry::
 					GetRegistry()->Emit( context, condition_expr );
 
-				BasicBlock *then_BB = LLVM_CREATE( BasicBlock, "then",
+				BasicBlock *then_BB = LLVM_CREATE(context,  BasicBlock, "then",
 						context->Function );
-				BasicBlock *else_BB = LLVM_CREATE( BasicBlock, "else",
+				BasicBlock *else_BB = LLVM_CREATE(context,  BasicBlock, "else",
 						context->Function );
 
 				// Emit the conditional branch.
-				LLVM_CREATE( BranchInst,
+				LLVM_CREATE_NO_CONTEXT(BranchInst,
 						then_BB, else_BB, 
 						condition_value->GetLLVMValue(),
 						context->BB );
@@ -89,13 +89,13 @@ class SelectionEmitter : public ExpressionEmitter
 				else_BB = context->BB;
 
 				// Create a continuation block.
-				BasicBlock *cont_BB = LLVM_CREATE( BasicBlock, "cont",
+				BasicBlock *cont_BB = LLVM_CREATE(context,  BasicBlock, "cont",
 						context->Function );
 
 				// Terminate then and else block by branches to
 				// continuation.
-				LLVM_CREATE( BranchInst, cont_BB, then_BB );
-				LLVM_CREATE( BranchInst, cont_BB, else_BB );
+				LLVM_CREATE_NO_CONTEXT( BranchInst, cont_BB, then_BB );
+				LLVM_CREATE_NO_CONTEXT( BranchInst, cont_BB, else_BB );
 
 				// Make the continuation where future instructions
 				// should be insterted.

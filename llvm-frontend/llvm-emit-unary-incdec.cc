@@ -81,20 +81,20 @@ class IncDecEmitter : ExpressionEmitter
 						case Firtree::TySpecFloat:
 #if LLVM_AT_LEAST_2_3
 							one = ConstantFP::
-							      get( Type::FloatTy, 1.0 );
+							      get( Type::FLOAT_TY(context), 1.0 );
 #else
 							one = ConstantFP::
-							      get( Type::FloatTy,
+							      get( Type::FLOAT_TY(context),
 							           APFloat( 1.f ) );
 #endif
 							break;
 						case Firtree::TySpecInt:
 							one = ConstantInt::
-							      get( Type::Int32Ty, 1 );
+							      get( Type::INT32_TY(context), 1 );
 							break;
 						case Firtree::TySpecBool:
 							one = ConstantInt::
-							      get( Type::Int1Ty, 1 );
+							      get( Type::INT1_TY(context), 1 );
 							break;
 						default:
 							FIRTREE_LLVM_ERROR( context, operand,
@@ -118,7 +118,7 @@ class IncDecEmitter : ExpressionEmitter
 				                           "tmp", context->BB );
 
 				new_value = ConstantExpressionValue::
-				            Create( context, new_val );
+				            Create( context, new_val, operand_value->GetType().Specifier );
 
 				if ( !( operand_value->IsMutable() ) ) {
 					FIRTREE_LLVM_ERROR( context, operand,

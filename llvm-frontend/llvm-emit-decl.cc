@@ -172,7 +172,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 	// value of destCoord().
 	if( ! prototype.is_intrinsic() ) {
 		param_llvm_types.push_back( llvm::VectorType::get(
-					llvm::Type::FloatTy, 2 ) );
+					llvm::Type::FLOAT_TY(m_Context), 4 ) );
 	}
 
 	while ( it != prototype.Parameters.end() ) {
@@ -212,7 +212,7 @@ llvm::Function* EmitDeclarations::ConstructFunction(
 		linkage = Function::InternalLinkage;
 	}
 
-	F = LLVM_CREATE( Function, FT,
+	F = LLVM_CREATE_NO_CONTEXT(Function, FT,
 			linkage,
 			func_name.c_str(),
 			m_Context->Module );
@@ -366,7 +366,7 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	}
 
 	// Create a basic block for this function
-	BasicBlock *BB = LLVM_CREATE( BasicBlock, "entry", F );
+	BasicBlock *BB = LLVM_CREATE(m_Context,  BasicBlock, "entry", F );
 	m_Context->BB = BB;
 	m_Context->EntryBB = BB;
 
@@ -478,12 +478,16 @@ void EmitDeclarations::emitFunction( firtreeFunctionDefinition func )
 	// Create a default return inst if there was no terminator.
 	if ( m_Context->BB->getTerminator() == NULL ) {
 		if ( prototype.ReturnType.Specifier == Firtree::TySpecVoid ) {
-			LLVM_CREATE( ReturnInst, NULL, m_Context->BB );
+			LLVM_CREATE(m_Context,  ReturnInst, NULL, m_Context->BB );
 		} else if((m_Context->BB != BB) && (m_Context->BB->empty())) {
 			// If this basic block is empty, and is different to the 
 			// original BB, then it is the 'guard' BB appended by the
 			// return instruction. We can safely append an unreachable.
+#if LLVM_AT_LEAST_2_6
+			new UnreachableInst(m_Context->Context, m_Context->BB);
+#else
 			new UnreachableInst(m_Context->BB);
+#endif
 		} else {
 			FIRTREE_LLVM_ERROR( m_Context, func, "Control reaches end "
 					"of non-void function." );

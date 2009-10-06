@@ -295,18 +295,35 @@ _firtree_cairo_surface_sampler_create_sample_function(FirtreeCairoSurfaceSampler
 	    cairo_image_surface_get_format(p->cairo_surface);
 
 	FirtreeBufferFormat firtree_format = FIRTREE_FORMAT_LAST;
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
 	switch (format) {
 	case CAIRO_FORMAT_ARGB32:
 		firtree_format = FIRTREE_FORMAT_BGRA32_PREMULTIPLIED;
 		break;
 	case CAIRO_FORMAT_RGB24:
-		firtree_format = FIRTREE_FORMAT_XBGR32;
+		firtree_format = FIRTREE_FORMAT_BGRX32;
 		break;
 	default:
 		g_debug("Unsupported Cairo image format.");
 		return NULL;
 		break;
 	}
+#elif G_BYTE_ORDER == G_BIG_ENDIAN
+	switch (format) {
+	case CAIRO_FORMAT_ARGB32:
+		firtree_format = FIRTREE_FORMAT_ARGB32_PREMULTIPLIED;
+		break;
+	case CAIRO_FORMAT_RGB24:
+		firtree_format = FIRTREE_FORMAT_XRGB32;
+		break;
+	default:
+		g_debug("Unsupported Cairo image format.");
+		return NULL;
+		break;
+	}
+#else
+	#error Unknown endianness.
+#endif
 
 	_firtree_cairo_surface_sampler_invalidate_llvm_cache(self);
 

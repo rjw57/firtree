@@ -361,6 +361,10 @@ class KernelTests(FirtreeTestCase):
 
         rv = self._e.render_into_cairo_surface((0, 0, width, height), self._s)
         self.assertCairoSurfaceMatches(self._s, 'cpu-sin-3')
+        
+        asm = debug_dump_cpu_renderer_asm(self._e, FORMAT_RGBA32)
+        self.assertNotEqual(asm, None)
+        #print(asm)
 
 # vim:sw=4:ts=4:et:autoindent
 

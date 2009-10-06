@@ -252,5 +252,19 @@ firtree_debug_dump_cpu_reduce_engine_function(FirtreeCpuReduceEngine* self)
     return g_string_new(out.str().c_str());
 }
 
+GString* 
+firtree_debug_dump_cpu_reduce_engine_asm(FirtreeCpuReduceEngine* self)
+{
+    FirtreeCpuReduceEnginePrivate* p = GET_PRIVATE(self); 
+
+    FirtreeCpuJitReduceFunc reduce_func = 
+        firtree_cpu_reduce_engine_get_reduce_engine_func(self);
+
+    if(!reduce_func)
+        return NULL;
+
+    return firtree_cpu_jit_dump_asm(p->jit);
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

@@ -101,6 +101,15 @@ class SimpleReduce(unittest.TestCase):
         self.assertEqual(len(filter(lambda v: (v[2] == 2) and (v[1] <= 20), output)), 200)
         self.assertEqual(len(filter(lambda v: (v[2] == 2) and (v[1] > 20), output)), 0)
         self.assertEqual(len(filter(lambda v: (v[2] == 2) and (v[1] < 10), output)), 0)
+        
+    def testReduceAsm(self):
+        engine = CpuReduceEngine()
+        self.assertEqual(engine.get_kernel(), None)
+        engine.set_kernel(self._k)
+        self.assertEqual(engine.get_kernel(), self._k)
+        asm = debug_dump_cpu_reduce_engine_asm(engine)
+        self.assertNotEqual(asm, None)
+        # print(asm)
 
 # vim:sw=4:ts=4:et:autoindent
 

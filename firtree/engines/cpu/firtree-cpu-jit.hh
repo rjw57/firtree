@@ -118,6 +118,19 @@ firtree_cpu_jit_get_reduce_function_for_kernel(FirtreeCpuJit* self,
         FirtreeKernel* kernel,
         FirtreeCpuJitLazyFunctionCreatorFunc lazy_creator_function);
 
+/**
+ * firtree_cpu_jit_dump_asm:
+ *
+ * Dump the target-specific asm which was generated on the last call
+ * to get_{reduce,render}_function into a string and return it. The string must
+ * be released via g_string_free() after use.
+ *
+ * If there was no previous call then this returns NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString* firtree_cpu_jit_dump_asm(FirtreeCpuJit* self);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_CPU_JIT */

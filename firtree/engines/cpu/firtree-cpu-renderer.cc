@@ -380,5 +380,20 @@ firtree_cpu_renderer_render_into_buffer (FirtreeCpuRenderer* self,
             (unsigned char*)buffer, width, height, stride, (float*)extents);
 }
 
+GString* 
+firtree_debug_dump_cpu_renderer_asm(FirtreeCpuRenderer* self, FirtreeBufferFormat format)
+{
+    FirtreeCpuRendererPrivate* p = GET_PRIVATE(self); 
+
+    FirtreeCpuJitRenderFunc render =
+        (FirtreeCpuJitRenderFunc)firtree_cpu_renderer_get_renderer_func(self, 
+                format);
+
+    if(!render)
+        return NULL;
+
+    return firtree_cpu_jit_dump_asm(p->jit);
+}
+
 /* vim:sw=4:ts=4:et:cindent
  */

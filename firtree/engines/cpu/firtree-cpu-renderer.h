@@ -182,6 +182,20 @@ firtree_cpu_renderer_render_into_buffer (FirtreeCpuRenderer* self,
 GString*
 firtree_debug_dump_cpu_renderer_function(FirtreeCpuRenderer* engine);
 
+/**
+ * firtree_debug_dump_cpu_renderer_asm:
+ * @engine: A FirtreeCpuRenderer.
+ *
+ * Dump the target-specific assembler associated with @engine into a string and
+ * return it. The string must be released via g_string_free() after use.
+ *
+ * If the engine is invalid, or there is no LLVM function, this returns NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString* firtree_debug_dump_cpu_renderer_asm(FirtreeCpuRenderer* engine,
+        FirtreeBufferFormat format);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_CPU_RENDERER */

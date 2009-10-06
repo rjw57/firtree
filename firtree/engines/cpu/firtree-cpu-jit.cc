@@ -45,6 +45,12 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Support/CommandLine.h>
 
+#include <llvm/ADT/Triple.h>
+#include <llvm/System/Host.h>
+#include <llvm/Target/TargetRegistry.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Support/FormattedStream.h>
+
 #include <firtree/internal/firtree-engine-intl.hh>
 #include <firtree/internal/firtree-sampler-intl.hh>
 #include <firtree/internal/firtree-kernel-intl.hh>
@@ -111,6 +117,7 @@ static llvm::ExecutionEngine*   _firtree_cpu_jit_global_llvm_engine = NULL;
 
 struct _FirtreeCpuJitPrivate {
     llvm::ModuleProvider*       cached_llvm_module_provider;
+    llvm::Function*             cached_llvm_function;
     llvm::MemoryBuffer*         render_buffer_bitcode;
 };
 
@@ -160,6 +167,7 @@ firtree_cpu_jit_init (FirtreeCpuJit *self)
     FirtreeCpuJitPrivate* p = GET_PRIVATE(self); 
 
     p->cached_llvm_module_provider = NULL;
+    p->cached_llvm_function = NULL;
     p->render_buffer_bitcode = 
         llvm::MemoryBuffer::getMemBuffer(
                 (const char*)_firtree_cpu_jit_render_buffer_mod,
@@ -349,6 +357,7 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
         }
         p->cached_llvm_module_provider = NULL;
     }
+    p->cached_llvm_function = NULL;
     p->cached_llvm_module_provider = new llvm::ExistingModuleProvider(linked_module);
 
     if(!_firtree_cpu_jit_global_llvm_engine) {
@@ -361,7 +370,7 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
         }
         _firtree_cpu_jit_global_llvm_engine = llvm::ExecutionEngine::create(
                 p->cached_llvm_module_provider, false, &err,
-                llvm::CodeGenOpt::None, false);
+                llvm::CodeGenOpt::Aggressive, false);
 #else
         _firtree_cpu_jit_global_llvm_engine = llvm::ExecutionEngine::create(
                 p->cached_llvm_module_provider, false, &err);
@@ -383,6 +392,7 @@ firtree_cpu_jit_get_compute_function (FirtreeCpuJit* self,
 
     void* compute_function = _firtree_cpu_jit_global_llvm_engine->
         getPointerToFunction(new_compute_func);
+    p->cached_llvm_function = new_compute_func;
     g_assert(compute_function);
 
     return compute_function;
@@ -419,6 +429,115 @@ static void _firtree_cpu_jit_optimise_module(llvm::Module* m,
                             llvm::createFunctionInliningPass(32768));
 
     PM.run(*m);
+}
+
+GString* 
+firtree_cpu_jit_dump_asm(FirtreeCpuJit* self)
+{
+    std::string err;
+
+    FirtreeCpuJitPrivate* p = GET_PRIVATE(self); 
+
+    llvm::ModuleProvider* mp = p->cached_llvm_module_provider;
+    if(!mp) 
+        return NULL;
+
+    llvm::Module* m = mp->getModule();
+
+    // A lot of this code is inspired by lli.cpp.
+
+    // Initialise targets and asm printers
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllAsmPrinters();
+
+    // Work out the target triple.
+    llvm::Triple the_triple(m->getTargetTriple());
+    if(the_triple.getTriple().empty())
+        the_triple.setTriple(llvm::sys::getHostTriple());
+
+    // Allocate the target machine
+    const llvm::Target* the_target =
+        llvm::TargetRegistry::lookupTarget(the_triple.getTriple(), err);
+    if(!the_target) 
+    {
+        g_warning("LLVM error selecting target: %s", err.c_str());
+        return NULL;
+    }
+
+    std::auto_ptr<llvm::TargetMachine> target_machine(
+            the_target->createTargetMachine(the_triple.getTriple(), ""));
+    g_assert(target_machine.get() && "Could not allocate target machine!");
+    llvm::TargetMachine &target = *target_machine.get();
+
+    std::string out_str;
+    llvm::raw_string_ostream out_string_stream(out_str);
+	llvm::formatted_raw_ostream out(out_string_stream);
+
+    if(target.WantsWholeFile()) 
+    {
+        llvm::PassManager PM;
+
+        if(const llvm::TargetData* TD = target.getTargetData()) {
+            PM.add(new llvm::TargetData(*TD));
+        } else {
+            PM.add(new llvm::TargetData(m));
+        }
+
+        if(target.addPassesToEmitWholeFile(PM, out, 
+                    llvm::TargetMachine::AssemblyFile, llvm::CodeGenOpt::Aggressive))
+        {
+            g_warning("Host target does not support generation of assembly.");
+            return NULL;
+        }
+
+        PM.run(*m);
+    } else {
+        llvm::FunctionPassManager Passes(p->cached_llvm_module_provider);
+
+        if(const llvm::TargetData* TD = target.getTargetData()) {
+            Passes.add(new llvm::TargetData(*TD));
+        } else {
+            Passes.add(new llvm::TargetData(m));
+        }
+
+        llvm::ObjectCodeEmitter* OCE = NULL;
+        target.setAsmVerbosityDefault(true);
+
+        switch(target.addPassesToEmitFile(Passes, out,
+                    llvm::TargetMachine::AssemblyFile, llvm::CodeGenOpt::Aggressive)) 
+        {
+            default:
+                g_assert(0 && "Invalid file model!");
+                return NULL;
+            case llvm::FileModel::Error:
+                g_warning("Host target does not support generation of assembly.");
+                return NULL;
+            case llvm::FileModel::AsmFile:
+                break;
+            case llvm::FileModel::MachOFile:
+            case llvm::FileModel::ElfFile:
+                g_error("Unexpected return code from addPassesToEmitFile().");
+                break;
+        }
+
+        if(target.addPassesToEmitFileFinish(Passes, OCE, llvm::CodeGenOpt::Aggressive)) {
+            g_warning("Host target does not support generation of assembly.");
+            return NULL;
+        }
+
+        Passes.doInitialization();
+
+        for(llvm::Module::iterator I = m->begin(), E = m->end(); I != E; ++I)
+        {
+            if (!I->isDeclaration()) {
+                Passes.run(*I);
+            }
+        }
+
+        Passes.doFinalization();
+    }
+
+    return g_string_new(out_str.c_str());
 }
 
 /* vim:sw=4:ts=4:et:cindent

@@ -47,6 +47,14 @@
   )
 )
 
+(define-function debug_dump_cpu_reduce_engine_asm
+  (c-name "firtree_debug_dump_cpu_reduce_engine_asm")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuReduceEngine*" "engine")
+  )
+)
+
 
 
 ;; From firtree-cpu-renderer.h
@@ -116,6 +124,15 @@
   (return-type "GString*")
   (parameters
     '("FirtreeCpuRenderer*" "engine")
+  )
+)
+
+(define-function debug_dump_cpu_renderer_asm
+  (c-name "firtree_debug_dump_cpu_renderer_asm")
+  (return-type "GString*")
+  (parameters
+    '("FirtreeCpuRenderer*" "engine")
+    '("FirtreeBufferFormat" "format")
   )
 )
 

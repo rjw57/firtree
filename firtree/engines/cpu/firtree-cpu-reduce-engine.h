@@ -131,6 +131,20 @@ firtree_cpu_reduce_engine_run (FirtreeCpuReduceEngine* self,
 GString*
 firtree_debug_dump_cpu_reduce_engine_function(FirtreeCpuReduceEngine* engine);
 
+/**
+ * firtree_debug_dump_cpu_reduce_engine_asm:
+ * @engine: A FirtreeCpuReduceEngine.
+ *
+ * Dump the target-specific assembler associated with @engine into a string and
+ * return it. The string must be released via g_string_free() after use.
+ *
+ * If the engine is invalid, or there is no LLVM function, this returns NULL.
+ *
+ * Returns: NULL or a GString.
+ */
+GString* firtree_debug_dump_cpu_reduce_engine_asm(FirtreeCpuReduceEngine*
+        engine);
+
 G_END_DECLS
 
 #endif /* _FIRTREE_CPU_REDUCE_ENGINE */

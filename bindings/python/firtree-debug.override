@@ -91,5 +91,57 @@ _wrap_firtree_debug_dump_cpu_reduce_engine_function(PyObject *self, PyObject *ar
     return str;
 }
 %%
+override firtree_debug_dump_cpu_reduce_engine_asm
+static PyObject *
+_wrap_firtree_debug_dump_cpu_reduce_engine_asm(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "engine", NULL };
+    PyGObject *cpu_reduce_engine;
+    GString* ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:debug_dump_cpu_reduce_engine_asm", kwlist, &PyFirtreeCpuReduceEngine_Type, &cpu_reduce_engine))
+        return NULL;
+    
+    ret = firtree_debug_dump_cpu_reduce_engine_asm(FIRTREE_CPU_REDUCE_ENGINE(cpu_reduce_engine->obj));
+
+    if(!ret) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    PyObject* str = PyString_FromString(ret->str);
+    g_string_free(ret, TRUE);
+    return str;
+}
+%%
+override firtree_debug_dump_cpu_renderer_asm
+static PyObject *
+_wrap_firtree_debug_dump_cpu_renderer_asm(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "engine", "format", NULL };
+    PyGObject *cpu_renderer;
+    PyObject *format;
+    GString* ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!O!:debug_dump_cpu_renderer_asm", kwlist, &PyFirtreeCpuRenderer_Type, &cpu_renderer, &PyGEnum_Type, &format))
+        return NULL;
+    
+    gint format_val;
+    if(0 != pyg_enum_get_value(FIRTREE_TYPE_BUFFER_FORMAT, format, &format_val)) {
+        return NULL;
+    }
+
+    ret = firtree_debug_dump_cpu_renderer_asm(FIRTREE_CPU_RENDERER(cpu_renderer->obj), format_val);
+
+    if(!ret) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    PyObject* str = PyString_FromString(ret->str);
+    g_string_free(ret, TRUE);
+    return str;
+}
+%%
 // vim:sw=4:ts=4:cindent:et:filetype=c
 
